@@ -1,26 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { tasks } from '@/lib/mock-data';
+import TaskCard from '@/components/TaskCard';
 
 const allSkills = Array.from(new Set(tasks.flatMap(t => t.skillsRequired))).sort();
-
-const statusLabel: Record<string, string> = {
-  open: 'Open',
-  in_progress: 'In Progress',
-  completed: 'Completed',
-  disputed: 'Disputed',
-};
 
 export default function TasksPage() {
   const [skillFilter, setSkillFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [budgetMin, setBudgetMin] = useState('');
+  const [budgetMax, setBudgetMax] = useState('');
+  const [sortBy, setSortBy] = useState<'newest' | 'budget_high' | 'budget_low' | 'bids'>('newest');
 
-  const filtered = tasks.filter(t => {
-    const matchSkill = !skillFilter || t.skillsRequired.includes(skillFilter);
-    const matchStatus = !statusFilter || t.status === statusFilter;
-    return matchSkill && matchStatus;
-  });
+  const filtered = useMemo(() => {
+    return tasks
+      .filter(t => {
+        const matchSkill = !skillFilter || t.skillsRequired.includes(skillFilter);
+        const matchStatus = !statusFilter || t.status === statusFilter;
+        const matchBudgetMin = !budgetMin || t.budgetErg >= Number(budgetMin);
+        const matchBudgetMax = !budgetMax || t.budgetErg <= Number(budgetMax);
+        return matchSkill && matchStatus && matchBudgetMin && matchBudgetMax;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'budget_high') return b.budgetErg - a.budgetErg;
+        if (sortBy === 'budget_low') return a.budgetErg - b.budgetErg;
+        if (sortBy === 'bids') return b.bidsCount - a.bidsCount;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+  }, [skillFilter, statusFilter, budgetMin, budgetMax, sortBy]);
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -36,65 +44,42 @@ export default function TasksPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <select
-            value={skillFilter}
-            onChange={e => setSkillFilter(e.target.value)}
-            className="px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-cyan)]/40"
-          >
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          <select value={skillFilter} onChange={e => setSkillFilter(e.target.value)}
+            className="px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-cyan)]/40">
             <option value="">All Skills</option>
             {allSkills.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
-          <select
-            value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
-            className="px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-cyan)]/40"
-          >
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+            className="px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-cyan)]/40">
             <option value="">All Status</option>
             <option value="open">Open</option>
+            <option value="assigned">Assigned</option>
             <option value="in_progress">In Progress</option>
+            <option value="review">In Review</option>
             <option value="completed">Completed</option>
+          </select>
+          <input type="number" placeholder="Min ERG" value={budgetMin} onChange={e => setBudgetMin(e.target.value)}
+            className="w-28 px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)]/40" />
+          <input type="number" placeholder="Max ERG" value={budgetMax} onChange={e => setBudgetMax(e.target.value)}
+            className="w-28 px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)]/40" />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value as typeof sortBy)}
+            className="px-4 py-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent-cyan)]/40">
+            <option value="newest">Newest First</option>
+            <option value="budget_high">Budget: High→Low</option>
+            <option value="budget_low">Budget: Low→High</option>
+            <option value="bids">Most Bids</option>
           </select>
         </div>
 
-        {/* Task List */}
+        <p className="text-[var(--text-muted)] text-sm mb-4">{filtered.length} tasks found</p>
+
         <div className="flex flex-col gap-4">
-          {filtered.map(task => (
-            <div key={task.id} className="card p-6">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-lg">{task.title}</h3>
-                    <span className={`badge text-xs status-${task.status}`} style={{
-                      borderColor: task.status === 'open' ? 'rgba(0,255,136,0.3)' : task.status === 'in_progress' ? 'rgba(0,212,255,0.3)' : 'rgba(139,92,246,0.3)',
-                      background: task.status === 'open' ? 'rgba(0,255,136,0.08)' : task.status === 'in_progress' ? 'rgba(0,212,255,0.08)' : 'rgba(139,92,246,0.08)',
-                    }}>
-                      {statusLabel[task.status]}
-                    </span>
-                  </div>
-                  <p className="text-[var(--text-secondary)] text-sm mb-3">{task.description}</p>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {task.skillsRequired.map(s => (
-                      <span key={s} className="badge badge-cyan text-xs">{s}</span>
-                    ))}
-                  </div>
-                  <p className="text-[var(--text-muted)] text-xs">
-                    Posted by <span className="text-[var(--accent-cyan)]">{task.creatorName}</span> • {task.createdAt}
-                  </p>
-                </div>
-                <div className="text-right sm:min-w-[120px]">
-                  <div className="text-2xl font-bold text-[var(--accent-green)] glow-text-green">{task.budgetErg}</div>
-                  <div className="text-[var(--text-muted)] text-xs">ERG Budget</div>
-                </div>
-              </div>
-            </div>
-          ))}
+          {filtered.map(task => <TaskCard key={task.id} task={task} />)}
         </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-16 text-[var(--text-muted)]">
-            No tasks found matching your criteria.
-          </div>
+          <div className="text-center py-16 text-[var(--text-muted)]">No tasks found matching your criteria.</div>
         )}
       </div>
     </div>

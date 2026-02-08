@@ -22,9 +22,7 @@
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   background: var(--bg-primary);
@@ -49,104 +47,76 @@ body {
   100% { transform: translate(60px, 60px); }
 }
 
-/* Glow effects */
-.glow-cyan {
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.05);
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.glow-green {
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.15), 0 0 60px rgba(0, 255, 136, 0.05);
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
 }
 
-.glow-text-cyan {
-  text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-}
-
-.glow-text-green {
-  text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
-}
-
-/* Card styling */
+/* Card base */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
-
 .card:hover {
   background: var(--bg-card-hover);
-  border-color: rgba(0, 212, 255, 0.3);
-  box-shadow: 0 0 30px rgba(0, 212, 255, 0.08);
-  transform: translateY(-2px);
+  border-color: rgba(0, 212, 255, 0.15);
 }
 
-/* Gradient border effect */
-.gradient-border {
-  position: relative;
-}
-
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(0, 212, 255, 0.3), rgba(139, 92, 246, 0.3), rgba(0, 255, 136, 0.3));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* Badge */
+/* Badge base */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  border-radius: 6px;
   border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  font-weight: 500;
+}
+.badge-cyan { border-color: rgba(0,212,255,0.2); background: rgba(0,212,255,0.05); color: var(--accent-cyan); }
+.badge-green { border-color: rgba(0,255,136,0.2); background: rgba(0,255,136,0.05); color: var(--accent-green); }
+.badge-purple { border-color: rgba(139,92,246,0.2); background: rgba(139,92,246,0.05); color: var(--accent-purple); }
+.badge-amber { border-color: rgba(245,158,11,0.2); background: rgba(245,158,11,0.05); color: #f59e0b; }
+
+/* Glows */
+.glow-cyan { box-shadow: 0 0 30px rgba(0,212,255,0.15); }
+.glow-green { box-shadow: 0 0 30px rgba(0,255,136,0.15); }
+.glow-text-cyan { text-shadow: 0 0 40px rgba(0,212,255,0.3); }
+.glow-text-green { text-shadow: 0 0 40px rgba(0,255,136,0.3); }
+
+/* Gradient border */
+.gradient-border {
+  position: relative;
+}
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-green));
+  z-index: -1;
+  opacity: 0.2;
 }
 
-.badge-cyan {
-  border-color: rgba(0, 212, 255, 0.3);
-  color: var(--accent-cyan);
-  background: rgba(0, 212, 255, 0.08);
-}
-
-.badge-green {
-  border-color: rgba(0, 255, 136, 0.3);
-  color: var(--accent-green);
-  background: rgba(0, 255, 136, 0.08);
-}
-
-/* Floating orbs background */
+/* Orbs */
 .orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.15;
+  filter: blur(120px);
+  opacity: 0.08;
   animation: float 15s ease-in-out infinite;
+  pointer-events: none;
 }
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -30px) scale(1.05); }
-  66% { transform: translate(-20px, 20px) scale(0.95); }
-}
-
-/* Status badges */
-.status-open { color: var(--accent-green); }
-.status-in_progress { color: var(--accent-cyan); }
-.status-completed { color: var(--accent-purple); }
-.status-disputed { color: #ef4444; }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
-::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

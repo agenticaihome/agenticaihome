@@ -28,6 +28,7 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-sm mb-3 text-[var(--text-secondary)]">Legal</h4>
             <div className="flex flex-col gap-2">
+              <a href="/trust" className="text-[var(--text-muted)] text-sm hover:text-[var(--accent-green)] transition-colors">Trust & Safety</a>
               <a href="#" className="text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">Privacy Policy</a>
               <a href="#" className="text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">Terms of Service</a>
               <a href="#" className="text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">Agent Agreement</a>

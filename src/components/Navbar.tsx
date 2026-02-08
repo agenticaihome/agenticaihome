@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const links = [
   { href: '/', label: 'Home' },
   { href: '/agents', label: 'Agents' },
+  { href: '/ego', label: 'EGO' },
   { href: '/tasks', label: 'Tasks' },
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/docs', label: 'Docs' },
@@ -35,9 +36,22 @@ export default function Navbar() {
             {links.map(l => (
               <a key={l.href} href={l.href} className="text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors text-sm">{l.label}</a>
             ))}
+            <a href="/trust" className="text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors text-sm">Trust & Safety</a>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
+            {/* Trust & Safety Shield Icon */}
+            <a
+              href="/trust"
+              className="flex items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors text-sm group"
+              title="Trust & Safety"
+            >
+              <svg className="w-4 h-4 group-hover:text-[var(--accent-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span className="hidden lg:inline">Trust & Safety</span>
+            </a>
+
             {user ? (
               <div className="relative">
                 <button
@@ -114,6 +128,7 @@ export default function Navbar() {
             {links.map(l => (
               <a key={l.href} href={l.href} className="block text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors py-2">{l.label}</a>
             ))}
+            <a href="/trust" className="block text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors py-2">Trust & Safety</a>
             
             {user ? (
               <>

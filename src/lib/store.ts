@@ -41,7 +41,29 @@ function simpleHash(password: string): string {
 function initializeData() {
   const initialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
   if (!initialized) {
-    localStorage.setItem(STORAGE_KEYS.AGENTS, JSON.stringify(agents));
+    // Initialize agents with safety fields
+    const agentsWithSafety: Agent[] = agents.map(agent => ({
+      ...agent,
+      // Add safety fields if missing
+      probationCompleted: agent.probationCompleted ?? (agent.tasksCompleted >= 5),
+      probationTasksRemaining: agent.probationTasksRemaining ?? Math.max(0, 5 - agent.tasksCompleted),
+      suspendedUntil: agent.suspendedUntil ?? null,
+      anomalyScore: agent.anomalyScore ?? 0,
+      maxTaskValue: agent.maxTaskValue ?? (agent.tasksCompleted >= 5 ? 50 : 10),
+      velocityWindow: agent.velocityWindow ?? { count: 0, windowStart: new Date().toISOString() },
+      tier: agent.tier ?? (
+        agent.tasksCompleted >= 100 ? 'elite' :
+        agent.tasksCompleted >= 20 ? 'established' :
+        agent.tasksCompleted >= 5 ? 'rising' : 'newcomer'
+      ) as Agent['tier'],
+      disputesWon: agent.disputesWon ?? 0,
+      disputesLost: agent.disputesLost ?? 0,
+      consecutiveDisputesLost: agent.consecutiveDisputesLost ?? 0,
+      completionRate: agent.completionRate ?? (agent.tasksCompleted > 0 ? 0.9 : 0),
+      lastActivityAt: agent.lastActivityAt ?? agent.createdAt
+    }));
+    
+    localStorage.setItem(STORAGE_KEYS.AGENTS, JSON.stringify(agentsWithSafety));
     localStorage.setItem(STORAGE_KEYS.TASKS, JSON.stringify(tasks));
     
     // Flatten bids from bidsForTask object into a single array
@@ -52,7 +74,14 @@ function initializeData() {
     localStorage.setItem(STORAGE_KEYS.BIDS, JSON.stringify(allBids));
     
     localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(sampleTransactions));
-    localStorage.setItem(STORAGE_KEYS.COMPLETIONS, JSON.stringify(completions));
+    
+    // Initialize completions with reviewerId if missing
+    const completionsWithReviewerId = completions.map(completion => ({
+      ...completion,
+      reviewerId: completion.reviewerId ?? `user-${Math.floor(Math.random() * 100).toString().padStart(3, '0')}`
+    }));
+    localStorage.setItem(STORAGE_KEYS.COMPLETIONS, JSON.stringify(completionsWithReviewerId));
+    
     localStorage.setItem(STORAGE_KEYS.REPUTATION_EVENTS, JSON.stringify(reputationHistory));
     
     // Create demo user
@@ -126,7 +155,7 @@ export function getAgentById(id: string): Agent | null {
   return agents.find(a => a.id === id) || null;
 }
 
-export function createAgent(agentData: Omit<Agent, 'id' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt'>): Agent {
+export function createAgent(agentData: Omit<Agent, 'id' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>): Agent {
   const agents = getAgents();
   const newAgent: Agent = {
     ...agentData,
@@ -135,7 +164,20 @@ export function createAgent(agentData: Omit<Agent, 'id' | 'egoScore' | 'tasksCom
     tasksCompleted: 0,
     rating: 0,
     status: 'available',
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    // Trust & Safety fields
+    probationCompleted: false,
+    probationTasksRemaining: 5,
+    suspendedUntil: null,
+    anomalyScore: 0,
+    maxTaskValue: 10, // Newcomer limit
+    velocityWindow: { count: 0, windowStart: new Date().toISOString() },
+    tier: 'newcomer',
+    disputesWon: 0,
+    disputesLost: 0,
+    consecutiveDisputesLost: 0,
+    completionRate: 0,
+    lastActivityAt: new Date().toISOString()
   };
   const updatedAgents = [...agents, newAgent];
   saveToStorage(STORAGE_KEYS.AGENTS, updatedAgents);
@@ -288,7 +330,8 @@ export function createCompletion(completionData: Omit<Completion, 'id'>): Comple
   const completions = getCompletions();
   const newCompletion: Completion = {
     ...completionData,
-    id: generateId()
+    id: generateId(),
+    reviewerId: completionData.reviewerId || 'unknown' // Ensure reviewerId is always present
   };
   const updatedCompletions = [...completions, newCompletion];
   saveToStorage(STORAGE_KEYS.COMPLETIONS, updatedCompletions);

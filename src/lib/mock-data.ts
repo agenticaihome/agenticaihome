@@ -1,6 +1,6 @@
 import { Agent, Task, Bid, Transaction, Completion, ReputationEvent } from './types';
 
-export const agents: Agent[] = [
+export const agents: any[] = [
   {
     id: 'agent-001', name: 'NexusResearch', status: 'available',
     description: 'Advanced research agent specializing in market analysis, competitive intelligence, and deep-dive reports. Processes thousands of sources in minutes and delivers structured, actionable insights.',
@@ -24,66 +24,77 @@ export const agents: Agent[] = [
     description: 'Data analysis and visualization powerhouse. Transforms raw datasets into compelling dashboards, statistical models, and predictive analytics reports.',
     skills: ['Data Analysis', 'Visualization', 'Python', 'SQL'],
     hourlyRateErg: 35, ergoAddress: '9gwk97nY8Uc2c5EqMQ3Z...5tBn', egoScore: 81, tasksCompleted: 167, rating: 4.7, createdAt: '2025-09-20',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.15, maxTaskValue: 300, velocityWindow: { count: 0, windowStart: new Date().toISOString() }, tier: 'elite' as const, disputesWon: 5, disputesLost: 1, consecutiveDisputesLost: 0, completionRate: 0.94, lastActivityAt: '2026-02-07'
   },
   {
     id: 'agent-005', name: 'ContentCraft', status: 'available',
     description: 'Professional content writing agent for blogs, whitepapers, documentation, and social media. SEO-optimized output with consistent tone and voice matching.',
     skills: ['Writing', 'SEO', 'Content Strategy', 'Editing'],
     hourlyRateErg: 20, ergoAddress: '9iRHVh9rcoU5JFnVYMvh...2wQx', egoScore: 68, tasksCompleted: 203, rating: 4.5, createdAt: '2026-01-03',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.25, maxTaskValue: 150, velocityWindow: { count: 2, windowStart: new Date().toISOString() }, tier: 'established' as const, disputesWon: 3, disputesLost: 2, consecutiveDisputesLost: 1, completionRate: 0.89, lastActivityAt: '2026-02-08'
   },
   {
     id: 'agent-006', name: 'TradeBot Alpha', status: 'busy',
     description: 'Algorithmic trading agent for DeFi and CEX markets. Executes technical analysis, identifies arbitrage opportunities, and manages portfolio rebalancing strategies.',
     skills: ['Trading', 'DeFi', 'Technical Analysis', 'Risk Management'],
     hourlyRateErg: 50, ergoAddress: '9fPBvg3u5TWJbRXhMQne...8dVk', egoScore: 79, tasksCompleted: 412, rating: 4.4, createdAt: '2025-08-14',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.3, maxTaskValue: 500, velocityWindow: { count: 5, windowStart: new Date().toISOString() }, tier: 'established' as const, disputesWon: 8, disputesLost: 4, consecutiveDisputesLost: 1, completionRate: 0.91, lastActivityAt: '2026-02-08'
   },
   {
     id: 'agent-007', name: 'InfraOps', status: 'available',
     description: 'DevOps and infrastructure automation agent. Manages CI/CD pipelines, container orchestration, monitoring setup, and cloud infrastructure provisioning.',
     skills: ['DevOps', 'Docker', 'CI/CD', 'Cloud Infrastructure'],
     hourlyRateErg: 45, ergoAddress: '9hYDF2KeRz4ZpqSMVN7g...6mLp', egoScore: 85, tasksCompleted: 98, rating: 4.7, createdAt: '2025-11-28',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.1, maxTaskValue: 400, velocityWindow: { count: 1, windowStart: new Date().toISOString() }, tier: 'elite' as const, disputesWon: 6, disputesLost: 1, consecutiveDisputesLost: 0, completionRate: 0.96, lastActivityAt: '2026-02-07'
   },
   {
     id: 'agent-008', name: 'LegalEagle', status: 'available',
     description: 'Legal research and document analysis agent. Reviews contracts, identifies compliance risks, summarizes legal precedents, and drafts standard agreements.',
     skills: ['Legal Research', 'Contract Review', 'Compliance', 'Document Analysis'],
     hourlyRateErg: 55, ergoAddress: '9g8UQypx3WMRA4fTbj2K...1nHc', egoScore: 71, tasksCompleted: 56, rating: 4.6, createdAt: '2026-01-20',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.2, maxTaskValue: 250, velocityWindow: { count: 0, windowStart: new Date().toISOString() }, tier: 'established' as const, disputesWon: 2, disputesLost: 1, consecutiveDisputesLost: 0, completionRate: 0.87, lastActivityAt: '2026-02-06'
   },
   {
     id: 'agent-009', name: 'TransLingua', status: 'available',
     description: 'Multi-language translation agent supporting 40+ languages. Handles technical documentation, marketing copy, and real-time chat translation with cultural adaptation.',
     skills: ['Translation', 'Localization', 'Writing', 'Content Strategy'],
     hourlyRateErg: 18, ergoAddress: '9fXb7Rq2nMJpK8Vtj5Wz...4kPn', egoScore: 76, tasksCompleted: 318, rating: 4.7, createdAt: '2025-10-12',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.15, maxTaskValue: 200, velocityWindow: { count: 2, windowStart: new Date().toISOString() }, tier: 'established' as const, disputesWon: 4, disputesLost: 2, consecutiveDisputesLost: 1, completionRate: 0.91, lastActivityAt: '2026-02-06'
   },
   {
     id: 'agent-010', name: 'SecureAudit', status: 'available',
     description: 'Security audit specialist for smart contracts and web applications. Performs static analysis, fuzzing, and formal verification with detailed vulnerability reports.',
     skills: ['Security Audit', 'Smart Contracts', 'Code Review', 'Penetration Testing'],
     hourlyRateErg: 65, ergoAddress: '9hMnPq4wXcYz8RfG2jNv...7sKd', egoScore: 94, tasksCompleted: 67, rating: 4.9, createdAt: '2025-09-05',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.05, maxTaskValue: 1000, velocityWindow: { count: 0, windowStart: new Date().toISOString() }, tier: 'legendary' as const, disputesWon: 8, disputesLost: 0, consecutiveDisputesLost: 0, completionRate: 0.98, lastActivityAt: '2026-02-08'
   },
   {
     id: 'agent-011', name: 'SynthVoice', status: 'offline',
     description: 'Audio generation and processing agent. Creates voiceovers, podcasts, music compositions, and sound design for multimedia projects.',
     skills: ['Audio Generation', 'Voice Synthesis', 'Music Composition', 'Sound Design'],
     hourlyRateErg: 28, ergoAddress: '9eVwNx5mR3jLpK7Yt2Qf...6hBc', egoScore: 62, tasksCompleted: 44, rating: 4.3, createdAt: '2026-01-10',
+    probationCompleted: false, probationTasksRemaining: 2, suspendedUntil: null, anomalyScore: 0.3, maxTaskValue: 100, velocityWindow: { count: 0, windowStart: new Date().toISOString() }, tier: 'rising' as const, disputesWon: 1, disputesLost: 2, consecutiveDisputesLost: 1, completionRate: 0.85, lastActivityAt: '2026-01-30'
   },
   {
     id: 'agent-012', name: 'ChainAnalyzer', status: 'available',
     description: 'Blockchain analytics agent specializing in on-chain data analysis, wallet tracking, token flow mapping, and compliance screening across multiple chains.',
     skills: ['Data Analysis', 'Research', 'DeFi', 'Compliance'],
     hourlyRateErg: 38, ergoAddress: '9gTyK8mWvR3nXp5Jz1Qc...9fLs', egoScore: 83, tasksCompleted: 124, rating: 4.8, createdAt: '2025-10-28',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.1, maxTaskValue: 400, velocityWindow: { count: 1, windowStart: new Date().toISOString() }, tier: 'elite' as const, disputesWon: 6, disputesLost: 1, consecutiveDisputesLost: 0, completionRate: 0.95, lastActivityAt: '2026-02-07'
   },
   {
     id: 'agent-013', name: 'DocuMaster', status: 'available',
     description: 'Technical documentation agent that produces API references, user guides, architecture diagrams, and developer onboarding materials with precision.',
     skills: ['Writing', 'Document Analysis', 'Code Review', 'UI Design'],
     hourlyRateErg: 22, ergoAddress: '9fBnM4qW8xR2Yp7Kj3Nv...5tGh', egoScore: 73, tasksCompleted: 156, rating: 4.6, createdAt: '2025-12-15',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.18, maxTaskValue: 180, velocityWindow: { count: 3, windowStart: new Date().toISOString() }, tier: 'established' as const, disputesWon: 3, disputesLost: 1, consecutiveDisputesLost: 0, completionRate: 0.92, lastActivityAt: '2026-02-08'
   },
   {
     id: 'agent-014', name: 'QuantumSolver', status: 'available',
     description: 'Mathematical optimization and problem-solving agent. Handles operations research, constraint satisfaction, scheduling, and resource allocation problems.',
     skills: ['Data Analysis', 'Python', 'Research', 'Visualization'],
     hourlyRateErg: 42, ergoAddress: '9hRcV6nP3wYz8Km5Jt1Q...2dXs', egoScore: 88, tasksCompleted: 78, rating: 4.8, createdAt: '2025-11-02',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.08, maxTaskValue: 500, velocityWindow: { count: 1, windowStart: new Date().toISOString() }, tier: 'elite' as const, disputesWon: 7, disputesLost: 1, consecutiveDisputesLost: 0, completionRate: 0.96, lastActivityAt: '2026-02-08'
   },
   {
     id: 'agent-015', name: 'SocialPulse', status: 'busy',

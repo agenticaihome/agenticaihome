@@ -8,7 +8,6 @@ import {
   getWalletState,
   signTransaction,
   submitTransaction,
-  signMessage,
   autoReconnectWallet,
   isWalletAvailable,
   waitForWallet,
@@ -232,20 +231,10 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     }
   }, [wallet.connected]);
 
-  // Sign message
-  const signMsg = useCallback(async (message: string, address?: string) => {
-    if (!wallet.connected) {
-      throw new Error('Wallet not connected');
-    }
-    
-    try {
-      return await signMessage(message, address);
-    } catch (error) {
-      const errorMessage = getErrorMessage(error);
-      setError(errorMessage);
-      throw error;
-    }
-  }, [wallet.connected]);
+  // Sign message (not supported by EIP-12 Context API — placeholder)
+  const signMsg = useCallback(async (_message: string, _address?: string) => {
+    throw new Error('Message signing not supported by EIP-12 wallet API');
+  }, []);
 
   // Refresh wallet balance
   const refreshBalance = useCallback(async () => {

@@ -22,29 +22,35 @@ export interface TokenBalance {
   decimals?: number;
 }
 
-// Ergo connector types (from EIP-12)
+// EIP-12 types: Connection API vs Context API are SEPARATE
 declare global {
   interface Window {
     ergoConnector?: {
-      nautilus?: ErgoConnector;
-      safew?: ErgoConnector;
+      nautilus?: ErgoWalletConnector;
+      safew?: ErgoWalletConnector;
     };
+    ergo?: ErgoContextApi;
   }
 }
 
-interface ErgoConnector {
-  connect(): Promise<boolean>;
+// Connection API — only connect/disconnect/isConnected
+interface ErgoWalletConnector {
+  connect(params?: { createErgoObject?: boolean }): Promise<boolean>;
   disconnect(): Promise<boolean>;
   isConnected(): Promise<boolean>;
+}
+
+// Context API — injected as window.ergo AFTER connect succeeds
+interface ErgoContextApi {
+  get_balance(tokenId?: string): Promise<string>;
   get_used_addresses(): Promise<string[]>;
   get_unused_addresses(): Promise<string[]>;
   get_change_address(): Promise<string>;
-  get_balance(token?: string): Promise<string>;
-  get_utxos(amount?: string, token?: string): Promise<any[]>;
+  get_utxos(params?: { tokens?: Array<{ tokenId: string; amount?: string }> }): Promise<any[]>;
+  get_current_height(): Promise<number>;
   sign_tx(tx: any): Promise<any>;
   submit_tx(tx: any): Promise<string>;
-  get_current_height(): Promise<number>;
-  auth(address: string, message: string): Promise<string>;
+  sign_tx_input(tx: any, index: number): Promise<any>;
 }
 
 // Wallet error types
@@ -76,8 +82,16 @@ export class WalletRejectedError extends WalletError {
   }
 }
 
-let currentWallet: ErgoConnector | null = null;
+let currentConnector: ErgoWalletConnector | null = null;
 let currentWalletName: string | null = null;
+
+// Get the context API (window.ergo) — throws if not available
+function getErgoContext(): ErgoContextApi {
+  if (!window.ergo) {
+    throw new WalletError('Ergo context not available. Wallet may have disconnected.');
+  }
+  return window.ergo;
+}
 
 export function isWalletAvailable(): boolean {
   return typeof window !== 'undefined' && !!window.ergoConnector;
@@ -95,6 +109,16 @@ export async function waitForWallet(timeoutMs = 3000): Promise<boolean> {
   return false;
 }
 
+// Wait for window.ergo to be injected after connect()
+async function waitForErgoContext(timeoutMs = 3000): Promise<boolean> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    if (window.ergo) return true;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return false;
+}
+
 export function isNautilusAvailable(): boolean {
   return isWalletAvailable() && !!window.ergoConnector?.nautilus;
 }
@@ -104,13 +128,11 @@ export function isSafewAvailable(): boolean {
 }
 
 export async function connectWallet(preferredWallet?: string): Promise<WalletState> {
-  // Wait for wallet extensions to inject (they load async)
   const available = await waitForWallet(3000);
   if (!available) {
     throw new WalletNotFoundError('No Ergo wallet extensions found. Install Nautilus Wallet.');
   }
 
-  // Try to connect to preferred wallet first, then fallback
   const walletsToTry = preferredWallet 
     ? [preferredWallet, ...Object.values(SUPPORTED_WALLETS).filter(w => w !== preferredWallet)]
     : Object.values(SUPPORTED_WALLETS);
@@ -122,22 +144,26 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
       const connector = getWalletConnector(walletName);
       if (!connector) continue;
 
-      // Try to connect with timeout
+      // Connect via Connection API
       const connected = await Promise.race([
-        connector.connect(),
+        connector.connect({ createErgoObject: true }),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('Connection timeout')), WALLET_CONNECT_TIMEOUT)
         )
       ]);
 
       if (connected) {
-        currentWallet = connector;
+        // Wait for window.ergo (Context API) to be injected
+        const contextReady = await waitForErgoContext(3000);
+        if (!contextReady) {
+          throw new WalletConnectionError('Wallet connected but context API not available');
+        }
+
+        currentConnector = connector;
         currentWalletName = walletName;
         
-        // Get wallet state
         const state = await getWalletState();
         
-        // Store connection preference
         if (typeof window !== 'undefined') {
           localStorage.setItem('ergo_wallet_connected', walletName);
         }
@@ -154,15 +180,15 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
 }
 
 export async function disconnectWallet(): Promise<void> {
-  if (currentWallet) {
+  if (currentConnector) {
     try {
-      await currentWallet.disconnect();
+      await currentConnector.disconnect();
     } catch (error) {
       console.warn('Error disconnecting wallet:', error);
     }
   }
   
-  currentWallet = null;
+  currentConnector = null;
   currentWalletName = null;
   
   if (typeof window !== 'undefined') {
@@ -171,7 +197,7 @@ export async function disconnectWallet(): Promise<void> {
 }
 
 export async function getWalletState(): Promise<WalletState> {
-  if (!currentWallet || !currentWalletName) {
+  if (!currentConnector || !currentWalletName || !window.ergo) {
     return {
       connected: false,
       address: null,
@@ -182,9 +208,10 @@ export async function getWalletState(): Promise<WalletState> {
   }
 
   try {
+    const ergo = getErgoContext();
     const [address, addresses, balance] = await Promise.all([
-      currentWallet.get_change_address(),
-      currentWallet.get_used_addresses(),
+      ergo.get_change_address(),
+      ergo.get_used_addresses(),
       getBalance(),
     ]);
 
@@ -202,20 +229,15 @@ export async function getWalletState(): Promise<WalletState> {
 }
 
 export async function getBalance(): Promise<WalletBalance> {
-  if (!currentWallet) {
-    throw new WalletError('No wallet connected');
-  }
+  const ergo = getErgoContext();
 
   try {
-    // Get ERG balance
-    const ergBalance = await currentWallet.get_balance('ERG');
+    const ergBalance = await ergo.get_balance('ERG');
     const erg = nanoErgToErg(ergBalance);
 
-    // Get all UTXOs to parse token balances
-    const utxos = await currentWallet.get_utxos();
+    const utxos = await ergo.get_utxos();
     const tokens: TokenBalance[] = [];
     
-    // Parse tokens from UTXOs
     if (Array.isArray(utxos)) {
       const tokenMap = new Map<string, bigint>();
       
@@ -230,12 +252,11 @@ export async function getBalance(): Promise<WalletBalance> {
         }
       }
       
-      // Convert to TokenBalance format
       for (const [tokenId, amount] of tokenMap.entries()) {
         tokens.push({
           tokenId,
           amount: amount.toString(),
-          name: undefined, // Would be fetched from token registry
+          name: undefined,
           decimals: undefined
         });
       }
@@ -249,72 +270,49 @@ export async function getBalance(): Promise<WalletBalance> {
 }
 
 export async function getAddress(): Promise<string> {
-  if (!currentWallet) {
-    throw new WalletError('No wallet connected');
-  }
-
+  const ergo = getErgoContext();
   try {
-    return await currentWallet.get_change_address();
+    return await ergo.get_change_address();
   } catch (error) {
     console.error('Error getting address:', error);
     throw new WalletError('Failed to get address');
   }
 }
 
+export async function getUtxos(): Promise<any[]> {
+  const ergo = getErgoContext();
+  return await ergo.get_utxos();
+}
+
 export async function signTransaction(unsignedTx: any): Promise<any> {
-  if (!currentWallet) {
-    throw new WalletError('No wallet connected');
-  }
+  const ergo = getErgoContext();
 
   try {
-    return await currentWallet.sign_tx(unsignedTx);
+    return await ergo.sign_tx(unsignedTx);
   } catch (error) {
     console.error('Error signing transaction:', error);
-    
     if (error instanceof Error && error.message.includes('rejected')) {
       throw new WalletRejectedError();
     }
-    
     throw new WalletError('Failed to sign transaction');
   }
 }
 
 export async function submitTransaction(signedTx: any): Promise<string> {
-  if (!currentWallet) {
-    throw new WalletError('No wallet connected');
-  }
+  const ergo = getErgoContext();
 
   try {
-    return await currentWallet.submit_tx(signedTx);
+    return await ergo.submit_tx(signedTx);
   } catch (error) {
     console.error('Error submitting transaction:', error);
     throw new WalletError('Failed to submit transaction');
   }
 }
 
-export async function signMessage(message: string, address?: string): Promise<string> {
-  if (!currentWallet) {
-    throw new WalletError('No wallet connected');
-  }
-
-  try {
-    const addr = address || await getAddress();
-    return await currentWallet.auth(addr, message);
-  } catch (error) {
-    console.error('Error signing message:', error);
-    
-    if (error instanceof Error && error.message.includes('rejected')) {
-      throw new WalletRejectedError();
-    }
-    
-    throw new WalletError('Failed to sign message');
-  }
-}
-
 export async function getCurrentHeight(): Promise<number> {
-  if (currentWallet) {
+  if (window.ergo) {
     try {
-      return await currentWallet.get_current_height();
+      return await window.ergo.get_current_height();
     } catch (error) {
       console.warn('Failed to get height from wallet, falling back to explorer:', error);
     }
@@ -342,7 +340,7 @@ export async function autoReconnectWallet(): Promise<WalletState | null> {
   }
 }
 
-function getWalletConnector(walletName: string): ErgoConnector | null {
+function getWalletConnector(walletName: string): ErgoWalletConnector | null {
   if (!window.ergoConnector) return null;
   
   switch (walletName) {
@@ -355,10 +353,9 @@ function getWalletConnector(walletName: string): ErgoConnector | null {
   }
 }
 
-// Export current wallet info for debugging
 export function getCurrentWalletInfo(): { name: string | null; connected: boolean } {
   return {
     name: currentWalletName,
-    connected: !!currentWallet,
+    connected: !!currentConnector,
   };
 }

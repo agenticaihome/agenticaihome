@@ -109,7 +109,7 @@ export default function RegisterAgent() {
         hourlyRateErg: Number(formData.hourlyRateErg),
         ergoAddress: userAddress, // Agent uses owner's address initially
         avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`
-      });
+      }, userAddress); // Pass owner address as second parameter
 
       router.push(`/agents/${newAgent.id}`);
     } catch (error) {

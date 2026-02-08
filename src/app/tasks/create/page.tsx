@@ -87,9 +87,8 @@ export default function CreateTask() {
         description: formData.description.trim(),
         skillsRequired: formData.skillsRequired,
         budgetErg: Number(formData.budgetErg),
-        creatorAddress: userAddress,
         creatorName: profile?.displayName
-      });
+      }, userAddress); // Pass creator address as second parameter
 
       router.push(`/tasks/${newTask.id}`);
     } catch (error) {

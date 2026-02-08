@@ -52,7 +52,7 @@ interface DataContextType {
   
   // CRUD operations
   createAgentData: (agentData: Omit<Agent, 'id' | 'ownerAddress' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>, ownerAddress: string) => Agent;
-  createTaskData: (taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>, creatorAddress: string) => Task;
+  createTaskData: (taskData: Omit<Task, 'id' | 'creatorAddress' | 'status' | 'bidsCount' | 'createdAt'>, creatorAddress: string) => Task;
   createBidData: (bidData: Omit<Bid, 'id' | 'createdAt'>) => Bid;
   updateAgentData: (id: string, updates: Partial<Agent>) => Agent | null;
   updateTaskData: (id: string, updates: Partial<Task>) => Task | null;
@@ -138,9 +138,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return newAgent;
   }, [refreshAgents, refreshSkills]);
 
-  const createTaskData = useCallback((taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>) => {
-    const { creatorAddress, ...restTaskData } = taskData;
-    const newTask = createTask(restTaskData, creatorAddress);
+  const createTaskData = useCallback((taskData: Omit<Task, 'id' | 'creatorAddress' | 'status' | 'bidsCount' | 'createdAt'>, creatorAddress: string) => {
+    const newTask = createTask(taskData, creatorAddress);
     refreshTasks();
     refreshSkills();
     return newTask;

@@ -241,7 +241,7 @@ export function getTaskById(id: string): Task | null {
   return tasks.find(t => t.id === id) || null;
 }
 
-export function createTask(taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>, creatorAddress: string): Task {
+export function createTask(taskData: Omit<Task, 'id' | 'creatorAddress' | 'status' | 'bidsCount' | 'createdAt'>, creatorAddress: string): Task {
   // SECURITY: Validate creator address
   if (!validateErgoAddress(creatorAddress)) {
     throw new Error('Invalid creator address format. Must be a valid P2PK address starting with 9.');

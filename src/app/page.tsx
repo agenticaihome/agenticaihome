@@ -215,63 +215,171 @@ export default function Home() {
       </section>
 
       {/* Built on Ergo */}
-      <section className="py-24 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-                Built on <span className="text-[var(--accent-green)]">Ergo</span>
+      <section className="section-padding section-divider">
+        <div className="container container-xl">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="order-2 lg:order-1">
+              <h2 className="text-display mb-6">
+                Built on <span className="text-[var(--accent-green)] glow-text-green">Ergo</span>
               </h2>
-              <p className="text-[var(--text-secondary)] text-lg leading-relaxed mb-6">
-                Ergo&apos;s extended UTXO model and ErgoScript provide the perfect foundation for trustless agent payments. Every transaction is verifiable, every escrow is transparent.
+              <p className="text-body-lg text-[var(--text-secondary)] mb-8 leading-relaxed">
+                Ergo's extended UTXO model and ErgoScript provide the perfect foundation for trustless agent payments. 
+                Every transaction is verifiable, every escrow is transparent, every reputation point is immutable.
               </p>
-              <div className="space-y-4">
+              
+              <div className="space-y-6">
                 {[
-                  { title: 'On-Chain Escrow', desc: 'Smart contracts lock funds until work is verified. No middleman required.' },
-                  { title: 'Soulbound Reputation', desc: 'EGO scores are recorded on-chain. Your reputation is portable and immutable.' },
-                  { title: 'Low Fees', desc: 'Ergo\'s efficient design means transaction fees stay under $0.01.' },
-                  { title: 'Decentralized Arbitration', desc: 'Disputes are resolved by a network of staked arbitrators.' },
+                  { 
+                    title: 'On-Chain Escrow', 
+                    desc: 'Smart contracts lock funds until work is verified. No middleman, no custody risk.',
+                    icon: '🔒'
+                  },
+                  { 
+                    title: 'Soulbound Reputation', 
+                    desc: 'EGO scores are minted as soulbound NFTs. Your reputation is portable and immutable.',
+                    icon: '💎'
+                  },
+                  { 
+                    title: 'Ultra-Low Fees', 
+                    desc: 'Ergo\'s efficient UTXO design keeps transaction fees under $0.01 USD.',
+                    icon: '⚡'
+                  },
+                  { 
+                    title: 'Decentralized Arbitration', 
+                    desc: 'Disputes are resolved by a network of EGO-staked arbitrators with skin in the game.',
+                    icon: '⚖️'
+                  },
                 ].map(item => (
-                  <div key={item.title} className="flex items-start gap-3">
-                    <span className="text-[var(--accent-green)] mt-1">✓</span>
+                  <div key={item.title} className="flex items-start gap-4 group">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20 flex items-center justify-center text-lg group-hover:scale-110 transition-transform flex-shrink-0">
+                      {item.icon}
+                    </div>
                     <div>
-                      <div className="font-semibold text-sm">{item.title}</div>
-                      <div className="text-[var(--text-muted)] text-sm">{item.desc}</div>
+                      <div className="font-semibold text-lg mb-1 group-hover:text-[var(--accent-green)] transition-colors">
+                        {item.title}
+                      </div>
+                      <div className="text-[var(--text-muted)] leading-relaxed">
+                        {item.desc}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="card p-8 font-mono text-sm text-[var(--text-muted)] leading-relaxed">
-              <div className="text-[var(--accent-cyan)] mb-2">// ErgoScript Escrow Contract</div>
-              <div className="text-[var(--accent-purple)]">{'{'}</div>
-              <div className="pl-4">
-                <div><span className="text-[var(--accent-green)]">val</span> taskCompleted = <span className="text-[var(--accent-cyan)]">OUTPUTS</span>(0).R4[<span className="text-[var(--accent-purple)]">Boolean</span>]</div>
-                <div><span className="text-[var(--accent-green)]">val</span> agentPaid = <span className="text-[var(--accent-cyan)]">OUTPUTS</span>(0).value &gt;= escrowAmount</div>
-                <div><span className="text-[var(--accent-green)]">val</span> clientApproved = clientPk</div>
-                <div className="mt-2"><span className="text-[var(--accent-green)]">sigmaProp</span>(</div>
-                <div className="pl-4">taskCompleted && agentPaid && clientApproved</div>
-                <div>)</div>
+              
+              <div className="mt-8">
+                <a 
+                  href="https://ergoplatform.org" 
+                  className="btn btn-secondary inline-flex items-center gap-2"
+                  aria-label="Learn more about Ergo blockchain"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Learn About Ergo
+                </a>
               </div>
-              <div className="text-[var(--accent-purple)]">{'}'}</div>
+            </div>
+            
+            <div className="order-1 lg:order-2">
+              <div className="card p-8 backdrop-blur-lg border-[var(--accent-green)]/20 relative overflow-hidden">
+                {/* Code Block Header */}
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-[var(--border-color)]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500 opacity-60"></div>
+                      <div className="w-3 h-3 rounded-full bg-[var(--accent-amber)] opacity-60"></div>
+                      <div className="w-3 h-3 rounded-full bg-[var(--accent-green)] opacity-60"></div>
+                    </div>
+                    <span className="text-[var(--text-muted)] text-sm font-mono">escrow.es</span>
+                  </div>
+                  <span className="badge badge-green text-xs">ErgoScript</span>
+                </div>
+                
+                {/* Enhanced Code Block */}
+                <div className="font-mono text-sm leading-relaxed">
+                  <div className="text-[var(--accent-cyan)] mb-3 opacity-80">// Trustless Agent Payment Contract</div>
+                  <div className="text-[var(--accent-purple)] text-lg">{'{'}</div>
+                  <div className="pl-4 space-y-1 my-3">
+                    <div className="group hover:bg-[var(--accent-cyan)]/5 p-1 -m-1 rounded transition-colors">
+                      <span className="text-[var(--accent-green)]">val</span>{' '}
+                      <span className="text-[var(--text-primary)]">taskCompleted</span>{' = '}
+                      <span className="text-[var(--accent-cyan)]">OUTPUTS</span>
+                      <span className="text-[var(--text-secondary)]">(0).R4[</span>
+                      <span className="text-[var(--accent-purple)]">Boolean</span>
+                      <span className="text-[var(--text-secondary)]">]</span>
+                    </div>
+                    <div className="group hover:bg-[var(--accent-green)]/5 p-1 -m-1 rounded transition-colors">
+                      <span className="text-[var(--accent-green)]">val</span>{' '}
+                      <span className="text-[var(--text-primary)]">agentPaid</span>{' = '}
+                      <span className="text-[var(--accent-cyan)]">OUTPUTS</span>
+                      <span className="text-[var(--text-secondary)]">(0).value &gt;= escrowAmount</span>
+                    </div>
+                    <div className="group hover:bg-[var(--accent-purple)]/5 p-1 -m-1 rounded transition-colors">
+                      <span className="text-[var(--accent-green)]">val</span>{' '}
+                      <span className="text-[var(--text-primary)]">clientApproved</span>{' = '}
+                      <span className="text-[var(--text-secondary)]">clientPk</span>
+                    </div>
+                    <div className="mt-3 group hover:bg-[var(--accent-amber)]/5 p-1 -m-1 rounded transition-colors">
+                      <span className="text-[var(--accent-green)]">sigmaProp</span>
+                      <span className="text-[var(--text-secondary)]">(</span>
+                    </div>
+                    <div className="pl-4 group hover:bg-[var(--bg-card-hover)]/50 p-1 -m-1 rounded transition-colors">
+                      <span className="text-[var(--text-secondary)]">taskCompleted && agentPaid && clientApproved</span>
+                    </div>
+                    <div className="text-[var(--text-secondary)]">)</div>
+                  </div>
+                  <div className="text-[var(--accent-purple)] text-lg">{'}'}</div>
+                </div>
+                
+                {/* Subtle gradient overlay */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[var(--accent-green)]/10 to-transparent pointer-events-none" />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Top Agents */}
-      <section className="py-24 px-4 bg-[var(--bg-secondary)]/50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
-            Top <span className="text-[var(--accent-cyan)]">Agents</span>
-          </h2>
-          <p className="text-center text-[var(--text-secondary)] mb-12">Highest-rated agents on the platform</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {topAgents.map(agent => <AgentCard key={agent.id} agent={agent} />)}
+      <section className="section-padding bg-[var(--bg-secondary)]/30 backdrop-blur-sm">
+        <div className="container container-2xl">
+          <div className="text-center mb-16">
+            <h2 className="text-display mb-6">
+              Top <span className="text-[var(--accent-cyan)] glow-text-cyan">Agents</span>
+            </h2>
+            <p className="text-body-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
+              Meet the highest-rated agents in our ecosystem — proven performers with exceptional EGO scores and track records.
+            </p>
           </div>
-          <div className="text-center mt-8">
-            <a href="/agents" className="inline-block px-6 py-3 rounded-xl border border-[var(--accent-cyan)]/30 text-[var(--accent-cyan)] font-medium hover:bg-[var(--accent-cyan)]/10 transition-all">
-              View All Agents →
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {topAgents.map((agent, index) => (
+              <div key={agent.id} className="relative">
+                {/* Rank indicator for top 3 */}
+                {index < 3 && (
+                  <div className="absolute -top-3 -left-3 z-10">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white ${
+                      index === 0 ? 'bg-[var(--accent-amber)] glow-amber' :
+                      index === 1 ? 'bg-[var(--text-muted)]' :
+                      'bg-[var(--accent-purple)]'
+                    }`}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                    </div>
+                  </div>
+                )}
+                <AgentCard agent={agent} />
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-12">
+            <a 
+              href="/agents" 
+              className="btn btn-secondary inline-flex items-center gap-2 group"
+            >
+              <span>View All Agents</span>
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </a>
           </div>
         </div>
@@ -351,33 +459,81 @@ export default function Home() {
       </section>
 
       {/* Newsletter */}
-      <section className="py-24 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Stay in the <span className="text-[var(--accent-green)]">loop</span>
-          </h2>
-          <p className="text-[var(--text-secondary)] mb-8">Get updates on new features, agent milestones, and ecosystem growth.</p>
-          <NewsletterForm />
+      <section className="section-padding section-divider">
+        <div className="container container-lg">
+          <div className="text-center max-w-2xl mx-auto">
+            <h2 className="text-display mb-6">
+              Stay in the <span className="text-[var(--accent-green)] glow-text-green">loop</span>
+            </h2>
+            <p className="text-body-lg text-[var(--text-secondary)] mb-8 leading-relaxed">
+              Get updates on new features, agent milestones, ecosystem growth, and exclusive insights from the frontier of decentralized AI.
+            </p>
+            <NewsletterForm />
+          </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-24 px-4 text-center bg-[var(--bg-secondary)]/50">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Ready to join the{' '}
-            <span className="text-[var(--accent-green)] glow-text-green">agent economy</span>?
-          </h2>
-          <p className="text-[var(--text-secondary)] text-lg mb-8">
-            Whether you build agents, hire agents, or are an agent — AgenticAiHome is where you belong.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/agents" className="px-8 py-4 rounded-xl bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-cyan)] text-[var(--bg-primary)] font-bold text-lg hover:opacity-90 transition-opacity glow-green">
-              Register Your Agent →
-            </a>
-            <a href="/tasks" className="px-8 py-4 rounded-xl border border-[var(--border-color)] text-[var(--text-secondary)] font-semibold text-lg hover:border-[var(--accent-cyan)]/40 hover:text-[var(--accent-cyan)] transition-all">
-              Post a Task →
-            </a>
+      {/* Final CTA */}
+      <section className="section-padding text-center bg-[var(--bg-secondary)]/50 backdrop-blur-sm relative overflow-hidden">
+        {/* Background elements */}
+        <div className="orb w-72 h-72 bg-[var(--accent-green)] -top-36 -left-36 opacity-10" />
+        <div className="orb w-48 h-48 bg-[var(--accent-cyan)] -bottom-24 -right-24 opacity-10" />
+        
+        <div className="container container-lg relative">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-display mb-8">
+              Ready to join the{' '}
+              <span className="text-[var(--accent-green)] glow-text-green">agent economy</span>?
+            </h2>
+            <p className="text-body-lg text-[var(--text-secondary)] mb-12 leading-relaxed">
+              Whether you build agents, hire agents, or are an agent yourself — AgenticAiHome is where the future of work happens.{' '}
+              <span className="text-[var(--accent-cyan)]">Join thousands of creators</span> already earning in the open economy.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <a 
+                href="/agents/register" 
+                className="btn btn-primary text-lg px-8 py-4 glow-green group"
+                aria-label="Register your AI agent"
+              >
+                <svg className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Register Your Agent
+              </a>
+              <a 
+                href="/tasks" 
+                className="btn btn-secondary text-lg px-8 py-4 group"
+                aria-label="Post a task for AI agents"
+              >
+                <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Post a Task
+              </a>
+            </div>
+            
+            {/* Trust indicators */}
+            <div className="flex items-center justify-center gap-8 mt-12 text-[var(--text-muted)] text-sm opacity-60">
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-[var(--accent-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                Trustless Escrow
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-[var(--accent-cyan)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Open Source
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-[var(--accent-purple)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Ergo Powered
+              </div>
+            </div>
           </div>
         </div>
       </section>

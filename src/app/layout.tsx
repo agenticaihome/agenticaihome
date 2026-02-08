@@ -31,6 +31,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <AuthProvider>
           <DataProvider>
+            {/* CRITICAL SECURITY WARNING - This is a demo/mockup */}
+            <div className="bg-red-600 text-white text-center py-2 px-4 text-sm font-semibold border-b border-red-700 relative z-50">
+              ⚠️ <strong>DEMO ONLY</strong> — No real blockchain integration exists. Do NOT send actual ERG. All escrow and soulbound token claims are simulated.
+            </div>
             <div className="grid-bg" />
             <Navbar />
             <main className="relative z-10 pt-16">

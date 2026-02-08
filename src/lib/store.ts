@@ -1,5 +1,6 @@
 import { Agent, Task, Bid, Transaction, Completion, ReputationEvent } from './types';
 import { agents, tasks, bidsForTask, sampleTransactions, completions, reputationHistory } from './mock-data';
+import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress, sanitizeEmail } from './sanitize';
 
 // TODO: Replace with Supabase when ready
 // This file should be the only one that changes when migrating to Supabase
@@ -26,7 +27,20 @@ export interface User {
   createdAt: string;
 }
 
-// Simple hash function for passwords (for demo only)
+// CRITICAL SECURITY FIX: Ergo address validation
+function validateErgoAddress(address: string): boolean {
+  // Ergo P2PK addresses start with '9' and are 51-52 characters
+  if (!address || typeof address !== 'string') return false;
+  if (address.length < 51 || address.length > 52) return false;
+  if (!address.startsWith('9')) return false;
+  
+  // Check for valid Base58 characters (excluding 0, O, I, l)
+  const base58Pattern = /^[1-9A-HJ-NP-Za-km-z]+$/;
+  return base58Pattern.test(address);
+}
+
+// WARNING: This is a weak hash for demo purposes only
+// NEVER use this in production - use bcrypt with proper salt
 function simpleHash(password: string): string {
   let hash = 0;
   for (let i = 0; i < password.length; i++) {
@@ -156,9 +170,30 @@ export function getAgentById(id: string): Agent | null {
 }
 
 export function createAgent(agentData: Omit<Agent, 'id' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>): Agent {
-  const agents = getAgents();
-  const newAgent: Agent = {
+  // SECURITY: Validate Ergo address before creating agent
+  if (agentData.ergoAddress && !validateErgoAddress(agentData.ergoAddress)) {
+    throw new Error('Invalid Ergo address format. Must be a valid P2PK address starting with 9.');
+  }
+  
+  // SECURITY: Sanitize input data to prevent XSS and other attacks
+  const sanitizedData = {
     ...agentData,
+    name: sanitizeText(agentData.name, 100),
+    description: sanitizeText(agentData.description, 2000),
+    skills: agentData.skills.map(sanitizeSkill).filter(skill => skill.length > 0).slice(0, 20),
+    hourlyRateErg: sanitizeNumber(agentData.hourlyRateErg, 0.1, 10000),
+    ergoAddress: sanitizeErgoAddress(agentData.ergoAddress)
+  };
+  
+  const agents = getAgents();
+  
+  // SECURITY: Check for duplicate Ergo addresses
+  if (sanitizedData.ergoAddress && agents.some(a => a.ergoAddress === sanitizedData.ergoAddress)) {
+    throw new Error('An agent with this Ergo address already exists.');
+  }
+  
+  const newAgent: Agent = {
+    ...sanitizedData,
     id: generateId(),
     egoScore: 50, // Starting score
     tasksCompleted: 0,
@@ -214,9 +249,19 @@ export function getTaskById(id: string): Task | null {
 }
 
 export function createTask(taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>): Task {
+  // SECURITY: Sanitize task input data
+  const sanitizedTaskData = {
+    ...taskData,
+    title: sanitizeText(taskData.title, 200),
+    description: sanitizeText(taskData.description, 5000),
+    skillsRequired: taskData.skillsRequired.map(sanitizeSkill).filter(skill => skill.length > 0).slice(0, 10),
+    budgetErg: sanitizeNumber(taskData.budgetErg, 0.1, 100000),
+    creatorName: sanitizeText(taskData.creatorName, 100)
+  };
+  
   const tasks = getTasks();
   const newTask: Task = {
-    ...taskData,
+    ...sanitizedTaskData,
     id: generateId(),
     status: 'open',
     bidsCount: 0,
@@ -262,9 +307,18 @@ export function getBidsForAgent(agentId: string): Bid[] {
 }
 
 export function createBid(bidData: Omit<Bid, 'id' | 'createdAt'>): Bid {
+  // SECURITY: Sanitize bid data
+  const sanitizedBidData = {
+    ...bidData,
+    agentName: sanitizeText(bidData.agentName, 100),
+    message: sanitizeText(bidData.message, 1000),
+    proposedRate: sanitizeNumber(bidData.proposedRate, 0.1, 10000),
+    agentEgoScore: sanitizeNumber(bidData.agentEgoScore, 0, 100)
+  };
+  
   const bids = getBids();
   const newBid: Bid = {
-    ...bidData,
+    ...sanitizedBidData,
     id: generateId(),
     createdAt: new Date().toISOString()
   };

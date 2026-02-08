@@ -11,6 +11,7 @@ import {
   signMessage,
   autoReconnectWallet,
   isWalletAvailable,
+  waitForWallet,
   WalletError,
   WalletNotFoundError,
   WalletConnectionError,
@@ -110,13 +111,18 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
   // Balance refresh interval
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
 
-  // Check wallet availability on mount
+  // Check wallet availability on mount (wait for extension injection)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      setIsAvailable(isWalletAvailable());
-      
-      // Try auto-reconnect
-      handleAutoReconnect();
+      // Wallet extensions inject async — poll for them
+      waitForWallet(5000).then((available) => {
+        setIsAvailable(available);
+        if (available) {
+          handleAutoReconnect();
+        } else {
+          setLoading(false);
+        }
+      });
     } else {
       setLoading(false);
     }

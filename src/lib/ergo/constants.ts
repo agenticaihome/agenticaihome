@@ -1,8 +1,9 @@
 // Network configuration
 export type NetworkType = 'mainnet' | 'testnet';
 
-// Default to testnet for development
-export const NETWORK: NetworkType = 'testnet';
+// Default to mainnet — real ERG, real agents
+// Cast to NetworkType so ternaries compile regardless of current value
+export const NETWORK = 'mainnet' as NetworkType;
 
 // Explorer URLs based on network
 export const ERGO_EXPLORER_API = NETWORK === 'testnet'

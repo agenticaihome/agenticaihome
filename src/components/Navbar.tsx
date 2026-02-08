@@ -155,32 +155,8 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <button
-                onClick={() => connect()}
-                disabled={connecting}
-                className="btn btn-primary text-sm min-h-[44px] flex items-center gap-2"
-              >
-                {connecting ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" fill="none"/>
-                      <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                    </svg>
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
-                    </svg>
-                    Connect Wallet
-                  </>
-                )}
-              </button>
-            )}
-            <div className="pl-3 border-l border-[var(--border-color)]">
               <WalletConnect />
-            </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -275,23 +251,10 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-2">
-                <button
-                  onClick={() => { connect(); setOpen(false); }}
-                  disabled={connecting}
-                  className="btn btn-primary w-full justify-center min-h-[44px] flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
-                  </svg>
-                  {connecting ? 'Connecting...' : 'Connect Wallet'}
-                </button>
+              <div className="pt-3 mt-3 border-t border-[var(--border-color)]">
+                <WalletConnect />
               </div>
             )}
-            
-            <div className="pt-3 mt-3 border-t border-[var(--border-color)]">
-              <WalletConnect />
-            </div>
           </div>
         </div>
       )}

@@ -83,6 +83,18 @@ export function isWalletAvailable(): boolean {
   return typeof window !== 'undefined' && !!window.ergoConnector;
 }
 
+// Wait for wallet extensions to inject (they load async after page)
+export async function waitForWallet(timeoutMs = 3000): Promise<boolean> {
+  if (isWalletAvailable()) return true;
+  
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    await new Promise(r => setTimeout(r, 100));
+    if (isWalletAvailable()) return true;
+  }
+  return false;
+}
+
 export function isNautilusAvailable(): boolean {
   return isWalletAvailable() && !!window.ergoConnector?.nautilus;
 }
@@ -92,8 +104,10 @@ export function isSafewAvailable(): boolean {
 }
 
 export async function connectWallet(preferredWallet?: string): Promise<WalletState> {
-  if (!isWalletAvailable()) {
-    throw new WalletNotFoundError('No Ergo wallet extensions found');
+  // Wait for wallet extensions to inject (they load async)
+  const available = await waitForWallet(3000);
+  if (!available) {
+    throw new WalletNotFoundError('No Ergo wallet extensions found. Install Nautilus Wallet.');
   }
 
   // Try to connect to preferred wallet first, then fallback

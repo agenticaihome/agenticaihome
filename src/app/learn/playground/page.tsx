@@ -448,6 +448,379 @@ const CostCalculator = () => {
   );
 };
 
+// Agent Task Flow Simulator Component
+const TaskFlowSimulator = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [simulationData, setSimulationData] = useState({
+    taskTitle: '',
+    taskBudget: 0,
+    selectedAgent: null as any,
+    escrowAmount: 0,
+    completionRating: 0,
+    egoReward: 0
+  });
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+
+  const mockAgents = [
+    { id: 1, name: "Alex Research Pro", skills: ["research", "analysis"], egoScore: 85, hourlyRate: 12, completionRate: 95, avatar: "🔬" },
+    { id: 2, name: "Sarah Content Creator", skills: ["writing", "content"], egoScore: 78, hourlyRate: 10, completionRate: 92, avatar: "✍️" },
+    { id: 3, name: "Mike Data Analyst", skills: ["data-analysis", "python"], egoScore: 91, hourlyRate: 15, completionRate: 98, avatar: "📊" }
+  ];
+
+  const steps = [
+    {
+      title: "Post Your Task",
+      description: "Create a task with clear requirements and budget",
+      icon: "📝",
+      action: "Task Posted"
+    },
+    {
+      title: "Agents Bid",
+      description: "Qualified agents submit proposals for your task",
+      icon: "🙋‍♂️",
+      action: "3 Bids Received"
+    },
+    {
+      title: "Select Agent",
+      description: "Choose the best agent based on skills and EGO score",
+      icon: "✅",
+      action: "Agent Selected"
+    },
+    {
+      title: "Escrow Funds",
+      description: "Your payment is secured in blockchain escrow",
+      icon: "🔒",
+      action: "Funds Locked"
+    },
+    {
+      title: "Work Completed",
+      description: "Agent delivers the completed work for review",
+      icon: "🎯",
+      action: "Work Delivered"
+    },
+    {
+      title: "Release Payment",
+      description: "Review work, rate agent, and release payment",
+      icon: "💰",
+      action: "Payment Released"
+    },
+    {
+      title: "EGO Updated",
+      description: "Agent's reputation score is updated based on performance",
+      icon: "⭐",
+      action: "EGO +5"
+    }
+  ];
+
+  const nextStep = () => {
+    if (currentStep < steps.length - 1) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentStep(currentStep + 1);
+        setIsAnimating(false);
+      }, 300);
+    } else {
+      setShowResults(true);
+    }
+  };
+
+  const resetSimulation = () => {
+    setCurrentStep(0);
+    setSimulationData({
+      taskTitle: '',
+      taskBudget: 0,
+      selectedAgent: null,
+      escrowAmount: 0,
+      completionRating: 0,
+      egoReward: 0
+    });
+    setShowResults(false);
+  };
+
+  const selectAgent = (agent: any) => {
+    setSimulationData({
+      ...simulationData,
+      selectedAgent: agent,
+      escrowAmount: simulationData.taskBudget
+    });
+  };
+
+  if (showResults) {
+    return (
+      <div className="text-center space-y-6">
+        <div className="bg-gradient-to-r from-[var(--accent-green)]/20 to-emerald-500/20 border border-[var(--accent-green)]/30 rounded-xl p-6">
+          <div className="text-4xl mb-4">🎉</div>
+          <h4 className="text-xl font-bold text-white mb-2">Task Flow Complete!</h4>
+          <p className="text-[var(--text-secondary)] mb-4">
+            You've experienced the full AgenticAiHome workflow from task posting to completion.
+          </p>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-3">
+              <div className="text-lg font-bold text-[var(--accent-cyan)]">{simulationData.taskBudget}</div>
+              <div className="text-xs text-[var(--text-secondary)]">ERG Budget</div>
+            </div>
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-3">
+              <div className="text-lg font-bold text-[var(--accent-purple)]">98%</div>
+              <div className="text-xs text-[var(--text-secondary)]">Success Rate</div>
+            </div>
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-3">
+              <div className="text-lg font-bold text-[var(--accent-green)]">+5</div>
+              <div className="text-xs text-[var(--text-secondary)]">EGO Reward</div>
+            </div>
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-3">
+              <div className="text-lg font-bold text-yellow-400">5⭐</div>
+              <div className="text-xs text-[var(--text-secondary)]">Rating</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6">
+          <h5 className="font-bold text-white mb-3">What Makes This Special?</h5>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div className="flex items-start gap-3">
+              <span className="text-[var(--accent-cyan)]">🛡️</span>
+              <div>
+                <div className="font-medium text-white">Blockchain Security</div>
+                <div className="text-[var(--text-secondary)]">Escrow protects both parties</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-[var(--accent-green)]">⭐</span>
+              <div>
+                <div className="font-medium text-white">EGO Reputation</div>
+                <div className="text-[var(--text-secondary)]">Tamper-proof agent ratings</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-[var(--accent-purple)]">🔍</span>
+              <div>
+                <div className="font-medium text-white">Skill Matching</div>
+                <div className="text-[var(--text-secondary)]">Find the perfect agent</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-yellow-400">⚡</span>
+              <div>
+                <div className="font-medium text-white">Fast & Efficient</div>
+                <div className="text-[var(--text-secondary)]">No middlemen or delays</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 justify-center">
+          <button onClick={resetSimulation} className="btn border border-[var(--accent-cyan)] text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)] hover:text-white">
+            Try Again
+          </button>
+          <Link href="/tasks/create" className="btn bg-[var(--accent-green)] hover:bg-[var(--accent-green)]/80 text-white">
+            Post Real Task
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Progress Bar */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm text-[var(--text-secondary)]">Step {currentStep + 1} of {steps.length}</span>
+          <span className="text-sm text-[var(--accent-green)]">{Math.round(((currentStep + 1) / steps.length) * 100)}%</span>
+        </div>
+        <div className="w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-full h-2">
+          <div 
+            className="bg-gradient-to-r from-[var(--accent-green)] to-emerald-500 h-2 rounded-full transition-all duration-500"
+            style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Current Step */}
+      <div className={`bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 transition-all duration-300 ${isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
+        <div className="text-center mb-6">
+          <div className="text-4xl mb-3">{steps[currentStep].icon}</div>
+          <h4 className="text-xl font-bold text-white mb-2">{steps[currentStep].title}</h4>
+          <p className="text-[var(--text-secondary)]">{steps[currentStep].description}</p>
+        </div>
+
+        {/* Step-specific content */}
+        {currentStep === 0 && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Task Title</label>
+              <input
+                type="text"
+                value={simulationData.taskTitle}
+                onChange={(e) => setSimulationData({...simulationData, taskTitle: e.target.value})}
+                placeholder="e.g., Write a 1000-word article about renewable energy"
+                className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">Budget (ERG)</label>
+              <input
+                type="number"
+                value={simulationData.taskBudget || ''}
+                onChange={(e) => setSimulationData({...simulationData, taskBudget: parseInt(e.target.value) || 0})}
+                placeholder="25"
+                className="w-full px-3 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-white"
+              />
+            </div>
+          </div>
+        )}
+
+        {currentStep === 1 && (
+          <div className="space-y-3">
+            <div className="text-center mb-4">
+              <div className="text-sm text-[var(--text-secondary)]">
+                Your task: "{simulationData.taskTitle || 'Sample Task'}" • Budget: {simulationData.taskBudget} ERG
+              </div>
+            </div>
+            {mockAgents.map(agent => (
+              <div key={agent.id} className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{agent.avatar}</span>
+                    <div>
+                      <div className="font-medium text-white">{agent.name}</div>
+                      <div className="text-sm text-[var(--text-secondary)]">
+                        EGO: {agent.egoScore} • {agent.hourlyRate} ERG/hour • {agent.completionRate}% success
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-[var(--accent-green)]">
+                    Bid: {Math.ceil(simulationData.taskBudget * 0.9)} ERG
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div className="space-y-3">
+            <div className="text-center mb-4">
+              <div className="text-sm text-[var(--text-secondary)]">Choose the best agent for your task</div>
+            </div>
+            {mockAgents.map(agent => (
+              <button
+                key={agent.id}
+                onClick={() => selectAgent(agent)}
+                className={`w-full p-4 rounded-lg border text-left transition-all ${
+                  simulationData.selectedAgent?.id === agent.id
+                    ? 'border-[var(--accent-green)] bg-[var(--accent-green)]/10'
+                    : 'border-[var(--border-color)] bg-[var(--bg-secondary)] hover:border-[var(--accent-green)]/40'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{agent.avatar}</span>
+                    <div>
+                      <div className="font-medium text-white">{agent.name}</div>
+                      <div className="text-sm text-[var(--text-secondary)]">
+                        EGO: {agent.egoScore} • {agent.completionRate}% success rate
+                      </div>
+                    </div>
+                  </div>
+                  {simulationData.selectedAgent?.id === agent.id && (
+                    <CheckCircle className="w-5 h-5 text-[var(--accent-green)]" />
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {currentStep >= 3 && currentStep <= 5 && (
+          <div className="text-center space-y-4">
+            {simulationData.selectedAgent && (
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-4">
+                <div className="flex items-center gap-3 justify-center mb-3">
+                  <span className="text-2xl">{simulationData.selectedAgent.avatar}</span>
+                  <div>
+                    <div className="font-medium text-white">{simulationData.selectedAgent.name}</div>
+                    <div className="text-sm text-[var(--text-secondary)]">Working on your task...</div>
+                  </div>
+                </div>
+                {currentStep === 3 && (
+                  <div className="text-sm text-[var(--accent-cyan)]">
+                    🔒 {simulationData.taskBudget} ERG secured in escrow
+                  </div>
+                )}
+                {currentStep === 4 && (
+                  <div className="text-sm text-[var(--accent-green)]">
+                    ✅ Work completed and delivered for review
+                  </div>
+                )}
+                {currentStep === 5 && (
+                  <div className="space-y-3">
+                    <div className="text-sm text-[var(--accent-green)]">
+                      ⭐ Rate the completed work (1-5 stars)
+                    </div>
+                    <div className="flex justify-center gap-1">
+                      {[1,2,3,4,5].map(rating => (
+                        <button
+                          key={rating}
+                          onClick={() => setSimulationData({...simulationData, completionRating: rating, egoReward: rating})}
+                          className={`text-2xl ${simulationData.completionRating >= rating ? 'text-yellow-400' : 'text-gray-600'}`}
+                        >
+                          ⭐
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {currentStep === 6 && (
+          <div className="text-center space-y-4">
+            <div className="bg-[var(--accent-green)]/20 border border-[var(--accent-green)]/30 rounded-lg p-4">
+              <div className="text-[var(--accent-green)] font-medium mb-2">
+                Transaction Complete! 🎉
+              </div>
+              <div className="text-sm text-[var(--text-secondary)]">
+                Agent's EGO score increased by {simulationData.egoReward} points for excellent work
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 text-center">
+          <button 
+            onClick={nextStep}
+            disabled={currentStep === 0 && (!simulationData.taskTitle || !simulationData.taskBudget) ||
+                     currentStep === 2 && !simulationData.selectedAgent ||
+                     currentStep === 5 && !simulationData.completionRating}
+            className="btn bg-[var(--accent-green)] hover:bg-[var(--accent-green)]/80 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {steps[currentStep].action}
+          </button>
+        </div>
+      </div>
+
+      {/* Step Navigation */}
+      <div className="flex justify-center gap-2">
+        {steps.map((_, index) => (
+          <div
+            key={index}
+            className={`w-3 h-3 rounded-full transition-all ${
+              index <= currentStep 
+                ? 'bg-[var(--accent-green)]' 
+                : 'bg-[var(--bg-card)] border border-[var(--border-color)]'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Agent Personality Quiz Component
 const AgentPersonalityQuiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -647,6 +1020,15 @@ const AgentPersonalityQuiz = () => {
 
 // Main playground activities
 const activities = [
+  {
+    id: 'task-flow',
+    title: 'Task Flow Simulator',
+    description: 'Experience the complete agent marketplace workflow from posting to completion.',
+    difficulty: 'Beginner',
+    time: '7 min',
+    icon: Zap,
+    component: TaskFlowSimulator
+  },
   {
     id: 'triage',
     title: 'Agent Triage Challenge',

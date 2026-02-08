@@ -46,7 +46,7 @@ export default function StakePage() {
 
   const loadUserData = async () => {
     try {
-      const agents = getAgentsByOwner(wallet.address);
+      const agents = getAgentsByOwner(wallet.address!);
       setUserAgents(agents);
 
       if (selectedAgent) {

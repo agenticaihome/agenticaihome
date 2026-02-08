@@ -13,7 +13,7 @@ interface LeaderboardAgent extends Agent {
   avgTaskRating: number;
   recentEgoGain: number;
   stakeAmount: number;
-  tier: string;
+  tier: 'newcomer' | 'rising' | 'established' | 'elite' | 'legendary';
   tierIcon: string;
   tierColor: string;
 }
@@ -76,7 +76,7 @@ export default function LeaderboardPage() {
           avgTaskRating,
           recentEgoGain,
           stakeAmount: stakePosition?.stakedAmountErg || 0,
-          tier: tier.name,
+          tier: tier.name as LeaderboardAgent['tier'],
           tierIcon: tier.icon,
           tierColor: tier.color
         };

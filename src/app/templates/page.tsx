@@ -103,7 +103,7 @@ export default function TemplatesPage() {
       );
 
       // Deploy to marketplace
-      const newAgent = createAgent(agentConfig, wallet.address);
+      const newAgent = createAgent(agentConfig as any, wallet.address!);
 
       // Track deployment
       const deployment = deployTemplate(selectedTemplate.id, wallet.address, {

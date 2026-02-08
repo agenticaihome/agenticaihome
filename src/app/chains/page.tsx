@@ -68,7 +68,7 @@ export default function ChainsPage() {
 
   const loadUserChains = async () => {
     try {
-      const userChainsData = getChainsByCreator(wallet.address);
+      const userChainsData = getChainsByCreator(wallet.address!);
       setUserChains(userChainsData);
     } catch (err) {
       setError('Failed to load your chains');
@@ -98,10 +98,11 @@ export default function ChainsPage() {
     try {
       const newChain = createCustomChain({
         ...newChainData,
-        creatorAddress: wallet.address,
+        creatorAddress: wallet.address!,
         tags: [],
         totalBudgetErg: 0,
-        estimatedDurationHours: 0
+        estimatedDurationHours: 0,
+        isTemplate: false
       });
       setUserChains([...userChains, newChain]);
       setShowCreateModal(false);

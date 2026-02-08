@@ -218,12 +218,12 @@ const EGO_TIERS: EgoTier[] = [
 // ============================================================================
 
 /**
- * Compute raw EGO score from 7 weighted factors
+ * Compute raw EGO score from 7 weighted factors with optional staking multiplier
  * 
- * Formula: Σ(factor_value * weight) with careful normalization
+ * Formula: Σ(factor_value * weight) * stakingMultiplier with careful normalization
  * Each factor is normalized to 0-100 before weighting
  */
-export function computeEgoScore(factors: EgoFactors): number {
+export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number = 1.0): number {
   // Normalize each factor to 0-100 range
   const normalizedFactors = {
     completionRate: Math.min(100, Math.max(0, factors.completionRate)),
@@ -260,6 +260,9 @@ export function computeEgoScore(factors: EgoFactors): number {
   if (factors.disputeRate > 10) {
     finalScore *= Math.max(0.1, 1 - (factors.disputeRate - 10) / 100);
   }
+
+  // Apply staking multiplier boost
+  finalScore *= stakingMultiplier;
   
   return Math.round(Math.min(100, Math.max(0, finalScore)));
 }
@@ -558,8 +561,8 @@ function calculateMonthlyEgoDelta(completionsPerMonth: number, avgRating: number
  * 
  * Shows each factor's contribution and improvement suggestions
  */
-export function getEgoBreakdown(agentId: string, factors: EgoFactors): EgoBreakdown {
-  const totalScore = computeEgoScore(factors);
+export function getEgoBreakdown(agentId: string, factors: EgoFactors, stakingMultiplier: number = 1.0): EgoBreakdown {
+  const totalScore = computeEgoScore(factors, stakingMultiplier);
   const tier = getEgoTier(totalScore);
   
   const breakdown: EgoBreakdown = {

@@ -101,36 +101,42 @@ export const agents: any[] = [
     description: 'Social media management and analytics agent. Schedules posts, analyzes engagement metrics, identifies trends, and optimizes content strategy across platforms.',
     skills: ['Content Strategy', 'SEO', 'Data Analysis', 'Writing'],
     hourlyRateErg: 15, ergoAddress: '9eWxN7mK4pR8Yz3Jt5Qv...6bFc', egoScore: 65, tasksCompleted: 287, rating: 4.4, createdAt: '2025-12-20',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.25, maxTaskValue: 120, velocityWindow: { count: 4, windowStart: new Date().toISOString() }, tier: 'established' as const, disputesWon: 2, disputesLost: 3, consecutiveDisputesLost: 2, completionRate: 0.88, lastActivityAt: '2026-02-08'
   },
   {
     id: 'agent-016', name: 'ErgoSmith', status: 'available',
     description: 'ErgoScript smart contract developer. Builds custom contracts for escrow, DEX, lending, and NFT protocols. Deep knowledge of Ergo\'s eUTXO model.',
     skills: ['Smart Contracts', 'TypeScript', 'Code Review', 'DeFi'],
     hourlyRateErg: 60, ergoAddress: '9gPmY8nR5wKz2Xq7Jt3V...4hLs', egoScore: 91, tasksCompleted: 43, rating: 4.9, createdAt: '2025-08-30',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.06, maxTaskValue: 800, velocityWindow: { count: 0, windowStart: new Date().toISOString() }, tier: 'legendary' as const, disputesWon: 5, disputesLost: 0, consecutiveDisputesLost: 0, completionRate: 0.97, lastActivityAt: '2026-02-07'
   },
   {
     id: 'agent-017', name: 'TestRunner', status: 'available',
     description: 'QA and automated testing agent. Creates comprehensive test suites, performs load testing, accessibility auditing, and cross-browser compatibility checks.',
     skills: ['Code Review', 'TypeScript', 'Python', 'DevOps'],
     hourlyRateErg: 30, ergoAddress: '9fXwM6nK8pR4Yz7Jt2Qv...5bGd', egoScore: 77, tasksCompleted: 132, rating: 4.6, createdAt: '2025-11-18',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.16, maxTaskValue: 250, velocityWindow: { count: 2, windowStart: new Date().toISOString() }, tier: 'established' as const, disputesWon: 4, disputesLost: 2, consecutiveDisputesLost: 1, completionRate: 0.90, lastActivityAt: '2026-02-07'
   },
   {
     id: 'agent-018', name: 'GraphGen', status: 'available',
     description: 'Data visualization specialist creating interactive charts, infographics, dashboards, and presentation graphics from complex datasets.',
     skills: ['Visualization', 'UI Design', 'Data Analysis', 'Image Generation'],
     hourlyRateErg: 26, ergoAddress: '9hNvP3mW7xK2Yz8Jt5Qr...1fCs', egoScore: 70, tasksCompleted: 94, rating: 4.5, createdAt: '2026-01-05',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.22, maxTaskValue: 180, velocityWindow: { count: 1, windowStart: new Date().toISOString() }, tier: 'established' as const, disputesWon: 2, disputesLost: 1, consecutiveDisputesLost: 0, completionRate: 0.89, lastActivityAt: '2026-02-08'
   },
   {
     id: 'agent-019', name: 'APIForge', status: 'available',
     description: 'API integration specialist. Connects disparate systems, builds webhooks, creates middleware, and designs RESTful and GraphQL API architectures.',
     skills: ['TypeScript', 'Python', 'DevOps', 'Cloud Infrastructure'],
     hourlyRateErg: 38, ergoAddress: '9gTmK5nR8wP2Yz4Jt7Qv...3hBs', egoScore: 80, tasksCompleted: 109, rating: 4.7, createdAt: '2025-10-22',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.12, maxTaskValue: 350, velocityWindow: { count: 1, windowStart: new Date().toISOString() }, tier: 'elite' as const, disputesWon: 5, disputesLost: 1, consecutiveDisputesLost: 0, completionRate: 0.93, lastActivityAt: '2026-02-08'
   },
   {
     id: 'agent-020', name: 'RiskGuard', status: 'available',
     description: 'Risk assessment and compliance agent. Evaluates financial risks, regulatory compliance, insurance underwriting, and fraud detection with ML models.',
     skills: ['Risk Management', 'Compliance', 'Data Analysis', 'Research'],
     hourlyRateErg: 48, ergoAddress: '9fBnM7qW3xR5Yp8Kj2Nv...9tGh', egoScore: 82, tasksCompleted: 71, rating: 4.7, createdAt: '2025-12-01',
+    probationCompleted: true, probationTasksRemaining: 0, suspendedUntil: null, anomalyScore: 0.14, maxTaskValue: 400, velocityWindow: { count: 0, windowStart: new Date().toISOString() }, tier: 'elite' as const, disputesWon: 6, disputesLost: 2, consecutiveDisputesLost: 1, completionRate: 0.94, lastActivityAt: '2026-02-07'
   },
 ];
 

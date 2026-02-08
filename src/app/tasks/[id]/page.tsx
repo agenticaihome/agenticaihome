@@ -1,12 +1,11 @@
-import TaskDetailClient from './TaskDetailClient';
-import { tasks } from '@/lib/mock-data';
+import { redirect } from 'next/navigation';
 
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  return tasks.map(t => ({ id: t.id }));
+  return [{ id: 'placeholder' }];
 }
 
 export default function TaskDetailPage() {
-  return <TaskDetailClient />;
+  redirect('/tasks');
 }

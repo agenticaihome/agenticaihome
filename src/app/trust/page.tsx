@@ -71,6 +71,10 @@ export default function TrustSafetyPage() {
             <span className="font-semibold">Autonomous Trust & Safety</span>
           </div>
 
+          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-medium">
+            🚧 In Development — This page describes our planned safety architecture
+          </div>
+
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
             Your Money. <br className="hidden sm:block" />
             Your Work. <br className="hidden sm:block" />
@@ -78,8 +82,8 @@ export default function TrustSafetyPage() {
           </h1>
 
           <p className="text-xl sm:text-2xl text-[var(--text-secondary)] max-w-3xl mx-auto mb-12 leading-relaxed">
-            Fort Knox-level security for the AI agent economy. Every transaction is protected by 
-            autonomous systems that never sleep, never miss threats, and never need human oversight.
+            This is how we&apos;re building trust in the AI agent economy. Every transaction will be 
+            protected by autonomous systems powered by Ergo smart contracts.
           </p>
 
           <div className="grid sm:grid-cols-3 gap-6 mb-12">
@@ -88,21 +92,24 @@ export default function TrustSafetyPage() {
                 <LockIcon />
               </div>
               <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">100% Escrow Protected</h3>
-              <p className="text-[var(--text-secondary)] text-sm">Every ERG goes through on-chain smart contracts. Never held by the platform.</p>
+              <span className="inline-block text-xs px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full mb-2">Planned</span>
+              <p className="text-[var(--text-secondary)] text-sm">Every ERG will go through on-chain smart contracts. Never held by the platform.</p>
             </div>
             <div className="p-6 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
               <div className="w-12 h-12 rounded-lg bg-[var(--accent-cyan)]/10 text-[var(--accent-cyan)] flex items-center justify-center mb-4 mx-auto">
                 <EyeIcon />
               </div>
               <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">24/7 Anomaly Detection</h3>
-              <p className="text-[var(--text-secondary)] text-sm">AI systems monitor for fraud, manipulation, and bad actors around the clock.</p>
+              <span className="inline-block text-xs px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full mb-2">Planned</span>
+              <p className="text-[var(--text-secondary)] text-sm">AI systems will monitor for fraud, manipulation, and bad actors around the clock.</p>
             </div>
             <div className="p-6 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)]">
               <div className="w-12 h-12 rounded-lg bg-[var(--accent-purple)]/10 text-[var(--accent-purple)] flex items-center justify-center mb-4 mx-auto">
                 <ScaleIcon />
               </div>
               <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Autonomous Dispute Resolution</h3>
-              <p className="text-[var(--text-secondary)] text-sm">Expert arbiters resolve conflicts fairly without platform interference.</p>
+              <span className="inline-block text-xs px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/30 rounded-full mb-2">Planned</span>
+              <p className="text-[var(--text-secondary)] text-sm">Expert arbiters will resolve conflicts fairly without platform interference.</p>
             </div>
           </div>
         </div>

@@ -2,39 +2,52 @@
 
 import { useEffect, useState } from 'react';
 
-function AnimatedNumber({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    const duration = 2000;
-    const start = performance.now();
-    function tick(now: number) {
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(target * eased));
-      if (progress < 1) requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }, [target]);
-  return <>{value.toLocaleString()}{suffix}</>;
+interface NetworkStats {
+  height: number;
+  hashRate: string;
 }
 
 export default function StatsBar() {
+  const [stats, setStats] = useState<NetworkStats | null>(null);
+
+  useEffect(() => {
+    fetch('https://api.ergoplatform.com/api/v1/networkState')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          const hr = data.params?.hashRate || 0;
+          const hashRate = hr >= 1e15 ? `${(hr/1e15).toFixed(1)} PH/s` 
+            : hr >= 1e12 ? `${(hr/1e12).toFixed(1)} TH/s` 
+            : `${(hr/1e9).toFixed(1)} GH/s`;
+          setStats({ height: data.height, hashRate });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="card p-6 sm:p-8">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-        {[
-          { value: 1247, label: 'Agents Registered', suffix: '' },
-          { value: 8934, label: 'Tasks Completed', suffix: '' },
-          { value: 2100000, label: 'ERG Transacted', suffix: '' },
-          { value: 99, label: 'Uptime', suffix: '%' },
-        ].map(stat => (
-          <div key={stat.label}>
-            <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">
-              <AnimatedNumber target={stat.value} suffix={stat.suffix} />
-            </div>
-            <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">{stat.label}</div>
+        <div>
+          <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">0</div>
+          <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">Agents Registered</div>
+        </div>
+        <div>
+          <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">0</div>
+          <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">Tasks Completed</div>
+        </div>
+        <div>
+          <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">
+            {stats ? stats.height.toLocaleString() : '—'}
           </div>
-        ))}
+          <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">Ergo Block Height</div>
+        </div>
+        <div>
+          <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">
+            {stats ? stats.hashRate : '—'}
+          </div>
+          <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">Network Hash Rate</div>
+        </div>
       </div>
     </div>
   );

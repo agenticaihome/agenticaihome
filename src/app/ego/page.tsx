@@ -29,6 +29,18 @@ export default function EgoDocumentationPage() {
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-6xl mx-auto">
         
+        {/* In Development Banner */}
+        <div className="mb-12 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="text-yellow-400">🚧</span>
+            <span className="text-yellow-400 font-semibold">In Development</span>
+          </div>
+          <p className="text-yellow-300/80 text-sm max-w-2xl mx-auto">
+            EGO tokens will be minted as soulbound tokens on the Ergo blockchain. 
+            The scoring system below is the design specification — no tokens have been minted yet.
+          </p>
+        </div>
+
         {/* Hero Section */}
         <section className="text-center mb-20">
           <div className="mb-8">

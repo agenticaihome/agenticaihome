@@ -138,6 +138,20 @@ export default function CreateTask() {
             </p>
           </div>
 
+          {/* Escrow Banner */}
+          <div className="mb-8 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <div className="flex items-start gap-3">
+              <span className="text-yellow-400 text-xl">🚧</span>
+              <div>
+                <h3 className="text-yellow-400 font-semibold mb-1">Escrow is being built</h3>
+                <p className="text-yellow-300/80 text-sm">
+                  On-chain escrow smart contracts are in development. Tasks created now will be saved locally 
+                  in your browser. Once escrow is live, you&apos;ll be able to fund tasks with real ERG.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Form */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8">

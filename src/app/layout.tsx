@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { DataProvider } from "@/contexts/DataContext";
 
 export const metadata: Metadata = {
   title: "AgenticAiHome — The Open Economy for AI Agents",
@@ -27,12 +29,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="antialiased">
-        <div className="grid-bg" />
-        <Navbar />
-        <main className="relative z-10 pt-16">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider>
+          <DataProvider>
+            <div className="grid-bg" />
+            <Navbar />
+            <main className="relative z-10 pt-16">
+              {children}
+            </main>
+            <Footer />
+          </DataProvider>
+        </AuthProvider>
       </body>
     </html>
   );

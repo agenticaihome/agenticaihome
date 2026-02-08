@@ -1,222 +1,188 @@
-import { TransactionBuilder, OutputBuilder, SConstant, SInt, SColl, SByte } from "@fleet-sdk/core";
-import { getCurrentHeight, getBoxesByAddress } from './explorer';
-import { MIN_BOX_VALUE, PLATFORM_FEE_PERCENT } from './constants';
+import {
+  TransactionBuilder,
+  OutputBuilder,
+  SConstant,
+  SInt,
+  SColl,
+  SByte,
+  ErgoAddress,
+} from '@fleet-sdk/core';
+import { getCurrentHeight, getBoxesByAddress, getBoxById } from './explorer';
+import {
+  MIN_BOX_VALUE,
+  RECOMMENDED_TX_FEE,
+  PLATFORM_FEE_PERCENT,
+  txExplorerUrl,
+} from './constants';
 
-// Escrow types
+// ─── Types ───────────────────────────────────────────────────────────
+
 export interface EscrowParams {
   clientAddress: string;
   agentAddress: string;
   amountNanoErg: bigint;
-  deadline: number; // block height
+  deadlineHeight: number;
   taskId?: string;
-  description?: string;
 }
 
 export interface EscrowBox {
   boxId: string;
+  transactionId: string;
   clientAddress: string;
   agentAddress: string;
   amount: bigint;
-  deadline: number;
-  status: 'active' | 'released' | 'refunded';
+  deadlineHeight: number;
+  status: 'active' | 'released' | 'refunded' | 'unknown';
   taskId?: string;
-  createdAt: number;
+  creationHeight: number;
 }
 
-export interface UnsignedTransaction {
-  inputs: any[];
-  outputs: any[];
-  fee: bigint;
-  total: bigint;
-}
+// ─── Transaction builders ────────────────────────────────────────────
 
-// Simple escrow contract (placeholder - in production would be proper ErgoScript)
-const ESCROW_SCRIPT = `
-{
-  // Escrow contract logic
-  // Can be spent by:
-  // 1. Agent after client approval (release)
-  // 2. Client after deadline (refund)
-  // 3. Platform for fee collection
-  
-  val client = SELF.R4[SigmaProp].get
-  val agent = SELF.R5[SigmaProp].get
-  val deadline = SELF.R6[Int].get
-  
-  val isRelease = agent && sigmaProp(true) // Simplified - would need client signature in real implementation
-  val isRefund = client && (HEIGHT > deadline)
-  
-  isRelease || isRefund
-}
-`;
+/**
+ * Create an escrow transaction: locks ERG at the client's own address
+ * with registers encoding the escrow metadata.
+ *
+ * MVP approach: The escrow is a standard P2PK box at the client's address
+ * with R4=clientAddr, R5=agentAddr, R6=deadline, R7=taskId.
+ * This means only the client can spend it (release or refund).
+ * A full contract-based escrow would use a P2S address.
+ *
+ * Returns an EIP-12 unsigned transaction ready for wallet signing.
+ */
+export async function createEscrowTx(
+  params: EscrowParams,
+  walletUtxos: any[],
+  changeAddress: string
+): Promise<any> {
+  const { clientAddress, agentAddress, amountNanoErg, deadlineHeight, taskId } = params;
 
-export async function createEscrowTx(params: EscrowParams): Promise<UnsignedTransaction> {
-  const {
-    clientAddress,
-    agentAddress,
-    amountNanoErg,
-    deadline,
-    taskId,
-    description
-  } = params;
-
-  if (amountNanoErg < MIN_BOX_VALUE) {
-    throw new Error(`Amount too small. Minimum is ${MIN_BOX_VALUE} nanoERG`);
+  const validation = validateEscrowParams(params);
+  if (!validation.valid) {
+    throw new Error(`Invalid escrow params: ${validation.errors.join(', ')}`);
   }
 
-  try {
-    // Calculate platform fee
-    const platformFee = (amountNanoErg * BigInt(PLATFORM_FEE_PERCENT)) / 100n;
-    const escrowAmount = amountNanoErg - platformFee;
-
-    // Build transaction using Fleet SDK
-    const currentHeight = await getCurrentHeight();
-    const txBuilder = new TransactionBuilder(currentHeight);
-    
-    // Add escrow output with contract script
-    const escrowOutput = new OutputBuilder(escrowAmount, clientAddress) // TODO: Use actual escrow contract address
-      .setAdditionalRegisters({
-        R4: SConstant(SColl(SByte, Buffer.from(clientAddress))), // Client address
-        R5: SConstant(SColl(SByte, Buffer.from(agentAddress))),  // Agent address  
-        R6: SConstant(SInt(deadline)), // Deadline height
-        R7: SConstant(SColl(SByte, Buffer.from(taskId || ''))),   // Task ID
-        R8: SConstant(SColl(SByte, Buffer.from(description || ''))) // Description
-      });
-
-    txBuilder.to(escrowOutput);
-
-    // Add platform fee output (if any)
-    if (platformFee > 0n) {
-      const platformOutput = new OutputBuilder(platformFee, "9fRAWhdxEsTcdb8PhGNrpfchHHttKK6pKnrmz6iP4wHZy4dN9vD"); // Platform address placeholder
-      txBuilder.to(platformOutput);
-    }
-
-    // Note: In a real implementation, we'd need to:
-    // 1. Get UTXOs from the client's wallet via wallet.getUtxos()
-    // 2. Add inputs using txBuilder.from() 
-    // 3. Calculate proper fees with estimateTransactionFee()
-    // 4. Handle change outputs
-    // 5. Use the actual deployed escrow contract address
-    
-    // Return the unsigned transaction structure
-    return {
-      inputs: [], // Would be populated with client's UTXOs
-      outputs: [
-        {
-          value: escrowAmount.toString(),
-          address: clientAddress, // Would be escrow contract address
-          registers: {
-            R4: clientAddress,
-            R5: agentAddress,
-            R6: deadline.toString(),
-            R7: taskId || '',
-            R8: description || ''
-          }
-        },
-        ...(platformFee > 0n ? [{
-          value: platformFee.toString(),
-          address: "platform-address-placeholder"
-        }] : [])
-      ],
-      fee: 1000000n, // 0.001 ERG standard fee
-      total: amountNanoErg + 1000000n
-    };
-  } catch (error) {
-    console.error('Error creating escrow transaction:', error);
-    throw new Error('Failed to create escrow transaction');
+  if (!walletUtxos.length) {
+    throw new Error('No UTXOs available. Make sure your wallet has ERG.');
   }
+
+  const currentHeight = await getCurrentHeight();
+
+  // Encode addresses as byte arrays for register storage
+  const clientBytes = new TextEncoder().encode(clientAddress);
+  const agentBytes = new TextEncoder().encode(agentAddress);
+  const taskBytes = new TextEncoder().encode(taskId || '');
+
+  // Build the escrow output — locked at client's address with metadata in registers
+  const escrowOutput = new OutputBuilder(amountNanoErg, clientAddress)
+    .setAdditionalRegisters({
+      R4: SConstant(SColl(SByte, clientBytes)),
+      R5: SConstant(SColl(SByte, agentBytes)),
+      R6: SConstant(SInt(deadlineHeight)),
+      R7: SConstant(SColl(SByte, taskBytes)),
+    });
+
+  const unsignedTx = new TransactionBuilder(currentHeight)
+    .from(walletUtxos)
+    .to([escrowOutput])
+    .sendChangeTo(changeAddress)
+    .payFee(RECOMMENDED_TX_FEE)
+    .build()
+    .toEIP12Object();
+
+  return unsignedTx;
 }
 
-export async function releaseEscrowTx(params: {
-  escrowBoxId: string;
-  agentAddress: string;
-  clientSignature?: string; // In real implementation, would need client approval
-}): Promise<UnsignedTransaction> {
-  const { escrowBoxId, agentAddress } = params;
+/**
+ * Release escrow: client sends the escrowed ERG to the agent.
+ */
+export async function releaseEscrowTx(
+  escrowBoxId: string,
+  agentAddress: string,
+  walletUtxos: any[],
+  changeAddress: string
+): Promise<any> {
+  const currentHeight = await getCurrentHeight();
 
-  try {
-    // In a real implementation, we would:
-    // 1. Fetch the escrow box
-    // 2. Verify it exists and is active
-    // 3. Build a transaction that spends the escrow box to the agent
-    // 4. Include proper signatures/proofs
-
-    return {
-      inputs: [
-        {
-          boxId: escrowBoxId,
-          spendingProof: "" // Would contain signatures
-        }
-      ],
-      outputs: [
-        {
-          value: "0", // Would be the escrow amount minus fees
-          address: agentAddress
-        }
-      ],
-      fee: 1000000n,
-      total: 1000000n
-    };
-  } catch (error) {
-    console.error('Error creating release transaction:', error);
-    throw new Error('Failed to create release transaction');
+  const escrowBox = await getBoxById(escrowBoxId);
+  if (!escrowBox) {
+    throw new Error('Escrow box not found on-chain');
   }
+
+  const escrowValue = BigInt(escrowBox.value);
+  const fee = RECOMMENDED_TX_FEE;
+  const agentAmount = escrowValue - fee;
+
+  if (agentAmount < MIN_BOX_VALUE) {
+    throw new Error('Escrow amount too small to release after fees');
+  }
+
+  const releaseOutput = new OutputBuilder(agentAmount, agentAddress);
+
+  const unsignedTx = new TransactionBuilder(currentHeight)
+    .from([escrowBox, ...walletUtxos])
+    .to([releaseOutput])
+    .sendChangeTo(changeAddress)
+    .payFee(fee)
+    .build()
+    .toEIP12Object();
+
+  return unsignedTx;
 }
 
-export async function refundEscrowTx(params: {
-  escrowBoxId: string;
-  clientAddress: string;
-  currentHeight?: number;
-}): Promise<UnsignedTransaction> {
-  const { escrowBoxId, clientAddress } = params;
+/**
+ * Refund escrow: client reclaims funds (after deadline).
+ */
+export async function refundEscrowTx(
+  escrowBoxId: string,
+  clientAddress: string,
+  walletUtxos: any[],
+  changeAddress: string
+): Promise<any> {
+  const currentHeight = await getCurrentHeight();
 
-  try {
-    const currentHeight = params.currentHeight || await getCurrentHeight();
-
-    // In a real implementation, we would:
-    // 1. Fetch the escrow box and verify deadline has passed
-    // 2. Build a transaction that refunds to the client
-    // 3. Include proper height proofs
-
-    return {
-      inputs: [
-        {
-          boxId: escrowBoxId,
-          spendingProof: "" // Would contain height proof + client signature
-        }
-      ],
-      outputs: [
-        {
-          value: "0", // Would be the escrow amount minus fees
-          address: clientAddress
-        }
-      ],
-      fee: 1000000n,
-      total: 1000000n
-    };
-  } catch (error) {
-    console.error('Error creating refund transaction:', error);
-    throw new Error('Failed to create refund transaction');
+  const escrowBox = await getBoxById(escrowBoxId);
+  if (!escrowBox) {
+    throw new Error('Escrow box not found on-chain');
   }
+
+  const escrowValue = BigInt(escrowBox.value);
+  const fee = RECOMMENDED_TX_FEE;
+  const refundAmount = escrowValue - fee;
+
+  if (refundAmount < MIN_BOX_VALUE) {
+    throw new Error('Escrow amount too small to refund after fees');
+  }
+
+  const refundOutput = new OutputBuilder(refundAmount, clientAddress);
+
+  const unsignedTx = new TransactionBuilder(currentHeight)
+    .from([escrowBox, ...walletUtxos])
+    .to([refundOutput])
+    .sendChangeTo(changeAddress)
+    .payFee(fee)
+    .build()
+    .toEIP12Object();
+
+  return unsignedTx;
 }
 
-export async function getEscrowStatus(boxId: string): Promise<EscrowBox | null> {
+// ─── Escrow box parsing ──────────────────────────────────────────────
+
+export function parseEscrowBox(box: any): EscrowBox | null {
   try {
-    // This would query the explorer API for the box
-    // and parse the escrow data from registers
-    
-    // Placeholder implementation
     return {
-      boxId,
-      clientAddress: "placeholder",
-      agentAddress: "placeholder",
-      amount: 0n,
-      deadline: 0,
-      status: 'active',
-      createdAt: Date.now()
+      boxId: box.boxId,
+      transactionId: box.transactionId,
+      clientAddress: box.address,
+      agentAddress: '',
+      amount: BigInt(box.value),
+      deadlineHeight: 0,
+      status: box.settlementHeight ? 'released' : 'active',
+      taskId: '',
+      creationHeight: box.creationHeight,
     };
-  } catch (error) {
-    console.error('Error getting escrow status:', error);
+  } catch {
     return null;
   }
 }
@@ -224,62 +190,52 @@ export async function getEscrowStatus(boxId: string): Promise<EscrowBox | null> 
 export async function getActiveEscrowsByAddress(address: string): Promise<EscrowBox[]> {
   try {
     const boxes = await getBoxesByAddress(address);
-    
-    // Filter for escrow boxes (would check for escrow contract)
-    // This is a placeholder - in real implementation would parse registers
-    
-    return [];
-  } catch (error) {
-    console.error('Error getting active escrows:', error);
+    return boxes
+      .filter((box: any) => {
+        const regs = box.additionalRegisters || {};
+        return regs.R4 && regs.R5 && regs.R6;
+      })
+      .map((box: any) => parseEscrowBox(box))
+      .filter((b: EscrowBox | null): b is EscrowBox => b !== null);
+  } catch {
     return [];
   }
 }
 
-export function calculateEscrowFee(amount: bigint): bigint {
-  return (amount * BigInt(PLATFORM_FEE_PERCENT)) / 100n;
-}
+// ─── Validation ──────────────────────────────────────────────────────
 
-export function calculateNetAmount(grossAmount: bigint): bigint {
-  const fee = calculateEscrowFee(grossAmount);
-  return grossAmount - fee;
-}
-
-// Utility to estimate transaction fee
-export function estimateTransactionFee(inputCount: number, outputCount: number): bigint {
-  // Basic fee calculation - in reality would be more complex
-  const baseSize = inputCount * 50 + outputCount * 40; // Rough byte estimation
-  const minFee = 1000000n; // 0.001 ERG minimum
-  const sizeBasedFee = BigInt(baseSize * 1000); // 1000 nanoERG per byte
-  
-  return minFee > sizeBasedFee ? minFee : sizeBasedFee;
-}
-
-// Validate escrow parameters
 export function validateEscrowParams(params: EscrowParams): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   if (!params.clientAddress || params.clientAddress.length < 10) {
     errors.push('Invalid client address');
   }
-
   if (!params.agentAddress || params.agentAddress.length < 10) {
     errors.push('Invalid agent address');
   }
-
   if (params.clientAddress === params.agentAddress) {
     errors.push('Client and agent addresses cannot be the same');
   }
-
   if (params.amountNanoErg < MIN_BOX_VALUE) {
-    errors.push(`Amount must be at least ${MIN_BOX_VALUE} nanoERG`);
+    errors.push(`Amount must be at least ${MIN_BOX_VALUE} nanoERG (0.001 ERG)`);
   }
-
-  if (params.deadline <= 0) {
+  if (params.deadlineHeight <= 0) {
     errors.push('Deadline must be a positive block height');
   }
 
-  return {
-    valid: errors.length === 0,
-    errors
-  };
+  return { valid: errors.length === 0, errors };
+}
+
+// ─── Utilities ───────────────────────────────────────────────────────
+
+export function calculateEscrowFee(amount: bigint): bigint {
+  return (amount * BigInt(PLATFORM_FEE_PERCENT)) / 100n;
+}
+
+export function calculateNetAmount(grossAmount: bigint): bigint {
+  return grossAmount - calculateEscrowFee(grossAmount);
+}
+
+export function estimateTransactionFee(): bigint {
+  return RECOMMENDED_TX_FEE;
 }

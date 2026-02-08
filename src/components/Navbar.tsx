@@ -19,7 +19,7 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { isAuthenticated, profile, userAddress, disconnect } = useWallet();
+  const { isAuthenticated, profile, userAddress, disconnect, connect, connecting } = useWallet();
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -155,15 +155,28 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <a
-                href="/auth"
+              <button
+                onClick={() => connect()}
+                disabled={connecting}
                 className="btn btn-primary text-sm min-h-[44px] flex items-center gap-2"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
-                </svg>
-                Connect Wallet
-              </a>
+                {connecting ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" fill="none"/>
+                      <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    </svg>
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
+                    </svg>
+                    Connect Wallet
+                  </>
+                )}
+              </button>
             )}
             <div className="pl-3 border-l border-[var(--border-color)]">
               <WalletConnect />
@@ -263,12 +276,16 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-2">
-                <a href="/auth" className="btn btn-primary w-full justify-center min-h-[44px] flex items-center gap-2" onClick={() => setOpen(false)}>
+                <button
+                  onClick={() => { connect(); setOpen(false); }}
+                  disabled={connecting}
+                  className="btn btn-primary w-full justify-center min-h-[44px] flex items-center gap-2"
+                >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
                   </svg>
-                  Connect Wallet
-                </a>
+                  {connecting ? 'Connecting...' : 'Connect Wallet'}
+                </button>
               </div>
             )}
             

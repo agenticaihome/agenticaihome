@@ -1,4 +1,4 @@
-// import { TransactionBuilder, OutputBuilder, SConstant, SInt } from "@fleet-sdk/core";
+import { TransactionBuilder, OutputBuilder, SConstant, SInt } from "@fleet-sdk/core";
 import { getCurrentHeight, getBoxesByAddress } from './explorer';
 import { MIN_BOX_VALUE, PLATFORM_FEE_PERCENT } from './constants';
 
@@ -69,35 +69,35 @@ export async function createEscrowTx(params: EscrowParams): Promise<UnsignedTran
     const platformFee = (amountNanoErg * BigInt(PLATFORM_FEE_PERCENT)) / 100n;
     const escrowAmount = amountNanoErg - platformFee;
 
-    // Build transaction using Fleet SDK (placeholder implementation)
-    // const txBuilder = new TransactionBuilder();
-    // 
-    // // Add escrow output
-    // const escrowOutput = new OutputBuilder(escrowAmount, clientAddress) // Temporary address, would use escrow contract
-    //   .addTokens([]) // No tokens for now
-    //   .setAdditionalRegisters({
-    //     R4: SConstant.from(clientAddress), // Client address
-    //     R5: SConstant.from(agentAddress),  // Agent address
-    //     R6: SConstant.from(SInt(deadline)), // Deadline height
-    //     R7: SConstant.from(taskId || ''),   // Task ID
-    //     R8: SConstant.from(description || '') // Description
-    //   });
-    //
-    // txBuilder.to(escrowOutput);
-    //
-    // // Add platform fee output (if any)
-    // if (platformFee > 0n) {
-    //   const platformOutput = new OutputBuilder(platformFee, "platform-address-placeholder");
-    //   txBuilder.to(platformOutput);
-    // }
+    // Build transaction using Fleet SDK
+    const txBuilder = new TransactionBuilder();
+    
+    // Add escrow output with contract script
+    const escrowOutput = new OutputBuilder(escrowAmount, clientAddress) // TODO: Use actual escrow contract address
+      .setAdditionalRegisters({
+        R4: SConstant.from(clientAddress), // Client address
+        R5: SConstant.from(agentAddress),  // Agent address  
+        R6: SConstant.from(SInt(deadline)), // Deadline height
+        R7: SConstant.from(taskId || ''),   // Task ID
+        R8: SConstant.from(description || '') // Description
+      });
+
+    txBuilder.to(escrowOutput);
+
+    // Add platform fee output (if any)
+    if (platformFee > 0n) {
+      const platformOutput = new OutputBuilder(platformFee, "9fRAWhdxEsTcdb8PhGNrpfchHHttKK6pKnrmz6iP4wHZy4dN9vD"); // Platform address placeholder
+      txBuilder.to(platformOutput);
+    }
 
     // Note: In a real implementation, we'd need to:
-    // 1. Get UTXOs from the client's wallet
-    // 2. Calculate proper fees
-    // 3. Handle change outputs
-    // 4. Use the actual escrow contract script
+    // 1. Get UTXOs from the client's wallet via wallet.getUtxos()
+    // 2. Add inputs using txBuilder.from() 
+    // 3. Calculate proper fees with estimateTransactionFee()
+    // 4. Handle change outputs
+    // 5. Use the actual deployed escrow contract address
     
-    // For now, return a simplified structure
+    // Return the unsigned transaction structure
     return {
       inputs: [], // Would be populated with client's UTXOs
       outputs: [

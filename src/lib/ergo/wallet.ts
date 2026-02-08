@@ -197,16 +197,34 @@ export async function getBalance(): Promise<WalletBalance> {
     const ergBalance = await currentWallet.get_balance('ERG');
     const erg = nanoErgToErg(ergBalance);
 
-    // Get all balances to find tokens
-    const allBalances = await currentWallet.get_balance('all');
-    
-    // Parse token balances (this would need to be adapted based on actual wallet response format)
+    // Get all UTXOs to parse token balances
+    const utxos = await currentWallet.get_utxos();
     const tokens: TokenBalance[] = [];
     
-    // Note: The actual format of 'all' response may vary by wallet
-    // This is a placeholder implementation
-    if (typeof allBalances === 'object' && allBalances !== null) {
-      // Implementation would depend on actual wallet response format
+    // Parse tokens from UTXOs
+    if (Array.isArray(utxos)) {
+      const tokenMap = new Map<string, bigint>();
+      
+      for (const utxo of utxos) {
+        if (utxo.assets && Array.isArray(utxo.assets)) {
+          for (const asset of utxo.assets) {
+            const tokenId = asset.tokenId;
+            const amount = BigInt(asset.amount || 0);
+            const current = tokenMap.get(tokenId) || 0n;
+            tokenMap.set(tokenId, current + amount);
+          }
+        }
+      }
+      
+      // Convert to TokenBalance format
+      for (const [tokenId, amount] of tokenMap.entries()) {
+        tokens.push({
+          tokenId,
+          amount: amount.toString(),
+          name: undefined, // Would be fetched from token registry
+          decimals: undefined
+        });
+      }
     }
 
     return { erg, tokens };

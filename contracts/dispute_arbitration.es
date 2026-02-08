@@ -9,6 +9,7 @@
   // R7: Selected arbiters (Coll[SigmaProp]) - exactly 3
   // R8: Dispute deadline height (Long) - arbiters must vote within timeframe
   // R9: Evidence hash (Coll[Byte]) - IPFS hash of dispute evidence
+  // R10: Appeal count (Long) - number of appeals so far (max 2)
 
   val originalEscrowId = SELF.R4[Coll[Byte]].get
   val clientPk = SELF.R5[SigmaProp].get
@@ -16,6 +17,7 @@
   val arbiters = SELF.R7[Coll[SigmaProp]].get
   val disputeDeadline = SELF.R8[Long].get
   val evidenceHash = SELF.R9[Coll[Byte]].get
+  val appealCount = SELF.R10[Long].get
 
   val minBoxValue = 1000000L
   val arbiterStakeRequired = 5000000L // 0.005 ERG stake per arbiter
@@ -59,18 +61,21 @@
     }
   }
 
-  // Path 3: Appeal mechanism - either party can appeal with stake
+  // Path 3: Appeal mechanism - either party can appeal with stake (max 2 appeals)
   val appealProcess = {
     (clientPk || agentPk) &&
+    appealCount < 2L && // Maximum 2 appeals allowed
     INPUTS.exists { (i: Box) =>
       i.value >= arbiterStakeRequired && // Appeal stake required
       (i.propositionBytes == clientPk.propBytes || 
        i.propositionBytes == agentPk.propBytes)
     } &&
     OUTPUTS.exists { (o: Box) =>
-      // Create new dispute with different arbiters
+      // Create new dispute with different arbiters and incremented appeal count
       o.R7[Coll[SigmaProp]].isDefined &&
-      o.R7[Coll[SigmaProp]].get != arbiters // Must be different arbiters
+      o.R7[Coll[SigmaProp]].get != arbiters && // Must be different arbiters
+      o.R10[Long].isDefined &&
+      o.R10[Long].get == appealCount + 1L // Increment appeal count
     }
   }
 

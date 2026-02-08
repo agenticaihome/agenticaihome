@@ -21,10 +21,10 @@ const STORAGE_KEYS = {
 
 // CRITICAL SECURITY FIX: Ergo address validation
 function validateErgoAddress(address: string): boolean {
-  // Ergo P2PK addresses start with '9' and are 51-52 characters
+  // Ergo addresses are Base58-encoded, typically 40-60 chars
+  // P2PK start with '9', P2S start with other chars, testnet addresses vary
   if (!address || typeof address !== 'string') return false;
-  if (address.length < 51 || address.length > 52) return false;
-  if (!address.startsWith('9')) return false;
+  if (address.length < 30 || address.length > 120) return false;
   
   // Check for valid Base58 characters (excluding 0, O, I, l)
   const base58Pattern = /^[1-9A-HJ-NP-Za-km-z]+$/;

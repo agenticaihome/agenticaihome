@@ -19,7 +19,7 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { isAuthenticated, profile, userAddress, disconnect, connect, connecting } = useWallet();
+  const { isAuthenticated, wallet, profile, userAddress, disconnect, connect, connecting, error } = useWallet();
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -85,7 +85,7 @@ export default function Navbar() {
 
           {/* User Actions */}
           <div className="hidden md:flex items-center gap-3">
-            {isAuthenticated && profile ? (
+            {wallet.connected && wallet.address ? (
               <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -93,15 +93,16 @@ export default function Navbar() {
                   aria-expanded={userMenuOpen}
                   aria-haspopup="true"
                 >
-                  <div className="avatar-placeholder w-8 h-8 text-xs">
-                    {profile.displayName ? profile.displayName.charAt(0).toUpperCase() : userAddress?.charAt(0).toUpperCase() || '?'}
-                  </div>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[var(--accent-green)] animate-pulse" />
                   <div className="hidden lg:flex flex-col items-start">
-                    <span className="text-sm font-medium">{profile.displayName || 'Unnamed Agent'}</span>
+                    <span className="text-sm font-medium text-[var(--accent-green)]">Connected</span>
                     <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                      {userAddress ? `${userAddress.slice(0, 8)}...` : ''}
+                      {wallet.address.slice(0, 8)}...{wallet.address.slice(-4)}
                     </span>
                   </div>
+                  <span className="lg:hidden text-xs font-mono text-[var(--accent-green)]">
+                    {wallet.address.slice(0, 6)}...
+                  </span>
                   <svg className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -110,8 +111,11 @@ export default function Navbar() {
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-52 card p-2 shadow-xl z-50 animate-in fade-in duration-200">
                     <div className="px-3 py-2 border-b border-[var(--border-color)] mb-2">
-                      <p className="text-xs text-[var(--text-tertiary)] font-mono">
-                        {userAddress}
+                      <p className="text-xs text-[var(--text-tertiary)] font-mono break-all">
+                        {wallet.address}
+                      </p>
+                      <p className="text-xs text-[var(--accent-green)] mt-1">
+                        Σ {parseFloat(wallet.balance.erg).toFixed(4)} ERG
                       </p>
                     </div>
                     <a
@@ -209,18 +213,16 @@ export default function Navbar() {
               Trust & Safety
             </a>
             
-            {isAuthenticated && profile ? (
+            {wallet.connected && wallet.address ? (
               <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-1">
                 <div className="flex items-center gap-3 px-3 py-2 mb-2">
-                  <div className="avatar-placeholder w-8 h-8 text-xs">
-                    {profile.displayName ? profile.displayName.charAt(0).toUpperCase() : userAddress?.charAt(0).toUpperCase() || '?'}
-                  </div>
+                  <span className="w-3 h-3 rounded-full bg-[var(--accent-green)] animate-pulse" />
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
-                      {profile.displayName || 'Unnamed Agent'}
+                    <span className="text-sm font-medium text-[var(--accent-green)]">
+                      Connected — Σ {parseFloat(wallet.balance.erg).toFixed(4)} ERG
                     </span>
                     <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                      {userAddress ? `${userAddress.slice(0, 12)}...` : ''}
+                      {wallet.address.slice(0, 12)}...{wallet.address.slice(-4)}
                     </span>
                   </div>
                 </div>

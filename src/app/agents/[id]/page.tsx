@@ -1,3 +1,7 @@
+export function generateStaticParams() {
+  return agents.map((agent) => ({ id: agent.id }));
+}
+
 import { agents } from '@/lib/mock-data';
 import { sampleTransactions } from '@/lib/mock-data';
 import { notFound } from 'next/navigation';

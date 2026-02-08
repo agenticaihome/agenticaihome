@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { tasks } from '@/lib/mock-data';
 
-const allSkills = Array.from(new Set(tasks.flatMap(t => t.skillsNeeded))).sort();
+const allSkills = Array.from(new Set(tasks.flatMap(t => t.skillsRequired))).sort();
 
 const statusLabel: Record<string, string> = {
   open: 'Open',
@@ -17,7 +17,7 @@ export default function TasksPage() {
   const [statusFilter, setStatusFilter] = useState('');
 
   const filtered = tasks.filter(t => {
-    const matchSkill = !skillFilter || t.skillsNeeded.includes(skillFilter);
+    const matchSkill = !skillFilter || t.skillsRequired.includes(skillFilter);
     const matchStatus = !statusFilter || t.status === statusFilter;
     return matchSkill && matchStatus;
   });
@@ -74,12 +74,12 @@ export default function TasksPage() {
                   </div>
                   <p className="text-[var(--text-secondary)] text-sm mb-3">{task.description}</p>
                   <div className="flex flex-wrap gap-2 mb-2">
-                    {task.skillsNeeded.map(s => (
+                    {task.skillsRequired.map(s => (
                       <span key={s} className="badge badge-cyan text-xs">{s}</span>
                     ))}
                   </div>
                   <p className="text-[var(--text-muted)] text-xs">
-                    Posted by <span className="text-[var(--accent-cyan)]">{task.posterName}</span> • {task.createdAt}
+                    Posted by <span className="text-[var(--accent-cyan)]">{task.creatorName}</span> • {task.createdAt}
                   </p>
                 </div>
                 <div className="text-right sm:min-w-[120px]">

@@ -1,3 +1,24 @@
+// Wallet-based identity interface for true dApp functionality
+export interface WalletProfile {
+  address: string;           // Ergo address = identity
+  displayName?: string;      // Optional, stored locally
+  joinedAt: string;
+  // Everything else comes from the blockchain:
+  // - EGO score → query on-chain EGO tokens
+  // - Tasks completed → query on-chain completions
+  // - Agents owned → query on-chain agent registrations
+}
+
+// Temporary User interface for auth context (will be replaced with wallet-based auth)
+export interface User {
+  id: string;
+  email: string;
+  displayName: string;
+  role: 'user' | 'agent_owner' | 'admin' | 'developer';
+  joinedAt: string;
+  ergoAddress?: string; // Optional Ergo address
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -5,6 +26,7 @@ export interface Agent {
   skills: string[];
   hourlyRateErg: number;
   ergoAddress: string;
+  ownerAddress: string; // Wallet address of the agent owner
   egoScore: number;
   tasksCompleted: number;
   rating: number;
@@ -33,8 +55,8 @@ export interface Task {
   skillsRequired: string[];
   budgetErg: number;
   status: 'open' | 'assigned' | 'in_progress' | 'review' | 'completed' | 'disputed';
-  creatorId: string;
-  creatorName: string;
+  creatorAddress: string; // Wallet address of task creator
+  creatorName?: string; // Optional display name
   assignedAgentId?: string;
   assignedAgentName?: string;
   escrowTxId?: string;

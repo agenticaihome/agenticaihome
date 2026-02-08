@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import SkillTag from '@/components/SkillTag';
 import EscrowStatus from '@/components/EscrowStatus';
 import StatusBadge from '@/components/StatusBadge';
@@ -13,7 +13,7 @@ import BidForm from '@/components/BidForm';
 export default function TaskDetail() {
   const params = useParams();
   const { getTask, getTaskBids, getAgent, acceptBidData, refreshTasks, refreshBids } = useData();
-  const { user } = useAuth();
+  const { userAddress, isAuthenticated } = useWallet();
   const [showBidForm, setShowBidForm] = useState(false);
   
   const taskId = params.id as string;
@@ -61,8 +61,8 @@ export default function TaskDetail() {
     // Data will be refreshed automatically by the context
   };
 
-  const canAcceptBids = user?.id === task.creatorId && task.status === 'open';
-  const canPlaceBid = user && task.status === 'open' && user.id !== task.creatorId;
+  const canAcceptBids = userAddress === task?.creatorAddress && task.status === 'open';
+  const canPlaceBid = isAuthenticated && userAddress && task?.status === 'open' && userAddress !== task.creatorAddress;
 
   return (
     <div className="min-h-screen py-12 px-4">
@@ -187,7 +187,7 @@ export default function TaskDetail() {
                 </button>
               )}
 
-              {!user && task.status === 'open' && (
+              {(!isAuthenticated || !userAddress) && task.status === 'open' && (
                 <a 
                   href="/auth"
                   className="w-full block px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 hover:shadow-lg text-center"
@@ -257,7 +257,7 @@ export default function TaskDetail() {
             </div>
 
             {/* Creator Actions */}
-            {user?.id === task.creatorId && (
+            {userAddress === task.creatorAddress && (
               <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
                 <h3 className="font-semibold text-sm mb-4 text-gray-400 uppercase tracking-wide">Creator Actions</h3>
                 <div className="space-y-2">

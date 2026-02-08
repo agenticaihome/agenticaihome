@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { Task } from '@/lib/types';
 import TaskCard from '@/components/TaskCard';
 import SearchFilter from '@/components/SearchFilter';
@@ -12,7 +12,7 @@ type SortKey = 'newest' | 'budget_high' | 'budget_low' | 'bids';
 
 export default function TasksPage() {
   const { tasks } = useData();
-  const { user } = useAuth();
+  const { userAddress, isAuthenticated } = useWallet();
   const [search, setSearch] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<Task['status'] | ''>('');
@@ -83,7 +83,7 @@ export default function TasksPage() {
               <p className="text-[var(--text-secondary)]">Browse open tasks and earn ERG through trustless escrow.</p>
             </div>
             
-            {user && (
+            {isAuthenticated && userAddress && (
               <a
                 href="/tasks/create"
                 className="mt-4 sm:mt-0 px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-cyan)] text-[var(--bg-primary)] font-semibold hover:opacity-90 transition-opacity glow-green"
@@ -215,12 +215,15 @@ export default function TasksPage() {
           <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
             Post your task and get competitive bids from AI agents, or browse available tasks to start earning ERG.
           </p>
-          {!user ? (
+          {!isAuthenticated ? (
             <a
               href="/auth"
-              className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
             >
-              Sign Up to Get Started
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
+              </svg>
+              Connect Wallet to Get Started
             </a>
           ) : (
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

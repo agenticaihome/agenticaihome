@@ -1,6 +1,9 @@
-import { Agent, Task, Bid, Transaction, Completion, ReputationEvent } from './types';
+import { Agent, Task, Bid, Transaction, Completion, ReputationEvent, WalletProfile, User } from './types';
+
+// Re-export types for convenience
+export type { User, WalletProfile } from './types';
 import { agents, tasks, bidsForTask, sampleTransactions, completions, reputationHistory } from './mock-data';
-import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress, sanitizeEmail } from './sanitize';
+import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress } from './sanitize';
 
 // TODO: Replace with Supabase when ready
 // This file should be the only one that changes when migrating to Supabase
@@ -12,20 +15,9 @@ const STORAGE_KEYS = {
   TRANSACTIONS: 'aih_transactions',
   COMPLETIONS: 'aih_completions',
   REPUTATION_EVENTS: 'aih_reputation_events',
-  USERS: 'aih_users',
+  WALLET_PROFILES: 'aih_wallet_profiles',
   INITIALIZED: 'aih_initialized'
 };
-
-export interface User {
-  id: string;
-  email: string;
-  displayName: string;
-  role: 'developer' | 'agent_owner' | 'business';
-  ergoAddress?: string;
-  avatarUrl?: string;
-  passwordHash: string; // Basic hashing for localStorage
-  createdAt: string;
-}
 
 // CRITICAL SECURITY FIX: Ergo address validation
 function validateErgoAddress(address: string): boolean {
@@ -37,18 +29,6 @@ function validateErgoAddress(address: string): boolean {
   // Check for valid Base58 characters (excluding 0, O, I, l)
   const base58Pattern = /^[1-9A-HJ-NP-Za-km-z]+$/;
   return base58Pattern.test(address);
-}
-
-// WARNING: This is a weak hash for demo purposes only
-// NEVER use this in production - use bcrypt with proper salt
-function simpleHash(password: string): string {
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return hash.toString(36);
 }
 
 // Initialize data if first time
@@ -98,17 +78,8 @@ function initializeData() {
     
     localStorage.setItem(STORAGE_KEYS.REPUTATION_EVENTS, JSON.stringify(reputationHistory));
     
-    // Create demo user
-    const demoUser: User = {
-      id: 'user-001',
-      email: 'demo@agenticaihome.com',
-      displayName: 'Demo User',
-      role: 'developer',
-      ergoAddress: '9f4QF8AD1nQ3nJahQVkM...demo',
-      passwordHash: simpleHash('demo123'),
-      createdAt: new Date().toISOString()
-    };
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([demoUser]));
+    // Initialize empty wallet profiles (profiles created when wallets connect)
+    localStorage.setItem(STORAGE_KEYS.WALLET_PROFILES, JSON.stringify([]));
     localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
   }
 }
@@ -130,33 +101,44 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// User Management
-export function getUsers(): User[] {
-  return getFromStorage<User>(STORAGE_KEYS.USERS);
+// Wallet Profile Management
+export function getWalletProfiles(): WalletProfile[] {
+  return getFromStorage<WalletProfile>(STORAGE_KEYS.WALLET_PROFILES);
 }
 
-export function getUserByEmail(email: string): User | null {
-  const users = getUsers();
-  return users.find(u => u.email === email) || null;
+export function getWalletProfile(address: string): WalletProfile | null {
+  const profiles = getWalletProfiles();
+  return profiles.find(p => p.address === address) || null;
 }
 
-export function createUser(userData: Omit<User, 'id' | 'passwordHash' | 'createdAt'> & { password: string }): User {
-  const users = getUsers();
-  const newUser: User = {
-    ...userData,
-    id: generateId(),
-    passwordHash: simpleHash(userData.password),
-    createdAt: new Date().toISOString()
-  };
-  const updatedUsers = [...users, newUser];
-  saveToStorage(STORAGE_KEYS.USERS, updatedUsers);
-  return newUser;
-}
+export function createOrUpdateWalletProfile(address: string, displayName?: string): WalletProfile {
+  // SECURITY: Validate Ergo address
+  if (!validateErgoAddress(address)) {
+    throw new Error('Invalid Ergo address format. Must be a valid P2PK address starting with 9.');
+  }
 
-export function verifyPassword(email: string, password: string): User | null {
-  const user = getUserByEmail(email);
-  if (!user) return null;
-  return user.passwordHash === simpleHash(password) ? user : null;
+  const profiles = getWalletProfiles();
+  const existingProfile = profiles.find(p => p.address === address);
+  
+  if (existingProfile) {
+    // Update existing profile
+    if (displayName) {
+      existingProfile.displayName = sanitizeText(displayName, 100);
+    }
+    const updatedProfiles = profiles.map(p => p.address === address ? existingProfile : p);
+    saveToStorage(STORAGE_KEYS.WALLET_PROFILES, updatedProfiles);
+    return existingProfile;
+  } else {
+    // Create new profile
+    const newProfile: WalletProfile = {
+      address,
+      displayName: displayName ? sanitizeText(displayName, 100) : undefined,
+      joinedAt: new Date().toISOString()
+    };
+    const updatedProfiles = [...profiles, newProfile];
+    saveToStorage(STORAGE_KEYS.WALLET_PROFILES, updatedProfiles);
+    return newProfile;
+  }
 }
 
 // Agent Management
@@ -169,8 +151,13 @@ export function getAgentById(id: string): Agent | null {
   return agents.find(a => a.id === id) || null;
 }
 
-export function createAgent(agentData: Omit<Agent, 'id' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>): Agent {
-  // SECURITY: Validate Ergo address before creating agent
+export function createAgent(agentData: Omit<Agent, 'id' | 'ownerAddress' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>, ownerAddress: string): Agent {
+  // SECURITY: Validate owner address
+  if (!validateErgoAddress(ownerAddress)) {
+    throw new Error('Invalid owner address format. Must be a valid P2PK address starting with 9.');
+  }
+  
+  // SECURITY: Validate agent Ergo address
   if (agentData.ergoAddress && !validateErgoAddress(agentData.ergoAddress)) {
     throw new Error('Invalid Ergo address format. Must be a valid P2PK address starting with 9.');
   }
@@ -195,6 +182,7 @@ export function createAgent(agentData: Omit<Agent, 'id' | 'egoScore' | 'tasksCom
   const newAgent: Agent = {
     ...sanitizedData,
     id: generateId(),
+    ownerAddress,
     egoScore: 50, // Starting score
     tasksCompleted: 0,
     rating: 0,
@@ -238,6 +226,11 @@ export function deleteAgent(id: string): boolean {
   return true;
 }
 
+export function getAgentsByOwner(ownerAddress: string): Agent[] {
+  const agents = getAgents();
+  return agents.filter(a => a.ownerAddress === ownerAddress);
+}
+
 // Task Management
 export function getTasks(): Task[] {
   return getFromStorage<Task>(STORAGE_KEYS.TASKS);
@@ -248,7 +241,12 @@ export function getTaskById(id: string): Task | null {
   return tasks.find(t => t.id === id) || null;
 }
 
-export function createTask(taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>): Task {
+export function createTask(taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>, creatorAddress: string): Task {
+  // SECURITY: Validate creator address
+  if (!validateErgoAddress(creatorAddress)) {
+    throw new Error('Invalid creator address format. Must be a valid P2PK address starting with 9.');
+  }
+  
   // SECURITY: Sanitize task input data
   const sanitizedTaskData = {
     ...taskData,
@@ -256,7 +254,8 @@ export function createTask(taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 
     description: sanitizeText(taskData.description, 5000),
     skillsRequired: taskData.skillsRequired.map(sanitizeSkill).filter(skill => skill.length > 0).slice(0, 10),
     budgetErg: sanitizeNumber(taskData.budgetErg, 0.1, 100000),
-    creatorName: sanitizeText(taskData.creatorName, 100)
+    creatorAddress,
+    creatorName: taskData.creatorName ? sanitizeText(taskData.creatorName, 100) : undefined
   };
   
   const tasks = getTasks();
@@ -289,6 +288,11 @@ export function deleteTask(id: string): boolean {
   if (filtered.length === tasks.length) return false;
   saveToStorage(STORAGE_KEYS.TASKS, filtered);
   return true;
+}
+
+export function getTasksByCreator(creatorAddress: string): Task[] {
+  const tasks = getTasks();
+  return tasks.filter(t => t.creatorAddress === creatorAddress);
 }
 
 // Bid Management
@@ -460,4 +464,67 @@ export function getAllSkills(): string[] {
   });
   
   return Array.from(skillSet).sort();
+}
+
+// Temporary user authentication functions (will be replaced with wallet-based auth)
+const USERS_STORAGE_KEY = 'aih_users';
+
+function getUsers(): User[] {
+  const stored = localStorage.getItem(USERS_STORAGE_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch (error) {
+      console.error('Error parsing users:', error);
+    }
+  }
+  return [];
+}
+
+function saveUsers(users: User[]): void {
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+}
+
+export function createUser(email: string, password: string, displayName: string, role: User['role'] = 'user'): User {
+  const users = getUsers();
+  
+  // Check if user already exists
+  if (users.find(u => u.email === email)) {
+    throw new Error('User already exists');
+  }
+  
+  const user: User = {
+    id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+    email: sanitizeText(email),
+    displayName: sanitizeText(displayName),
+    role,
+    joinedAt: new Date().toISOString()
+  };
+  
+  // Store password separately (in real implementation, would be hashed)
+  const passwords = JSON.parse(localStorage.getItem('aih_passwords') || '{}');
+  passwords[email] = password;
+  localStorage.setItem('aih_passwords', JSON.stringify(passwords));
+  
+  users.push(user);
+  saveUsers(users);
+  
+  return user;
+}
+
+export function verifyPassword(email: string, password: string): User | null {
+  const users = getUsers();
+  const user = users.find(u => u.email === email);
+  
+  if (!user) {
+    return null;
+  }
+  
+  // Check password (in real implementation, would be hashed comparison)
+  const passwords = JSON.parse(localStorage.getItem('aih_passwords') || '{}');
+  if (passwords[email] === password) {
+    return user;
+  }
+  
+  return null;
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import WalletConnect from './WalletConnect';
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 
 const links = [
   { href: '/', label: 'Home' },
@@ -12,13 +12,14 @@ const links = [
   { href: '/tasks', label: 'Tasks' },
   { href: '/explorer', label: 'Explorer' },
   { href: '/how-it-works', label: 'How It Works' },
+  { href: '/learn', label: 'Learn' },
   { href: '/docs', label: 'Docs' },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { isAuthenticated, profile, userAddress, disconnect } = useWallet();
   const pathname = usePathname();
 
   const isActive = (href: string) => {
@@ -26,8 +27,8 @@ export default function Navbar() {
     return pathname.startsWith(href);
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleDisconnect = async () => {
+    await disconnect();
     setUserMenuOpen(false);
   };
 
@@ -84,7 +85,7 @@ export default function Navbar() {
 
           {/* User Actions */}
           <div className="hidden md:flex items-center gap-3">
-            {user ? (
+            {isAuthenticated && profile ? (
               <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -93,9 +94,14 @@ export default function Navbar() {
                   aria-haspopup="true"
                 >
                   <div className="avatar-placeholder w-8 h-8 text-xs">
-                    {user.displayName.charAt(0).toUpperCase()}
+                    {profile.displayName ? profile.displayName.charAt(0).toUpperCase() : userAddress?.charAt(0).toUpperCase() || '?'}
                   </div>
-                  <span className="text-sm font-medium hidden lg:inline">{user.displayName}</span>
+                  <div className="hidden lg:flex flex-col items-start">
+                    <span className="text-sm font-medium">{profile.displayName || 'Unnamed Agent'}</span>
+                    <span className="text-xs text-[var(--text-tertiary)] font-mono">
+                      {userAddress ? `${userAddress.slice(0, 8)}...` : ''}
+                    </span>
+                  </div>
                   <svg className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -103,6 +109,11 @@ export default function Navbar() {
 
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-52 card p-2 shadow-xl z-50 animate-in fade-in duration-200">
+                    <div className="px-3 py-2 border-b border-[var(--border-color)] mb-2">
+                      <p className="text-xs text-[var(--text-tertiary)] font-mono">
+                        {userAddress}
+                      </p>
+                    </div>
                     <a
                       href="/dashboard"
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-white transition-colors min-h-[40px]"
@@ -132,32 +143,27 @@ export default function Navbar() {
                     </a>
                     <div className="border-t border-[var(--border-color)] my-2"></div>
                     <button
-                      onClick={handleLogout}
+                      onClick={handleDisconnect}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-400 transition-colors min-h-[40px] w-full text-left"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      Logout
+                      Disconnect
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-3">
-                <a
-                  href="/auth"
-                  className="px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors text-sm font-medium min-h-[44px] flex items-center"
-                >
-                  Sign In
-                </a>
-                <a
-                  href="/auth"
-                  className="btn btn-primary text-sm min-h-[44px]"
-                >
-                  Sign Up
-                </a>
-              </div>
+              <a
+                href="/auth"
+                className="btn btn-primary text-sm min-h-[44px] flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
+                </svg>
+                Connect Wallet
+              </a>
             )}
             <div className="pl-3 border-l border-[var(--border-color)]">
               <WalletConnect />
@@ -214,13 +220,20 @@ export default function Navbar() {
               Trust & Safety
             </a>
             
-            {user ? (
+            {isAuthenticated && profile ? (
               <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-1">
                 <div className="flex items-center gap-3 px-3 py-2 mb-2">
                   <div className="avatar-placeholder w-8 h-8 text-xs">
-                    {user.displayName.charAt(0).toUpperCase()}
+                    {profile.displayName ? profile.displayName.charAt(0).toUpperCase() : userAddress?.charAt(0).toUpperCase() || '?'}
                   </div>
-                  <span className="text-sm font-medium text-[var(--text-primary)]">{user.displayName}</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                      {profile.displayName || 'Unnamed Agent'}
+                    </span>
+                    <span className="text-xs text-[var(--text-tertiary)] font-mono">
+                      {userAddress ? `${userAddress.slice(0, 12)}...` : ''}
+                    </span>
+                  </div>
                 </div>
                 
                 <a href="/dashboard" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
@@ -241,20 +254,20 @@ export default function Navbar() {
                   </svg>
                   Post Task
                 </a>
-                <button onClick={() => { handleLogout(); setOpen(false); }} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all min-h-[44px] w-full text-left">
+                <button onClick={() => { disconnect(); setOpen(false); }} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all min-h-[44px] w-full text-left">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  Logout
+                  Disconnect
                 </button>
               </div>
             ) : (
               <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-2">
-                <a href="/auth" className="flex items-center px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
-                  Sign In
-                </a>
-                <a href="/auth" className="btn btn-primary w-full justify-center min-h-[44px]" onClick={() => setOpen(false)}>
-                  Sign Up
+                <a href="/auth" className="btn btn-primary w-full justify-center min-h-[44px] flex items-center gap-2" onClick={() => setOpen(false)}>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
+                  </svg>
+                  Connect Wallet
                 </a>
               </div>
             )}

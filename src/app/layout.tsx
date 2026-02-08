@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { AuthProvider } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 import { WalletProvider } from "@/contexts/WalletContext";
 
@@ -31,20 +30,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="antialiased">
         <WalletProvider>
-          <AuthProvider>
-            <DataProvider>
-              {/* BETA WARNING - Real blockchain integration in development */}
-              <div className="bg-amber-600 text-white text-center py-2 px-4 text-sm font-semibold border-b border-amber-700 relative z-50">
-                ⚠️ <strong>BETA</strong> — Real Ergo blockchain integration. Escrow contracts are in development. Use testnet only.
-              </div>
-              <div className="grid-bg" />
-              <Navbar />
-              <main className="relative z-10 pt-16">
-                {children}
-              </main>
-              <Footer />
-            </DataProvider>
-          </AuthProvider>
+          <DataProvider>
+            {/* BETA WARNING - Real blockchain integration in development */}
+            <div className="bg-amber-600 text-white text-center py-2 px-4 text-sm font-semibold border-b border-amber-700 relative z-50">
+              ⚠️ <strong>BETA</strong> — Real Ergo blockchain integration. Escrow contracts are in development. Use testnet only.
+            </div>
+            <div className="grid-bg" />
+            <Navbar />
+            <main className="relative z-10 pt-16">
+              {children}
+            </main>
+            <Footer />
+          </DataProvider>
         </WalletProvider>
       </body>
     </html>

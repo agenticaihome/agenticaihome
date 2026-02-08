@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
 import AuthGuard from '@/components/AuthGuard';
 import SkillSelector from '@/components/SkillSelector';
 import EgoScore from '@/components/EgoScore';
 
 export default function RegisterAgent() {
-  const { user } = useAuth();
+  const { userAddress, profile } = useWallet();
   const { createAgentData } = useData();
   const router = useRouter();
   
@@ -97,12 +97,17 @@ export default function RegisterAgent() {
     setIsSubmitting(true);
 
     try {
+      // Validation: Must have connected wallet
+      if (!userAddress) {
+        throw new Error('Wallet not connected');
+      }
+      
       const newAgent = createAgentData({
         name: formData.name.trim(),
         description: formData.description.trim(),
         skills: formData.skills,
         hourlyRateErg: Number(formData.hourlyRateErg),
-        ergoAddress: user?.ergoAddress || `temp-${Date.now()}`, // Use user's address or temp
+        ergoAddress: userAddress, // Agent uses owner's address initially
         avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`
       });
 

@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
+import { getAgentsByOwner } from '@/lib/store';
 
 interface BidFormProps {
   taskId: string;
@@ -11,7 +12,7 @@ interface BidFormProps {
 }
 
 export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidFormProps) {
-  const { user } = useAuth();
+  const { userAddress, profile, isAuthenticated } = useWallet();
   const { createBidData } = useData();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -42,22 +43,28 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) return;
+    if (!isAuthenticated || !userAddress) return;
     
     if (!validateForm()) return;
 
     setIsSubmitting(true);
 
     try {
-      // TODO: In real implementation, we'd need to find the agent owned by this user
-      // For now, we'll use a placeholder agent ID
-      const userAgentId = 'agent-demo'; // This should be looked up from user's owned agents
+      // Get user's agents to bid with
+      const userAgents = getAgentsByOwner(userAddress);
+      
+      if (userAgents.length === 0) {
+        throw new Error('You need to register an agent first to place bids');
+      }
+      
+      // Use the first available agent (in a real app, user would select which agent)
+      const agent = userAgents.find(a => a.status === 'available') || userAgents[0];
       
       createBidData({
         taskId,
-        agentId: userAgentId,
-        agentName: user.displayName,
-        agentEgoScore: 75, // This should come from the agent's actual score
+        agentId: agent.id,
+        agentName: agent.name,
+        agentEgoScore: agent.egoScore,
         proposedRate: Number(formData.proposedRate),
         message: formData.message.trim()
       });
@@ -67,21 +74,24 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
       onBidSubmitted?.();
     } catch (error) {
       console.error('Error submitting bid:', error);
-      setErrors({ submit: 'Failed to submit bid. Please try again.' });
+      setErrors({ submit: error instanceof Error ? error.message : 'Failed to submit bid. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!user) {
+  if (!isAuthenticated || !userAddress) {
     return (
       <div className={`bg-slate-800/50 border border-slate-700 rounded-lg p-6 text-center ${className}`}>
-        <p className="text-gray-400 mb-4">You need to be logged in to place a bid.</p>
+        <p className="text-gray-400 mb-4">Connect your wallet to place a bid.</p>
         <a
           href="/auth"
-          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200"
         >
-          Sign In
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2Z"/>
+          </svg>
+          Connect Wallet
         </a>
       </div>
     );

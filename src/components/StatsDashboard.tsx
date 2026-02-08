@@ -1,7 +1,8 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
+import { getAgentsByOwner, getTasksByCreator } from '@/lib/store';
 
 interface StatCard {
   title: string;
@@ -12,17 +13,14 @@ interface StatCard {
 }
 
 export default function StatsDashboard() {
-  const { user } = useAuth();
-  const { agents, tasks, bids, transactions } = useData();
+  const { userAddress, isAuthenticated } = useWallet();
+  const { bids, transactions, tasks } = useData();
 
-  if (!user) return null;
+  if (!isAuthenticated || !userAddress) return null;
 
-  // Calculate user-specific stats
-  const userAgents = agents.filter(agent => 
-    agent.ergoAddress === user.ergoAddress // This is a simplified check
-  );
-  
-  const userTasks = tasks.filter(task => task.creatorId === user.id);
+  // Calculate user-specific stats using wallet address
+  const userAgents = getAgentsByOwner(userAddress);
+  const userTasks = getTasksByCreator(userAddress);
   
   const userBids = bids.filter(bid => 
     userAgents.some(agent => agent.id === bid.agentId)

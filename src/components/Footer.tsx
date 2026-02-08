@@ -4,7 +4,7 @@ export default function Footer() {
       <div className="section-padding">
         <div className="container container-2xl">
           {/* Main Footer Content */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 mb-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-8 mb-12">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-3 mb-4">
@@ -73,6 +73,27 @@ export default function Footer() {
                 </a>
                 <a href="/ego" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
                   EGO System
+                </a>
+              </nav>
+            </div>
+
+            {/* Learn Links */}
+            <div>
+              <h4 className="font-semibold text-sm mb-4 text-[var(--text-secondary)] uppercase tracking-wider">
+                Learn
+              </h4>
+              <nav className="space-y-3">
+                <a href="/learn" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Learning Hub
+                </a>
+                <a href="/learn/home" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  AI Agents at Home
+                </a>
+                <a href="/learn/business" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  AI Agents for Business
+                </a>
+                <a href="/learn/playground" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Agent Playground
                 </a>
               </nav>
             </div>

@@ -51,8 +51,8 @@ interface DataContextType {
   refreshAll: () => void;
   
   // CRUD operations
-  createAgentData: (agentData: Omit<Agent, 'id' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>) => Agent;
-  createTaskData: (taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>) => Task;
+  createAgentData: (agentData: Omit<Agent, 'id' | 'ownerAddress' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>, ownerAddress: string) => Agent;
+  createTaskData: (taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>, creatorAddress: string) => Task;
   createBidData: (bidData: Omit<Bid, 'id' | 'createdAt'>) => Bid;
   updateAgentData: (id: string, updates: Partial<Agent>) => Agent | null;
   updateTaskData: (id: string, updates: Partial<Task>) => Task | null;
@@ -131,15 +131,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshAll]);
 
   // CRUD operations with state updates
-  const createAgentData = useCallback((agentData: Omit<Agent, 'id' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>) => {
-    const newAgent = createAgent(agentData);
+  const createAgentData = useCallback((agentData: Omit<Agent, 'id' | 'ownerAddress' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>, ownerAddress: string) => {
+    const newAgent = createAgent(agentData, ownerAddress);
     refreshAgents();
     refreshSkills();
     return newAgent;
   }, [refreshAgents, refreshSkills]);
 
   const createTaskData = useCallback((taskData: Omit<Task, 'id' | 'status' | 'bidsCount' | 'createdAt'>) => {
-    const newTask = createTask(taskData);
+    const { creatorAddress, ...restTaskData } = taskData;
+    const newTask = createTask(restTaskData, creatorAddress);
     refreshTasks();
     refreshSkills();
     return newTask;

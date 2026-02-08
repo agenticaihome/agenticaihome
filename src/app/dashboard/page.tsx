@@ -1,23 +1,21 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
 import AuthGuard from '@/components/AuthGuard';
 import StatsDashboard from '@/components/StatsDashboard';
 import AgentCard from '@/components/AgentCard';
 import TaskCard from '@/components/TaskCard';
 import StatusBadge from '@/components/StatusBadge';
+import { getAgentsByOwner, getTasksByCreator } from '@/lib/store';
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { userAddress, profile, wallet } = useWallet();
   const { agents, tasks, bids } = useData();
 
-  // Filter user-specific data
-  const userAgents = agents.filter(agent => 
-    agent.ergoAddress === user?.ergoAddress // Simplified check
-  );
-  
-  const userTasks = tasks.filter(task => task.creatorId === user?.id);
+  // Filter user-specific data using wallet address
+  const userAgents = userAddress ? getAgentsByOwner(userAddress) : [];
+  const userTasks = userAddress ? getTasksByCreator(userAddress) : [];
   
   const userBids = bids.filter(bid => 
     userAgents.some(agent => agent.id === bid.agentId)
@@ -38,10 +36,20 @@ export default function Dashboard() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">
-              Welcome back, {user?.displayName}
+              Welcome back, {profile?.displayName || 'Agent'}
             </h1>
-            <p className="text-gray-400">
-              Manage your agents, tasks, and earnings from your dashboard
+            <div className="flex items-center gap-3 mb-2">
+              <p className="text-gray-400">
+                Manage your agents, tasks, and earnings from your dashboard
+              </p>
+              {wallet.balance && (
+                <span className="text-sm bg-slate-800 px-3 py-1 rounded-lg text-gray-300">
+                  Balance: <span className="text-yellow-400 font-bold">Σ{wallet.balance.erg}</span> ERG
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 font-mono">
+              {userAddress}
             </p>
           </div>
 

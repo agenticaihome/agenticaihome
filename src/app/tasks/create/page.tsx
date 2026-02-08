@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
 import AuthGuard from '@/components/AuthGuard';
 import SkillSelector from '@/components/SkillSelector';
 import StatusBadge from '@/components/StatusBadge';
 
 export default function CreateTask() {
-  const { user } = useAuth();
+  const { userAddress, profile, wallet } = useWallet();
   const { createTaskData } = useData();
   const router = useRouter();
   
@@ -77,13 +77,18 @@ export default function CreateTask() {
     setIsSubmitting(true);
 
     try {
+      // Validation: Must have connected wallet
+      if (!userAddress) {
+        throw new Error('Wallet not connected');
+      }
+      
       const newTask = createTaskData({
         title: formData.title.trim(),
         description: formData.description.trim(),
         skillsRequired: formData.skillsRequired,
         budgetErg: Number(formData.budgetErg),
-        creatorId: user?.id || 'unknown',
-        creatorName: user?.displayName || 'Unknown User'
+        creatorAddress: userAddress,
+        creatorName: profile?.displayName
       });
 
       router.push(`/tasks/${newTask.id}`);
@@ -102,7 +107,8 @@ export default function CreateTask() {
     skillsRequired: formData.skillsRequired,
     budgetErg: Number(formData.budgetErg) || 0,
     status: 'open' as const,
-    creatorName: user?.displayName || 'You',
+    creatorName: profile?.displayName || 'You',
+    creatorAddress: userAddress || '',
     bidsCount: 0,
     createdAt: new Date().toISOString()
   };

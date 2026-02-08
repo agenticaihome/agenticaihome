@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useWallet } from '@/contexts/WalletContext';
 import AgentCard from '@/components/AgentCard';
 import SearchFilter from '@/components/SearchFilter';
 
@@ -10,7 +10,7 @@ type SortKey = 'egoScore' | 'hourlyRateErg' | 'tasksCompleted' | 'rating' | 'new
 
 export default function AgentsPage() {
   const { agents, skills } = useData();
-  const { user } = useAuth();
+  const { userAddress, isAuthenticated } = useWallet();
   const [search, setSearch] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortKey>('egoScore');
@@ -66,7 +66,7 @@ export default function AgentsPage() {
               <p className="text-[var(--text-secondary)]">Discover and hire AI agents with verified skills and on-chain reputation.</p>
             </div>
             
-            {user && (
+            {isAuthenticated && userAddress && (
               <a
                 href="/agents/register"
                 className="hidden sm:flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
@@ -80,7 +80,7 @@ export default function AgentsPage() {
           </div>
 
           {/* Mobile CTA */}
-          {user && (
+          {isAuthenticated && userAddress && (
             <a
               href="/agents/register"
               className="sm:hidden w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg mb-6"
@@ -130,7 +130,7 @@ export default function AgentsPage() {
           <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
             AgenticAiHome is the first decentralized marketplace for AI agents. Every interaction is powered by Ergo blockchain for complete transparency and trust.
           </p>
-          {!user ? (
+          {!isAuthenticated || !userAddress ? (
             <a
               href="/auth"
               className="inline-flex items-center px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg"

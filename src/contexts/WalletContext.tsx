@@ -17,6 +17,7 @@ import {
   WalletRejectedError,
 } from '@/lib/ergo/wallet';
 import { BALANCE_REFRESH_INTERVAL } from '@/lib/ergo/constants';
+import { WalletProfile, createOrUpdateWalletProfile, getWalletProfile } from '@/lib/store';
 
 // Wallet context types
 interface WalletContextType {
@@ -24,6 +25,12 @@ interface WalletContextType {
   wallet: WalletState;
   connecting: boolean;
   error: string | null;
+  
+  // Authentication state (wallet = auth)
+  isAuthenticated: boolean;
+  userAddress: string | null;
+  profile: WalletProfile | null;
+  loading: boolean;
   
   // Connection methods
   connect: (preferredWallet?: string) => Promise<void>;
@@ -33,6 +40,9 @@ interface WalletContextType {
   signTx: (tx: any) => Promise<any>;
   submitTx: (tx: any) => Promise<string>;
   signMsg: (message: string, address?: string) => Promise<string>;
+  
+  // Profile methods
+  updateProfile: (displayName: string) => WalletProfile;
   
   // Utility methods
   refreshBalance: () => Promise<void>;
@@ -56,11 +66,16 @@ const defaultContextValue: WalletContextType = {
   wallet: defaultWalletState,
   connecting: false,
   error: null,
+  isAuthenticated: false,
+  userAddress: null,
+  profile: null,
+  loading: false,
   connect: async () => {},
   disconnect: async () => {},
   signTx: async () => ({}),
   submitTx: async () => '',
   signMsg: async () => '',
+  updateProfile: () => ({ address: '', joinedAt: '' }),
   refreshBalance: async () => {},
   clearError: () => {},
   isAvailable: false,
@@ -89,6 +104,8 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isAvailable, setIsAvailable] = useState(false);
+  const [profile, setProfile] = useState<WalletProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   
   // Balance refresh interval
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
@@ -100,6 +117,8 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
       
       // Try auto-reconnect
       handleAutoReconnect();
+    } else {
+      setLoading(false);
     }
   }, []);
 
@@ -111,8 +130,12 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
       setConnecting(true);
       const reconnectedState = await autoReconnectWallet();
       
-      if (reconnectedState) {
+      if (reconnectedState && reconnectedState.address) {
         setWallet(reconnectedState);
+        // Load or create wallet profile
+        const walletProfile = getWalletProfile(reconnectedState.address) || 
+                             createOrUpdateWalletProfile(reconnectedState.address);
+        setProfile(walletProfile);
         startBalanceRefresh();
       }
     } catch (error) {
@@ -120,6 +143,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
       // Don't show error for auto-reconnect failures
     } finally {
       setConnecting(false);
+      setLoading(false);
     }
   }, []);
 
@@ -133,6 +157,14 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     try {
       const walletState = await connectErgoWallet(preferredWallet);
       setWallet(walletState);
+      
+      if (walletState.address) {
+        // Load or create wallet profile  
+        const walletProfile = getWalletProfile(walletState.address) || 
+                             createOrUpdateWalletProfile(walletState.address);
+        setProfile(walletProfile);
+      }
+      
       startBalanceRefresh();
     } catch (error) {
       const errorMessage = getErrorMessage(error);
@@ -148,12 +180,14 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     try {
       await disconnectErgoWallet();
       setWallet(defaultWalletState);
+      setProfile(null);
       setError(null);
       stopBalanceRefresh();
     } catch (error) {
       console.error('Wallet disconnection failed:', error);
       // Still reset state even if disconnect fails
       setWallet(defaultWalletState);
+      setProfile(null);
       setError(null);
       stopBalanceRefresh();
     }
@@ -225,6 +259,17 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     setError(null);
   }, []);
 
+  // Update wallet profile
+  const updateProfile = useCallback((displayName: string): WalletProfile => {
+    if (!wallet.address) {
+      throw new Error('Wallet not connected');
+    }
+    
+    const updatedProfile = createOrUpdateWalletProfile(wallet.address, displayName);
+    setProfile(updatedProfile);
+    return updatedProfile;
+  }, [wallet.address]);
+
   // Start balance refresh interval
   const startBalanceRefresh = useCallback(() => {
     stopBalanceRefresh(); // Clear any existing interval
@@ -257,6 +302,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
 
     const handleWalletDisconnect = () => {
       setWallet(defaultWalletState);
+      setProfile(null);
       stopBalanceRefresh();
     };
 
@@ -274,11 +320,16 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     wallet,
     connecting,
     error,
+    isAuthenticated: wallet.connected && !!wallet.address,
+    userAddress: wallet.address,
+    profile,
+    loading,
     connect,
     disconnect,
     signTx,
     submitTx,
     signMsg,
+    updateProfile,
     refreshBalance,
     clearError,
     isAvailable,
@@ -329,6 +380,24 @@ export function useWalletInstallation() {
   }, []);
   
   return { hasNautilus, hasSafew };
+}
+
+// Alias for useWallet that provides auth-like interface for compatibility
+export function useAuth() {
+  const context = useWallet();
+  return {
+    user: context.profile,
+    loading: context.loading,
+    login: () => Promise.resolve(false), // Not used in wallet auth
+    signup: () => Promise.resolve(false), // Not used in wallet auth  
+    logout: context.disconnect,
+    getCurrentUser: () => context.profile,
+    // Additional wallet-specific methods
+    isAuthenticated: context.isAuthenticated,
+    userAddress: context.userAddress,
+    connect: context.connect,
+    updateProfile: context.updateProfile
+  };
 }
 
 export default WalletProvider;

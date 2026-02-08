@@ -1,0 +1,334 @@
+'use client';
+
+import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import {
+  WalletState,
+  connectWallet as connectErgoWallet,
+  disconnectWallet as disconnectErgoWallet,
+  getWalletState,
+  signTransaction,
+  submitTransaction,
+  signMessage,
+  autoReconnectWallet,
+  isWalletAvailable,
+  WalletError,
+  WalletNotFoundError,
+  WalletConnectionError,
+  WalletRejectedError,
+} from '@/lib/ergo/wallet';
+import { BALANCE_REFRESH_INTERVAL } from '@/lib/ergo/constants';
+
+// Wallet context types
+interface WalletContextType {
+  // Wallet state
+  wallet: WalletState;
+  connecting: boolean;
+  error: string | null;
+  
+  // Connection methods
+  connect: (preferredWallet?: string) => Promise<void>;
+  disconnect: () => Promise<void>;
+  
+  // Transaction methods
+  signTx: (tx: any) => Promise<any>;
+  submitTx: (tx: any) => Promise<string>;
+  signMsg: (message: string, address?: string) => Promise<string>;
+  
+  // Utility methods
+  refreshBalance: () => Promise<void>;
+  clearError: () => void;
+  
+  // Wallet availability
+  isAvailable: boolean;
+}
+
+// Default wallet state
+const defaultWalletState: WalletState = {
+  connected: false,
+  address: null,
+  addresses: [],
+  balance: { erg: '0', tokens: [] },
+  walletName: null,
+};
+
+// Default context value
+const defaultContextValue: WalletContextType = {
+  wallet: defaultWalletState,
+  connecting: false,
+  error: null,
+  connect: async () => {},
+  disconnect: async () => {},
+  signTx: async () => ({}),
+  submitTx: async () => '',
+  signMsg: async () => '',
+  refreshBalance: async () => {},
+  clearError: () => {},
+  isAvailable: false,
+};
+
+// Create context
+const WalletContext = createContext<WalletContextType>(defaultContextValue);
+
+// Custom hook to use wallet context
+export function useWallet(): WalletContextType {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWallet must be used within a WalletProvider');
+  }
+  return context;
+}
+
+// Wallet provider props
+interface WalletProviderProps {
+  children: ReactNode;
+}
+
+// Wallet provider component
+export function WalletProvider({ children }: WalletProviderProps): React.JSX.Element {
+  const [wallet, setWallet] = useState<WalletState>(defaultWalletState);
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isAvailable, setIsAvailable] = useState(false);
+  
+  // Balance refresh interval
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
+
+  // Check wallet availability on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsAvailable(isWalletAvailable());
+      
+      // Try auto-reconnect
+      handleAutoReconnect();
+    }
+  }, []);
+
+  // Auto-reconnect wallet if previously connected
+  const handleAutoReconnect = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      setConnecting(true);
+      const reconnectedState = await autoReconnectWallet();
+      
+      if (reconnectedState) {
+        setWallet(reconnectedState);
+        startBalanceRefresh();
+      }
+    } catch (error) {
+      console.warn('Auto-reconnect failed:', error);
+      // Don't show error for auto-reconnect failures
+    } finally {
+      setConnecting(false);
+    }
+  }, []);
+
+  // Connect wallet
+  const connect = useCallback(async (preferredWallet?: string) => {
+    if (connecting) return;
+    
+    setConnecting(true);
+    setError(null);
+    
+    try {
+      const walletState = await connectErgoWallet(preferredWallet);
+      setWallet(walletState);
+      startBalanceRefresh();
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      setError(errorMessage);
+      console.error('Wallet connection failed:', error);
+    } finally {
+      setConnecting(false);
+    }
+  }, [connecting]);
+
+  // Disconnect wallet
+  const disconnect = useCallback(async () => {
+    try {
+      await disconnectErgoWallet();
+      setWallet(defaultWalletState);
+      setError(null);
+      stopBalanceRefresh();
+    } catch (error) {
+      console.error('Wallet disconnection failed:', error);
+      // Still reset state even if disconnect fails
+      setWallet(defaultWalletState);
+      setError(null);
+      stopBalanceRefresh();
+    }
+  }, []);
+
+  // Sign transaction
+  const signTx = useCallback(async (tx: any) => {
+    if (!wallet.connected) {
+      throw new Error('Wallet not connected');
+    }
+    
+    try {
+      return await signTransaction(tx);
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      setError(errorMessage);
+      throw error;
+    }
+  }, [wallet.connected]);
+
+  // Submit transaction
+  const submitTx = useCallback(async (tx: any) => {
+    if (!wallet.connected) {
+      throw new Error('Wallet not connected');
+    }
+    
+    try {
+      const txId = await submitTransaction(tx);
+      // Refresh balance after successful transaction
+      setTimeout(refreshBalance, 2000); // Wait 2 seconds for blockchain update
+      return txId;
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      setError(errorMessage);
+      throw error;
+    }
+  }, [wallet.connected]);
+
+  // Sign message
+  const signMsg = useCallback(async (message: string, address?: string) => {
+    if (!wallet.connected) {
+      throw new Error('Wallet not connected');
+    }
+    
+    try {
+      return await signMessage(message, address);
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      setError(errorMessage);
+      throw error;
+    }
+  }, [wallet.connected]);
+
+  // Refresh wallet balance
+  const refreshBalance = useCallback(async () => {
+    if (!wallet.connected) return;
+    
+    try {
+      const updatedState = await getWalletState();
+      setWallet(updatedState);
+    } catch (error) {
+      console.error('Failed to refresh balance:', error);
+      // Don't show error for balance refresh failures
+    }
+  }, [wallet.connected]);
+
+  // Clear error
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // Start balance refresh interval
+  const startBalanceRefresh = useCallback(() => {
+    stopBalanceRefresh(); // Clear any existing interval
+    
+    const interval = setInterval(() => {
+      refreshBalance();
+    }, BALANCE_REFRESH_INTERVAL);
+    
+    setRefreshInterval(interval);
+  }, [refreshBalance]);
+
+  // Stop balance refresh interval
+  const stopBalanceRefresh = useCallback(() => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+      setRefreshInterval(null);
+    }
+  }, [refreshInterval]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopBalanceRefresh();
+    };
+  }, [stopBalanceRefresh]);
+
+  // Handle wallet disconnection events (if wallet supports it)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !wallet.connected) return;
+
+    const handleWalletDisconnect = () => {
+      setWallet(defaultWalletState);
+      stopBalanceRefresh();
+    };
+
+    // Listen for wallet disconnection events (if supported)
+    // This is wallet-specific and may not be available in all wallets
+    window.addEventListener('ergo_wallet_disconnected', handleWalletDisconnect);
+
+    return () => {
+      window.removeEventListener('ergo_wallet_disconnected', handleWalletDisconnect);
+    };
+  }, [wallet.connected, stopBalanceRefresh]);
+
+  // Context value
+  const contextValue: WalletContextType = {
+    wallet,
+    connecting,
+    error,
+    connect,
+    disconnect,
+    signTx,
+    submitTx,
+    signMsg,
+    refreshBalance,
+    clearError,
+    isAvailable,
+  };
+
+  return (
+    <WalletContext.Provider value={contextValue}>
+      {children}
+    </WalletContext.Provider>
+  );
+}
+
+// Helper function to extract user-friendly error messages
+function getErrorMessage(error: unknown): string {
+  if (error instanceof WalletNotFoundError) {
+    return 'No compatible wallet found. Please install Nautilus Wallet.';
+  }
+  
+  if (error instanceof WalletRejectedError) {
+    return 'Connection was rejected. Please try again.';
+  }
+  
+  if (error instanceof WalletConnectionError) {
+    return 'Failed to connect to wallet. Please try again.';
+  }
+  
+  if (error instanceof WalletError) {
+    return error.message;
+  }
+  
+  if (error instanceof Error) {
+    return error.message;
+  }
+  
+  return 'An unknown error occurred';
+}
+
+// Hook to check if wallet is installed
+export function useWalletInstallation() {
+  const [hasNautilus, setHasNautilus] = useState(false);
+  const [hasSafew, setHasSafew] = useState(false);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHasNautilus(!!window.ergoConnector?.nautilus);
+      setHasSafew(!!window.ergoConnector?.safew);
+    }
+  }, []);
+  
+  return { hasNautilus, hasSafew };
+}
+
+export default WalletProvider;

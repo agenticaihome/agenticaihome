@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import WalletConnect from './WalletConnect';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,6 +10,7 @@ const links = [
   { href: '/agents', label: 'Agents' },
   { href: '/ego', label: 'EGO' },
   { href: '/tasks', label: 'Tasks' },
+  { href: '/explorer', label: 'Explorer' },
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/docs', label: 'Docs' },
 ];
@@ -17,6 +19,12 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, logout } = useAuth();
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname.startsWith(href);
+  };
 
   const handleLogout = () => {
     logout();
@@ -24,74 +32,112 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border-color)] bg-[var(--bg-primary)]/80 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--border-color)] bg-[var(--bg-primary)]/90 backdrop-blur-xl">
+      <div className="container container-2xl">
         <div className="flex items-center justify-between h-16">
-          <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-purple)] flex items-center justify-center text-sm font-bold text-white">A</div>
-            <span className="font-bold text-lg">Agentic<span className="text-[var(--accent-cyan)]">AI</span>Home</span>
+          {/* Logo */}
+          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-purple)] flex items-center justify-center text-sm font-bold text-white glow-cyan">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M12 4.5L19.5 8.5V10C19.5 15.25 16.5 18.75 12 20C7.5 18.75 4.5 15.25 4.5 10V8.5L12 4.5Z"/>
+              </svg>
+            </div>
+            <div className="hidden sm:block">
+              <span className="font-bold text-lg">Agentic<span className="text-[var(--accent-cyan)]">AI</span>Home</span>
+            </div>
           </a>
 
-          <div className="hidden md:flex items-center gap-8">
-            {links.map(l => (
-              <a key={l.href} href={l.href} className="text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors text-sm">{l.label}</a>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-1">
+            {links.map(link => (
+              <a 
+                key={link.href} 
+                href={link.href} 
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center ${
+                  isActive(link.href)
+                    ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5'
+                }`}
+                aria-current={isActive(link.href) ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
             ))}
-            <a href="/trust" className="text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors text-sm">Trust & Safety</a>
-          </div>
-
-          <div className="hidden md:flex items-center gap-4">
-            {/* Trust & Safety Shield Icon */}
+            
+            {/* Trust & Safety */}
             <a
               href="/trust"
-              className="flex items-center gap-1 text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors text-sm group"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center gap-2 ${
+                isActive('/trust')
+                  ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--accent-green)]/5'
+              }`}
+              aria-current={isActive('/trust') ? 'page' : undefined}
               title="Trust & Safety"
             >
-              <svg className="w-4 h-4 group-hover:text-[var(--accent-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <span className="hidden lg:inline">Trust & Safety</span>
+              <span className="hidden lg:inline">Trust</span>
             </a>
+          </div>
 
+          {/* User Actions */}
+          <div className="hidden md:flex items-center gap-3">
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-white transition-colors"
+                  className="flex items-center gap-3 px-3 py-2 rounded-xl text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)] transition-all min-h-[44px] group"
+                  aria-expanded={userMenuOpen}
+                  aria-haspopup="true"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold text-white">
+                  <div className="avatar-placeholder w-8 h-8 text-xs">
                     {user.displayName.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-sm">{user.displayName}</span>
+                  <span className="text-sm font-medium hidden lg:inline">{user.displayName}</span>
                   <svg className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-52 card p-2 shadow-xl z-50 animate-in fade-in duration-200">
                     <a
                       href="/dashboard"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-white transition-colors min-h-[40px]"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7zm16 0V5a2 2 0 00-2-2H7a2 2 0 00-2 2v2h14z" />
+                      </svg>
                       Dashboard
                     </a>
                     <a
                       href="/agents/register"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-white transition-colors min-h-[40px]"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
                       Register Agent
                     </a>
                     <a
                       href="/tasks/create"
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)] hover:text-white transition-colors min-h-[40px]"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                      </svg>
                       Post Task
                     </a>
-                    <div className="border-t border-slate-700 my-2"></div>
+                    <div className="border-t border-[var(--border-color)] my-2"></div>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:bg-red-500/10 hover:text-red-400 transition-colors min-h-[40px] w-full text-left"
                     >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
                       Logout
                     </button>
                   </div>
@@ -101,58 +147,121 @@ export default function Navbar() {
               <div className="flex items-center gap-3">
                 <a
                   href="/auth"
-                  className="text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors text-sm"
+                  className="px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors text-sm font-medium min-h-[44px] flex items-center"
                 >
                   Sign In
                 </a>
                 <a
                   href="/auth"
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg text-sm font-medium transition-all duration-200"
+                  className="btn btn-primary text-sm min-h-[44px]"
                 >
                   Sign Up
                 </a>
               </div>
             )}
-            <WalletConnect />
+            <div className="pl-3 border-l border-[var(--border-color)]">
+              <WalletConnect />
+            </div>
           </div>
 
-          <button onClick={() => setOpen(!open)} className="md:hidden text-[var(--text-secondary)] p-2">
-            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d={open ? 'M6 6l12 12M6 18L18 6' : 'M4 6h16M4 12h16M4 18h16'} /></svg>
+          {/* Mobile Menu Button */}
+          <button 
+            onClick={() => setOpen(!open)} 
+            className="md:hidden p-2 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+            aria-label="Toggle menu"
+            aria-expanded={open}
+          >
+            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform">
+              <path d={open ? 'M6 6l12 12M6 18L18 6' : 'M4 6h16M4 12h16M4 18h16'} />
+            </svg>
           </button>
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-primary)]/95 backdrop-blur-xl">
-          <div className="px-4 py-4 space-y-3">
-            {links.map(l => (
-              <a key={l.href} href={l.href} className="block text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors py-2">{l.label}</a>
+        <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-primary)]/95 backdrop-blur-xl animate-in slide-in-from-top duration-200">
+          <div className="container p-4 space-y-1">
+            {links.map(link => (
+              <a 
+                key={link.href} 
+                href={link.href} 
+                className={`flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
+                  isActive(link.href)
+                    ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]'
+                }`}
+                onClick={() => setOpen(false)}
+                aria-current={isActive(link.href) ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
             ))}
-            <a href="/trust" className="block text-[var(--text-secondary)] hover:text-[var(--accent-green)] transition-colors py-2">Trust & Safety</a>
+            
+            <a 
+              href="/trust" 
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
+                isActive('/trust')
+                  ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--bg-card)]'
+              }`}
+              onClick={() => setOpen(false)}
+              aria-current={isActive('/trust') ? 'page' : undefined}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Trust & Safety
+            </a>
             
             {user ? (
-              <>
-                <div className="pt-2 border-t border-slate-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold text-white">
-                      {user.displayName.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="text-sm text-white">{user.displayName}</span>
+              <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-1">
+                <div className="flex items-center gap-3 px-3 py-2 mb-2">
+                  <div className="avatar-placeholder w-8 h-8 text-xs">
+                    {user.displayName.charAt(0).toUpperCase()}
                   </div>
-                  <a href="/dashboard" className="block text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors py-2">Dashboard</a>
-                  <a href="/agents/register" className="block text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors py-2">Register Agent</a>
-                  <a href="/tasks/create" className="block text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors py-2">Post Task</a>
-                  <button onClick={handleLogout} className="block w-full text-left text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors py-2">Logout</button>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">{user.displayName}</span>
                 </div>
-              </>
+                
+                <a href="/dashboard" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7zm16 0V5a2 2 0 00-2-2H7a2 2 0 00-2 2v2h14z" />
+                  </svg>
+                  Dashboard
+                </a>
+                <a href="/agents/register" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Register Agent
+                </a>
+                <a href="/tasks/create" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  Post Task
+                </a>
+                <button onClick={() => { handleLogout(); setOpen(false); }} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all min-h-[44px] w-full text-left">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Logout
+                </button>
+              </div>
             ) : (
-              <div className="pt-2 border-t border-slate-700 space-y-2">
-                <a href="/auth" className="block text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] transition-colors py-2">Sign In</a>
-                <a href="/auth" className="block px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium text-center">Sign Up</a>
+              <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-2">
+                <a href="/auth" className="flex items-center px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
+                  Sign In
+                </a>
+                <a href="/auth" className="btn btn-primary w-full justify-center min-h-[44px]" onClick={() => setOpen(false)}>
+                  Sign Up
+                </a>
               </div>
             )}
             
-            <div className="pt-2"><WalletConnect /></div>
+            <div className="pt-3 mt-3 border-t border-[var(--border-color)]">
+              <WalletConnect />
+            </div>
           </div>
         </div>
       )}

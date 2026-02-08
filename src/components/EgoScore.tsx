@@ -204,10 +204,32 @@ export default function EgoScore({
             )}
           </div>
           
-          {/* Tier icon overlay for legendary */}
+          {/* Enhanced tier effects for legendary */}
           {displayScore >= 91 && (
-            <div className="absolute -top-2 -right-2 text-2xl animate-pulse">
-              💎
+            <>
+              {/* Legendary pulse effect */}
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[var(--accent-purple)]/20 via-transparent to-[var(--accent-cyan)]/20 animate-pulse" />
+              
+              {/* Legendary icon with custom pulse */}
+              <div className="absolute -top-3 -right-3 text-3xl animate-bounce" style={{ animationDuration: '2s' }}>
+                💎
+              </div>
+              
+              {/* Orbital glow effect */}
+              <div 
+                className="absolute inset-0 rounded-full opacity-30"
+                style={{
+                  background: `conic-gradient(from 0deg, ${tier.color}00, ${tier.color}80, ${tier.color}00)`,
+                  animation: 'spin 4s linear infinite'
+                }}
+              />
+            </>
+          )}
+          
+          {/* Mythic tier effects */}
+          {displayScore >= 76 && displayScore < 91 && (
+            <div className="absolute -top-1 -right-1 text-lg">
+              ✨
             </div>
           )}
         </div>

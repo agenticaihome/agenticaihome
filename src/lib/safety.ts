@@ -576,7 +576,7 @@ export function initiateDisputeResolution(taskId: string, initiatedBy: 'client' 
     throw new Error(`Task ${taskId} not found`);
   }
 
-  const arbiters = selectArbiters([task.assignedAgentId || '', task.creatorId]);
+  const arbiters = selectArbiters([task.assignedAgentId || '', task.creatorAddress]);
   
   if (arbiters.length < 3) {
     // Not enough arbiters - will auto-refund after timeout

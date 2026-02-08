@@ -1,4 +1,4 @@
-import { TransactionBuilder, OutputBuilder, SConstant, SInt } from "@fleet-sdk/core";
+import { TransactionBuilder, OutputBuilder, SConstant, SInt, SColl, SByte } from "@fleet-sdk/core";
 import { getCurrentHeight, getBoxesByAddress } from './explorer';
 import { MIN_BOX_VALUE, PLATFORM_FEE_PERCENT } from './constants';
 
@@ -70,16 +70,17 @@ export async function createEscrowTx(params: EscrowParams): Promise<UnsignedTran
     const escrowAmount = amountNanoErg - platformFee;
 
     // Build transaction using Fleet SDK
-    const txBuilder = new TransactionBuilder();
+    const currentHeight = await getCurrentHeight();
+    const txBuilder = new TransactionBuilder(currentHeight);
     
     // Add escrow output with contract script
     const escrowOutput = new OutputBuilder(escrowAmount, clientAddress) // TODO: Use actual escrow contract address
       .setAdditionalRegisters({
-        R4: SConstant.from(clientAddress), // Client address
-        R5: SConstant.from(agentAddress),  // Agent address  
-        R6: SConstant.from(SInt(deadline)), // Deadline height
-        R7: SConstant.from(taskId || ''),   // Task ID
-        R8: SConstant.from(description || '') // Description
+        R4: SConstant(SColl(SByte, Buffer.from(clientAddress))), // Client address
+        R5: SConstant(SColl(SByte, Buffer.from(agentAddress))),  // Agent address  
+        R6: SConstant(SInt(deadline)), // Deadline height
+        R7: SConstant(SColl(SByte, Buffer.from(taskId || ''))),   // Task ID
+        R8: SConstant(SColl(SByte, Buffer.from(description || ''))) // Description
       });
 
     txBuilder.to(escrowOutput);

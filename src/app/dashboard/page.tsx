@@ -41,19 +41,24 @@ export default function Dashboard() {
     };
   }, [userTasks, workingOnTasks]);
 
-  // Generate mock data for charts
+  // Real earnings data from completed tasks (no fake data)
   const ergEarningsData = useMemo(() => {
-    const now = new Date();
-    return Array.from({ length: 30 }, (_, i) => {
-      const date = new Date(now.getTime() - (29 - i) * 24 * 60 * 60 * 1000);
-      const earnings = Math.random() * 50 + (i * 2); // Trending upward
-      return {
-        date: date.toISOString().split('T')[0],
-        earnings: Math.round(earnings * 100) / 100,
-        cumulative: Math.round((earnings + i * 10) * 100) / 100
-      };
+    const completed = workingOnTasks.filter(t => t.status === 'completed' && t.completedAt);
+    if (completed.length === 0) return [];
+    
+    // Group by date
+    const byDate: Record<string, number> = {};
+    completed.forEach(t => {
+      const date = new Date(t.completedAt!).toISOString().split('T')[0];
+      byDate[date] = (byDate[date] || 0) + t.budgetErg;
     });
-  }, []);
+    
+    let cumulative = 0;
+    return Object.entries(byDate).sort().map(([date, earnings]) => {
+      cumulative += earnings;
+      return { date, earnings: Math.round(earnings * 100) / 100, cumulative: Math.round(cumulative * 100) / 100 };
+    });
+  }, [workingOnTasks]);
 
   const taskStatusData = useMemo(() => {
     const statusCounts = userTasks.reduce((acc, task) => {
@@ -77,18 +82,13 @@ export default function Dashboard() {
     }));
   }, [userTasks]);
 
+  // EGO score - just show current scores, no fake history
   const egoScoreData = useMemo(() => {
-    const now = new Date();
-    return userAgents.flatMap(agent => 
-      Array.from({ length: 10 }, (_, i) => {
-        const date = new Date(now.getTime() - (9 - i) * 7 * 24 * 60 * 60 * 1000);
-        return {
-          date: date.toISOString().split('T')[0],
-          agent: agent.name,
-          score: agent.egoScore + Math.random() * 20 - 10,
-        };
-      })
-    );
+    return userAgents.map(agent => ({
+      date: new Date().toISOString().split('T')[0],
+      agent: agent.name,
+      score: agent.egoScore,
+    }));
   }, [userAgents]);
 
   // Agent performance metrics
@@ -102,7 +102,7 @@ export default function Dashboard() {
         name: agent.name,
         completionRate: agentTasks.length > 0 ? (completedTasks.length / agentTasks.length) * 100 : 0,
         avgRating: agent.rating,
-        egoTrend: Math.random() > 0.5 ? 'up' : 'down',
+        egoTrend: agent.egoScore >= 50 ? 'up' : 'down',
         tasksCompleted: agent.tasksCompleted,
         status: agent.status
       };
@@ -217,32 +217,42 @@ export default function Dashboard() {
             <div className="lg:col-span-2 bg-slate-800/50 border border-slate-700 rounded-xl p-6">
               <h3 className="text-white text-lg font-semibold mb-4">ERG Earnings Over Time</h3>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={ergEarningsData}>
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="#64748b" 
-                      fontSize={12}
-                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    />
-                    <YAxis stroke="#64748b" fontSize={12} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1e293b', 
-                        border: '1px solid #334155',
-                        borderRadius: '8px',
-                        color: '#f8fafc'
-                      }}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="cumulative" 
-                      stroke="#10b981" 
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {ergEarningsData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={ergEarningsData}>
+                      <XAxis 
+                        dataKey="date" 
+                        stroke="#64748b" 
+                        fontSize={12}
+                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      />
+                      <YAxis stroke="#64748b" fontSize={12} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #334155',
+                          borderRadius: '8px',
+                          color: '#f8fafc'
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="cumulative" 
+                        stroke="#10b981" 
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <DollarSign className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                      <p className="text-gray-400 font-medium">No earnings data yet</p>
+                      <p className="text-gray-500 text-sm mt-1">Complete tasks to see your earnings chart</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -250,32 +260,42 @@ export default function Dashboard() {
             <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
               <h3 className="text-white text-lg font-semibold mb-4">Tasks by Status</h3>
               <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={taskStatusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {taskStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1e293b', 
-                        border: '1px solid #334155',
-                        borderRadius: '8px',
-                        color: '#f8fafc'
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                {taskStatusData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={taskStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {taskStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          border: '1px solid #334155',
+                          borderRadius: '8px',
+                          color: '#f8fafc'
+                        }}
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <Target className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                      <p className="text-gray-400 font-medium">No tasks yet</p>
+                      <p className="text-gray-500 text-sm mt-1">Post a task to get started</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

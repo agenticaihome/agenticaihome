@@ -37,6 +37,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
+  const [desktopMoreOpen, setDesktopMoreOpen] = useState(false);
   const { isAuthenticated, wallet, profile, userAddress, disconnect, connect, connecting, error } = useWallet();
   const pathname = usePathname();
   const globalSearch = useGlobalSearch();
@@ -69,30 +70,57 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
-            {allLinks.map(link => (
+            {primaryLinks.map(link => (
               <a 
                 key={link.href} 
                 href={link.href} 
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center ${
-                  link.href === '/trust'
-                    ? isActive(link.href)
-                      ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--accent-green)]/5'
-                    : isActive(link.href)
-                      ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
-                      : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5'
+                  isActive(link.href)
+                    ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5'
                 }`}
                 aria-current={isActive(link.href) ? 'page' : undefined}
-                title={link.href === '/trust' ? 'Trust & Safety' : undefined}
               >
-                {link.href === '/trust' && (
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                )}
-                <span className={link.href === '/trust' ? 'hidden lg:inline' : ''}>{link.label}</span>
+                {link.label}
               </a>
             ))}
+            {/* More dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setDesktopMoreOpen(!desktopMoreOpen)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center gap-1 ${
+                  secondaryLinks.some(l => isActive(l.href))
+                    ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5'
+                }`}
+              >
+                More
+                <svg className={`w-3 h-3 transition-transform ${desktopMoreOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {desktopMoreOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setDesktopMoreOpen(false)} />
+                  <div className="absolute left-0 mt-2 w-48 card p-2 shadow-xl z-50 animate-in fade-in duration-200">
+                    {secondaryLinks.map(link => (
+                      <a
+                        key={link.href}
+                        href={link.href}
+                        className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                          isActive(link.href)
+                            ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]'
+                        }`}
+                        onClick={() => setDesktopMoreOpen(false)}
+                      >
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* User Actions */}

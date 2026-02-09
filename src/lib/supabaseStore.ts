@@ -190,89 +190,10 @@ function validateErgoAddress(address: string): boolean {
   return base58Pattern.test(address);
 }
 
-// ---- Mock data seeding (runs once if DB is empty) ----
-let _initPromise: Promise<void> | null = null;
-
+// ---- Data initialization (no-op, database starts empty) ----
 async function initializeData(): Promise<void> {
-  if (typeof window === 'undefined') return;
-  if (_initPromise) return _initPromise;
-  
-  _initPromise = (async () => {
-    // Check if agents table has data
-    const { count } = await supabase.from('agents').select('*', { count: 'exact', head: true });
-    if (count && count > 0) return; // Already seeded
-
-    // Import and seed mock data
-    const { agents, tasks, bidsForTask, sampleTransactions, completions, reputationHistory } = await import('./mock-data');
-
-    const agentsWithSafety = agents.map(agent => ({
-      ...agent,
-      probationCompleted: agent.probationCompleted ?? (agent.tasksCompleted >= 5),
-      probationTasksRemaining: agent.probationTasksRemaining ?? Math.max(0, 5 - agent.tasksCompleted),
-      suspendedUntil: agent.suspendedUntil ?? null,
-      anomalyScore: agent.anomalyScore ?? 0,
-      maxTaskValue: agent.maxTaskValue ?? (agent.tasksCompleted >= 5 ? 50 : 10),
-      velocityWindow: agent.velocityWindow ?? { count: 0, windowStart: new Date().toISOString() },
-      tier: (agent.tier ?? (
-        agent.tasksCompleted >= 100 ? 'elite' :
-        agent.tasksCompleted >= 20 ? 'established' :
-        agent.tasksCompleted >= 5 ? 'rising' : 'newcomer'
-      )) as Agent['tier'],
-      disputesWon: agent.disputesWon ?? 0,
-      disputesLost: agent.disputesLost ?? 0,
-      consecutiveDisputesLost: agent.consecutiveDisputesLost ?? 0,
-      completionRate: agent.completionRate ?? (agent.tasksCompleted > 0 ? 0.9 : 0),
-      lastActivityAt: agent.lastActivityAt ?? agent.createdAt,
-    }));
-
-    // Insert agents
-    for (const a of agentsWithSafety) {
-      await supabase.from('agents').insert(agentToDb(a));
-    }
-
-    // Insert tasks
-    for (const t of tasks) {
-      await supabase.from('tasks').insert(taskToDb(t));
-    }
-
-    // Insert bids
-    const allBids: Bid[] = [];
-    Object.values(bidsForTask).forEach((bidArray) => {
-      allBids.push(...(bidArray as Bid[]));
-    });
-    for (const b of allBids) {
-      await supabase.from('bids').insert(bidToDb(b));
-    }
-
-    // Insert transactions
-    for (const t of sampleTransactions) {
-      await supabase.from('transactions').insert({
-        id: t.id, task_id: t.taskId, task_title: t.taskTitle,
-        amount_erg: t.amountErg, type: t.type, date: t.date, tx_id: t.txId,
-      });
-    }
-
-    // Insert completions
-    for (const c of completions) {
-      await supabase.from('completions').insert({
-        id: c.id, task_id: c.taskId, task_title: c.taskTitle,
-        agent_id: c.agentId, rating: c.rating, review: c.review,
-        reviewer_name: c.reviewerName,
-        reviewer_id: c.reviewerId ?? `user-${Math.floor(Math.random() * 100).toString().padStart(3, '0')}`,
-        ego_earned: c.egoEarned, erg_paid: c.ergPaid, completed_at: c.completedAt,
-      });
-    }
-
-    // Insert reputation events
-    for (const e of reputationHistory) {
-      await supabase.from('reputation_events').insert({
-        id: e.id, agent_id: e.agentId, event_type: e.eventType,
-        ego_delta: e.egoDelta, description: e.description, created_at: e.createdAt,
-      });
-    }
-  })();
-
-  return _initPromise;
+  // No mock data seeding — database should contain only real user data
+  return;
 }
 
 // ---- Wallet Profile Management ----

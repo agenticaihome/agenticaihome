@@ -57,6 +57,17 @@ interface MempoolInfo {
   }>;
 }
 
+const ERGO_API = 'https://api.ergoplatform.com/api/v1';
+const CORS_PROXY = 'https://corsproxy.io/?';
+
+async function ergoFetch(path: string): Promise<Response> {
+  try {
+    const res = await fetch(`${ERGO_API}${path}`);
+    if (res.ok) return res;
+  } catch {}
+  return fetch(`${CORS_PROXY}${encodeURIComponent(`${ERGO_API}${path}`)}`);
+}
+
 export default function ExplorerPage() {
   const { wallet, userAddress } = useWallet();
   const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
@@ -81,10 +92,10 @@ export default function ExplorerPage() {
     try {
       // Fetch network info, blocks, transactions, and mempool
       const [infoRes, blocksRes, txRes, mempoolRes] = await Promise.all([
-        fetch('https://api.ergoplatform.com/api/v1/networkState'),
-        fetch('https://api.ergoplatform.com/api/v1/blocks?limit=10&offset=0&sortBy=height&sortDirection=desc'),
-        fetch('https://api.ergoplatform.com/api/v1/transactions?limit=10&offset=0&sortBy=timestamp&sortDirection=desc'),
-        fetch('https://api.ergoplatform.com/api/v1/mempool/transactions?limit=20&offset=0').catch(() => null),
+        ergoFetch('/networkState'),
+        ergoFetch('/blocks?limit=10&offset=0&sortBy=height&sortDirection=desc'),
+        ergoFetch('/transactions?limit=10&offset=0&sortBy=timestamp&sortDirection=desc'),
+        ergoFetch('/mempool/transactions?limit=20&offset=0').catch(() => null),
       ]);
 
       if (infoRes.ok) {
@@ -154,8 +165,8 @@ export default function ExplorerPage() {
     setSearchLoading(true);
     try {
       const [balanceRes, txRes] = await Promise.all([
-        fetch(`https://api.ergoplatform.com/api/v1/addresses/${address}/balance/total`),
-        fetch(`https://api.ergoplatform.com/api/v1/addresses/${address}/transactions?limit=1`)
+        ergoFetch(`/addresses/${address}/balance/total`),
+        ergoFetch(`/addresses/${address}/transactions?limit=1`)
       ]);
 
       if (balanceRes.ok && txRes.ok) {
@@ -216,8 +227,8 @@ export default function ExplorerPage() {
       try {
         setSearchLoading(true);
         const [txRes, blockRes] = await Promise.all([
-          fetch(`https://api.ergoplatform.com/api/v1/transactions/${query}`).catch(() => null),
-          fetch(`https://api.ergoplatform.com/api/v1/blocks/${query}`).catch(() => null)
+          ergoFetch(`/transactions/${query}`).catch(() => null),
+          ergoFetch(`/blocks/${query}`).catch(() => null)
         ]);
         
         if (txRes && txRes.ok) {
@@ -241,7 +252,7 @@ export default function ExplorerPage() {
       // Block height
       try {
         setSearchLoading(true);
-        const blockRes = await fetch(`https://api.ergoplatform.com/api/v1/blocks/at/${query}`);
+        const blockRes = await ergoFetch(`/blocks/at/${query}`);
         if (blockRes.ok) {
           const blockData = await blockRes.json();
           setSearchResult('block');

@@ -18,7 +18,7 @@ export default function Home() {
             <span className="w-1 h-1 rounded-full bg-[var(--accent-green)]/60" />
             <span>MIT Licensed</span>
             <span className="w-1 h-1 rounded-full bg-[var(--accent-green)]/60" />
-            <span>Building in Public</span>
+            <span>Ergo Blockchain</span>
           </div>
 
           {/* Hero Title */}
@@ -423,7 +423,7 @@ export default function Home() {
                 designed for exactly this kind of composable, low-fee computation.
               </p>
               <p className="text-gradient-cyan text-xl font-semibold">
-                We&apos;re building in public. Everything is open source. The code is the product.
+                Everything is open source. The code is the product.
               </p>
             </div>
           </div>

@@ -84,7 +84,7 @@ export default function CreateTask() {
         throw new Error('Wallet not connected');
       }
       
-      const newTask = createTaskData({
+      const newTask = await createTaskData({
         title: formData.title.trim(),
         description: formData.description.trim(),
         skillsRequired: formData.skillsRequired,

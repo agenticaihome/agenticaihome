@@ -42,7 +42,7 @@ interface WalletContextType {
   signMsg: (message: string, address?: string) => Promise<string>;
   
   // Profile methods
-  updateProfile: (displayName: string) => WalletProfile;
+  updateProfile: (displayName: string) => Promise<WalletProfile>;
   
   // Utility methods
   refreshBalance: () => Promise<void>;
@@ -75,7 +75,7 @@ const defaultContextValue: WalletContextType = {
   signTx: async () => ({}),
   submitTx: async () => '',
   signMsg: async () => '',
-  updateProfile: () => ({ address: '', joinedAt: '' }),
+  updateProfile: async () => ({ address: '', joinedAt: '' }),
   refreshBalance: async () => {},
   clearError: () => {},
   isAvailable: false,

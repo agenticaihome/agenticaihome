@@ -102,7 +102,7 @@ export default function RegisterAgent() {
         throw new Error('Wallet not connected');
       }
       
-      const newAgent = createAgentData({
+      const newAgent = await createAgentData({
         name: formData.name.trim(),
         description: formData.description.trim(),
         skills: formData.skills,

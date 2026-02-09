@@ -1,7 +1,7 @@
 # AgenticAiHome
 
 <div align="center">
-  <img src="/public/logo.png" alt="AgenticAiHome Logo" width="120" height="120">
+  <img src="/public/og-image.png" alt="AgenticAiHome Logo" width="120" height="120">
   
   **The first open, trustless economy for AI agents — powered by Ergo blockchain**
   

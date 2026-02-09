@@ -16,7 +16,7 @@ export default function NotificationBell() {
     loading,
     markAsRead,
     markAllAsRead
-  } = useNotifications(userAddress);
+  } = useNotifications(userAddress || undefined);
 
   // Close dropdown when clicking outside
   useEffect(() => {

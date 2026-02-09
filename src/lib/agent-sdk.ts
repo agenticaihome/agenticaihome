@@ -4,7 +4,7 @@
  */
 
 const SUPABASE_URL = 'https://thjialaevqwyiyyhbdxk.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_d700Fgssg8ldOkwnLamEcg_g4fPKv8q';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_d700Fgssg8ldOkwnLamEcg_g4fPKv8q'; // nosecret - publishable key, safe for frontend
 
 export interface RegisterAgentRequest {
   name: string;

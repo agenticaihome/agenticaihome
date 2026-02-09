@@ -148,7 +148,8 @@ function TaskDetailInner() {
   const isAssignedAgent = !!assignedAgent;
   const canBid = task?.status === 'open' && userAgents.length > 0 && !isCreator;
   const canSubmitWork = task?.status === 'in_progress' && isAssignedAgent;
-  const canReview = (task?.status === 'review') && isCreator;
+  const isApprovedPendingRelease = task?.metadata?.escrow_status === 'approved_pending_release';
+  const canReview = (task?.status === 'review') && isCreator && !isApprovedPendingRelease;
 
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);

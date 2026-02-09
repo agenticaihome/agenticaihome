@@ -151,3 +151,99 @@ export function generateCSP(): string {
     "form-action 'self'"
   ].join('; ');
 }
+
+/**
+ * Enhanced input length validation with strict limits
+ */
+export const INPUT_LIMITS = {
+  NAME: 100,
+  TITLE: 200,
+  DESCRIPTION: 2000,
+  TASK_DESCRIPTION: 5000,
+  MESSAGE: 1000,
+  SKILL: 50,
+  SKILLS_COUNT: 20,
+  EMAIL: 255,
+  URL: 500
+} as const;
+
+/**
+ * Honeypot field detector - checks for bot-filled hidden fields
+ */
+export function detectHoneypotFields(formData: Record<string, unknown>): boolean {
+  const honeypotFields = [
+    'website', 'url', 'homepage', 'phone', 'telephone', 'mobile',
+    'company', 'organization', 'business', '_token', '_honey',
+    'bot_check', 'spam_check', 'hidden_field', 'do_not_fill'
+  ];
+  
+  return honeypotFields.some(field => {
+    const value = formData[field];
+    return value && typeof value === 'string' && value.trim().length > 0;
+  });
+}
+
+/**
+ * Advanced spam pattern detection
+ */
+const ADVANCED_SPAM_PATTERNS = [
+  /bitcoin.*double/i,
+  /crypto.*investment.*guaranteed/i,
+  /get.*rich.*quick/i,
+  /make.*money.*fast/i,
+  /binary.*options/i,
+  /(.)\1{10,}/, // Repeated characters
+  /[!?]{5,}/, // Excessive punctuation
+] as const;
+
+export function detectAdvancedSpam(text: string): boolean {
+  if (!text || typeof text !== 'string') return false;
+  return ADVANCED_SPAM_PATTERNS.some(pattern => pattern.test(text));
+}
+
+/**
+ * Form field validation with honeypot and spam detection
+ */
+export function validateFormSubmission(formData: Record<string, unknown>): {
+  valid: boolean;
+  errors: string[];
+  isSpam: boolean;
+} {
+  const errors: string[] = [];
+  let isSpam = false;
+  
+  // Check honeypot fields
+  if (detectHoneypotFields(formData)) {
+    isSpam = true;
+    errors.push('Automated submission detected');
+  }
+  
+  // Check for spam in text fields
+  const textFields = ['name', 'title', 'description', 'message', 'content'];
+  for (const field of textFields) {
+    const value = formData[field];
+    if (value && typeof value === 'string') {
+      if (detectAdvancedSpam(value)) {
+        isSpam = true;
+        errors.push(`Spam detected in ${field} field`);
+      }
+    }
+  }
+  
+  // Check submission timing (too fast = bot)
+  const submissionTime = formData._submissionTime;
+  const pageLoadTime = formData._pageLoadTime;
+  if (typeof submissionTime === 'number' && typeof pageLoadTime === 'number') {
+    const fillTime = submissionTime - pageLoadTime;
+    if (fillTime < 3000) { // Less than 3 seconds to fill form
+      isSpam = true;
+      errors.push('Form submitted too quickly');
+    }
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+    isSpam
+  };
+}

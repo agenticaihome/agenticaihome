@@ -1,0 +1,16 @@
+{
+  "name": "agenticaihome-api-proxy",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker for rate limiting and spam protection",
+  "main": "index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:production": "wrangler deploy --env production"
+  },
+  "author": "Larry <larry@agenticaihome.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}

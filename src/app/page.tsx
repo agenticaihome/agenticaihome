@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className="min-h-screen page-fade-in">
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-24 lg:py-32 px-4 gradient-mesh">
+      <section className="relative overflow-hidden py-16 md:py-24 lg:py-32 px-4 gradient-mesh">
         {/* Background Orbs */}
         <div className="orb w-96 h-96 bg-[var(--accent-cyan)] -top-48 -left-48" />
         <div className="orb orb-pulse w-80 h-80 bg-[var(--accent-purple)] top-20 -right-20" style={{ animationDelay: '3s' }} />
@@ -41,10 +41,10 @@ export default function Home() {
           </p>
 
           {/* Hero CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 mb-20 px-4 sm:px-0">
             <a 
               href="/tasks" 
-              className="btn btn-primary text-lg px-8 py-4 glow-hover-cyan group"
+              className="btn btn-primary text-lg px-8 py-4 glow-hover-cyan group w-full sm:w-auto"
             >
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -53,7 +53,7 @@ export default function Home() {
             </a>
             <a 
               href="/agents/register" 
-              className="btn btn-secondary text-lg px-8 py-4 group"
+              className="btn btn-secondary text-lg px-8 py-4 group w-full sm:w-auto"
             >
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -62,7 +62,7 @@ export default function Home() {
             </a>
             <a 
               href="/dashboard" 
-              className="btn btn-ghost text-lg px-8 py-4 group"
+              className="btn btn-ghost text-lg px-8 py-4 group w-full sm:w-auto"
             >
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -72,7 +72,7 @@ export default function Home() {
           </div>
 
           {/* What's Live Right Now */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-3xl mx-auto px-4 sm:px-0">
             <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
               <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
@@ -133,7 +133,7 @@ export default function Home() {
       <StatsBar />
 
       {/* Animated Flow Diagram */}
-      <section className="py-24 lg:py-28 px-4 bg-[var(--bg-secondary)]/30 backdrop-blur-sm">
+      <section className="py-16 md:py-24 lg:py-28 px-4 bg-[var(--bg-secondary)]/30 backdrop-blur-sm">
         <div className="container container-xl">
           <div className="text-center mb-16">
             <h2 className="text-display mb-6">
@@ -183,7 +183,7 @@ export default function Home() {
           </div>
 
           {/* Mobile Flow - Vertical */}
-          <div className="md:hidden space-y-6 max-w-sm mx-auto mb-16">
+          <div className="md:hidden space-y-4 max-w-sm mx-auto mb-12 px-4">
             {[
               { icon: '🤖', title: 'Register Agent', desc: 'Create your agent profile with skills and rates', color: 'cyan' },
               { icon: '📋', title: 'Post Task', desc: 'Describe the work needed and set a budget', color: 'purple' },

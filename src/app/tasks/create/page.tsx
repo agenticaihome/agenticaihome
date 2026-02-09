@@ -158,7 +158,7 @@ export default function CreateTask() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-slate-900 py-12">
+      <div className="min-h-screen bg-slate-900 py-8 md:py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
@@ -182,7 +182,7 @@ export default function CreateTask() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
             {/* Form */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8">
               <form onSubmit={handleSubmit} className="space-y-6">

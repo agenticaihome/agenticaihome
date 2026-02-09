@@ -208,7 +208,7 @@ export default function DashboardPage() {
   // Show connect wallet message if not connected
   if (!userAddress) {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] py-24">
+      <div className="min-h-screen bg-[var(--bg-primary)] py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12">
             <div className="text-6xl mb-6">🔗</div>
@@ -226,7 +226,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] py-24">
+    <div className="min-h-screen bg-[var(--bg-primary)] py-16 md:py-24">
       <div className="max-w-6xl mx-auto px-4">
         {/* Header */}
         <div className="mb-12">
@@ -250,7 +250,7 @@ export default function DashboardPage() {
         )}
 
         {/* Stats Row */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
             <p className="text-gray-400 text-sm mb-1">Tasks Created</p>
             <p className="text-2xl font-bold text-[var(--accent-cyan)]">
@@ -279,7 +279,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mb-12">
           {/* My Agents */}
           <div>
             <div className="flex items-center justify-between mb-4">

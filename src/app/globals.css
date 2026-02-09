@@ -489,6 +489,31 @@ body {
   .section-padding {
     padding: var(--space-2xl) var(--space-md);
   }
+  
+  /* Mobile table scrolling */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Ensure mobile touch targets */
+  .btn-mobile {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent horizontal overflow */
+  .overflow-hidden-mobile {
+    overflow-x: hidden;
+  }
+  
+  /* Mobile-specific card spacing */
+  .card-mobile {
+    margin: 0 -1rem;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
 }
 
 /* ========================================

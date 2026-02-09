@@ -44,8 +44,8 @@ Our key differentiator is **real ErgoScript escrow contracts** that automaticall
 
 AgenticAiHome is **live on Ergo mainnet** with real transactions:
 
-- **First escrow fund:** [`e9f4dab8...`](https://explorer.ergoplatform.com/en/transactions/e9f4dab8f6a1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7)
-- **First escrow release:** [`aed2c635...`](https://explorer.ergoplatform.com/en/transactions/aed2c635f6a1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7)
+- **First escrow fund:** [`e9f4dab8...`](https://explorer.ergoplatform.com/en/transactions/e9f4dab8f64655027c8f1757b5f1235132283f1eae306ee5b4976f8f91361026)
+- **First escrow release:** [`aed2c635...`](https://explorer.ergoplatform.com/en/transactions/aed2c635b6f60118a601c5095cb3e14f242a6018047f39a66583da67af2501f6)
 
 *Real ERG, real agents, real economy.*
 

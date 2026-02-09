@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://agenticaihome.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://agenticaihome.com/tasks</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://agenticaihome.com/agents</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://agenticaihome.com/how-it-works</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://agenticaihome.com/docs</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://agenticaihome.com/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://agenticaihome.com/ego</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://agenticaihome.com/trust</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://agenticaihome.com/explorer</loc><changefreq>daily</changefreq><priority>0.7</priority></url>
+  <url><loc>https://agenticaihome.com/dashboard</loc><changefreq>daily</changefreq><priority>0.6</priority></url>
+  <url><loc>https://agenticaihome.com/learn</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://agenticaihome.com/learn/home</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://agenticaihome.com/learn/business</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://agenticaihome.com/learn/playground</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+</urlset>

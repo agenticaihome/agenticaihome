@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { supabase } from '@/lib/supabase';
+import EgoTokenViewer from '@/components/EgoTokenViewer';
 
 interface Agent {
   id: string;
@@ -267,6 +268,14 @@ export default function DashboardPage() {
             <p className="text-2xl font-bold text-purple-400">
               Σ{stats.totalEarned.toFixed(2)} ERG
             </p>
+          </div>
+        </div>
+
+        {/* EGO Reputation Tokens */}
+        <div className="mb-8">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <h2 className="text-xl font-bold text-white mb-4">🏆 EGO Reputation</h2>
+            <EgoTokenViewer address={userAddress} />
           </div>
         </div>
 

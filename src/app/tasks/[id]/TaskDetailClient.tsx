@@ -21,6 +21,8 @@ import {
   type TaskFlowEntry,
   type TaskFlowState,
 } from '@/lib/taskFlow';
+import { mintEgoAfterRelease, egoTokenExplorerUrl } from '@/lib/ergo/ego-token';
+import { getUtxos } from '@/lib/ergo/wallet';
 import {
   getDeliverablesByTask,
   submitDeliverable,
@@ -43,6 +45,8 @@ export default function TaskDetailClient() {
   const [showDisputeForm, setShowDisputeForm] = useState(false);
   const [showRevisionForm, setShowRevisionForm] = useState(false);
   const [actionLoading, setActionLoading] = useState('');
+  const [egoMintTxId, setEgoMintTxId] = useState<string | null>(null);
+  const [egoMintError, setEgoMintError] = useState<string | null>(null);
 
   const taskId = params.id as string;
   const [task, setTask] = useState<Awaited<ReturnType<typeof getTask>>>(null);
@@ -475,6 +479,66 @@ export default function TaskDetailClient() {
                       </button>
                     </div>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* EGO Mint Section — visible after task completion */}
+            {isCreator && task.status === 'completed' && assignedAgent && (
+              <div className="bg-gradient-to-r from-emerald-900/30 to-cyan-900/30 border border-emerald-500/30 rounded-lg p-6">
+                <h2 className="font-semibold text-lg text-white mb-3">🏆 Mint EGO Reputation Tokens</h2>
+                <p className="text-gray-400 text-sm mb-4">
+                  Reward <strong className="text-emerald-400">{assignedAgent.name}</strong> with 10 EGO soulbound reputation tokens on the Ergo blockchain.
+                  This costs ~0.0021 ERG (token box + tx fee).
+                </p>
+
+                {egoMintTxId ? (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                    <div className="text-emerald-400 font-semibold mb-1">✅ EGO Tokens Minted!</div>
+                    <a
+                      href={`https://explorer.ergoplatform.com/en/transactions/${egoMintTxId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-cyan-400 hover:text-cyan-300 font-mono"
+                    >
+                      TX: {egoMintTxId.slice(0, 12)}...{egoMintTxId.slice(-8)} →
+                    </a>
+                  </div>
+                ) : (
+                  <>
+                    {egoMintError && (
+                      <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm mb-3">
+                        {egoMintError}
+                      </div>
+                    )}
+                    <button
+                      onClick={async () => {
+                        if (!userAddress || !assignedAgent?.ergoAddress) return;
+                        setActionLoading('ego-mint');
+                        setEgoMintError(null);
+                        try {
+                          const utxos = await getUtxos();
+                          const unsignedTx = await mintEgoAfterRelease({
+                            agentAddress: assignedAgent.ergoAddress,
+                            agentName: assignedAgent.name,
+                            minterAddress: userAddress,
+                            minterUtxos: utxos,
+                          });
+                          const signedTx = await window.ergo!.sign_tx(unsignedTx);
+                          const txId = await window.ergo!.submit_tx(signedTx);
+                          setEgoMintTxId(txId);
+                        } catch (err) {
+                          setEgoMintError(err instanceof Error ? err.message : 'Failed to mint EGO tokens');
+                        } finally {
+                          setActionLoading('');
+                        }
+                      }}
+                      disabled={actionLoading === 'ego-mint'}
+                      className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg font-medium transition-all duration-200"
+                    >
+                      {actionLoading === 'ego-mint' ? 'Minting...' : '🏆 Mint 10 EGO Tokens for Agent'}
+                    </button>
+                  </>
                 )}
               </div>
             )}

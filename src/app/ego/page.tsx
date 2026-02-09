@@ -4,11 +4,16 @@ import { useState } from 'react';
 import EgoScore from '@/components/EgoScore';
 import EgoBreakdown from '@/components/EgoBreakdown';
 import EgoProjection from '@/components/EgoProjection';
+import EgoTokenViewer from '@/components/EgoTokenViewer';
+import { useWallet } from '@/contexts/WalletContext';
 import { getAllEgoTiers, EgoFactors, computeEgoScore } from '@/lib/ego';
 
 export default function EgoDocumentationPage() {
   const [selectedFactor, setSelectedFactor] = useState<keyof EgoFactors | null>(null);
   const [showContract, setShowContract] = useState(false);
+  const [lookupAddress, setLookupAddress] = useState('');
+  const [showLookup, setShowLookup] = useState(false);
+  const { userAddress, isAuthenticated } = useWallet();
   
   const tiers = getAllEgoTiers();
   
@@ -29,17 +34,48 @@ export default function EgoDocumentationPage() {
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-6xl mx-auto">
         
-        {/* In Development Banner */}
-        <div className="mb-12 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-center">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <span className="text-yellow-400">🚧</span>
-            <span className="text-yellow-400 font-semibold">In Development</span>
+        {/* On-Chain EGO Balance Section */}
+        <section className="mb-12">
+          <div className="card p-8">
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              🔗 On-Chain <span className="text-[var(--accent-green)]">EGO</span> Tokens
+            </h2>
+
+            {/* Connected wallet EGO display */}
+            {isAuthenticated && userAddress && (
+              <div className="mb-8">
+                <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-3">Your Wallet&apos;s EGO Tokens</h3>
+                <EgoTokenViewer address={userAddress} />
+              </div>
+            )}
+
+            {/* Address lookup */}
+            <div className="border-t border-[var(--border-color)] pt-6">
+              <h3 className="text-sm font-medium text-[var(--text-secondary)] mb-3">Check EGO Balance by Address</h3>
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={lookupAddress}
+                  onChange={(e) => setLookupAddress(e.target.value)}
+                  placeholder="Enter Ergo address (9f4Q...)"
+                  className="flex-1 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-[var(--accent-cyan)] text-sm font-mono"
+                />
+                <button
+                  onClick={() => setShowLookup(!!lookupAddress.trim())}
+                  disabled={!lookupAddress.trim()}
+                  className="px-6 py-2 bg-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/80 disabled:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Look Up
+                </button>
+              </div>
+              {showLookup && lookupAddress.trim() && (
+                <div className="mt-4">
+                  <EgoTokenViewer address={lookupAddress.trim()} />
+                </div>
+              )}
+            </div>
           </div>
-          <p className="text-yellow-300/80 text-sm max-w-2xl mx-auto">
-            EGO tokens will be minted as soulbound tokens on the Ergo blockchain. 
-            The scoring system below is the design specification — no tokens have been minted yet.
-          </p>
-        </div>
+        </section>
 
         {/* Hero Section */}
         <section className="text-center mb-20">

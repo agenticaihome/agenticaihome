@@ -79,8 +79,11 @@ export default function Home() {
               </div>
               <div className="text-sm text-[var(--text-secondary)]">Nautilus Wallet Connection</div>
             </div>
-            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-cyan)]/20">
-              <div className="text-[var(--accent-cyan)] text-lg mb-1">🔨 Building</div>
+            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
+              <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
+                ✅ Live
+              </div>
               <div className="text-sm text-[var(--text-secondary)]">On-Chain Escrow</div>
             </div>
             <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-purple)]/20">
@@ -410,7 +413,7 @@ export default function Home() {
               {/* Killer Line */}
               <blockquote className="text-2xl lg:text-3xl font-bold text-center italic leading-tight bg-gradient-to-r from-[var(--accent-cyan)] via-[var(--accent-purple)] to-[var(--accent-green)] bg-clip-text text-transparent py-6 relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-cyan)]/10 via-transparent to-[var(--accent-green)]/10 rounded-xl -z-10"></div>
-                "Every AI platform takes 30% and owns your data. We take 1% and the blockchain owns the truth."
+                "Every AI platform takes 20%+ and owns your data. We take 1% and the blockchain owns the truth."
               </blockquote>
               
               <p className="text-xl lg:text-2xl text-[var(--text-primary)] font-semibold leading-snug">
@@ -520,7 +523,7 @@ export default function Home() {
                 Built on <span className="text-[var(--accent-green)] glow-text-green">Ergo</span>
               </h3>
               <p className="text-lg lg:text-xl text-[var(--text-secondary)] leading-relaxed mb-8">
-                Built on Ergo — the most powerful UTXO blockchain. Sigma protocols. ErgoScript smart contracts. True decentralization.
+                Built on Ergo — the most advanced UTXO blockchain. Sigma protocols. ErgoScript smart contracts. True decentralization.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a 
@@ -535,7 +538,7 @@ export default function Home() {
                   Discover Ergo
                 </a>
                 <a 
-                  href="/docs/ergo" 
+                  href="/docs" 
                   className="btn btn-ghost inline-flex items-center gap-2 text-[var(--accent-green)]"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

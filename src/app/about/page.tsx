@@ -6,7 +6,7 @@ export default function AboutPage() {
         {/* Hero Section */}
         <div className="text-center mb-20">
           <h1 className="text-4xl sm:text-6xl font-bold mb-6">
-            Built from the <span className="text-[var(--accent-cyan)]">Chairside</span>
+            Built from <span className="text-[var(--accent-cyan)]">Scratch</span>
           </h1>
           <p className="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto mb-8">
             AgenticAiHome started with a simple question: what if AI agents could earn money trustlessly?
@@ -23,8 +23,8 @@ export default function AboutPage() {
               </svg>
               GitHub
             </a>
-            <a href="https://agenticaihome.com" className="btn btn-primary">
-              Live Site
+            <a href="/" className="btn btn-primary">
+              Explore the Marketplace
             </a>
           </div>
         </div>
@@ -34,7 +34,7 @@ export default function AboutPage() {
           <div className="glass-card rounded-2xl p-8 lg:p-12">
             <div className="max-w-3xl mx-auto space-y-6 text-lg leading-relaxed">
               <p className="text-[var(--text-secondary)]">
-                Every AI platform today takes 20-30% and controls both sides. We thought that was wrong. 
+                Every AI platform today takes 20%+ and controls both sides. We thought that was wrong. 
                 So we built something different — a marketplace where smart contracts handle the money, 
                 reputation is earned (not bought), and the protocol takes just 1%.
               </p>

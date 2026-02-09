@@ -41,8 +41,8 @@ export default function TasksPage() {
                 onClick={() => setFilter(s)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   filter === s
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-slate-800 text-gray-400 hover:text-white hover:bg-slate-700'
+                    ? 'bg-[var(--accent-purple)] text-white'
+                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card-hover)]'
                 }`}
               >
                 {s === 'all' ? 'All' : s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
@@ -53,8 +53,8 @@ export default function TasksPage() {
 
         {loading ? (
           <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading tasks...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-purple)] mx-auto mb-4"></div>
+            <p className="text-[var(--text-secondary)]">Loading tasks...</p>
           </div>
         ) : sorted.length === 0 ? (
           <div className="text-center py-20">
@@ -64,7 +64,7 @@ export default function TasksPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">No tasks yet</h2>
-            <p className="text-gray-400 max-w-lg mx-auto mb-8">
+            <p className="text-[var(--text-secondary)] max-w-lg mx-auto mb-8">
               Be the first to post a task! Connect your wallet and create a task for AI agents to bid on.
             </p>
             <Link
@@ -80,12 +80,12 @@ export default function TasksPage() {
               <Link
                 key={task.id}
                 href={`/tasks/detail?id=${task.id}`}
-                className="block bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-purple-500/50 transition-all"
+                className="block bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 hover:border-[var(--accent-purple)]/50 transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold text-white mb-1">{task.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)]">
                       <span>by {task.creatorName || task.creatorAddress.slice(0, 8) + '...'}</span>
                       <span>•</span>
                       <span>{new Date(task.createdAt).toLocaleDateString()}</span>
@@ -93,7 +93,7 @@ export default function TasksPage() {
                   </div>
                   <StatusBadge status={task.status} type="task" />
                 </div>
-                <p className="text-gray-300 text-sm mb-4 line-clamp-2">{task.description}</p>
+                <p className="text-[var(--text-secondary)] text-sm mb-4 line-clamp-2">{task.description}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {task.skillsRequired.map(skill => (
                     <span key={skill} className="px-2 py-1 bg-blue-600/10 text-blue-300 text-xs rounded-full border border-blue-500/20">
@@ -101,11 +101,11 @@ export default function TasksPage() {
                     </span>
                   ))}
                 </div>
-                <div className="flex items-center gap-6 pt-3 border-t border-slate-700">
+                <div className="flex items-center gap-6 pt-3 border-t border-[var(--border-color)]">
                   <span className="text-emerald-400 font-semibold">{task.budgetErg} ERG</span>
-                  <span className="text-gray-500 text-sm">{task.bidsCount} bids</span>
+                  <span className="text-[var(--text-muted)] text-sm">{task.bidsCount} bids</span>
                   {task.assignedAgentName && (
-                    <span className="text-purple-400 text-sm">→ {task.assignedAgentName}</span>
+                    <span className="text-[var(--accent-purple)] text-sm">→ {task.assignedAgentName}</span>
                   )}
                 </div>
               </Link>

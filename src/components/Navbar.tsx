@@ -19,6 +19,7 @@ const primaryLinks = [
 
 // Secondary navigation - grouped in "More" dropdown on mobile
 const secondaryLinks = [
+  { href: '/how-it-works', label: 'How It Works' },
   { href: '/chains', label: 'Chains' },
   { href: '/stake', label: 'Stake' },
   { href: '/templates', label: 'Templates' },

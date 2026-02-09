@@ -38,8 +38,8 @@ export default function AgentsPage() {
 
         {loading ? (
           <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading agents...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-purple)] mx-auto mb-4"></div>
+            <p className="text-[var(--text-secondary)]">Loading agents...</p>
           </div>
         ) : sorted.length === 0 ? (
           <div className="text-center py-20">
@@ -49,7 +49,7 @@ export default function AgentsPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">No agents registered yet</h2>
-            <p className="text-gray-400 max-w-lg mx-auto mb-8">
+            <p className="text-[var(--text-secondary)] max-w-lg mx-auto mb-8">
               Be the first to register an AI agent on the platform!
             </p>
             <Link
@@ -62,7 +62,7 @@ export default function AgentsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sorted.map(agent => (
-              <div key={agent.id} className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-purple-500/50 transition-all">
+              <div key={agent.id} className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 hover:border-[var(--accent-purple)]/50 transition-all">
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                     {agent.name.charAt(0)}
@@ -72,27 +72,27 @@ export default function AgentsPage() {
                       <h3 className="text-lg font-semibold text-white truncate">{agent.name}</h3>
                       <EgoScore score={agent.egoScore} />
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-400">
+                    <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
                       <span>{agent.hourlyRateErg} ERG/hr</span>
                       <span>•</span>
                       <span>{agent.tasksCompleted} tasks</span>
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-300 text-sm mb-4 line-clamp-2">{agent.description}</p>
+                <p className="text-[var(--text-secondary)] text-sm mb-4 line-clamp-2">{agent.description}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {agent.skills.slice(0, 5).map(skill => (
-                    <span key={skill} className="px-2 py-0.5 bg-purple-600/10 text-purple-300 text-xs rounded-full border border-purple-500/20">
+                    <span key={skill} className="px-2 py-0.5 bg-[var(--accent-purple)]/10 text-[var(--accent-purple)] text-xs rounded-full border border-[var(--accent-purple)]/20">
                       {skill}
                     </span>
                   ))}
                   {agent.skills.length > 5 && (
-                    <span className="px-2 py-0.5 text-gray-500 text-xs">+{agent.skills.length - 5} more</span>
+                    <span className="px-2 py-0.5 text-[var(--text-muted)] text-xs">+{agent.skills.length - 5} more</span>
                   )}
                 </div>
                 {agent.ownerAddress === userAddress && (
-                  <div className="mt-3 pt-3 border-t border-slate-700">
-                    <span className="text-xs text-purple-400">✓ Your agent</span>
+                  <div className="mt-3 pt-3 border-t border-[var(--border-color)]">
+                    <span className="text-xs text-[var(--accent-purple)]">✓ Your agent</span>
                   </div>
                 )}
               </div>

@@ -110,11 +110,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <WalletProvider>
             <DataProvider>
               <ToastProvider>
-                {/* BETA WARNING - Real blockchain integration in development */}
+                {/* ALPHA WARNING - Real blockchain integration in development */}
                 <div 
                   className="bg-amber-600 text-white text-center py-2 px-4 text-sm font-semibold border-b border-amber-700 relative z-50"
                   role="banner"
-                  aria-label="Beta warning"
+                  aria-label="Alpha warning"
                 >
                   ⚠️ <strong>ALPHA RELEASE</strong> — Escrow contracts are live on mainnet. Trade responsibly.
                 </div>

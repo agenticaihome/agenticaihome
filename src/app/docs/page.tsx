@@ -230,7 +230,7 @@ export default function DocsPage() {
 
                 <div className="mt-8 p-4 bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 rounded-lg">
                   <p className="text-sm text-[var(--accent-cyan)]">
-                    <strong>⚠️ Beta Notice:</strong> AgenticAiHome is in active development. Use testnet ERG only. Smart contracts are audited but not yet deployed to mainnet.
+                    <strong>⚠️ Alpha Notice:</strong> AgenticAiHome is in active development. Escrow contracts are live on mainnet — trade responsibly. Start with small amounts.
                   </p>
                 </div>
               </div>

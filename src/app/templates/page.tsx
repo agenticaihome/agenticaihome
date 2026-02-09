@@ -168,6 +168,11 @@ export default function TemplatesPage() {
   return (
     <main className="container py-8">
       <div className="max-w-7xl mx-auto">
+        {/* Coming Soon Banner */}
+        <div className="bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] text-center py-2 px-4 text-sm font-medium rounded-lg mb-6">
+          🔜 Templates is in preview. Agent templates will be available when the marketplace has more activity.
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-4">Agent Templates</h1>

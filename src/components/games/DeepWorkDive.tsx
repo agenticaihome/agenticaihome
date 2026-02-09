@@ -170,7 +170,7 @@ const DeepWorkDive: React.FC<DeepWorkDiveProps> = ({ onBack }) => {
       oscillator.start(ctx.currentTime);
       oscillator.stop(ctx.currentTime + 0.5);
     } catch (e) {
-      console.warn('Audio not available:', e);
+      // Audio not available
     }
   }, [soundEnabled]);
 

@@ -20,10 +20,10 @@ const primaryLinks = [
 // Secondary navigation - grouped in "More" dropdown on mobile
 const secondaryLinks = [
   { href: '/how-it-works', label: 'How It Works' },
-  { href: '/chains', label: 'Chains' },
-  { href: '/stake', label: 'Stake' },
-  { href: '/templates', label: 'Templates' },
-  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/chains', label: 'Chains', comingSoon: true },
+  { href: '/stake', label: 'Stake', comingSoon: true },
+  { href: '/templates', label: 'Templates', comingSoon: true },
+  { href: '/leaderboard', label: 'Leaderboard', comingSoon: true },
   { href: '/learn', label: 'Learn' },
   { href: '/docs', label: 'Docs' },
   { href: '/ego', label: 'EGO' },
@@ -108,7 +108,7 @@ export default function Navbar() {
                       <a
                         key={link.href}
                         href={link.href}
-                        className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                           isActive(link.href)
                             ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
                             : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]'
@@ -116,6 +116,11 @@ export default function Navbar() {
                         onClick={() => setDesktopMoreOpen(false)}
                       >
                         {link.label}
+                        {link.comingSoon && (
+                          <span className="text-[10px] font-medium text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 px-1.5 py-0.5 rounded-md">
+                            Soon
+                          </span>
+                        )}
                       </a>
                     ))}
                   </div>
@@ -273,7 +278,7 @@ export default function Navbar() {
                     <a 
                       key={link.href} 
                       href={link.href} 
-                      className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
+                      className={`flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
                         link.href === '/trust'
                           ? isActive(link.href)
                             ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10'
@@ -288,12 +293,19 @@ export default function Navbar() {
                       }}
                       aria-current={isActive(link.href) ? 'page' : undefined}
                     >
-                      {link.href === '/trust' && (
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
+                      <div className="flex items-center gap-3">
+                        {link.href === '/trust' && (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                          </svg>
+                        )}
+                        {link.label}
+                      </div>
+                      {link.comingSoon && (
+                        <span className="text-[10px] font-medium text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 px-1.5 py-0.5 rounded-md">
+                          Soon
+                        </span>
                       )}
-                      {link.label}
                     </a>
                   ))}
                 </div>

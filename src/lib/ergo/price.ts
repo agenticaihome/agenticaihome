@@ -56,7 +56,7 @@ export async function getErgPrice(): Promise<{ usd: number; btc: number }> {
       
       // Return cached data if available, even if expired
       if (priceCache) {
-        console.warn('Using expired price cache');
+        // Using expired price cache
         return {
           usd: priceCache.usd,
           btc: priceCache.btc,

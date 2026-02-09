@@ -304,7 +304,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
       oscillator.start(ctx.currentTime);
       oscillator.stop(ctx.currentTime + 0.3);
     } catch (e) {
-      console.warn('Audio not available:', e);
+      // Audio not available
     }
   }, [soundEnabled]);
 

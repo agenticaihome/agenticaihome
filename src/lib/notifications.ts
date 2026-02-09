@@ -48,7 +48,6 @@ export async function createNotification(notification: Omit<Notification, 'id' |
 
     if (error) {
       // Table might not exist yet - fail gracefully
-      console.warn('Notifications table not available:', error.message);
       return null;
     }
     return data;
@@ -70,7 +69,6 @@ export async function getNotifications(userId: string, limit = 50) {
     if (error) {
       // Table might not exist - return empty array
       if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
-        console.warn('Notifications table not available');
         return [];
       }
       throw error;

@@ -379,7 +379,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
           break;
       }
     } catch (e) {
-      console.warn('Audio not available:', e);
+      // Audio not available
     }
   }, [soundEnabled]);
 

@@ -144,7 +144,6 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
         startBalanceRefresh();
       }
     } catch (error) {
-      console.warn('Auto-reconnect failed:', error);
       // Don't show error for auto-reconnect failures
     } finally {
       setConnecting(false);

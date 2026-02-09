@@ -172,7 +172,6 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
       }
     } catch (error) {
       lastError = error instanceof Error ? error : new Error('Unknown error');
-      console.warn(`Failed to connect to ${walletName}:`, error);
     }
   }
 
@@ -184,7 +183,7 @@ export async function disconnectWallet(): Promise<void> {
     try {
       await currentConnector.disconnect();
     } catch (error) {
-      console.warn('Error disconnecting wallet:', error);
+      // Error disconnecting wallet
     }
   }
   
@@ -314,7 +313,7 @@ export async function getCurrentHeight(): Promise<number> {
     try {
       return await window.ergo.get_current_height();
     } catch (error) {
-      console.warn('Failed to get height from wallet, falling back to explorer:', error);
+      // Failed to get height from wallet, falling back to explorer
     }
   }
   
@@ -334,7 +333,6 @@ export async function autoReconnectWallet(): Promise<WalletState | null> {
   try {
     return await connectWallet(lastConnectedWallet);
   } catch (error) {
-    console.warn('Failed to auto-reconnect wallet:', error);
     localStorage.removeItem('ergo_wallet_connected');
     return null;
   }

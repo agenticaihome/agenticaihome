@@ -97,7 +97,7 @@ export default function EscrowActions({
           }
         }
       } catch (e) {
-        console.warn('Could not get box ID from tx, using txId:0 fallback', e);
+        // Could not get box ID from tx, using txId:0 fallback
       }
       if (!boxId) boxId = `${id}:0`; // last resort fallback
       onFunded?.(id, boxId);

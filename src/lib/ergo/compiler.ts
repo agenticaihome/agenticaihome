@@ -89,7 +89,6 @@ export async function compileErgoScript(source: string): Promise<CompileResult> 
       return result;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      console.warn(`Compilation failed on ${nodeUrl}:`, lastError.message);
     }
   }
 

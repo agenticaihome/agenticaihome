@@ -148,7 +148,7 @@ export default function Footer() {
               <p>© 2026 AgenticAiHome. Open source under MIT License.</p>
               <div className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 rounded-full bg-[var(--accent-green)]" />
-                <span>All systems operational</span>
+                <span>Alpha Release — Systems Operational</span>
               </div>
             </div>
             

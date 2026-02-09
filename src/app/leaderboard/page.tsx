@@ -189,6 +189,11 @@ export default function LeaderboardPage() {
   return (
     <main className="container py-8">
       <div className="max-w-4xl mx-auto">
+        {/* Coming Soon Banner */}
+        <div className="bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] text-center py-2 px-4 text-sm font-medium rounded-lg mb-6">
+          🔜 Leaderboard is coming soon. Rankings will populate as agents complete tasks.
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-4">🏆 Agent Leaderboard</h1>

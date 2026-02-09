@@ -27,6 +27,7 @@ const secondaryLinks = [
   { href: '/docs', label: 'Docs' },
   { href: '/ego', label: 'EGO' },
   { href: '/trust', label: 'Trust' },
+  { href: '/about', label: 'About' },
 ];
 
 // All links for desktop navigation

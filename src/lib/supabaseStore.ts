@@ -4,6 +4,58 @@ import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress } from
 
 export type { User, WalletProfile } from './types';
 
+// ---- API Proxy Helper for Rate-Limited Writes ----
+
+/**
+ * Check if we should use the API proxy for rate limiting
+ */
+function shouldUseApiProxy(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.location.hostname === 'agenticaihome.com';
+}
+
+/**
+ * Perform a rate-limited write through the API proxy worker
+ */
+async function apiProxyWrite(table: string, data: Record<string, unknown>): Promise<any> {
+  const response = await fetch(`/api/${table}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-client-info': 'agenticaihome-frontend'
+    },
+    body: JSON.stringify(data)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+    
+    if (response.status === 429) {
+      const retryAfter = response.headers.get('Retry-After');
+      throw new Error(`Rate limit exceeded. ${errorData.message}${retryAfter ? ` Retry after ${retryAfter} seconds.` : ''}`);
+    }
+    
+    throw new Error(errorData.error || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Universal write function that uses API proxy in production, direct Supabase in development
+ */
+async function universalWrite(table: string, data: Record<string, unknown>): Promise<any> {
+  if (shouldUseApiProxy()) {
+    // Production: use rate-limited API proxy
+    return apiProxyWrite(table, data);
+  } else {
+    // Development: direct Supabase access
+    const { data: result, error } = await supabase.from(table).insert(data).select().single();
+    if (error) throw new Error(error.message);
+    return result;
+  }
+}
+
 // ---- Helpers: camelCase <-> snake_case mapping ----
 
 function agentToDb(a: Partial<Agent>): Record<string, unknown> {
@@ -235,7 +287,7 @@ export async function createOrUpdateWalletProfile(address: string, displayName?:
     displayName: displayName ? sanitizeText(displayName, 100) : undefined,
     joinedAt: new Date().toISOString(),
   };
-  await supabase.from('wallet_profiles').insert({
+  await universalWrite('wallet_profiles', {
     address: profile.address,
     display_name: profile.displayName,
     joined_at: profile.joinedAt,
@@ -307,7 +359,7 @@ export async function createAgent(
     lastActivityAt: new Date().toISOString(),
   };
 
-  await supabase.from('agents').insert(agentToDb(newAgent));
+  await universalWrite('agents', agentToDb(newAgent));
   return newAgent;
 }
 
@@ -372,7 +424,7 @@ export async function createTask(
     createdAt: new Date().toISOString(),
   };
 
-  await supabase.from('tasks').insert(taskToDb(newTask));
+  await universalWrite('tasks', taskToDb(newTask));
   return newTask;
 }
 
@@ -432,7 +484,7 @@ export async function createBid(bidData: Omit<Bid, 'id' | 'createdAt'>): Promise
     createdAt: new Date().toISOString(),
   };
 
-  await supabase.from('bids').insert(bidToDb(newBid));
+  await universalWrite('bids', bidToDb(newBid));
 
   // Update task bid count
   const { data: taskData } = await supabase.from('tasks').select('bids_count').eq('id', bidData.taskId).single();
@@ -467,7 +519,7 @@ export async function getTransactions(): Promise<Transaction[]> {
 
 export async function createTransaction(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
   const newTx: Transaction = { ...transactionData, id: generateId() };
-  await supabase.from('transactions').insert({
+  await universalWrite('transactions', {
     id: newTx.id, task_id: newTx.taskId, task_title: newTx.taskTitle,
     amount_erg: newTx.amountErg, type: newTx.type, date: newTx.date, tx_id: newTx.txId,
   });
@@ -494,7 +546,7 @@ export async function createCompletion(completionData: Omit<Completion, 'id'>): 
     id: generateId(),
     reviewerId: completionData.reviewerId || 'unknown',
   };
-  await supabase.from('completions').insert({
+  await universalWrite('completions', {
     id: newCompletion.id, task_id: newCompletion.taskId, task_title: newCompletion.taskTitle,
     agent_id: newCompletion.agentId, rating: newCompletion.rating, review: newCompletion.review,
     reviewer_name: newCompletion.reviewerName, reviewer_id: newCompletion.reviewerId,
@@ -519,7 +571,7 @@ export async function getReputationEventsForAgent(agentId: string): Promise<Repu
 
 export async function createReputationEvent(eventData: Omit<ReputationEvent, 'id'>): Promise<ReputationEvent> {
   const newEvent: ReputationEvent = { ...eventData, id: generateId() };
-  await supabase.from('reputation_events').insert({
+  await universalWrite('reputation_events', {
     id: newEvent.id, agent_id: newEvent.agentId, event_type: newEvent.eventType,
     ego_delta: newEvent.egoDelta, description: newEvent.description, created_at: newEvent.createdAt,
   });
@@ -582,7 +634,7 @@ export async function createDeliverable(deliverable: {
     }
   }
   const id = generateId();
-  await supabase.from('deliverables').insert({
+  await universalWrite('deliverables', {
     id,
     task_id: deliverable.taskId,
     agent_id: deliverable.agentId,
@@ -610,7 +662,7 @@ export async function getDeliverablesForTask(taskId: string): Promise<Record<str
 
 export async function updateAgentStats(agentId: string, egoDelta: number, description: string): Promise<void> {
   // Create reputation event
-  await supabase.from('reputation_events').insert({
+  await universalWrite('reputation_events', {
     id: generateId(),
     agent_id: agentId,
     event_type: 'completion',

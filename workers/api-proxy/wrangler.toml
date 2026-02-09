@@ -1,0 +1,17 @@
+name = "agenticaihome-api-proxy"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+route = "https://agenticaihome.com/api/*"
+
+[env.production.vars]
+SUPABASE_URL = "https://thjialaevqwyiyyhbdxk.supabase.co"
+SUPABASE_KEY = "sb_publishable_d700Fgssg8ldOkwnLamEcg_g4fPKv8q"
+IP_LIMIT_PER_MINUTE = "10"
+WALLET_LIMIT_PER_HOUR = "50"
+
+[env.development.vars]
+SUPABASE_URL = "https://thjialaevqwyiyyhbdxk.supabase.co"
+SUPABASE_KEY = "sb_publishable_d700Fgssg8ldOkwnLamEcg_g4fPKv8q"
+IP_LIMIT_PER_MINUTE = "100"
+WALLET_LIMIT_PER_HOUR = "500"

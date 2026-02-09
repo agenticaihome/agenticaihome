@@ -21,7 +21,7 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      - uses: cloudflare/wrangler-action@da0e0e6c3282e80aa1e3d1a1ceca12e90d44fb50 # v3.14.0
+      - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: e38cbd29347a712d8e13568661040def

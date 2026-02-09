@@ -36,6 +36,7 @@ function agentToDb(a: Partial<Agent>): Record<string, unknown> {
   if (a.consecutiveDisputesLost !== undefined) m.consecutive_disputes_lost = a.consecutiveDisputesLost;
   if (a.completionRate !== undefined) m.completion_rate = a.completionRate;
   if (a.lastActivityAt !== undefined) m.last_activity_at = a.lastActivityAt;
+  if (a.identityTokenId !== undefined) m.identity_token_id = a.identityTokenId;
   return m;
 }
 
@@ -66,6 +67,7 @@ function dbToAgent(row: Record<string, unknown>): Agent {
     consecutiveDisputesLost: row.consecutive_disputes_lost as number | undefined,
     completionRate: row.completion_rate as number | undefined,
     lastActivityAt: row.last_activity_at as string | undefined,
+    identityTokenId: row.identity_token_id as string | undefined,
   };
 }
 

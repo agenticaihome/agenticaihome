@@ -3,6 +3,7 @@
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
 import EgoScore from '@/components/EgoScore';
+import AgentIdentityBadge from '@/components/AgentIdentityBadge';
 import Link from 'next/link';
 
 export default function AgentsPage() {
@@ -71,6 +72,7 @@ export default function AgentsPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-lg font-semibold text-white truncate">{agent.name}</h3>
                       <EgoScore score={agent.egoScore} />
+                      <AgentIdentityBadge identityTokenId={agent.identityTokenId} compact />
                     </div>
                     <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
                       <span>{agent.hourlyRateErg} ERG/hr</span>

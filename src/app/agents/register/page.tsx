@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
-import { withWalletAuth, verifiedCreateAgent } from '@/lib/supabaseStore';
+import { withWalletAuth, verifiedCreateAgent, updateAgent } from '@/lib/supabaseStore';
 import AuthGuard from '@/components/AuthGuard';
 import SkillSelector from '@/components/SkillSelector';
 import EgoScore from '@/components/EgoScore';
+import AgentIdentityBadge from '@/components/AgentIdentityBadge';
+import { buildAgentIdentityMintTx, agentIdentityExplorerUrl } from '@/lib/ergo/agent-identity';
+import { getCurrentHeight } from '@/lib/ergo/explorer';
 
 export default function RegisterAgent() {
   const { userAddress, profile } = useWallet();
@@ -24,6 +27,8 @@ export default function RegisterAgent() {
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
+  const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success' | 'failed'>('idle');
+  const [mintedTokenId, setMintedTokenId] = useState<string | null>(null);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -86,27 +91,73 @@ export default function RegisterAgent() {
       };
 
       // Try verified write first, fall back to direct write
+      let createdAgentId: string | undefined;
       try {
         const auth = await withWalletAuth(userAddress, async (msg) => {
           const ergo = (window as any).ergo;
           if (!ergo?.auth) throw new Error('No wallet auth');
           return await ergo.auth(userAddress, msg);
         });
-        await verifiedCreateAgent({
+        const created = await verifiedCreateAgent({
           name: agentPayload.name,
           description: agentPayload.description,
           skills: agentPayload.skills,
           hourlyRateErg: agentPayload.hourlyRateErg,
           ergoAddress: agentPayload.ergoAddress,
         }, auth);
+        createdAgentId = (created as any)?.id;
         setWalletVerified(true);
       } catch {
         // Fall back to direct write
-        await createAgentData(agentPayload, userAddress);
+        const created = await createAgentData(agentPayload, userAddress);
+        createdAgentId = (created as any)?.id;
         setWalletVerified(false);
       }
 
-      router.push(`/agents`);
+      // Mint Agent Identity NFT on Ergo
+      try {
+        setMintStatus('minting');
+        const ergo = (window as any).ergo;
+        if (!ergo) throw new Error('Nautilus wallet not available');
+
+        const utxos = await ergo.get_utxos();
+        const currentHeight = await getCurrentHeight();
+
+        const unsignedTx = await buildAgentIdentityMintTx({
+          agentName: formData.name.trim(),
+          agentAddress: userAddress,
+          skills: formData.skills,
+          description: formData.description.trim(),
+          utxos,
+          currentHeight,
+        });
+
+        const signedTx = await ergo.sign_tx(unsignedTx);
+        const txId = await ergo.submit_tx(signedTx);
+
+        // Token ID = first input box ID (Ergo convention)
+        const tokenId = unsignedTx.inputs[0]?.boxId || txId;
+        setMintedTokenId(tokenId);
+        setMintStatus('success');
+
+        // Update agent record with token ID
+        if (createdAgentId) {
+          try {
+            await updateAgent(createdAgentId, { identityTokenId: tokenId });
+          } catch {
+            // non-critical
+          }
+        }
+      } catch (mintError) {
+        console.error('NFT minting failed:', mintError);
+        setMintStatus('failed');
+        // Don't block registration — agent is already created
+      }
+
+      if (mintStatus !== 'minting') {
+        // Show success inline instead of immediate redirect
+        setSuccessMsg(createdAgentId ? 'Agent registered successfully!' : 'Agent registered!');
+      }
     } catch (error) {
       console.error('Error creating agent:', error);
       setErrors({ submit: 'Failed to register agent. Please try again.' });
@@ -243,22 +294,53 @@ export default function RegisterAgent() {
 
                 {/* Submit Button */}
                 <div className="space-y-2">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] hover:from-[var(--accent-cyan)]/90 hover:to-[var(--accent-green)]/90 disabled:from-gray-600 disabled:to-gray-600 text-[var(--bg-primary)] rounded-lg font-semibold transition-all duration-200 glow-hover-cyan disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <span className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        Registering Agent...
-                      </span>
-                    ) : (
-                      'Register Agent'
-                    )}
-                  </button>
-                  {walletVerified === true && <p className="text-center text-xs text-emerald-400">🔒 Wallet Verified</p>}
-                  {walletVerified === false && <p className="text-center text-xs text-yellow-400">⚠️ Unverified (direct write)</p>}
+                  {!successMsg ? (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] hover:from-[var(--accent-cyan)]/90 hover:to-[var(--accent-green)]/90 disabled:from-gray-600 disabled:to-gray-600 text-[var(--bg-primary)] rounded-lg font-semibold transition-all duration-200 glow-hover-cyan disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? (
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          {mintStatus === 'minting' ? 'Minting Identity NFT...' : 'Registering Agent...'}
+                        </span>
+                      ) : (
+                        'Register & Mint Identity'
+                      )}
+                    </button>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                        <p className="text-emerald-400 font-medium mb-2">✅ {successMsg}</p>
+                        {mintStatus === 'success' && mintedTokenId && (
+                          <div className="space-y-1">
+                            <p className="text-emerald-300 text-sm">🎉 Agent Identity NFT minted!</p>
+                            <a
+                              href={agentIdentityExplorerUrl(mintedTokenId)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-cyan-400 text-xs font-mono hover:underline break-all"
+                            >
+                              {mintedTokenId}
+                            </a>
+                          </div>
+                        )}
+                        {mintStatus === 'failed' && (
+                          <p className="text-yellow-400 text-sm">⚠️ On-chain identity not minted. You can mint later from your agent profile.</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => router.push('/agents')}
+                        className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] text-[var(--bg-primary)] rounded-lg font-semibold"
+                      >
+                        View Agent Directory →
+                      </button>
+                    </div>
+                  )}
+                  {walletVerified === true && !successMsg && <p className="text-center text-xs text-emerald-400">🔒 Wallet Verified</p>}
+                  {walletVerified === false && !successMsg && <p className="text-center text-xs text-yellow-400">⚠️ Unverified (direct write)</p>}
                 </div>
               </form>
             </div>

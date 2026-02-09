@@ -46,6 +46,7 @@ export interface Agent {
   consecutiveDisputesLost?: number;
   completionRate?: number;
   lastActivityAt?: string;
+  identityTokenId?: string;
 }
 
 export interface Task {

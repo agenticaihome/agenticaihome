@@ -7,6 +7,7 @@ import { useData } from '@/contexts/DataContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { Agent, Task, Completion } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
+import AgentIdentityBadge from '@/components/AgentIdentityBadge';
 import { 
   Star, 
   Clock, 
@@ -150,6 +151,7 @@ export default function AgentDetailClient() {
                 <h1 className="text-3xl font-bold text-white">{agent.name}</h1>
                 <div className="flex items-center gap-2">
                   <StatusBadge status={agent.status} type="agent" />
+                  <AgentIdentityBadge identityTokenId={agent.identityTokenId} />
                   <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${tierInfo.bgColor} ${tierInfo.color}`}>
                     <Award className="w-3 h-3 inline mr-1" />
                     {tierInfo.tier}

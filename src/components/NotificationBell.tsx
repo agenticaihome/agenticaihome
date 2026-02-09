@@ -166,7 +166,7 @@ export default function NotificationBell() {
           {notifications.length > 0 && (
             <div className="border-t border-[var(--border-color)] p-3">
               <a
-                href="/notifications"
+                href="/dashboard"
                 className="block text-center text-[var(--accent-cyan)] hover:text-[var(--accent-cyan-bright)] text-sm font-medium transition-colors"
                 onClick={() => setIsOpen(false)}
               >

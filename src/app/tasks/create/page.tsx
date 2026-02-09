@@ -7,6 +7,8 @@ import { useData } from '@/contexts/DataContext';
 import AuthGuard from '@/components/AuthGuard';
 import SkillSelector from '@/components/SkillSelector';
 import StatusBadge from '@/components/StatusBadge';
+import { initTaskFlow } from '@/lib/taskFlow';
+import { logEvent } from '@/lib/events';
 
 export default function CreateTask() {
   const { userAddress, profile, wallet } = useWallet();
@@ -88,7 +90,18 @@ export default function CreateTask() {
         skillsRequired: formData.skillsRequired,
         budgetErg: Number(formData.budgetErg),
         creatorName: profile?.displayName
-      }, userAddress); // Pass creator address as second parameter
+      }, userAddress);
+
+      // Initialize task flow
+      initTaskFlow(newTask.id, userAddress);
+
+      // Log event
+      logEvent({
+        type: 'task_created',
+        message: `Task "${newTask.title}" created with ${formData.budgetErg} ERG budget`,
+        taskId: newTask.id,
+        actor: userAddress,
+      });
 
       router.push(`/tasks/${newTask.id}`);
     } catch (error) {

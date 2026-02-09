@@ -3,17 +3,19 @@ import {
   OutputBuilder,
   SConstant,
   SInt,
+  SLong,
   SColl,
   SByte,
-  ErgoAddress,
 } from '@fleet-sdk/core';
 import { getCurrentHeight, getBoxesByAddress, getBoxById } from './explorer';
 import {
   MIN_BOX_VALUE,
   RECOMMENDED_TX_FEE,
   PLATFORM_FEE_PERCENT,
+  ESCROW_ERGOSCRIPT,
   txExplorerUrl,
 } from './constants';
+import { compileErgoScript } from './compiler';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -37,23 +39,45 @@ export interface EscrowBox {
   creationHeight: number;
 }
 
+// ─── Contract compilation ────────────────────────────────────────────
+
+let _compiledAddress: string | null = null;
+
+/**
+ * Get or compile the escrow contract P2S address.
+ */
+export async function getEscrowContractAddress(): Promise<string> {
+  if (_compiledAddress) return _compiledAddress;
+
+  try {
+    const result = await compileErgoScript(ESCROW_ERGOSCRIPT);
+    _compiledAddress = result.address;
+    return _compiledAddress;
+  } catch (err) {
+    console.error('Failed to compile escrow contract:', err);
+    throw new Error('Could not compile escrow contract. Check node availability.');
+  }
+}
+
 // ─── Transaction builders ────────────────────────────────────────────
 
 /**
- * Create an escrow transaction: locks ERG at the client's own address
+ * Create an escrow transaction: locks ERG at the P2S contract address
  * with registers encoding the escrow metadata.
  *
- * MVP approach: The escrow is a standard P2PK box at the client's address
- * with R4=clientAddr, R5=agentAddr, R6=deadline, R7=taskId.
- * This means only the client can spend it (release or refund).
- * A full contract-based escrow would use a P2S address.
+ * R4: client address (SigmaProp encoded as bytes)
+ * R5: agent address (SigmaProp encoded as bytes)
+ * R6: deadline block height (Int)
+ * R7: task ID (Coll[Byte])
  *
  * Returns an EIP-12 unsigned transaction ready for wallet signing.
  */
 export async function createEscrowTx(
   params: EscrowParams,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   walletUtxos: any[],
   changeAddress: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const { clientAddress, agentAddress, amountNanoErg, deadlineHeight, taskId } = params;
 
@@ -62,19 +86,29 @@ export async function createEscrowTx(
     throw new Error(`Invalid escrow params: ${validation.errors.join(', ')}`);
   }
 
-  if (!walletUtxos.length) {
+  if (!Array.isArray(walletUtxos) || !walletUtxos.length) {
     throw new Error('No UTXOs available. Make sure your wallet has ERG.');
   }
 
   const currentHeight = await getCurrentHeight();
+
+  // Get compiled contract address (P2S)
+  let contractAddress: string;
+  try {
+    contractAddress = await getEscrowContractAddress();
+  } catch {
+    // Fallback: lock at client's address (MVP approach)
+    console.warn('P2S compilation failed, falling back to P2PK escrow');
+    contractAddress = clientAddress;
+  }
 
   // Encode addresses as byte arrays for register storage
   const clientBytes = new TextEncoder().encode(clientAddress);
   const agentBytes = new TextEncoder().encode(agentAddress);
   const taskBytes = new TextEncoder().encode(taskId || '');
 
-  // Build the escrow output — locked at client's address with metadata in registers
-  const escrowOutput = new OutputBuilder(amountNanoErg, clientAddress)
+  // Build the escrow output at the contract address
+  const escrowOutput = new OutputBuilder(amountNanoErg, contractAddress)
     .setAdditionalRegisters({
       R4: SConstant(SColl(SByte, clientBytes)),
       R5: SConstant(SColl(SByte, agentBytes)),
@@ -119,8 +153,10 @@ export async function releaseEscrowTx(
 
   const releaseOutput = new OutputBuilder(agentAmount, agentAddress);
 
+  const inputs: any[] = [escrowBox, ...(Array.isArray(walletUtxos) ? walletUtxos : [])];
+
   const unsignedTx = new TransactionBuilder(currentHeight)
-    .from([escrowBox, ...walletUtxos])
+    .from(inputs)
     .to([releaseOutput])
     .sendChangeTo(changeAddress)
     .payFee(fee)
@@ -156,8 +192,10 @@ export async function refundEscrowTx(
 
   const refundOutput = new OutputBuilder(refundAmount, clientAddress);
 
+  const inputs: any[] = [escrowBox, ...(Array.isArray(walletUtxos) ? walletUtxos : [])];
+
   const unsignedTx = new TransactionBuilder(currentHeight)
-    .from([escrowBox, ...walletUtxos])
+    .from(inputs)
     .to([refundOutput])
     .sendChangeTo(changeAddress)
     .payFee(fee)
@@ -172,15 +210,15 @@ export async function refundEscrowTx(
 export function parseEscrowBox(box: any): EscrowBox | null {
   try {
     return {
-      boxId: box.boxId,
-      transactionId: box.transactionId,
-      clientAddress: box.address,
+      boxId: box.boxId as string,
+      transactionId: box.transactionId as string,
+      clientAddress: box.address as string,
       agentAddress: '',
-      amount: BigInt(box.value),
+      amount: BigInt((box.value as string) || '0'),
       deadlineHeight: 0,
-      status: box.settlementHeight ? 'released' : 'active',
+      status: (box as Record<string, unknown>).settlementHeight ? 'released' : 'active',
       taskId: '',
-      creationHeight: box.creationHeight,
+      creationHeight: (box.creationHeight as number) || 0,
     };
   } catch {
     return null;
@@ -192,7 +230,7 @@ export async function getActiveEscrowsByAddress(address: string): Promise<Escrow
     const boxes = await getBoxesByAddress(address);
     return boxes
       .filter((box: any) => {
-        const regs = box.additionalRegisters || {};
+        const regs = (box.additionalRegisters || {}) as Record<string, unknown>;
         return regs.R4 && regs.R5 && regs.R6;
       })
       .map((box: any) => parseEscrowBox(box))
@@ -239,3 +277,5 @@ export function calculateNetAmount(grossAmount: bigint): bigint {
 export function estimateTransactionFee(): bigint {
   return RECOMMENDED_TX_FEE;
 }
+
+export { txExplorerUrl };

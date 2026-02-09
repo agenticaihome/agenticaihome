@@ -91,7 +91,13 @@ function TaskDetailInner() {
         const meta = t.metadata;
         if (meta?.escrow_box_id) {
           setEscrowBoxId(meta.escrow_box_id);
-          setEscrowStatus((meta.escrow_status as 'unfunded' | 'funded' | 'released' | 'refunded') || 'funded');
+          // Map non-standard statuses to valid escrow states
+          const rawStatus = meta.escrow_status || 'funded';
+          const statusMap: Record<string, 'unfunded' | 'funded' | 'released' | 'refunded'> = {
+            unfunded: 'unfunded', funded: 'funded', released: 'released', refunded: 'refunded',
+            approved_pending_release: 'funded', // approved but not yet released on-chain
+          };
+          setEscrowStatus(statusMap[rawStatus] || 'funded');
         }
         if (t.escrowTxId) {
           setEscrowTxId(t.escrowTxId);

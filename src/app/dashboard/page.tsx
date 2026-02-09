@@ -6,6 +6,8 @@ import { useData } from '@/contexts/DataContext';
 import AuthGuard from '@/components/AuthGuard';
 import StatusBadge from '@/components/StatusBadge';
 import { getEvents, type PlatformEvent } from '@/lib/events';
+import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { TrendingUp, TrendingDown, DollarSign, Users, Clock, Star, Target, Activity } from 'lucide-react';
 
 export default function Dashboard() {
   const { userAddress, profile, wallet } = useWallet();
@@ -19,6 +21,93 @@ export default function Dashboard() {
   const workingOnTasks = useMemo(() => tasks.filter(t =>
     t.assignedAgentId && myAgentIds.includes(t.assignedAgentId)
   ), [tasks, myAgentIds]);
+
+  // Portfolio calculations
+  const portfolio = useMemo(() => {
+    const completedUserTasks = userTasks.filter(t => t.status === 'completed');
+    const workingTasksEarnings = workingOnTasks.filter(t => t.status === 'completed');
+    const pendingEscrow = userTasks.filter(t => ['assigned', 'in_progress', 'review'].includes(t.status));
+    
+    const totalErgEarned = workingTasksEarnings.reduce((sum, t) => sum + t.budgetErg, 0);
+    const totalErgSpent = completedUserTasks.reduce((sum, t) => sum + t.budgetErg, 0);
+    const pendingInEscrow = pendingEscrow.reduce((sum, t) => sum + t.budgetErg, 0);
+    const netPosition = totalErgEarned - totalErgSpent;
+    
+    return {
+      totalErgEarned,
+      totalErgSpent,
+      pendingInEscrow,
+      netPosition
+    };
+  }, [userTasks, workingOnTasks]);
+
+  // Generate mock data for charts
+  const ergEarningsData = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 30 }, (_, i) => {
+      const date = new Date(now.getTime() - (29 - i) * 24 * 60 * 60 * 1000);
+      const earnings = Math.random() * 50 + (i * 2); // Trending upward
+      return {
+        date: date.toISOString().split('T')[0],
+        earnings: Math.round(earnings * 100) / 100,
+        cumulative: Math.round((earnings + i * 10) * 100) / 100
+      };
+    });
+  }, []);
+
+  const taskStatusData = useMemo(() => {
+    const statusCounts = userTasks.reduce((acc, task) => {
+      acc[task.status] = (acc[task.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const colors = {
+      open: '#3B82F6',
+      assigned: '#F59E0B',
+      in_progress: '#8B5CF6',
+      review: '#F97316',
+      completed: '#10B981',
+      disputed: '#EF4444'
+    };
+
+    return Object.entries(statusCounts).map(([status, count]) => ({
+      name: status.replace('_', ' '),
+      value: count,
+      color: colors[status as keyof typeof colors] || '#6B7280'
+    }));
+  }, [userTasks]);
+
+  const egoScoreData = useMemo(() => {
+    const now = new Date();
+    return userAgents.flatMap(agent => 
+      Array.from({ length: 10 }, (_, i) => {
+        const date = new Date(now.getTime() - (9 - i) * 7 * 24 * 60 * 60 * 1000);
+        return {
+          date: date.toISOString().split('T')[0],
+          agent: agent.name,
+          score: agent.egoScore + Math.random() * 20 - 10,
+        };
+      })
+    );
+  }, [userAgents]);
+
+  // Agent performance metrics
+  const agentPerformance = useMemo(() => {
+    return userAgents.map(agent => {
+      const agentTasks = workingOnTasks.filter(t => t.assignedAgentId === agent.id);
+      const completedTasks = agentTasks.filter(t => t.status === 'completed');
+      
+      return {
+        id: agent.id,
+        name: agent.name,
+        completionRate: agentTasks.length > 0 ? (completedTasks.length / agentTasks.length) * 100 : 0,
+        avgRating: agent.rating,
+        egoTrend: Math.random() > 0.5 ? 'up' : 'down',
+        tasksCompleted: agent.tasksCompleted,
+        status: agent.status
+      };
+    });
+  }, [userAgents, workingOnTasks]);
 
   // Categorize user's tasks
   const openTasks = userTasks.filter(t => t.status === 'open');
@@ -72,16 +161,173 @@ export default function Dashboard() {
             <p className="text-xs text-gray-500 font-mono">{userAddress}</p>
           </div>
 
+          {/* Portfolio Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-gray-400 text-sm font-medium">Total Earned</h3>
+                <DollarSign className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-emerald-400">
+                  Σ{portfolio.totalErgEarned.toFixed(2)}
+                </span>
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+              </div>
+            </div>
+
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-gray-400 text-sm font-medium">Total Spent</h3>
+                <DollarSign className="w-4 h-4 text-red-400" />
+              </div>
+              <span className="text-2xl font-bold text-red-400">
+                Σ{portfolio.totalErgSpent.toFixed(2)}
+              </span>
+            </div>
+
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-gray-400 text-sm font-medium">In Escrow</h3>
+                <Clock className="w-4 h-4 text-yellow-400" />
+              </div>
+              <span className="text-2xl font-bold text-yellow-400">
+                Σ{portfolio.pendingInEscrow.toFixed(2)}
+              </span>
+            </div>
+
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-gray-400 text-sm font-medium">Net Position</h3>
+                {portfolio.netPosition >= 0 ? (
+                  <TrendingUp className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <TrendingDown className="w-4 h-4 text-red-400" />
+                )}
+              </div>
+              <span className={`text-2xl font-bold ${portfolio.netPosition >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {portfolio.netPosition >= 0 ? '+' : ''}Σ{portfolio.netPosition.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            {/* ERG Earnings Over Time */}
+            <div className="lg:col-span-2 bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <h3 className="text-white text-lg font-semibold mb-4">ERG Earnings Over Time</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={ergEarningsData}>
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#64748b" 
+                      fontSize={12}
+                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    />
+                    <YAxis stroke="#64748b" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1e293b', 
+                        border: '1px solid #334155',
+                        borderRadius: '8px',
+                        color: '#f8fafc'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="cumulative" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Task Status Distribution */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <h3 className="text-white text-lg font-semibold mb-4">Tasks by Status</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={taskStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {taskStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1e293b', 
+                        border: '1px solid #334155',
+                        borderRadius: '8px',
+                        color: '#f8fafc'
+                      }}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* EGO Score History */}
+          {userAgents.length > 0 && (
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-8">
+              <h3 className="text-white text-lg font-semibold mb-4">EGO Score History</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={egoScoreData}>
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#64748b" 
+                      fontSize={12}
+                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    />
+                    <YAxis stroke="#64748b" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1e293b', 
+                        border: '1px solid #334155',
+                        borderRadius: '8px',
+                        color: '#f8fafc'
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="score" 
+                      stroke="#8b5cf6" 
+                      fill="#8b5cf6" 
+                      fillOpacity={0.2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
           {/* Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             {[
-              { label: 'Open Tasks', value: openTasks.length, color: 'text-blue-400' },
-              { label: 'In Progress', value: activeTasks.length, color: 'text-yellow-400' },
-              { label: 'Awaiting Review', value: reviewTasks.length, color: 'text-purple-400' },
-              { label: 'Completed', value: completedTasks.length, color: 'text-emerald-400' },
-              { label: 'Working On', value: workingOnTasks.length, color: 'text-cyan-400' },
+              { label: 'Open Tasks', value: openTasks.length, color: 'text-blue-400', icon: Target },
+              { label: 'In Progress', value: activeTasks.length, color: 'text-yellow-400', icon: Clock },
+              { label: 'Awaiting Review', value: reviewTasks.length, color: 'text-purple-400', icon: Star },
+              { label: 'Completed', value: completedTasks.length, color: 'text-emerald-400', icon: TrendingUp },
+              { label: 'Working On', value: workingOnTasks.length, color: 'text-cyan-400', icon: Users },
             ].map((stat) => (
               <div key={stat.label} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
                 <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
                 <div className="text-gray-400 text-xs mt-1">{stat.label}</div>
               </div>
@@ -89,104 +335,132 @@ export default function Dashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a href="/agents/register" className="group bg-slate-800/50 border border-slate-700 rounded-lg p-5 hover:border-purple-500/50 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-purple-600/20 flex items-center justify-center text-purple-400 text-xl">+</div>
-                <div>
-                  <h3 className="font-semibold text-white group-hover:text-purple-300 transition-colors">Register Agent</h3>
-                  <p className="text-gray-400 text-sm">Add AI agent to marketplace</p>
-                </div>
-              </div>
-            </a>
+          <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
             <a href="/tasks/create" className="group bg-slate-800/50 border border-slate-700 rounded-lg p-5 hover:border-blue-500/50 transition-all">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center text-blue-400 text-xl">+</div>
+                <div className="w-12 h-12 rounded-lg bg-blue-600/20 flex items-center justify-center text-blue-400 text-xl">
+                  <Target className="w-6 h-6" />
+                </div>
                 <div>
                   <h3 className="font-semibold text-white group-hover:text-blue-300 transition-colors">Post Task</h3>
                   <p className="text-gray-400 text-sm">Create task and get bids</p>
                 </div>
               </div>
             </a>
+            
+            <a href="/agents/register" className="group bg-slate-800/50 border border-slate-700 rounded-lg p-5 hover:border-purple-500/50 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center text-purple-400 text-xl">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white group-hover:text-purple-300 transition-colors">Register Agent</h3>
+                  <p className="text-gray-400 text-sm">Add AI agent to marketplace</p>
+                </div>
+              </div>
+            </a>
+
+            <a href="/agents" className="group bg-slate-800/50 border border-slate-700 rounded-lg p-5 hover:border-emerald-500/50 transition-all">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-emerald-600/20 flex items-center justify-center text-emerald-400 text-xl">
+                  <Activity className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-white group-hover:text-emerald-300 transition-colors">Browse Marketplace</h3>
+                  <p className="text-gray-400 text-sm">Find agents to hire</p>
+                </div>
+              </div>
+            </a>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Tasks I Created — needs action */}
+            {/* Active Tasks Feed */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Review needed */}
-              {reviewTasks.length > 0 && (
-                <div>
-                  <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                    Needs Your Review
-                  </h2>
+              {/* Active Tasks with Real-time Updates */}
+              <div>
+                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-cyan-400" />
+                  Active Tasks Feed
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                </h2>
+                
+                {[...activeTasks, ...reviewTasks].length > 0 ? (
                   <div className="space-y-3">
-                    {reviewTasks.map(task => (
-                      <a key={task.id} href={`/tasks/${task.id}`} className="block bg-purple-500/5 border border-purple-500/20 rounded-lg p-4 hover:border-purple-500/40 transition-all">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="font-semibold text-white">{task.title}</h3>
-                            <p className="text-gray-400 text-sm mt-1">Work submitted — review and approve or request changes</p>
-                          </div>
-                          <span className="text-emerald-400 font-medium">{task.budgetErg} ERG</span>
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Tasks I'm working on */}
-              {workingOnTasks.length > 0 && (
-                <div>
-                  <h2 className="text-lg font-bold text-white mb-3">Tasks I&apos;m Working On</h2>
-                  <div className="space-y-3">
-                    {workingOnTasks.map(task => (
-                      <a key={task.id} href={`/tasks/${task.id}`} className="block bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-cyan-500/30 transition-all">
+                    {[...reviewTasks, ...activeTasks].map(task => (
+                      <a key={task.id} href={`/tasks/${task.id}`} className="block bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-cyan-500/40 transition-all">
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="font-semibold text-white">{task.title}</h3>
                           <StatusBadge status={task.status} type="task" />
                         </div>
-                        <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center justify-between text-sm mb-2">
                           <span className="text-gray-500">{formatDate(task.createdAt)}</span>
                           <span className="text-emerald-400">{task.budgetErg} ERG</span>
                         </div>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* All my tasks */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-bold text-white">Tasks I Created</h2>
-                  <a href="/tasks/create" className="text-blue-400 hover:text-blue-300 text-sm">Create +</a>
-                </div>
-                {userTasks.length > 0 ? (
-                  <div className="space-y-3">
-                    {userTasks.slice(0, 8).map(task => (
-                      <a key={task.id} href={`/tasks/${task.id}`} className="block bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-slate-600 transition-all">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-white">{task.title}</h3>
-                          <StatusBadge status={task.status} type="task" />
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500">{task.bidsCount} bids • {formatDate(task.createdAt)}</span>
-                          <span className="text-emerald-400">{task.budgetErg} ERG</span>
-                        </div>
+                        {task.status === 'review' && (
+                          <div className="flex items-center gap-2 text-xs text-purple-400">
+                            <Clock className="w-3 h-3" />
+                            Awaiting your review
+                          </div>
+                        )}
                       </a>
                     ))}
                   </div>
                 ) : (
                   <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
-                    <p className="text-gray-400 mb-4">No tasks created yet</p>
+                    <Activity className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-400 mb-4">No active tasks at the moment</p>
                     <a href="/tasks/create" className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
                       Post Your First Task
                     </a>
                   </div>
                 )}
               </div>
+
+              {/* Agent Performance Section */}
+              {agentPerformance.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-yellow-400" />
+                    Agent Performance
+                  </h2>
+                  <div className="space-y-3">
+                    {agentPerformance.map(agent => (
+                      <div key={agent.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-white">{agent.name}</h3>
+                          <StatusBadge status={agent.status} type="agent" />
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500 block">Completion Rate</span>
+                            <span className="text-emerald-400 font-medium">{agent.completionRate.toFixed(1)}%</span>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">Avg Rating</span>
+                            <div className="flex items-center gap-1">
+                              <Star className="w-3 h-3 text-yellow-400" />
+                              <span className="text-yellow-400 font-medium">{agent.avgRating.toFixed(1)}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-gray-500 block">EGO Trend</span>
+                            <div className="flex items-center gap-1">
+                              {agent.egoTrend === 'up' ? (
+                                <TrendingUp className="w-3 h-3 text-emerald-400" />
+                              ) : (
+                                <TrendingDown className="w-3 h-3 text-red-400" />
+                              )}
+                              <span className={agent.egoTrend === 'up' ? 'text-emerald-400' : 'text-red-400'}>
+                                {agent.egoTrend === 'up' ? 'Rising' : 'Falling'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right sidebar */}
@@ -220,7 +494,7 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* Activity Feed */}
+              {/* Recent Activity */}
               <div>
                 <h2 className="text-lg font-bold text-white mb-3">Recent Activity</h2>
                 {events.length > 0 ? (

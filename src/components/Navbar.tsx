@@ -2,29 +2,43 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { Search } from 'lucide-react';
 import WalletConnect from './WalletConnect';
+import NotificationBell from './NotificationBell';
+import GlobalSearch, { useGlobalSearch } from './GlobalSearch';
 import { useWallet } from '@/contexts/WalletContext';
 
-const links = [
+// Primary navigation - always visible on mobile
+const primaryLinks = [
   { href: '/', label: 'Home' },
-  { href: '/agents', label: 'Agents' },
-  { href: '/ego', label: 'EGO' },
   { href: '/tasks', label: 'Tasks' },
+  { href: '/agents', label: 'Agents' },
   { href: '/explorer', label: 'Explorer' },
+  { href: '/dashboard', label: 'Dashboard' },
+];
+
+// Secondary navigation - grouped in "More" dropdown on mobile
+const secondaryLinks = [
   { href: '/chains', label: 'Chains' },
-  { href: '/templates', label: 'Templates' },
   { href: '/stake', label: 'Stake' },
+  { href: '/templates', label: 'Templates' },
   { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/how-it-works', label: 'How It Works' },
   { href: '/learn', label: 'Learn' },
   { href: '/docs', label: 'Docs' },
+  { href: '/ego', label: 'EGO' },
+  { href: '/trust', label: 'Trust' },
 ];
+
+// All links for desktop navigation
+const allLinks = [...primaryLinks, ...secondaryLinks];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const { isAuthenticated, wallet, profile, userAddress, disconnect, connect, connecting, error } = useWallet();
   const pathname = usePathname();
+  const globalSearch = useGlobalSearch();
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -54,41 +68,47 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
-            {links.map(link => (
+            {allLinks.map(link => (
               <a 
                 key={link.href} 
                 href={link.href} 
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center ${
-                  isActive(link.href)
-                    ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5'
+                  link.href === '/trust'
+                    ? isActive(link.href)
+                      ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--accent-green)]/5'
+                    : isActive(link.href)
+                      ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
+                      : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5'
                 }`}
                 aria-current={isActive(link.href) ? 'page' : undefined}
+                title={link.href === '/trust' ? 'Trust & Safety' : undefined}
               >
-                {link.label}
+                {link.href === '/trust' && (
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                )}
+                <span className={link.href === '/trust' ? 'hidden lg:inline' : ''}>{link.label}</span>
               </a>
             ))}
-            
-            {/* Trust & Safety */}
-            <a
-              href="/trust"
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center gap-2 ${
-                isActive('/trust')
-                  ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--accent-green)]/5'
-              }`}
-              aria-current={isActive('/trust') ? 'page' : undefined}
-              title="Trust & Safety"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              <span className="hidden lg:inline">Trust</span>
-            </a>
           </div>
 
           {/* User Actions */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-1">
+            {/* Search Button */}
+            <button
+              onClick={globalSearch.open}
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] rounded-lg transition-all flex items-center gap-2"
+              title="Search (⌘K)"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+
+            {/* Notification Bell */}
+            <NotificationBell />
+            
+            <div className="w-px h-6 bg-[var(--border-color)] mx-1"></div>
             {wallet.connected && wallet.address ? (
               <div className="relative">
                 <button
@@ -185,7 +205,8 @@ export default function Navbar() {
       {open && (
         <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-primary)]/95 backdrop-blur-xl animate-in slide-in-from-top duration-200">
           <div className="container p-4 space-y-1">
-            {links.map(link => (
+            {/* Primary Navigation Links */}
+            {primaryLinks.map(link => (
               <a 
                 key={link.href} 
                 href={link.href} 
@@ -201,21 +222,53 @@ export default function Navbar() {
               </a>
             ))}
             
-            <a 
-              href="/trust" 
-              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
-                isActive('/trust')
-                  ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--bg-card)]'
-              }`}
-              onClick={() => setOpen(false)}
-              aria-current={isActive('/trust') ? 'page' : undefined}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-              Trust & Safety
-            </a>
+            {/* More Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
+                className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] w-full text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]"
+                aria-expanded={mobileMoreOpen}
+                aria-haspopup="true"
+              >
+                <span>More</span>
+                <svg className={`w-4 h-4 transition-transform ${mobileMoreOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* Secondary Navigation Links */}
+              {mobileMoreOpen && (
+                <div className="mt-1 ml-4 space-y-1 border-l-2 border-[var(--border-color)] pl-4">
+                  {secondaryLinks.map(link => (
+                    <a 
+                      key={link.href} 
+                      href={link.href} 
+                      className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
+                        link.href === '/trust'
+                          ? isActive(link.href)
+                            ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--bg-card)]'
+                          : isActive(link.href)
+                            ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]'
+                      }`}
+                      onClick={() => {
+                        setOpen(false);
+                        setMobileMoreOpen(false);
+                      }}
+                      aria-current={isActive(link.href) ? 'page' : undefined}
+                    >
+                      {link.href === '/trust' && (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                      )}
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
             
             {wallet.connected && wallet.address ? (
               <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-1">
@@ -231,12 +284,6 @@ export default function Navbar() {
                   </div>
                 </div>
                 
-                <a href="/dashboard" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7zm16 0V5a2 2 0 00-2-2H7a2 2 0 00-2 2v2h14z" />
-                  </svg>
-                  Dashboard
-                </a>
                 <a href="/agents/register" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -264,6 +311,9 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Global Search Modal */}
+      <GlobalSearch isOpen={globalSearch.isOpen} onClose={globalSearch.close} />
     </nav>
   );
 }

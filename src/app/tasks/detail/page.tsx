@@ -72,6 +72,7 @@ function TaskDetailInner() {
   // Escrow state
   const [escrowBoxId, setEscrowBoxId] = useState<string | undefined>(undefined);
   const [escrowStatus, setEscrowStatus] = useState<'unfunded' | 'funded' | 'released' | 'refunded'>('unfunded');
+  const [escrowTxId, setEscrowTxId] = useState<string | undefined>(undefined);
 
   const loadData = useCallback(async () => {
     if (!taskId) return;
@@ -83,6 +84,18 @@ function TaskDetailInner() {
       ]);
       setTask(t);
       setBids(b);
+
+      // Load escrow state from task metadata
+      if (t) {
+        const meta = t.metadata;
+        if (meta?.escrow_box_id) {
+          setEscrowBoxId(meta.escrow_box_id);
+          setEscrowStatus((meta.escrow_status as 'unfunded' | 'funded' | 'released' | 'refunded') || 'funded');
+        }
+        if (t.escrowTxId) {
+          setEscrowTxId(t.escrowTxId);
+        }
+      }
 
       // Load deliverables
       const { data: delData } = await supabase
@@ -226,20 +239,32 @@ function TaskDetailInner() {
       if (deliverables.length > 0) {
         await supabase.from('deliverables').update({ status: 'approved' }).eq('id', deliverables[0].id);
       }
-      await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
-      // Create reputation event for agent
-      if (task.assignedAgentId) {
-        await supabase.from('reputation_events').insert({
-          id: generateId(),
-          agent_id: task.assignedAgentId,
-          event_type: 'completion',
-          ego_delta: 5,
-          description: `Completed task: ${task.title}`,
-          created_at: new Date().toISOString(),
-        });
+      
+      // If escrow is funded, don't mark completed yet — wait for on-chain release
+      if (escrowStatus === 'funded' && escrowBoxId) {
+        // Mark as approved but awaiting payment release
+        await supabase.from('tasks').update({
+          metadata: { escrow_box_id: escrowBoxId, escrow_status: 'approved_pending_release' },
+        }).eq('id', taskId);
+        logEvent({ type: 'work_approved', message: `Work approved — release payment to complete`, taskId, actor: userAddress || '' });
+        showSuccess('Work approved! Now release the escrow payment to complete the task.');
+      } else {
+        // No escrow — just complete directly
+        await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
+        // Create reputation event for agent
+        if (task.assignedAgentId) {
+          await supabase.from('reputation_events').insert({
+            id: generateId(),
+            agent_id: task.assignedAgentId,
+            event_type: 'completion',
+            ego_delta: 5,
+            description: `Completed task: ${task.title}`,
+            created_at: new Date().toISOString(),
+          });
+        }
+        logEvent({ type: 'work_approved', message: `Work approved for "${task.title}"`, taskId, actor: userAddress || '' });
+        showSuccess('Work approved! Task completed.');
       }
-      logEvent({ type: 'work_approved', message: `Work approved for "${task.title}"`, taskId, actor: userAddress || '' });
-      showSuccess('Work approved! Task completed.');
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve');
@@ -600,7 +625,7 @@ function TaskDetailInner() {
           )}
 
           {/* Escrow Actions — Fund, Release, or Refund ERG on-chain */}
-          {task && task.assignedAgentId && (isCreator || isAssignedAgent) && (
+          {task && task.assignedAgentId && (isCreator || isAssignedAgent) && escrowStatus !== 'released' && (
             <div className="mb-6">
               <EscrowActions
                 taskId={task.id}
@@ -614,22 +639,34 @@ function TaskDetailInner() {
                 escrowStatus={escrowStatus}
                 onFunded={async (txId, boxId) => {
                   setEscrowBoxId(boxId);
+                  setEscrowTxId(txId);
                   setEscrowStatus('funded');
-                  // Update task to funded status
-                  await updateTaskData(task.id, { status: 'assigned' });
+                  // Persist escrow info to Supabase (metadata + escrow_tx_id)
+                  await supabase.from('tasks').update({
+                    escrow_tx_id: txId,
+                    metadata: { escrow_box_id: boxId, escrow_status: 'funded' },
+                  }).eq('id', task.id);
+                  await updateTaskData(task.id, { status: 'in_progress' });
                   logEvent({ type: 'escrow_funded', message: `Escrow funded: ${txId}`, taskId: task.id, actor: userAddress || '' });
                   showSuccess(`Escrow funded! TX: ${txId.slice(0, 12)}...`);
                   await loadData();
                 }}
                 onReleased={async (txId) => {
                   setEscrowStatus('released');
+                  // Persist release status
+                  await supabase.from('tasks').update({
+                    metadata: { escrow_box_id: escrowBoxId, escrow_status: 'released', release_tx_id: txId },
+                  }).eq('id', task.id);
                   await updateTaskData(task.id, { status: 'completed' });
                   logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId: task.id, actor: userAddress || '' });
-                  showSuccess(`Payment released! TX: ${txId.slice(0, 12)}...`);
+                  showSuccess(`💰 Payment released! 99% to agent, 1% to treasury. TX: ${txId.slice(0, 12)}...`);
                   await loadData();
                 }}
                 onRefunded={async (txId) => {
                   setEscrowStatus('refunded');
+                  await supabase.from('tasks').update({
+                    metadata: { escrow_box_id: escrowBoxId, escrow_status: 'refunded', refund_tx_id: txId },
+                  }).eq('id', task.id);
                   await updateTaskData(task.id, { status: 'disputed' });
                   logEvent({ type: 'escrow_refunded', message: `Escrow refunded: ${txId}`, taskId: task.id, actor: userAddress || '' });
                   showSuccess(`Escrow refunded! TX: ${txId.slice(0, 12)}...`);

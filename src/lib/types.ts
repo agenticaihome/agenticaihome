@@ -63,6 +63,7 @@ export interface Task {
   bidsCount: number;
   createdAt: string;
   completedAt?: string;
+  metadata?: Record<string, string>;
 }
 
 export interface Bid {

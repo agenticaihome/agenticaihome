@@ -101,6 +101,7 @@ function dbToTask(row: Record<string, unknown>): Task {
     bidsCount: Number(row.bids_count) || 0,
     createdAt: (row.created_at as string) || '',
     completedAt: row.completed_at as string | undefined,
+    metadata: (row.metadata as Record<string, string>) || undefined,
   };
 }
 

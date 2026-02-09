@@ -1,336 +1,88 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWallet } from '@/contexts/WalletContext';
-import { createClient } from '@supabase/supabase-js';
-
-interface NetworkStats {
-  height: number;
-  hashRate: number;
-  difficulty: number;
-  supply: number;
-  lastBlockTime: string;
-}
-
-interface BlockInfo {
-  id: string;
-  height: number;
-  timestamp: number;
-  transactionsCount: number;
-  minerReward: number;
-  size: number;
-}
+import { supabase } from '@/lib/supabase';
 
 interface Transaction {
   id: string;
-  blockId: string;
-  height: number;
-  timestamp: number;
-  inputs: number;
-  outputs: number;
-  fee: number;
-  size: number;
-}
-
-interface AddressInfo {
-  address: string;
-  balance: number;
-  totalReceived: number;
-  totalSent: number;
-  transactionsCount: number;
-  tokens: Array<{
-    tokenId: string;
-    name?: string;
-    amount: number;
-    decimals: number;
-  }>;
-}
-
-interface MempoolInfo {
-  size: number;
-  transactions: Array<{
-    id: string;
-    fee: number;
-    size: number;
-    timestamp: number;
-    inputs: number;
-    outputs: number;
-  }>;
-}
-
-interface PlatformTransaction {
-  id: string;
   task_id: string | null;
   task_title: string | null;
-  amount_erg: number;
+  amount_erg: string;
   type: string;
-  date: string | null;
-  tx_id: string | null;
+  date: string;
+  tx_id: string;
 }
 
-interface EscrowStats {
-  totalFunded: number;
-  totalReleased: number;
+interface PlatformStats {
+  totalTransactions: number;
   totalVolume: number;
-  transactionCount: number;
-}
-
-const ERGO_API = 'https://api.ergoplatform.com/api/v1';
-const CORS_PROXY = 'https://corsproxy.io/?';
-
-// Supabase configuration
-const SUPABASE_URL = 'https://thjialaevqwyiyyhbdxk.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_d700Fgssg8ldOkwnLamEcg_g4fPKv8q';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-async function ergoFetch(path: string): Promise<Response> {
-  try {
-    const res = await fetch(`${ERGO_API}${path}`);
-    if (res.ok) return res;
-  } catch {}
-  return fetch(`${CORS_PROXY}${encodeURIComponent(`${ERGO_API}${path}`)}`);
 }
 
 export default function ExplorerPage() {
-  const { wallet, userAddress } = useWallet();
-  const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
-  const [recentBlocks, setRecentBlocks] = useState<BlockInfo[]>([]);
-  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
-  const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
-  const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null);
-  const [platformTransactions, setPlatformTransactions] = useState<PlatformTransaction[]>([]);
-  const [escrowStats, setEscrowStats] = useState<EscrowStats | null>(null);
-  const [activeTab, setActiveTab] = useState<'platform' | 'blocks' | 'transactions' | 'mempool' | 'address'>('platform');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResult, setSearchResult] = useState<'transaction' | 'address' | 'block' | null>(null);
+
+  const escrowContractAddress = '29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh';
 
   useEffect(() => {
-    fetchNetworkData();
-    fetchPlatformData();
+    fetchData();
   }, []);
 
-  const fetchPlatformData = async () => {
+  const fetchData = async () => {
     try {
-      // Fetch platform transactions from Supabase
-      const { data: transactions, error } = await supabase
+      setLoading(true);
+      setError(null);
+
+      const { data: txData, error: txError } = await supabase
         .from('transactions')
         .select('*')
         .order('date', { ascending: false });
 
-      if (error) throw error;
+      if (txError) throw txError;
 
-      setPlatformTransactions(transactions || []);
+      setTransactions(txData || []);
 
-      // Calculate escrow stats
-      const stats: EscrowStats = {
-        totalFunded: 0,
-        totalReleased: 0,
-        totalVolume: 0,
-        transactionCount: (transactions || []).length
-      };
+      // Calculate stats
+      const totalTransactions = txData?.length || 0;
+      const totalVolume = txData?.reduce((sum, tx) => {
+        return sum + (parseFloat(tx.amount_erg) / 1e9);
+      }, 0) || 0;
 
-      (transactions || []).forEach(tx => {
-        const amount = parseFloat(tx.amount_erg) / 1e9; // Convert from nanoERG to ERG
-        stats.totalVolume += amount;
-        
-        if (tx.type === 'escrow_fund') {
-          stats.totalFunded += amount;
-        } else if (tx.type === 'escrow_release') {
-          stats.totalReleased += amount;
-        }
+      setStats({
+        totalTransactions,
+        totalVolume
       });
 
-      setEscrowStats(stats);
-    } catch (error) {
-      console.error('Failed to fetch platform data:', error);
-    }
-  };
-
-  const fetchNetworkData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Fetch network info, blocks, transactions, and mempool
-      const [infoRes, blocksRes, txRes, mempoolRes] = await Promise.all([
-        ergoFetch('/networkState'),
-        ergoFetch('/blocks?limit=10&offset=0&sortBy=height&sortDirection=desc'),
-        ergoFetch('/transactions?limit=10&offset=0&sortBy=timestamp&sortDirection=desc'),
-        ergoFetch('/mempool/transactions?limit=20&offset=0').catch(() => null),
-      ]);
-
-      if (infoRes.ok) {
-        const info = await infoRes.json();
-        setNetworkStats({
-          height: info.height,
-          hashRate: info.params?.hashRate || 0,
-          difficulty: info.difficulty,
-          supply: info.params?.circulatingSupply || 0,
-          lastBlockTime: new Date(info.lastBlockTimestamp || Date.now()).toISOString(),
-        });
-      }
-
-      if (blocksRes.ok) {
-        const blocksData = await blocksRes.json();
-        const blocks = (blocksData.items || []).map((b: any) => ({
-          id: b.id,
-          height: b.height,
-          timestamp: b.timestamp,
-          transactionsCount: b.transactionsCount,
-          minerReward: b.minerReward / 1e9,
-          size: b.size,
-        }));
-        setRecentBlocks(blocks);
-      }
-
-      if (txRes.ok) {
-        const txData = await txRes.json();
-        const transactions = (txData.items || []).map((tx: any) => ({
-          id: tx.id,
-          blockId: tx.blockId,
-          height: tx.inclusionHeight,
-          timestamp: tx.timestamp,
-          inputs: tx.inputs?.length || 0,
-          outputs: tx.outputs?.length || 0,
-          fee: (tx.inputs?.[0]?.value || 0) - (tx.outputs?.reduce((sum: number, out: any) => sum + (out.value || 0), 0) || 0),
-          size: tx.size || 0,
-        }));
-        setRecentTransactions(transactions);
-      }
-
-      if (mempoolRes && mempoolRes.ok) {
-        const mempoolData = await mempoolRes.json();
-        const mempoolTxs = (mempoolData.items || []).map((tx: any) => ({
-          id: tx.id,
-          fee: (tx.inputs?.[0]?.value || 0) - (tx.outputs?.reduce((sum: number, out: any) => sum + (out.value || 0), 0) || 0),
-          size: tx.size || 0,
-          timestamp: tx.creationTimestamp || Date.now(),
-          inputs: tx.inputs?.length || 0,
-          outputs: tx.outputs?.length || 0,
-        }));
-        
-        setMempoolInfo({
-          size: mempoolTxs.length,
-          transactions: mempoolTxs,
-        });
-      }
     } catch (err) {
-      console.error('Failed to fetch network data:', err);
-      setError('Failed to connect to Ergo network. Please try again.');
+      console.error('Error fetching data:', err);
+      setError('Failed to load transaction data');
     } finally {
       setLoading(false);
     }
   };
 
-  const searchAddress = async (address: string) => {
-    setSearchLoading(true);
+  const formatDate = (dateStr: string) => {
     try {
-      const [balanceRes, txRes] = await Promise.all([
-        ergoFetch(`/addresses/${address}/balance/total`),
-        ergoFetch(`/addresses/${address}/transactions?limit=1`)
-      ]);
-
-      if (balanceRes.ok && txRes.ok) {
-        const balanceData = await balanceRes.json();
-        const txData = await txRes.json();
-        
-        setAddressInfo({
-          address,
-          balance: balanceData.confirmed?.nanoErgs / 1e9 || 0,
-          totalReceived: balanceData.received?.nanoErgs / 1e9 || 0,
-          totalSent: (balanceData.received?.nanoErgs - balanceData.confirmed?.nanoErgs) / 1e9 || 0,
-          transactionsCount: txData.total || 0,
-          tokens: balanceData.confirmed?.tokens?.map((token: any) => ({
-            tokenId: token.tokenId,
-            name: token.name,
-            amount: token.amount,
-            decimals: token.decimals || 0,
-          })) || [],
-        });
-        setSearchResult('address');
-        setActiveTab('address');
-      }
-    } catch (err) {
-      console.error('Address search failed:', err);
-      setError('Failed to fetch address information');
-    } finally {
-      setSearchLoading(false);
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateStr;
     }
   };
 
-  const formatHashRate = (hr: number) => {
-    if (hr >= 1e15) return `${(hr / 1e15).toFixed(2)} PH/s`;
-    if (hr >= 1e12) return `${(hr / 1e12).toFixed(2)} TH/s`;
-    if (hr >= 1e9) return `${(hr / 1e9).toFixed(2)} GH/s`;
-    return `${(hr / 1e6).toFixed(2)} MH/s`;
-  };
-
-  const formatTimeAgo = (timestamp: number) => {
-    const diff = Date.now() - timestamp;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
-  };
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    
-    const query = searchQuery.trim();
-    setError(null);
-    setSearchResult(null);
-    
-    // Detect search type
-    if (query.length === 64 && /^[a-fA-F0-9]+$/.test(query)) {
-      // Transaction ID or Block ID
-      try {
-        setSearchLoading(true);
-        const [txRes, blockRes] = await Promise.all([
-          ergoFetch(`/transactions/${query}`).catch(() => null),
-          ergoFetch(`/blocks/${query}`).catch(() => null)
-        ]);
-        
-        if (txRes && txRes.ok) {
-          setSearchResult('transaction');
-          window.open(`https://explorer.ergoplatform.com/en/transactions/${query}`, '_blank');
-        } else if (blockRes && blockRes.ok) {
-          setSearchResult('block');
-          window.open(`https://explorer.ergoplatform.com/en/blocks/${query}`, '_blank');
-        } else {
-          setError('Transaction or block not found');
-        }
-      } catch (err) {
-        setError('Search failed. Please try again.');
-      } finally {
-        setSearchLoading(false);
-      }
-    } else if (query.startsWith('9') && query.length >= 51) {
-      // Ergo address
-      await searchAddress(query);
-    } else if (/^\d+$/.test(query)) {
-      // Block height
-      try {
-        setSearchLoading(true);
-        const blockRes = await ergoFetch(`/blocks/at/${query}`);
-        if (blockRes.ok) {
-          const blockData = await blockRes.json();
-          setSearchResult('block');
-          window.open(`https://explorer.ergoplatform.com/en/blocks/${blockData[0]?.id}`, '_blank');
-        } else {
-          setError('Block not found at this height');
-        }
-      } catch (err) {
-        setError('Block search failed');
-      } finally {
-        setSearchLoading(false);
-      }
-    } else {
-      setError('Invalid search query. Use transaction ID, block ID, address, or block height.');
-    }
+  const formatAmount = (amountStr: string) => {
+    const amount = parseFloat(amountStr) / 1e9;
+    return amount.toLocaleString('en-US', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 6 
+    });
   };
 
   return (
@@ -339,62 +91,41 @@ export default function ExplorerPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold mb-4">
-            <span className="text-[var(--text-primary)]">On-Chain </span>
+            <span className="text-[var(--text-primary)]">Transaction </span>
             <span className="text-[var(--accent-cyan)]">Explorer</span>
           </h1>
           <p className="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">
-            Live Ergo blockchain data. All AgenticAiHome transactions will be verifiable here.
+            All AgenticAiHome platform transactions are recorded on the Ergo blockchain for complete transparency.
           </p>
         </div>
 
-        {/* Search */}
-        <div className="max-w-2xl mx-auto mb-12">
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by transaction ID, block ID, address, or block height..."
-                className="w-full px-4 py-3 pl-10 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none search-glow transition-colors"
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <svg className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <button
-              onClick={handleSearch}
-              disabled={!searchQuery.trim() || searchLoading}
-              className="px-6 py-3 bg-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/80 disabled:opacity-50 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-            >
-              {searchLoading ? 'Searching...' : 'Search'}
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            Address lookups show detailed info here. Transactions/blocks open in Ergo Platform Explorer.
-          </p>
-        </div>
-
-        {/* Wallet Info */}
-        {userAddress && (
-          <div className="mb-8 p-6 bg-slate-800/50 border border-slate-700 rounded-xl">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h3 className="text-white font-semibold mb-1">Your Wallet</h3>
-                <p className="text-gray-400 text-sm font-mono break-all">{userAddress}</p>
+        {/* Platform Stats */}
+        {stats && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-4">Platform Statistics</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                <p className="text-gray-400 text-sm mb-1">Total Transactions</p>
+                <p className="text-2xl font-bold text-[var(--accent-cyan)]">
+                  {stats.totalTransactions}
+                </p>
               </div>
-              <div className="flex items-center gap-4">
-                {wallet.balance && (
-                  <span className="text-lg font-bold text-yellow-400">
-                    Σ{wallet.balance.erg} ERG
-                  </span>
-                )}
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                <p className="text-gray-400 text-sm mb-1">Total Volume</p>
+                <p className="text-2xl font-bold text-emerald-400">
+                  Σ{stats.totalVolume.toFixed(2)} ERG
+                </p>
+              </div>
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                <p className="text-gray-400 text-sm mb-1">Escrow Contract</p>
+                <p className="text-sm font-mono text-purple-400 break-all">
+                  {escrowContractAddress.slice(0, 20)}...
+                </p>
                 <a
-                  href={`https://explorer.ergoplatform.com/en/addresses/${userAddress}`}
+                  href={`https://explorer.ergoplatform.com/en/addresses/${escrowContractAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 border border-[var(--accent-cyan)]/50 hover:border-[var(--accent-cyan)] text-[var(--accent-cyan)] rounded-lg text-sm font-medium transition-all"
+                  className="text-xs text-[var(--accent-cyan)] hover:underline"
                 >
                   View on Explorer →
                 </a>
@@ -403,12 +134,19 @@ export default function ExplorerPage() {
           </div>
         )}
 
-        {/* Network Stats */}
-        <div className="mb-8">
+        {/* Error State */}
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm mb-6">
+            {error}
+          </div>
+        )}
+
+        {/* Transactions */}
+        <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white">Network Stats</h2>
+            <h2 className="text-2xl font-bold text-white">Recent Transactions</h2>
             <button
-              onClick={fetchNetworkData}
+              onClick={fetchData}
               disabled={loading}
               className="text-sm text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)]/80 transition-colors disabled:opacity-50"
             >
@@ -416,300 +154,69 @@ export default function ExplorerPage() {
             </button>
           </div>
 
-          {error && (
-            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm mb-4">
-              {error}
-            </div>
-          )}
-
-          {loading && !networkStats ? (
-            <div className="grid md:grid-cols-4 gap-4">
-              {[1,2,3,4].map(i => (
-                <div key={i} className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 animate-pulse">
-                  <div className="h-4 bg-slate-700 rounded w-24 mb-3"></div>
-                  <div className="h-8 bg-slate-700 rounded w-32"></div>
-                </div>
-              ))}
-            </div>
-          ) : networkStats ? (
-            <div className="grid md:grid-cols-4 gap-4">
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                <p className="text-gray-400 text-sm mb-1">Block Height</p>
-                <p className="text-2xl font-bold text-white">{networkStats.height.toLocaleString()}</p>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                <p className="text-gray-400 text-sm mb-1">Hash Rate</p>
-                <p className="text-2xl font-bold text-[var(--accent-cyan)]">{formatHashRate(networkStats.hashRate)}</p>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                <p className="text-gray-400 text-sm mb-1">Difficulty</p>
-                <p className="text-2xl font-bold text-purple-400">{(networkStats.difficulty / 1e15).toFixed(2)}P</p>
-              </div>
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                <p className="text-gray-400 text-sm mb-1">Last Block</p>
-                <p className="text-2xl font-bold text-emerald-400">
-                  {formatTimeAgo(new Date(networkStats.lastBlockTime).getTime())}
-                </p>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="mb-8">
-          <div className="border-b border-slate-700">
-            <nav className="flex gap-8">
-              {[
-                { key: 'platform', label: 'Platform Transactions', icon: '🏛️' },
-                { key: 'blocks', label: 'Recent Blocks', icon: '📦' },
-                { key: 'transactions', label: 'Recent Transactions', icon: '💸' },
-                { key: 'mempool', label: 'Mempool', icon: '⏳' },
-                ...(addressInfo ? [{ key: 'address', label: 'Address Info', icon: '👤' }] : [])
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key as any)}
-                  className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-all ${
-                    activeTab === tab.key
-                      ? 'border-[var(--accent-cyan)] text-[var(--accent-cyan)]'
-                      : 'border-transparent text-gray-400 hover:text-white hover:border-gray-600'
-                  }`}
-                >
-                  <span>{tab.icon}</span>
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-
-        {/* Content based on active tab */}
-        <div>
-          {/* Platform Transactions */}
-          {activeTab === 'platform' && (
-            <div>
-              {/* Escrow Contract Stats */}
-              {escrowStats && (
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-4">Escrow Contract Stats</h2>
-                  <div className="grid md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                      <p className="text-gray-400 text-sm mb-1">Total Funded</p>
-                      <p className="text-2xl font-bold text-[var(--accent-cyan)]">Σ{escrowStats.totalFunded.toFixed(2)} ERG</p>
-                    </div>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                      <p className="text-gray-400 text-sm mb-1">Total Released</p>
-                      <p className="text-2xl font-bold text-emerald-400">Σ{escrowStats.totalReleased.toFixed(2)} ERG</p>
-                    </div>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                      <p className="text-gray-400 text-sm mb-1">Total Volume</p>
-                      <p className="text-2xl font-bold text-purple-400">Σ{escrowStats.totalVolume.toFixed(2)} ERG</p>
-                    </div>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                      <p className="text-gray-400 text-sm mb-1">Transactions</p>
-                      <p className="text-2xl font-bold text-yellow-400">{escrowStats.transactionCount}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-white">Platform Transactions</h2>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-400">
-                    {platformTransactions.length} transactions
-                  </span>
-                  <button
-                    onClick={fetchPlatformData}
-                    className="text-sm text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)]/80 transition-colors"
-                  >
-                    ↻ Refresh
-                  </button>
-                </div>
-              </div>
-
-              {platformTransactions.length > 0 ? (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-700 text-gray-400">
-                          <th className="text-left p-4">TX Hash</th>
-                          <th className="text-left p-4">Type</th>
-                          <th className="text-left p-4">Task</th>
-                          <th className="text-left p-4">Amount</th>
-                          <th className="text-left p-4">Date</th>
-                          <th className="text-left p-4">Ergo Explorer</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {platformTransactions.map((tx) => (
-                          <tr key={tx.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
-                            <td className="p-4">
-                              {tx.tx_id ? (
-                                <span className="font-mono text-xs text-[var(--accent-cyan)]">
-                                  {tx.tx_id.slice(0, 16)}...
-                                </span>
-                              ) : (
-                                <span className="text-gray-500 italic">N/A</span>
-                              )}
-                            </td>
-                            <td className="p-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                tx.type === 'escrow_fund' 
-                                  ? 'bg-blue-500/20 text-blue-400' 
-                                  : tx.type === 'escrow_release'
-                                  ? 'bg-emerald-500/20 text-emerald-400'
-                                  : 'bg-gray-500/20 text-gray-400'
-                              }`}>
-                                {tx.type.replace('_', ' ').toUpperCase()}
-                              </span>
-                            </td>
-                            <td className="p-4">
-                              <div>
-                                {tx.task_title ? (
-                                  <p className="text-white font-medium">{tx.task_title}</p>
-                                ) : (
-                                  <p className="text-gray-500 italic">No task</p>
-                                )}
-                                {tx.task_id && (
-                                  <p className="text-gray-400 text-xs">ID: {tx.task_id}</p>
-                                )}
-                              </div>
-                            </td>
-                            <td className="p-4">
-                              <span className="text-emerald-400 font-medium">
-                                Σ{(Number(tx.amount_erg) / 1e9).toFixed(4)} ERG
-                              </span>
-                            </td>
-                            <td className="p-4 text-gray-300">
-                              {tx.date ? new Date(tx.date).toLocaleDateString() : 'Unknown'}
-                            </td>
-                            <td className="p-4">
-                              {tx.tx_id ? (
-                                <a
-                                  href={`https://explorer.ergoplatform.com/en/transactions/${tx.tx_id}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-[var(--accent-cyan)] hover:underline"
-                                >
-                                  View →
-                                </a>
-                              ) : (
-                                <span className="text-gray-500">-</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
-                  <div className="text-4xl mb-4">🏛️</div>
-                  <h3 className="text-lg font-semibold text-white mb-2">No Platform Transactions Yet</h3>
-                  <p className="text-gray-400">Platform transactions will appear here as the escrow system is used.</p>
-                  
-                  {/* Show hardcoded genesis transactions if no data */}
-                  <div className="mt-6 p-4 bg-slate-900 border border-slate-600 rounded-lg">
-                    <h4 className="text-white font-medium mb-3">Platform Genesis Transactions</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Fund TX:</span>
-                        <a 
-                          href="https://explorer.ergoplatform.com/en/transactions/e9f4dab8f64655027c8f1757b5f1235132283f1eae306ee5b4976f8f91361026"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[var(--accent-cyan)] hover:underline font-mono"
-                        >
-                          e9f4dab8...1026
-                        </a>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Release TX:</span>
-                        <a 
-                          href="https://explorer.ergoplatform.com/en/transactions/aed2c635b6f60118a601c5095cb3e14f242a6018047f39a66583da67af2501f6"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[var(--accent-cyan)] hover:underline font-mono"
-                        >
-                          aed2c635...01f6
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-6 p-4 bg-slate-800/30 border border-slate-700 rounded-lg">
-                <h4 className="text-white font-medium mb-2">Contract Addresses</h4>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-gray-400">Escrow Contract: </span>
-                    <span className="font-mono text-[var(--accent-cyan)]">
-                      29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Platform Treasury: </span>
-                    <span className="font-mono text-[var(--accent-cyan)]">
-                      9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Recent Blocks */}
-          {activeTab === 'blocks' && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-white">Recent Blocks</h2>
-                <span className="text-sm text-gray-400">
-                  {recentBlocks.length} blocks shown
-                </span>
-              </div>
-          
-          {loading && recentBlocks.length === 0 ? (
+          {loading ? (
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-cyan)] mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading blocks from Ergo network...</p>
+              <p className="text-gray-400">Loading transactions...</p>
             </div>
-          ) : recentBlocks.length > 0 ? (
+          ) : transactions.length > 0 ? (
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-700 text-gray-400">
-                      <th className="text-left p-4">Height</th>
-                      <th className="text-left p-4">Age</th>
-                      <th className="text-left p-4">Txns</th>
-                      <th className="text-left p-4">Reward</th>
-                      <th className="text-left p-4">Size</th>
-                      <th className="text-left p-4">Block ID</th>
+                      <th className="text-left p-4">TX Hash</th>
+                      <th className="text-left p-4">Type</th>
+                      <th className="text-left p-4">Amount (ERG)</th>
+                      <th className="text-left p-4">Date</th>
+                      <th className="text-left p-4">Task</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recentBlocks.map((block) => (
-                      <tr key={block.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
-                        <td className="p-4 text-[var(--accent-cyan)] font-mono font-medium">
-                          {block.height.toLocaleString()}
-                        </td>
-                        <td className="p-4 text-gray-300">{formatTimeAgo(block.timestamp)}</td>
-                        <td className="p-4 text-gray-300">{block.transactionsCount}</td>
-                        <td className="p-4 text-emerald-400">{block.minerReward.toFixed(2)} ERG</td>
-                        <td className="p-4 text-gray-400">{(block.size / 1024).toFixed(1)} KB</td>
+                    {transactions.map((tx) => (
+                      <tr key={tx.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
                         <td className="p-4">
                           <a
-                            href={`https://explorer.ergoplatform.com/en/blocks/${block.id}`}
+                            href={`https://explorer.ergoplatform.com/en/transactions/${tx.tx_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-[var(--accent-cyan)] hover:underline font-mono text-xs"
                           >
-                            {block.id.slice(0, 12)}...
+                            {tx.tx_id.slice(0, 16)}...{tx.tx_id.slice(-8)}
                           </a>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            tx.type === 'escrow_fund' 
+                              ? 'bg-blue-500/20 text-blue-400' 
+                              : tx.type === 'escrow_release'
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : tx.type === 'genesis'
+                              ? 'bg-purple-500/20 text-purple-400'
+                              : 'bg-gray-500/20 text-gray-400'
+                          }`}>
+                            {tx.type.replace('_', ' ').toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <span className="text-emerald-400 font-medium">
+                            Σ{formatAmount(tx.amount_erg)}
+                          </span>
+                        </td>
+                        <td className="p-4 text-gray-300">
+                          {formatDate(tx.date)}
+                        </td>
+                        <td className="p-4">
+                          {tx.task_title ? (
+                            <div>
+                              <p className="text-white text-sm">{tx.task_title}</p>
+                              {tx.task_id && (
+                                <p className="text-gray-400 text-xs">ID: {tx.task_id}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 italic text-sm">No task</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -719,273 +226,41 @@ export default function ExplorerPage() {
             </div>
           ) : (
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
-              <p className="text-gray-400">Unable to load blocks. Check your connection.</p>
+              <div className="text-4xl mb-4">🔍</div>
+              <h3 className="text-lg font-semibold text-white mb-2">No Transactions Yet</h3>
+              <p className="text-gray-400">Platform transactions will appear here as the system is used.</p>
             </div>
           )}
+        </div>
 
-              <div className="mt-4 text-center">
-                <a
-                  href="https://explorer.ergoplatform.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-[var(--accent-cyan)] hover:underline"
-                >
-                  View full explorer on ergoplatform.com →
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* Recent Transactions */}
-          {activeTab === 'transactions' && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-white">Recent Transactions</h2>
-                <span className="text-sm text-gray-400">
-                  {recentTransactions.length} transactions shown
+        {/* Contract Info */}
+        <div className="mt-8 p-6 bg-slate-800/30 border border-slate-700 rounded-lg">
+          <h3 className="text-white font-medium mb-4">Smart Contract Information</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-gray-400 whitespace-nowrap">Escrow Contract:</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[var(--accent-cyan)] text-xs break-all">
+                  {escrowContractAddress}
                 </span>
-              </div>
-              
-              {loading && recentTransactions.length === 0 ? (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-cyan)] mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading transactions from Ergo network...</p>
-                </div>
-              ) : recentTransactions.length > 0 ? (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-700 text-gray-400">
-                          <th className="text-left p-4">Transaction ID</th>
-                          <th className="text-left p-4">Age</th>
-                          <th className="text-left p-4">Height</th>
-                          <th className="text-left p-4">I/O</th>
-                          <th className="text-left p-4">Fee</th>
-                          <th className="text-left p-4">Size</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentTransactions.map((tx) => (
-                          <tr key={tx.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
-                            <td className="p-4">
-                              <a
-                                href={`https://explorer.ergoplatform.com/en/transactions/${tx.id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-[var(--accent-cyan)] hover:underline font-mono text-xs"
-                              >
-                                {tx.id.slice(0, 16)}...
-                              </a>
-                            </td>
-                            <td className="p-4 text-gray-300">{formatTimeAgo(tx.timestamp)}</td>
-                            <td className="p-4 text-[var(--accent-cyan)] font-mono">{tx.height?.toLocaleString() || 'Pending'}</td>
-                            <td className="p-4 text-gray-300">{tx.inputs}/{tx.outputs}</td>
-                            <td className="p-4 text-emerald-400">{(tx.fee / 1e9).toFixed(4)} ERG</td>
-                            <td className="p-4 text-gray-400">{(tx.size / 1024).toFixed(1)} KB</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
-                  <p className="text-gray-400">Unable to load transactions. Check your connection.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Mempool */}
-          {activeTab === 'mempool' && (
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-white">Mempool (Pending Transactions)</h2>
-                {mempoolInfo && (
-                  <span className="text-sm text-gray-400">
-                    {mempoolInfo.size} pending transactions
-                  </span>
-                )}
-              </div>
-              
-              {loading && !mempoolInfo ? (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent-cyan)] mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading mempool data...</p>
-                </div>
-              ) : mempoolInfo && mempoolInfo.transactions.length > 0 ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                      <p className="text-gray-400 text-sm mb-1">Pending Transactions</p>
-                      <p className="text-2xl font-bold text-[var(--accent-cyan)]">{mempoolInfo.size}</p>
-                    </div>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                      <p className="text-gray-400 text-sm mb-1">Avg Fee</p>
-                      <p className="text-2xl font-bold text-emerald-400">
-                        {mempoolInfo.transactions.length > 0 
-                          ? (mempoolInfo.transactions.reduce((sum, tx) => sum + tx.fee, 0) / mempoolInfo.transactions.length / 1e9).toFixed(4)
-                          : '0.0000'} ERG
-                      </p>
-                    </div>
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                      <p className="text-gray-400 text-sm mb-1">Total Size</p>
-                      <p className="text-2xl font-bold text-purple-400">
-                        {(mempoolInfo.transactions.reduce((sum, tx) => sum + tx.size, 0) / 1024).toFixed(1)} KB
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-slate-700 text-gray-400">
-                            <th className="text-left p-4">Transaction ID</th>
-                            <th className="text-left p-4">Age</th>
-                            <th className="text-left p-4">I/O</th>
-                            <th className="text-left p-4">Fee</th>
-                            <th className="text-left p-4">Fee Rate</th>
-                            <th className="text-left p-4">Size</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {mempoolInfo.transactions.slice(0, 15).map((tx) => (
-                            <tr key={tx.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
-                              <td className="p-4">
-                                <a
-                                  href={`https://explorer.ergoplatform.com/en/transactions/${tx.id}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-[var(--accent-cyan)] hover:underline font-mono text-xs"
-                                >
-                                  {tx.id.slice(0, 16)}...
-                                </a>
-                              </td>
-                              <td className="p-4 text-gray-300">{formatTimeAgo(tx.timestamp)}</td>
-                              <td className="p-4 text-gray-300">{tx.inputs}/{tx.outputs}</td>
-                              <td className="p-4 text-emerald-400">{(tx.fee / 1e9).toFixed(4)} ERG</td>
-                              <td className="p-4 text-yellow-400">
-                                {tx.size > 0 ? ((tx.fee / 1e9) / (tx.size / 1024)).toFixed(2) : '0.00'} ERG/KB
-                              </td>
-                              <td className="p-4 text-gray-400">{(tx.size / 1024).toFixed(1)} KB</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
-                  <div className="text-4xl mb-4">🎉</div>
-                  <h3 className="text-lg font-semibold text-white mb-2">Mempool is Empty!</h3>
-                  <p className="text-gray-400">All transactions have been processed into blocks.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Address Information */}
-          {activeTab === 'address' && addressInfo && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Address Information</h2>
                 <a
-                  href={`https://explorer.ergoplatform.com/en/addresses/${addressInfo.address}`}
+                  href={`https://explorer.ergoplatform.com/en/addresses/${escrowContractAddress}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-[var(--accent-cyan)] hover:underline"
+                  className="text-[var(--accent-cyan)] hover:underline whitespace-nowrap"
                 >
-                  View on Official Explorer →
+                  View →
                 </a>
               </div>
-
-              {/* Address Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                  <p className="text-gray-400 text-sm mb-1">Current Balance</p>
-                  <p className="text-3xl font-bold text-[var(--accent-cyan)]">
-                    {addressInfo.balance.toFixed(4)} ERG
-                  </p>
-                </div>
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                  <p className="text-gray-400 text-sm mb-1">Total Received</p>
-                  <p className="text-3xl font-bold text-emerald-400">
-                    {addressInfo.totalReceived.toFixed(4)} ERG
-                  </p>
-                </div>
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                  <p className="text-gray-400 text-sm mb-1">Transactions</p>
-                  <p className="text-3xl font-bold text-purple-400">
-                    {addressInfo.transactionsCount.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              {/* Address Details */}
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 mb-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Address Details</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Address</p>
-                    <p className="text-white font-mono text-sm break-all bg-slate-900 p-2 rounded">
-                      {addressInfo.address}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-gray-400 text-sm mb-1">Total Sent</p>
-                      <p className="text-white font-semibold">{addressInfo.totalSent.toFixed(4)} ERG</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 text-sm mb-1">Net Flow</p>
-                      <p className={`font-semibold ${addressInfo.balance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                        {addressInfo.balance >= 0 ? '+' : ''}{addressInfo.balance.toFixed(4)} ERG
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tokens */}
-              {addressInfo.tokens.length > 0 && (
-                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4">
-                    Token Holdings ({addressInfo.tokens.length})
-                  </h3>
-                  <div className="space-y-3">
-                    {addressInfo.tokens.slice(0, 10).map((token) => (
-                      <div key={token.tokenId} className="flex items-center justify-between p-3 bg-slate-900 rounded-lg">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white font-medium truncate">
-                            {token.name || 'Unknown Token'}
-                          </p>
-                          <p className="text-gray-400 text-xs font-mono truncate">
-                            {token.tokenId}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[var(--accent-cyan)] font-semibold">
-                            {(token.amount / Math.pow(10, token.decimals)).toLocaleString()}
-                          </p>
-                          <p className="text-gray-400 text-xs">
-                            {token.decimals} decimals
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    {addressInfo.tokens.length > 10 && (
-                      <p className="text-center text-gray-400 text-sm pt-2">
-                        And {addressInfo.tokens.length - 10} more tokens...
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
-          )}
+            <div>
+              <span className="text-gray-400">Platform Treasury: </span>
+              <span className="font-mono text-purple-400">9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-4">
+              All transactions are cryptographically secured on the Ergo blockchain. Click any transaction hash to verify on the official Ergo explorer.
+            </p>
+          </div>
         </div>
       </div>
     </div>

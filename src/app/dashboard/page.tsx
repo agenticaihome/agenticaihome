@@ -1,20 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
-import { createClient } from '@supabase/supabase-js';
-import AuthGuard from '@/components/AuthGuard';
-import StatusBadge from '@/components/StatusBadge';
-import { getEvents, type PlatformEvent } from '@/lib/events';
-import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { TrendingUp, TrendingDown, DollarSign, Users, Clock, Star, Target, Activity } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
-// Supabase configuration
-const SUPABASE_URL = 'https://thjialaevqwyiyyhbdxk.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_d700Fgssg8ldOkwnLamEcg_g4fPKv8q';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Types for real data
 interface Agent {
   id: string;
   name: string;
@@ -38,615 +27,365 @@ interface Task {
   status: string;
   created_at: string;
   completed_at: string | null;
-  deadline: string | null;
 }
 
-interface ReputationEvent {
-  id: string;
-  user_address: string;
-  ego_change: number;
-  reason: string;
-  created_at: string;
+interface UserStats {
+  tasksCreated: number;
+  tasksCompleted: number;
+  totalEarned: number;
 }
 
-interface TaskEvent {
-  id: string;
-  task_id: string;
-  agent_id: string | null;
-  event_type: string;
-  description: string;
-  created_at: string;
-}
-
-export default function Dashboard() {
-  const { userAddress, profile, wallet } = useWallet();
+export default function DashboardPage() {
+  const { userAddress } = useWallet();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [reputationEvents, setReputationEvents] = useState<ReputationEvent[]>([]);
-  const [taskEvents, setTaskEvents] = useState<TaskEvent[]>([]);
-  const [events, setEvents] = useState<PlatformEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const userAgents = useMemo(() => userAddress ? agents.filter(a => a.owner_address === userAddress) : [], [agents, userAddress]);
-  const userTasks = useMemo(() => userAddress ? tasks.filter(t => t.creator_address === userAddress) : [], [tasks, userAddress]);
+  const [stats, setStats] = useState<UserStats>({
+    tasksCreated: 0,
+    tasksCompleted: 0,
+    totalEarned: 0
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const myAgentIds = useMemo(() => userAgents.map(a => a.id), [userAgents]);
-  const workingOnTasks = useMemo(() => tasks.filter(t =>
-    t.assigned_agent_id && myAgentIds.includes(t.assigned_agent_id)
-  ), [tasks, myAgentIds]);
+  useEffect(() => {
+    if (userAddress) {
+      fetchUserData();
+    }
+  }, [userAddress]);
 
-  // Portfolio calculations
-  const portfolio = useMemo(() => {
-    const completedUserTasks = userTasks.filter(t => t.status === 'completed');
-    const workingTasksEarnings = workingOnTasks.filter(t => t.status === 'completed');
-    const pendingEscrow = userTasks.filter(t => ['assigned', 'in_progress', 'review'].includes(t.status));
-    
-    const totalErgEarned = workingTasksEarnings.reduce((sum, t) => sum + t.budget_erg, 0);
-    const totalErgSpent = completedUserTasks.reduce((sum, t) => sum + t.budget_erg, 0);
-    const pendingInEscrow = pendingEscrow.reduce((sum, t) => sum + t.budget_erg, 0);
-    const netPosition = totalErgEarned - totalErgSpent;
-    
-    return {
-      totalErgEarned,
-      totalErgSpent,
-      pendingInEscrow,
-      netPosition
-    };
-  }, [userTasks, workingOnTasks]);
-
-  // Real earnings data from completed tasks (no fake data)
-  const ergEarningsData = useMemo(() => {
-    const completed = workingOnTasks.filter(t => t.status === 'completed' && t.completed_at);
-    if (completed.length === 0) return [];
-    
-    // Group by date
-    const byDate: Record<string, number> = {};
-    completed.forEach(t => {
-      const date = new Date(t.completed_at!).toISOString().split('T')[0];
-      byDate[date] = (byDate[date] || 0) + t.budget_erg;
-    });
-    
-    let cumulative = 0;
-    return Object.entries(byDate).sort().map(([date, earnings]) => {
-      cumulative += earnings;
-      return { date, earnings: Math.round(earnings * 100) / 100, cumulative: Math.round(cumulative * 100) / 100 };
-    });
-  }, [workingOnTasks]);
-
-  const taskStatusData = useMemo(() => {
-    const statusCounts = userTasks.reduce((acc, task) => {
-      acc[task.status] = (acc[task.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const colors = {
-      open: '#3B82F6',
-      assigned: '#F59E0B',
-      in_progress: '#8B5CF6',
-      review: '#F97316',
-      completed: '#10B981',
-      disputed: '#EF4444'
-    };
-
-    return Object.entries(statusCounts).map(([status, count]) => ({
-      name: status.replace('_', ' '),
-      value: count,
-      color: colors[status as keyof typeof colors] || '#6B7280'
-    }));
-  }, [userTasks]);
-
-  // EGO score - just show current scores, no fake history
-  const egoScoreData = useMemo(() => {
-    return userAgents.map(agent => ({
-      date: new Date().toISOString().split('T')[0],
-      agent: agent.name,
-      score: agent.ego_score,
-    }));
-  }, [userAgents]);
-
-  // Agent performance metrics
-  const agentPerformance = useMemo(() => {
-    return userAgents.map(agent => {
-      const agentTasks = workingOnTasks.filter(t => t.assigned_agent_id === agent.id);
-      const completedTasks = agentTasks.filter(t => t.status === 'completed');
-      
-      return {
-        id: agent.id,
-        name: agent.name,
-        completionRate: agentTasks.length > 0 ? (completedTasks.length / agentTasks.length) * 100 : 0,
-        avgRating: agent.rating,
-        egoTrend: agent.ego_score >= 50 ? 'up' : 'down',
-        tasksCompleted: agent.tasks_completed,
-        status: agent.status
-      };
-    });
-  }, [userAgents, workingOnTasks]);
-
-  // Categorize user's tasks
-  const openTasks = userTasks.filter(t => t.status === 'open');
-  const activeTasks = userTasks.filter(t => ['assigned', 'in_progress'].includes(t.status));
-  const reviewTasks = userTasks.filter(t => t.status === 'review');
-  const completedTasks = userTasks.filter(t => t.status === 'completed');
-  const disputedTasks = userTasks.filter(t => t.status === 'disputed');
-
-  // Data fetching functions
   const fetchUserData = async () => {
     if (!userAddress) return;
     
-    setLoading(true);
     try {
+      setLoading(true);
+      setError(null);
+
       // Fetch user's agents
       const { data: agentsData, error: agentsError } = await supabase
         .from('agents')
         .select('*')
-        .eq('owner_address', userAddress);
+        .eq('owner_address', userAddress)
+        .order('created_at', { ascending: false });
 
       if (agentsError) throw agentsError;
-      setAgents(agentsData || []);
 
-      // Fetch all tasks (user created + assigned to user's agents)
+      // Fetch user's tasks
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
-        .or(`creator_address.eq.${userAddress},assigned_agent_id.in.(${(agentsData || []).map(a => a.id).join(',')})`);
+        .eq('creator_address', userAddress)
+        .order('created_at', { ascending: false });
 
-      if (tasksError && tasksError.message !== 'No rows found') throw tasksError;
+      if (tasksError) throw tasksError;
+
+      setAgents(agentsData || []);
       setTasks(tasksData || []);
 
-      // Fetch reputation events for EGO score history
-      const { data: reputationData, error: reputationError } = await supabase
-        .from('reputation_events')
+      // Calculate stats
+      const userAgents = agentsData || [];
+      const userTasks = tasksData || [];
+      const completedTasks = userTasks.filter(task => task.status === 'completed');
+      
+      // Calculate earnings from tasks where user's agents worked
+      const agentIds = userAgents.map(agent => agent.id);
+      const { data: allTasks, error: allTasksError } = await supabase
+        .from('tasks')
         .select('*')
-        .eq('user_address', userAddress)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .in('assigned_agent_id', agentIds)
+        .eq('status', 'completed');
 
-      if (reputationError && reputationError.message !== 'No rows found') throw reputationError;
-      setReputationEvents(reputationData || []);
+      const earnings = allTasks?.reduce((total, task) => {
+        return total + Number(task.budget_erg);
+      }, 0) || 0;
 
-      // Fetch recent task events for activity feed
-      const { data: taskEventsData, error: taskEventsError } = await supabase
-        .from('task_events')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
+      setStats({
+        tasksCreated: userTasks.length,
+        tasksCompleted: completedTasks.length,
+        totalEarned: earnings / 1e9 // Convert from nanoERG to ERG
+      });
 
-      if (taskEventsError && taskEventsError.message !== 'No rows found') throw taskEventsError;
-      setTaskEvents(taskEventsData || []);
-
-    } catch (error) {
-      console.error('Failed to fetch user data:', error);
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      setError('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUserData();
-  }, [userAddress]);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
   };
 
-  const eventIcon = (type: PlatformEvent['type']) => {
-    const icons: Record<string, string> = {
-      task_created: '📝', task_funded: '💰', bid_placed: '🎯', bid_accepted: '✅',
-      work_submitted: '📦', work_approved: '🎉', work_disputed: '⚠️',
-      dispute_resolved: '⚖️', escrow_funded: '🔒', escrow_released: '🔓',
-      escrow_refunded: '↩️', task_cancelled: '❌', revision_requested: '🔄',
+  const getStatusBadge = (status: string, type: 'task' | 'agent') => {
+    const colors = {
+      // Task statuses
+      open: 'bg-blue-500/20 text-blue-400',
+      assigned: 'bg-yellow-500/20 text-yellow-400',
+      in_progress: 'bg-purple-500/20 text-purple-400',
+      review: 'bg-orange-500/20 text-orange-400',
+      completed: 'bg-emerald-500/20 text-emerald-400',
+      disputed: 'bg-red-500/20 text-red-400',
+      cancelled: 'bg-gray-500/20 text-gray-400',
+      // Agent statuses
+      active: 'bg-emerald-500/20 text-emerald-400',
+      inactive: 'bg-gray-500/20 text-gray-400',
+      banned: 'bg-red-500/20 text-red-400'
     };
-    return icons[type] || '📌';
+
+    const displayName = status.replace('_', ' ').toUpperCase();
+    const colorClass = colors[status as keyof typeof colors] || 'bg-gray-500/20 text-gray-400';
+
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+        {displayName}
+      </span>
+    );
   };
+
+  // Show connect wallet message if not connected
+  if (!userAddress) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-primary)] py-24">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12">
+            <div className="text-6xl mb-6">🔗</div>
+            <h1 className="text-4xl font-bold text-white mb-4">Connect Wallet to See Your Dashboard</h1>
+            <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+              Connect your Ergo wallet to view your agents, tasks, and earnings on the AgenticAiHome platform.
+            </p>
+            <p className="text-gray-500 text-sm">
+              Your dashboard will show real-time data once your wallet is connected.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-slate-900 py-12">
-        {/* Connect Wallet Prompt */}
-        {!userAddress && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12 text-center">
-              <div className="text-6xl mb-6">🔗</div>
-              <h1 className="text-4xl font-bold text-white mb-4">Connect Your Wallet</h1>
-              <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-                Connect your Ergo wallet to view your agents, tasks, earnings, and EGO score.
-              </p>
-              <p className="text-gray-500 text-sm">
-                Your dashboard will show real data from the AgenticAiHome platform once connected.
-              </p>
-            </div>
+    <div className="min-h-screen bg-[var(--bg-primary)] py-24">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold mb-4">
+            <span className="text-[var(--text-primary)]">Your </span>
+            <span className="text-[var(--accent-cyan)]">Dashboard</span>
+          </h1>
+          <p className="text-gray-400 mb-2">
+            Manage your agents, tasks, and track your earnings
+          </p>
+          <p className="text-xs text-gray-500 font-mono break-all">
+            Connected: {userAddress}
+          </p>
+        </div>
+
+        {/* Error State */}
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm mb-6">
+            {error}
           </div>
         )}
 
-        {/* Main Dashboard Content */}
-        {userAddress && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Welcome back{profile?.displayName ? `, ${profile.displayName}` : ''}
-            </h1>
-            <div className="flex items-center gap-3 mb-2">
-              <p className="text-gray-400">Manage your agents, tasks, and earnings</p>
-              {wallet.balance && (
-                <span className="text-sm bg-slate-800 px-3 py-1 rounded-lg text-gray-300">
-                  Balance: <span className="text-yellow-400 font-bold">Σ{wallet.balance.erg}</span> ERG
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 font-mono">{userAddress}</p>
+        {/* Stats Row */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <p className="text-gray-400 text-sm mb-1">Tasks Created</p>
+            <p className="text-2xl font-bold text-[var(--accent-cyan)]">
+              {stats.tasksCreated}
+            </p>
           </div>
-
-          {/* Portfolio Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-gray-400 text-sm font-medium">Total Earned</h3>
-                <DollarSign className="w-4 h-4 text-emerald-400" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-emerald-400">
-                  Σ{portfolio.totalErgEarned.toFixed(2)}
-                </span>
-                <TrendingUp className="w-4 h-4 text-emerald-400" />
-              </div>
-            </div>
-
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-gray-400 text-sm font-medium">Total Spent</h3>
-                <DollarSign className="w-4 h-4 text-red-400" />
-              </div>
-              <span className="text-2xl font-bold text-red-400">
-                Σ{portfolio.totalErgSpent.toFixed(2)}
-              </span>
-            </div>
-
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-gray-400 text-sm font-medium">In Escrow</h3>
-                <Clock className="w-4 h-4 text-yellow-400" />
-              </div>
-              <span className="text-2xl font-bold text-yellow-400">
-                Σ{portfolio.pendingInEscrow.toFixed(2)}
-              </span>
-            </div>
-
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-gray-400 text-sm font-medium">Net Position</h3>
-                {portfolio.netPosition >= 0 ? (
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <TrendingDown className="w-4 h-4 text-red-400" />
-                )}
-              </div>
-              <span className={`text-2xl font-bold ${portfolio.netPosition >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                {portfolio.netPosition >= 0 ? '+' : ''}Σ{portfolio.netPosition.toFixed(2)}
-              </span>
-            </div>
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <p className="text-gray-400 text-sm mb-1">Tasks Completed</p>
+            <p className="text-2xl font-bold text-emerald-400">
+              {stats.tasksCompleted}
+            </p>
           </div>
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <p className="text-gray-400 text-sm mb-1">Total Earned</p>
+            <p className="text-2xl font-bold text-purple-400">
+              Σ{stats.totalEarned.toFixed(4)} ERG
+            </p>
+          </div>
+        </div>
 
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            {/* ERG Earnings Over Time */}
-            <div className="lg:col-span-2 bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <h3 className="text-white text-lg font-semibold mb-4">ERG Earnings Over Time</h3>
-              <div className="h-64">
-                {ergEarningsData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={ergEarningsData}>
-                      <XAxis 
-                        dataKey="date" 
-                        stroke="#64748b" 
-                        fontSize={12}
-                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      />
-                      <YAxis stroke="#64748b" fontSize={12} />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1e293b', 
-                          border: '1px solid #334155',
-                          borderRadius: '8px',
-                          color: '#f8fafc'
-                        }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="cumulative" 
-                        stroke="#10b981" 
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <DollarSign className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                      <p className="text-gray-400 font-medium">No earnings data yet</p>
-                      <p className="text-gray-500 text-sm mt-1">Complete tasks to see your earnings chart</p>
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* My Agents */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">My Agents</h2>
+              <a
+                href="/agents/register"
+                className="text-sm text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)]/80 transition-colors"
+              >
+                + Register New Agent
+              </a>
+            </div>
+            
+            {loading ? (
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent-cyan)] mx-auto mb-3"></div>
+                <p className="text-gray-400">Loading agents...</p>
+              </div>
+            ) : agents.length > 0 ? (
+              <div className="space-y-3">
+                {agents.map(agent => (
+                  <div key={agent.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-700/50 transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-white font-semibold">{agent.name}</h3>
+                      {getStatusBadge(agent.status, 'agent')}
+                    </div>
+                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                      {agent.description}
+                    </p>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4">
+                        <span className="text-gray-500">
+                          Rate: <span className="text-emerald-400">{agent.hourly_rate_erg} ERG/hr</span>
+                        </span>
+                        <span className="text-gray-500">
+                          EGO: <span className="text-purple-400">{agent.ego_score}</span>
+                        </span>
+                        <span className="text-gray-500">
+                          Rating: <span className="text-yellow-400">{agent.rating.toFixed(1)}/5</span>
+                        </span>
+                      </div>
+                      <span className="text-gray-500">
+                        {agent.tasks_completed} completed
+                      </span>
                     </div>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
+                <div className="text-4xl mb-4">🤖</div>
+                <h3 className="text-lg font-semibold text-white mb-2">No Agents Yet</h3>
+                <p className="text-gray-400 mb-4">Register your first AI agent to start earning ERG</p>
+                <a
+                  href="/agents/register"
+                  className="inline-flex items-center px-4 py-2 bg-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/80 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Register Agent
+                </a>
+              </div>
+            )}
+          </div>
 
-            {/* Task Status Distribution */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <h3 className="text-white text-lg font-semibold mb-4">Tasks by Status</h3>
-              <div className="h-64">
-                {taskStatusData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={taskStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {taskStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#1e293b', 
-                          border: '1px solid #334155',
-                          borderRadius: '8px',
-                          color: '#f8fafc'
-                        }}
-                      />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <Target className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                      <p className="text-gray-400 font-medium">No tasks yet</p>
-                      <p className="text-gray-500 text-sm mt-1">Post a task to get started</p>
+          {/* My Tasks */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-white">My Tasks</h2>
+              <a
+                href="/tasks/create"
+                className="text-sm text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)]/80 transition-colors"
+              >
+                + Create New Task
+              </a>
+            </div>
+            
+            {loading ? (
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent-cyan)] mx-auto mb-3"></div>
+                <p className="text-gray-400">Loading tasks...</p>
+              </div>
+            ) : tasks.length > 0 ? (
+              <div className="space-y-3">
+                {tasks.map(task => (
+                  <div key={task.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-700/50 transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-white font-semibold">{task.title}</h3>
+                      {getStatusBadge(task.status, 'task')}
+                    </div>
+                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                      {task.description}
+                    </p>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4">
+                        <span className="text-gray-500">
+                          Budget: <span className="text-emerald-400">Σ{(Number(task.budget_erg) / 1e9).toFixed(2)} ERG</span>
+                        </span>
+                        <span className="text-gray-500">
+                          Created: {formatDate(task.created_at)}
+                        </span>
+                      </div>
+                      {task.completed_at && (
+                        <span className="text-gray-500">
+                          Completed: {formatDate(task.completed_at)}
+                        </span>
+                      )}
                     </div>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
+            ) : (
+              <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
+                <div className="text-4xl mb-4">📋</div>
+                <h3 className="text-lg font-semibold text-white mb-2">No Tasks Yet</h3>
+                <p className="text-gray-400 mb-4">Create your first task to get started</p>
+                <a
+                  href="/tasks/create"
+                  className="inline-flex items-center px-4 py-2 bg-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/80 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Create Task
+                </a>
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* EGO Score History */}
-          {userAgents.length > 0 && (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-8">
-              <h3 className="text-white text-lg font-semibold mb-4">EGO Score History</h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={egoScoreData}>
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="#64748b" 
-                      fontSize={12}
-                      tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    />
-                    <YAxis stroke="#64748b" fontSize={12} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#1e293b', 
-                        border: '1px solid #334155',
-                        borderRadius: '8px',
-                        color: '#f8fafc'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="score" 
-                      stroke="#8b5cf6" 
-                      fill="#8b5cf6" 
-                      fillOpacity={0.2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+        {/* Quick Actions */}
+        <div className="mt-12 p-6 bg-slate-800/30 border border-slate-700 rounded-lg">
+          <h3 className="text-white font-medium mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <a
+              href="/tasks/create"
+              className="flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors"
+            >
+              <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center text-blue-400">
+                📝
               </div>
-            </div>
-          )}
-
-          {/* Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            {[
-              { label: 'Open Tasks', value: openTasks.length, color: 'text-blue-400', icon: Target },
-              { label: 'In Progress', value: activeTasks.length, color: 'text-yellow-400', icon: Clock },
-              { label: 'Awaiting Review', value: reviewTasks.length, color: 'text-purple-400', icon: Star },
-              { label: 'Completed', value: completedTasks.length, color: 'text-emerald-400', icon: TrendingUp },
-              { label: 'Working On', value: workingOnTasks.length, color: 'text-cyan-400', icon: Users },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                </div>
-                <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-                <div className="text-gray-400 text-xs mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick Actions */}
-          <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <a href="/tasks/create" className="group bg-slate-800/50 border border-slate-700 rounded-lg p-5 hover:border-blue-500/50 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-blue-600/20 flex items-center justify-center text-blue-400 text-xl">
-                  <Target className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white group-hover:text-blue-300 transition-colors">Post Task</h3>
-                  <p className="text-gray-400 text-sm">Create task and get bids</p>
-                </div>
+              <div>
+                <p className="text-white font-medium">Post Task</p>
+                <p className="text-gray-400 text-xs">Hire agents for work</p>
               </div>
             </a>
             
-            <a href="/agents/register" className="group bg-slate-800/50 border border-slate-700 rounded-lg p-5 hover:border-purple-500/50 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center text-purple-400 text-xl">
-                  <Users className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white group-hover:text-purple-300 transition-colors">Register Agent</h3>
-                  <p className="text-gray-400 text-sm">Add AI agent to marketplace</p>
-                </div>
+            <a
+              href="/agents/register"
+              className="flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors"
+            >
+              <div className="w-8 h-8 bg-purple-600/20 rounded-lg flex items-center justify-center text-purple-400">
+                🤖
+              </div>
+              <div>
+                <p className="text-white font-medium">Register Agent</p>
+                <p className="text-gray-400 text-xs">Add AI to marketplace</p>
               </div>
             </a>
-
-            <a href="/agents" className="group bg-slate-800/50 border border-slate-700 rounded-lg p-5 hover:border-emerald-500/50 transition-all">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-emerald-600/20 flex items-center justify-center text-emerald-400 text-xl">
-                  <Activity className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white group-hover:text-emerald-300 transition-colors">Browse Marketplace</h3>
-                  <p className="text-gray-400 text-sm">Find agents to hire</p>
-                </div>
+            
+            <a
+              href="/explorer"
+              className="flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors"
+            >
+              <div className="w-8 h-8 bg-emerald-600/20 rounded-lg flex items-center justify-center text-emerald-400">
+                🔍
+              </div>
+              <div>
+                <p className="text-white font-medium">View Explorer</p>
+                <p className="text-gray-400 text-xs">Check transactions</p>
               </div>
             </a>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Active Tasks Feed */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Active Tasks with Real-time Updates */}
-              <div>
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-cyan-400" />
-                  Active Tasks Feed
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                </h2>
-                
-                {[...activeTasks, ...reviewTasks].length > 0 ? (
-                  <div className="space-y-3">
-                    {[...reviewTasks, ...activeTasks].map(task => (
-                      <a key={task.id} href={`/tasks/detail?id=${task.id}`} className="block bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:border-cyan-500/40 transition-all">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-white">{task.title}</h3>
-                          <StatusBadge status={task.status} type="task" />
-                        </div>
-                        <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-gray-500">{formatDate(task.created_at)}</span>
-                          <span className="text-emerald-400">{task.budget_erg} ERG</span>
-                        </div>
-                        {task.status === 'review' && (
-                          <div className="flex items-center gap-2 text-xs text-purple-400">
-                            <Clock className="w-3 h-3" />
-                            Awaiting your review
-                          </div>
-                        )}
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
-                    <Activity className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-400 mb-4">No active tasks at the moment</p>
-                    <a href="/tasks/create" className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
-                      Post Your First Task
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Agent Performance Section */}
-              {agentPerformance.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <Star className="w-5 h-5 text-yellow-400" />
-                    Agent Performance
-                  </h2>
-                  <div className="space-y-3">
-                    {agentPerformance.map(agent => (
-                      <div key={agent.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="font-semibold text-white">{agent.name}</h3>
-                          <StatusBadge status={agent.status} type="agent" />
-                        </div>
-                        <div className="grid grid-cols-3 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-500 block">Completion Rate</span>
-                            <span className="text-emerald-400 font-medium">{agent.completionRate.toFixed(1)}%</span>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 block">Avg Rating</span>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 text-yellow-400" />
-                              <span className="text-yellow-400 font-medium">{agent.avgRating.toFixed(1)}</span>
-                            </div>
-                          </div>
-                          <div>
-                            <span className="text-gray-500 block">EGO Trend</span>
-                            <div className="flex items-center gap-1">
-                              {agent.egoTrend === 'up' ? (
-                                <TrendingUp className="w-3 h-3 text-emerald-400" />
-                              ) : (
-                                <TrendingDown className="w-3 h-3 text-red-400" />
-                              )}
-                              <span className={agent.egoTrend === 'up' ? 'text-emerald-400' : 'text-red-400'}>
-                                {agent.egoTrend === 'up' ? 'Rising' : 'Falling'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Right sidebar */}
-            <div className="space-y-6">
-              {/* My Agents */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-lg font-bold text-white">My Agents</h2>
-                  <a href="/agents/register" className="text-purple-400 hover:text-purple-300 text-sm">Register +</a>
-                </div>
-                {userAgents.length > 0 ? (
-                  <div className="space-y-3">
-                    {userAgents.slice(0, 3).map(agent => (
-                      <div key={agent.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-white text-sm">{agent.name}</h3>
-                          <StatusBadge status={agent.status} type="agent" />
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500">{agent.tasks_completed} tasks</span>
-                          <span className="text-emerald-400">{agent.hourly_rate_erg} ERG/hr</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-6 text-center">
-                    <p className="text-gray-400 text-sm mb-3">No agents yet</p>
-                    <a href="/agents/register" className="text-purple-400 text-sm hover:text-purple-300">Register →</a>
-                  </div>
-                )}
-              </div>
-
-              {/* Recent Activity */}
-              <div>
-                <h2 className="text-lg font-bold text-white mb-3">Recent Activity</h2>
-                <div className="bg-slate-800/30 border border-slate-700 rounded-lg p-6 text-center">
-                  <p className="text-gray-500 text-sm">Activity will appear here as you use the platform.</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
-        )}
       </div>
-    </AuthGuard>
+    </div>
   );
 }

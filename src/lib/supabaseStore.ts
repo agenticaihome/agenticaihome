@@ -178,9 +178,9 @@ function dbToWalletProfile(row: Record<string, unknown>): WalletProfile {
   };
 }
 
-// ---- ID generation (matches original store format) ----
+// ---- ID generation (cryptographically random UUIDs) ----
 function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return crypto.randomUUID();
 }
 
 // ---- Ergo address validation ----
@@ -562,46 +562,85 @@ export async function getAllSkills(): Promise<string[]> {
   return Array.from(skillSet).sort();
 }
 
-// ---- User auth (kept as localStorage for now - not migrated to Supabase) ----
+// ---- Legacy email/password auth REMOVED (security hardening 2026-02-09) ----
+// The app uses wallet-based identity only. Plaintext password storage has been removed.
+// createUser() and verifyPassword() are no longer available.
 
-const USERS_STORAGE_KEY = 'aih_users';
+// ---- Deliverable Management ----
 
-function getUsers(): User[] {
-  if (typeof window === 'undefined') return [];
-  const stored = localStorage.getItem(USERS_STORAGE_KEY);
-  if (stored) {
-    try { return JSON.parse(stored); } catch { return []; }
+export async function createDeliverable(deliverable: {
+  taskId: string;
+  agentId: string;
+  content: string;
+  deliverableUrl?: string;
+  revisionNumber: number;
+}): Promise<{ id: string }> {
+  // Validate deliverable URL if provided
+  if (deliverable.deliverableUrl) {
+    if (!deliverable.deliverableUrl.startsWith('https://')) {
+      throw new Error('Deliverable URL must start with https://');
+    }
   }
-  return [];
+  const id = generateId();
+  await supabase.from('deliverables').insert({
+    id,
+    task_id: deliverable.taskId,
+    agent_id: deliverable.agentId,
+    content: sanitizeText(deliverable.content, 5000),
+    deliverable_url: deliverable.deliverableUrl || null,
+    status: 'pending',
+    revision_number: deliverable.revisionNumber,
+    created_at: new Date().toISOString(),
+  });
+  return { id };
 }
 
-function saveUsers(users: User[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+export async function updateDeliverableStatus(id: string, status: string): Promise<void> {
+  await supabase.from('deliverables').update({ status }).eq('id', id);
 }
 
-export function createUser(email: string, password: string, displayName: string, role: User['role'] = 'user'): User {
-  const users = getUsers();
-  if (users.find(u => u.email === email)) throw new Error('User already exists');
-  const user: User = {
-    id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-    email: sanitizeText(email),
-    displayName: sanitizeText(displayName),
-    role,
-    joinedAt: new Date().toISOString(),
-  };
-  const passwords = JSON.parse(localStorage.getItem('aih_passwords') || '{}');
-  passwords[email] = password;
-  localStorage.setItem('aih_passwords', JSON.stringify(passwords));
-  users.push(user);
-  saveUsers(users);
-  return user;
+export async function getDeliverablesForTask(taskId: string): Promise<Record<string, unknown>[]> {
+  const { data } = await supabase
+    .from('deliverables')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: false });
+  return data || [];
 }
 
-export function verifyPassword(email: string, password: string): User | null {
-  const users = getUsers();
-  const user = users.find(u => u.email === email);
-  if (!user) return null;
-  const passwords = JSON.parse(localStorage.getItem('aih_passwords') || '{}');
-  return passwords[email] === password ? user : null;
+export async function updateAgentStats(agentId: string, egoDelta: number, description: string): Promise<void> {
+  // Create reputation event
+  await supabase.from('reputation_events').insert({
+    id: generateId(),
+    agent_id: agentId,
+    event_type: 'completion',
+    ego_delta: egoDelta,
+    description: sanitizeText(description, 500),
+    created_at: new Date().toISOString(),
+  });
+
+  // Update agent's EGO score and task count
+  const { data: currentAgent } = await supabase
+    .from('agents')
+    .select('ego_score, tasks_completed')
+    .eq('id', agentId)
+    .single();
+
+  if (currentAgent) {
+    await supabase.from('agents').update({
+      ego_score: currentAgent.ego_score + egoDelta,
+      tasks_completed: currentAgent.tasks_completed + 1,
+    }).eq('id', agentId);
+  }
+}
+
+export async function updateTaskMetadata(taskId: string, metadata: Record<string, string>): Promise<void> {
+  await supabase.from('tasks').update({ metadata }).eq('id', taskId);
+}
+
+export async function updateTaskEscrow(taskId: string, escrowTxId: string, metadata: Record<string, string>): Promise<void> {
+  await supabase.from('tasks').update({
+    escrow_tx_id: escrowTxId,
+    metadata,
+  }).eq('id', taskId);
 }

@@ -8,8 +8,8 @@ import AuthGuard from '@/components/AuthGuard';
 import StatusBadge from '@/components/StatusBadge';
 import EgoScore from '@/components/EgoScore';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import { logEvent } from '@/lib/events';
+import { createDeliverable, updateDeliverableStatus, getDeliverablesForTask, updateAgentStats, updateTaskMetadata, updateTaskEscrow } from '@/lib/supabaseStore';
 import EscrowActions from '@/components/EscrowActions';
 import type { Task, Bid, Agent } from '@/lib/types';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';
@@ -25,10 +25,6 @@ interface Deliverable {
   reviewNotes?: string;
   revisionNumber: number;
   createdAt: string;
-}
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 export default function TaskDetailPage() {
@@ -105,11 +101,7 @@ function TaskDetailInner() {
       }
 
       // Load deliverables
-      const { data: delData } = await supabase
-        .from('deliverables')
-        .select('*')
-        .eq('task_id', taskId)
-        .order('created_at', { ascending: false });
+      const delData = await getDeliverablesForTask(taskId);
       setDeliverables((delData || []).map((d: Record<string, unknown>) => ({
         id: d.id as string,
         taskId: d.task_id as string,
@@ -213,16 +205,16 @@ function TaskDetailInner() {
     setSubmittingDeliverable(true);
     setError('');
     try {
-      const delivId = generateId();
-      await supabase.from('deliverables').insert({
-        id: delivId,
-        task_id: taskId,
-        agent_id: assignedAgent.id,
+      // Validate deliverable URL
+      if (deliverableUrl && !deliverableUrl.startsWith('https://')) {
+        throw new Error('Deliverable URL must start with https://');
+      }
+      await createDeliverable({
+        taskId,
+        agentId: assignedAgent.id,
         content: deliverableContent,
-        deliverable_url: deliverableUrl || null,
-        status: 'pending',
-        revision_number: deliverables.length + 1,
-        created_at: new Date().toISOString(),
+        deliverableUrl: deliverableUrl || undefined,
+        revisionNumber: deliverables.length + 1,
       });
       await updateTaskData(taskId, { status: 'review' });
       logEvent({ type: 'work_submitted', message: `Work submitted for review`, taskId, actor: userAddress || '' });
@@ -245,46 +237,23 @@ function TaskDetailInner() {
     try {
       // Mark deliverable approved
       if (deliverables.length > 0) {
-        await supabase.from('deliverables').update({ status: 'approved' }).eq('id', deliverables[0].id);
+        await updateDeliverableStatus(deliverables[0].id, 'approved');
       }
       
       // If escrow is funded, don't mark completed yet — wait for on-chain release
       if (escrowStatus === 'funded' && escrowBoxId) {
         // Mark as approved but awaiting payment release
-        await supabase.from('tasks').update({
-          metadata: { escrow_box_id: escrowBoxId, escrow_status: 'approved_pending_release' },
-        }).eq('id', taskId);
+        await updateTaskMetadata(taskId, { escrow_box_id: escrowBoxId, escrow_status: 'approved_pending_release' });
         logEvent({ type: 'work_approved', message: `Work approved — release payment to complete`, taskId, actor: userAddress || '' });
         showSuccess('Work approved! Now release the escrow payment to complete the task.');
       } else {
         // No escrow — just complete directly
         await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
         
-        // Create reputation event for agent - EGO score increase based on task value
+        // Update agent stats via store
         if (task.assignedAgentId && task.budgetErg) {
-          const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0); // Scale based on task value, 2-8 range
-          await supabase.from('reputation_events').insert({
-            id: generateId(),
-            agent_id: task.assignedAgentId,
-            event_type: 'completion',
-            ego_delta: egoDelta,
-            description: `Task completed: ${task.title} (${task.budgetErg} ERG)`,
-            created_at: new Date().toISOString(),
-          });
-          
-          // Update agent's EGO score and task count
-          const { data: currentAgent } = await supabase
-            .from('agents')
-            .select('ego_score, tasks_completed')
-            .eq('id', task.assignedAgentId)
-            .single();
-          
-          if (currentAgent) {
-            await supabase.from('agents').update({
-              ego_score: currentAgent.ego_score + egoDelta,
-              tasks_completed: currentAgent.tasks_completed + 1,
-            }).eq('id', task.assignedAgentId);
-          }
+          const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0);
+          await updateAgentStats(task.assignedAgentId, egoDelta, `Task completed: ${task.title} (${task.budgetErg} ERG)`);
         }
         
         logEvent({ type: 'work_approved', message: `Work approved for "${task.title}"`, taskId, actor: userAddress || '' });
@@ -304,7 +273,7 @@ function TaskDetailInner() {
     setError('');
     try {
       if (deliverables.length > 0) {
-        await supabase.from('deliverables').update({ status: 'revision_requested' }).eq('id', deliverables[0].id);
+        await updateDeliverableStatus(deliverables[0].id, 'revision_requested');
       }
       await updateTaskData(taskId, { status: 'in_progress' });
       logEvent({ type: 'revision_requested', message: `Revision requested`, taskId, actor: userAddress || '' });
@@ -651,11 +620,8 @@ function TaskDetailInner() {
                   setEscrowBoxId(boxId);
                   setEscrowTxId(txId);
                   setEscrowStatus('funded');
-                  // Persist escrow info to Supabase (metadata + escrow_tx_id)
-                  await supabase.from('tasks').update({
-                    escrow_tx_id: txId,
-                    metadata: { escrow_box_id: boxId, escrow_status: 'funded' },
-                  }).eq('id', task.id);
+                  // Persist escrow info to Supabase via store
+                  await updateTaskEscrow(task.id, txId, { escrow_box_id: boxId, escrow_status: 'funded' });
                   await updateTaskData(task.id, { status: 'in_progress' });
                   logEvent({ type: 'escrow_funded', message: `Escrow funded: ${txId}`, taskId: task.id, actor: userAddress || '' });
                   showSuccess(`Escrow funded! TX: ${txId.slice(0, 12)}...`);
@@ -663,37 +629,14 @@ function TaskDetailInner() {
                 }}
                 onReleased={async (txId) => {
                   setEscrowStatus('released');
-                  // Persist release status
-                  await supabase.from('tasks').update({
-                    metadata: { escrow_box_id: escrowBoxId, escrow_status: 'released', release_tx_id: txId },
-                  }).eq('id', task.id);
+                  // Persist release status via store
+                  await updateTaskMetadata(task.id, { escrow_box_id: escrowBoxId || '', escrow_status: 'released', release_tx_id: txId });
                   await updateTaskData(task.id, { status: 'completed', completedAt: new Date().toISOString() });
                   
-                  // Create reputation event for agent - EGO score increase based on task value
+                  // Update agent stats via store
                   if (task.assignedAgentId && task.budgetErg) {
-                    const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0); // Scale based on task value, 2-8 range
-                    await supabase.from('reputation_events').insert({
-                      id: generateId(),
-                      agent_id: task.assignedAgentId,
-                      event_type: 'completion',
-                      ego_delta: egoDelta,
-                      description: `Task completed with escrow release: ${task.title} (${task.budgetErg} ERG)`,
-                      created_at: new Date().toISOString(),
-                    });
-                    
-                    // Update agent's EGO score and task count
-                    const { data: currentAgent } = await supabase
-                      .from('agents')
-                      .select('ego_score, tasks_completed')
-                      .eq('id', task.assignedAgentId)
-                      .single();
-                    
-                    if (currentAgent) {
-                      await supabase.from('agents').update({
-                        ego_score: currentAgent.ego_score + egoDelta,
-                        tasks_completed: currentAgent.tasks_completed + 1,
-                      }).eq('id', task.assignedAgentId);
-                    }
+                    const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0);
+                    await updateAgentStats(task.assignedAgentId, egoDelta, `Task completed with escrow release: ${task.title} (${task.budgetErg} ERG)`);
                   }
                   
                   logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId: task.id, actor: userAddress || '' });
@@ -702,9 +645,7 @@ function TaskDetailInner() {
                 }}
                 onRefunded={async (txId) => {
                   setEscrowStatus('refunded');
-                  await supabase.from('tasks').update({
-                    metadata: { escrow_box_id: escrowBoxId, escrow_status: 'refunded', refund_tx_id: txId },
-                  }).eq('id', task.id);
+                  await updateTaskMetadata(task.id, { escrow_box_id: escrowBoxId || '', escrow_status: 'refunded', refund_tx_id: txId });
                   await updateTaskData(task.id, { status: 'disputed' });
                   logEvent({ type: 'escrow_refunded', message: `Escrow refunded: ${txId}`, taskId: task.id, actor: userAddress || '' });
                   showSuccess(`Escrow refunded! TX: ${txId.slice(0, 12)}...`);

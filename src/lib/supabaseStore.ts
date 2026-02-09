@@ -1,6 +1,9 @@
-import { supabase } from './supabase';
+import { supabase, requestChallenge, verifiedWrite, type WalletAuth } from './supabase';
 import { Agent, Task, Bid, Transaction, Completion, ReputationEvent, WalletProfile, User } from './types';
 import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress } from './sanitize';
+
+export { requestChallenge } from './supabase';
+export type { WalletAuth } from './supabase';
 
 export type { User, WalletProfile } from './types';
 
@@ -643,4 +646,79 @@ export async function updateTaskEscrow(taskId: string, escrowTxId: string, metad
     escrow_tx_id: escrowTxId,
     metadata,
   }).eq('id', taskId);
+}
+
+// ============================================================
+// Verified Write Operations (via Edge Functions)
+// These require wallet signature verification before writing.
+// Use these instead of direct writes for security.
+// ============================================================
+
+/**
+ * Helper: request a challenge, let the caller sign it, then perform a verified write.
+ * `signMessage` should call the Nautilus wallet to sign the challenge message.
+ */
+export async function withWalletAuth(
+  address: string,
+  signMessage: (message: string) => Promise<string | undefined>,
+): Promise<WalletAuth> {
+  const challenge = await requestChallenge(address);
+  const signature = await signMessage(challenge.message);
+  return { address, nonce: challenge.nonce, signature: signature || undefined };
+}
+
+export async function verifiedCreateAgent(
+  agentData: {
+    name: string; description: string; skills: string[];
+    hourlyRateErg: number; ergoAddress: string;
+  },
+  auth: WalletAuth,
+): Promise<Record<string, unknown>> {
+  return verifiedWrite('create-agent', agentData as unknown as Record<string, unknown>, auth);
+}
+
+export async function verifiedUpdateAgent(
+  id: string,
+  updates: Partial<Agent>,
+  auth: WalletAuth,
+): Promise<Record<string, unknown>> {
+  return verifiedWrite('update-agent', { id, ...updates } as unknown as Record<string, unknown>, auth);
+}
+
+export async function verifiedCreateTask(
+  taskData: {
+    title: string; description: string; skillsRequired: string[];
+    budgetErg: number; creatorName?: string;
+  },
+  auth: WalletAuth,
+): Promise<Record<string, unknown>> {
+  return verifiedWrite('create-task', taskData as unknown as Record<string, unknown>, auth);
+}
+
+export async function verifiedUpdateTask(
+  id: string,
+  updates: Partial<Task>,
+  auth: WalletAuth,
+): Promise<Record<string, unknown>> {
+  return verifiedWrite('update-task', { id, ...updates } as unknown as Record<string, unknown>, auth);
+}
+
+export async function verifiedCreateBid(
+  bidData: {
+    taskId: string; agentId: string; agentName: string;
+    agentEgoScore: number; proposedRate: number; message: string;
+  },
+  auth: WalletAuth,
+): Promise<Record<string, unknown>> {
+  return verifiedWrite('create-bid', bidData as unknown as Record<string, unknown>, auth);
+}
+
+export async function verifiedCreateDeliverable(
+  deliverable: {
+    taskId: string; agentId: string; content: string;
+    deliverableUrl?: string; revisionNumber: number;
+  },
+  auth: WalletAuth,
+): Promise<Record<string, unknown>> {
+  return verifiedWrite('create-deliverable', deliverable as unknown as Record<string, unknown>, auth);
 }

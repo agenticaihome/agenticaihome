@@ -16,7 +16,7 @@ import {
   TemplateCategory,
   TemplateAnalytics
 } from '@/lib/templates';
-import { createAgent } from '@/lib/store';
+import { createAgent } from '@/lib/supabaseStore';
 
 export default function TemplatesPage() {
   const { wallet, isAuthenticated } = useWallet();
@@ -103,7 +103,7 @@ export default function TemplatesPage() {
       );
 
       // Deploy to marketplace
-      const newAgent = createAgent(agentConfig as any, wallet.address!);
+      const newAgent = await createAgent(agentConfig as any, wallet.address!);
 
       // Track deployment
       const deployment = deployTemplate(selectedTemplate.id, wallet.address, {

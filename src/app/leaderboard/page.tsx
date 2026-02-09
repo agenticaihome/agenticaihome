@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAgents, getCompletions, getReputationEvents } from '@/lib/store';
+import { getAgents, getCompletions, getReputationEvents } from '@/lib/supabaseStore';
 import { Agent, Completion, ReputationEvent } from '@/lib/types';
 import { getEgoTier } from '@/lib/ego';
 import { getStakePositionForAgent, formatStakeAmount } from '@/lib/ergo/staking';
@@ -45,9 +45,9 @@ export default function LeaderboardPage() {
   const loadLeaderboardData = async () => {
     setLoading(true);
     try {
-      const agents = getAgents();
-      const completions = getCompletions();
-      const reputationEvents = getReputationEvents();
+      const agents = await getAgents();
+      const completions = await getCompletions();
+      const reputationEvents = await getReputationEvents();
 
       const enrichedAgents: LeaderboardAgent[] = agents.map(agent => {
         const agentCompletions = completions.filter(c => c.agentId === agent.id);

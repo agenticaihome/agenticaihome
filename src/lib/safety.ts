@@ -34,7 +34,7 @@ import {
   getCompletionsForAgent,
   getAgentById,
   getTaskById
-} from './store';
+} from './supabaseStore';
 
 // ====================================
 // CONSTANTS & CONFIGURATION
@@ -126,13 +126,13 @@ export function getMaxTaskValue(tier: Agent['tier']): number {
 /**
  * Get current probation status for an agent
  */
-export function getProbationStatus(agentId: string): ProbationStatus {
-  const agent = getAgentById(agentId);
+export async function getProbationStatus(agentId: string): ProbationStatus {
+  const agent = await getAgentById(agentId);
   if (!agent) {
     throw new Error(`Agent ${agentId} not found`);
   }
 
-  const completions = getCompletionsForAgent(agentId);
+  const completions = await getCompletionsForAgent(agentId);
   const averageRating = completions.length > 0 
     ? completions.reduce((sum, c) => sum + c.rating, 0) / completions.length 
     : 0;
@@ -161,14 +161,14 @@ export function getProbationStatus(agentId: string): ProbationStatus {
 /**
  * Graduate agent from probation if eligible
  */
-export function graduateFromProbation(agentId: string): boolean {
-  const probationStatus = getProbationStatus(agentId);
+export async function graduateFromProbation(agentId: string): boolean {
+  const probationStatus = await getProbationStatus(agentId);
   
   if (probationStatus.eligibleForGraduation) {
-    const agent = getAgentById(agentId);
+    const agent = await getAgentById(agentId);
     if (agent) {
       const newTier = calculateAgentTier({ ...agent, probationCompleted: true });
-      updateAgent(agentId, {
+      await updateAgent(agentId, {
         probationCompleted: true,
         probationTasksRemaining: 0,
         tier: newTier,
@@ -188,8 +188,8 @@ export function graduateFromProbation(agentId: string): boolean {
 /**
  * Check if agent is exceeding velocity limits (anti-drain protection)
  */
-export function checkVelocityLimits(agentId: string): VelocityCheck {
-  const agent = getAgentById(agentId);
+export async function checkVelocityLimits(agentId: string): VelocityCheck {
+  const agent = await getAgentById(agentId);
   if (!agent) {
     throw new Error(`Agent ${agentId} not found`);
   }
@@ -202,7 +202,7 @@ export function checkVelocityLimits(agentId: string): VelocityCheck {
   // Reset window if it's been more than an hour
   if (hoursSinceWindowStart >= VELOCITY_CONFIG.WINDOW_SIZE_HOURS) {
     const newWindow = { count: 0, windowStart: now.toISOString() };
-    updateAgent(agentId, { velocityWindow: newWindow });
+    await updateAgent(agentId, { velocityWindow: newWindow });
     
     return {
       agentId,
@@ -230,15 +230,15 @@ export function checkVelocityLimits(agentId: string): VelocityCheck {
 /**
  * Increment velocity counter when agent accepts a task
  */
-export function incrementVelocityCounter(agentId: string): void {
-  const agent = getAgentById(agentId);
+export async function incrementVelocityCounter(agentId: string): void {
+  const agent = await getAgentById(agentId);
   if (!agent) return;
 
-  const velocityCheck = checkVelocityLimits(agentId);
+  const velocityCheck = await checkVelocityLimits(agentId);
   
   if (!velocityCheck.exceeds) {
     const velocityWindow = agent.velocityWindow ?? { count: 0, windowStart: new Date().toISOString() };
-    updateAgent(agentId, {
+    await updateAgent(agentId, {
       velocityWindow: {
         count: velocityWindow.count + 1,
         windowStart: velocityWindow.windowStart
@@ -254,8 +254,8 @@ export function incrementVelocityCounter(agentId: string): void {
 /**
  * Detect rating manipulation patterns
  */
-export function detectRatingManipulation(agentId: string): AnomalyReport | null {
-  const completions = getCompletionsForAgent(agentId);
+export async function detectRatingManipulation(agentId: string): AnomalyReport | null {
+  const completions = await getCompletionsForAgent(agentId);
   
   // Check for same reviewer giving 5-star ratings repeatedly
   const reviewerCounts = new Map<string, { total: number; fiveStars: number }>();
@@ -297,8 +297,8 @@ export function detectRatingManipulation(agentId: string): AnomalyReport | null 
 /**
  * Detect velocity anomalies (suspicious rapid completion patterns)
  */
-export function detectVelocityAnomaly(agentId: string): AnomalyReport | null {
-  const completions = getCompletionsForAgent(agentId);
+export async function detectVelocityAnomaly(agentId: string): AnomalyReport | null {
+  const completions = await getCompletionsForAgent(agentId);
   const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
   
   const recentCompletions = completions.filter(
@@ -306,7 +306,7 @@ export function detectVelocityAnomaly(agentId: string): AnomalyReport | null {
   ).length;
 
   // Flag if agent went from 0 to 20+ completions in 24 hours
-  const agent = getAgentById(agentId);
+  const agent = await getAgentById(agentId);
   if (agent && recentCompletions >= 20 && agent.tasksCompleted === recentCompletions) {
     return {
       id: `anomaly-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -331,8 +331,8 @@ export function detectVelocityAnomaly(agentId: string): AnomalyReport | null {
 /**
  * Detect review bombing (multiple 1-star reviews in short time)
  */
-export function detectReviewBombing(agentId: string): AnomalyReport | null {
-  const completions = getCompletionsForAgent(agentId);
+export async function detectReviewBombing(agentId: string): AnomalyReport | null {
+  const completions = await getCompletionsForAgent(agentId);
   const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
   
   const recentOneStars = completions.filter(
@@ -363,8 +363,8 @@ export function detectReviewBombing(agentId: string): AnomalyReport | null {
 /**
  * Detect score farming (rapid low-value tasks between same parties)
  */
-export function detectScoreFarming(agentId: string): AnomalyReport | null {
-  const completions = getCompletionsForAgent(agentId);
+export async function detectScoreFarming(agentId: string): AnomalyReport | null {
+  const completions = await getCompletionsForAgent(agentId);
   const last24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000);
   
   const recentLowValueCompletions = completions.filter(
@@ -406,14 +406,14 @@ export function detectScoreFarming(agentId: string): AnomalyReport | null {
 /**
  * Comprehensive anomaly detection for an agent
  */
-export function detectAnomalies(agentId: string): AnomalyReport[] {
+export async function detectAnomalies(agentId: string): AnomalyReport[] {
   const anomalies: AnomalyReport[] = [];
 
   // Run all detection algorithms
-  const ratingManipulation = detectRatingManipulation(agentId);
-  const velocityAnomaly = detectVelocityAnomaly(agentId);
-  const reviewBombing = detectReviewBombing(agentId);
-  const scoreFarming = detectScoreFarming(agentId);
+  const ratingManipulation = await detectRatingManipulation(agentId);
+  const velocityAnomaly = await detectVelocityAnomaly(agentId);
+  const reviewBombing = await detectReviewBombing(agentId);
+  const scoreFarming = await detectScoreFarming(agentId);
 
   if (ratingManipulation) anomalies.push(ratingManipulation);
   if (velocityAnomaly) anomalies.push(velocityAnomaly);
@@ -430,15 +430,15 @@ export function detectAnomalies(agentId: string): AnomalyReport[] {
 /**
  * Comprehensive risk assessment for an agent
  */
-export function assessAgentRisk(agentId: string): RiskAssessment {
-  const agent = getAgentById(agentId);
+export async function assessAgentRisk(agentId: string): RiskAssessment {
+  const agent = await getAgentById(agentId);
   if (!agent) {
     throw new Error(`Agent ${agentId} not found`);
   }
 
-  const anomalies = detectAnomalies(agentId);
-  const velocityCheck = checkVelocityLimits(agentId);
-  const probationStatus = getProbationStatus(agentId);
+  const anomalies = await detectAnomalies(agentId);
+  const velocityCheck = await checkVelocityLimits(agentId);
+  const probationStatus = await getProbationStatus(agentId);
 
   // Calculate risk factors
   const factors = {
@@ -498,7 +498,7 @@ export function assessAgentRisk(agentId: string): RiskAssessment {
 /**
  * Automatically respond to detected anomalies
  */
-export function autoRespondToAnomaly(anomaly: AnomalyReport): AutoResponse {
+export async function autoRespondToAnomaly(anomaly: AnomalyReport): AutoResponse {
   let action: AutoResponse['action'] = 'none';
   let reason = '';
   let details = '';
@@ -509,9 +509,9 @@ export function autoRespondToAnomaly(anomaly: AnomalyReport): AutoResponse {
     details = `Agent automatically suspended due to anomaly score of ${anomaly.score}`;
     
     // Execute suspension
-    const agent = getAgentById(anomaly.agentId);
+    const agent = await getAgentById(anomaly.agentId);
     if (agent) {
-      updateAgent(anomaly.agentId, {
+      await updateAgent(anomaly.agentId, {
         status: 'suspended',
         suspendedUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
       });
@@ -522,9 +522,9 @@ export function autoRespondToAnomaly(anomaly: AnomalyReport): AutoResponse {
     details = `Agent flagged for manual review and enhanced monitoring`;
     
     // Update anomaly score
-    const agent = getAgentById(anomaly.agentId);
+    const agent = await getAgentById(anomaly.agentId);
     if (agent) {
-      updateAgent(anomaly.agentId, {
+      await updateAgent(anomaly.agentId, {
         anomalyScore: Math.max(agent.anomalyScore ?? 0, anomaly.score)
       });
     }
@@ -550,8 +550,8 @@ export function autoRespondToAnomaly(anomaly: AnomalyReport): AutoResponse {
 /**
  * Select arbiters for dispute resolution
  */
-export function selectArbiters(excludeIds: string[] = []): string[] {
-  const agents = getAgents();
+export async function selectArbiters(excludeIds: string[] = []): string[] {
+  const agents = await getAgents();
   
   // Filter for eligible arbiters (Elite/Legendary with good standing)
   const eligibleArbiters = agents.filter(agent => 
@@ -570,8 +570,8 @@ export function selectArbiters(excludeIds: string[] = []): string[] {
 /**
  * Initiate dispute resolution process
  */
-export function initiateDisputeResolution(taskId: string, initiatedBy: 'client' | 'agent' = 'client'): DisputeProcess {
-  const task = getTaskById(taskId);
+export async function initiateDisputeResolution(taskId: string, initiatedBy: 'client' | 'agent' = 'client'): DisputeProcess {
+  const task = await getTaskById(taskId);
   if (!task) {
     throw new Error(`Task ${taskId} not found`);
   }
@@ -617,10 +617,10 @@ export function initiateDisputeResolution(taskId: string, initiatedBy: 'client' 
 /**
  * Calculate comprehensive platform health metrics
  */
-export function calculatePlatformHealth(): PlatformHealthReport {
-  const agents = getAgents();
-  const tasks = getTasks();
-  const completions = getCompletions();
+export async function calculatePlatformHealth(): PlatformHealthReport {
+  const agents = await getAgents();
+  const tasks = await getTasks();
+  const completions = await getCompletions();
   
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -753,9 +753,9 @@ export function calculatePlatformHealth(): PlatformHealthReport {
  * Run comprehensive safety audit of the entire platform
  * This is the main function that orchestrates all safety systems
  */
-export function runSafetyAudit(): SafetyAuditReport {
+export async function runSafetyAudit(): SafetyAuditReport {
   const startTime = Date.now();
-  const agents = getAgents();
+  const agents = await getAgents();
   
   const findings = {
     anomaliesDetected: [] as AnomalyReport[],
@@ -774,19 +774,19 @@ export function runSafetyAudit(): SafetyAuditReport {
   agents.forEach(agent => {
     try {
       // Risk assessment
-      const riskAssessment = assessAgentRisk(agent.id);
+      const riskAssessment = await assessAgentRisk(agent.id);
       findings.riskAssessments.push(riskAssessment);
 
       if (riskAssessment.riskLevel === 'critical') criticalIssues++;
       if (riskAssessment.riskLevel === 'high') highRiskAgents++;
 
       // Anomaly detection
-      const anomalies = detectAnomalies(agent.id);
+      const anomalies = await detectAnomalies(agent.id);
       findings.anomaliesDetected.push(...anomalies);
 
       // Auto-respond to anomalies
       anomalies.forEach(anomaly => {
-        const response = autoRespondToAnomaly(anomaly);
+        const response = await autoRespondToAnomaly(anomaly);
         findings.automatedActions.push(response);
 
         switch (response.action) {
@@ -811,7 +811,7 @@ export function runSafetyAudit(): SafetyAuditReport {
       // Update tier based on current performance
       const newTier = calculateAgentTier(agent);
       if (newTier !== agent.tier) {
-        updateAgent(agent.id, {
+        await updateAgent(agent.id, {
           tier: newTier,
           maxTaskValue: getMaxTaskValue(newTier)
         });
@@ -822,7 +822,7 @@ export function runSafetyAudit(): SafetyAuditReport {
       const daysSinceActivity = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60 * 24);
       
       if (daysSinceActivity > PLATFORM_THRESHOLDS.INACTIVITY_DAYS && agent.status === 'available') {
-        updateAgent(agent.id, { status: 'dormant' });
+        await updateAgent(agent.id, { status: 'dormant' });
       }
 
     } catch (error) {
@@ -855,8 +855,8 @@ export function runSafetyAudit(): SafetyAuditReport {
 /**
  * Initialize safety fields for existing agents
  */
-export function initializeSafetyFields(): void {
-  const agents = getAgents();
+export async function initializeSafetyFields(): void {
+  const agents = await getAgents();
   
   agents.forEach(agent => {
     if (!agent.hasOwnProperty('probationCompleted')) {
@@ -871,7 +871,7 @@ export function initializeSafetyFields(): void {
         lastActivityAt: agent.createdAt
       });
 
-      updateAgent(agent.id, {
+      await updateAgent(agent.id, {
         probationCompleted: agent.tasksCompleted >= PROBATION_CONFIG.REQUIRED_TASKS,
         probationTasksRemaining: Math.max(0, PROBATION_CONFIG.REQUIRED_TASKS - agent.tasksCompleted),
         suspendedUntil: null,

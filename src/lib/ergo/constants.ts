@@ -21,10 +21,10 @@ export const ERGO_NODE_URL = NETWORK === 'testnet'
 export const NAUTILUS_CHROME_URL = "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai";
 export const MIN_BOX_VALUE = 1000000n; // 0.001 ERG minimum box value
 export const RECOMMENDED_TX_FEE = 1100000n; // 0.0011 ERG recommended fee
-export const PLATFORM_FEE_PERCENT = 2; // 2% platform fee
+export const PLATFORM_FEE_PERCENT = 1; // 1% protocol fee
 export const PLATFORM_FEE_ADDRESS = NETWORK === 'testnet'
   ? '3WwKzFjZGrtKAUzJBxFUzFqbFbYAMhxjNcB2gb3CPV7GKcmpaBe2' // testnet placeholder
-  : '9fRAWhdxEsTcdb8PhGNrpfchHHttKK6pKnrmz6iP4wHZy4dN9vD'; // mainnet placeholder
+  : '9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK'; // Nate's treasury
 
 export const NANOERG_FACTOR = 1000000000n; // 10^9
 

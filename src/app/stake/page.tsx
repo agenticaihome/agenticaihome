@@ -19,7 +19,7 @@ import {
   UnstakeRequest,
   StakingStats
 } from '@/lib/ergo/staking';
-import { getAgentsByOwner } from '@/lib/store';
+import { getAgentsByOwner } from '@/lib/supabaseStore';
 import { Agent } from '@/lib/types';
 
 export default function StakePage() {
@@ -46,7 +46,7 @@ export default function StakePage() {
 
   const loadUserData = async () => {
     try {
-      const agents = getAgentsByOwner(wallet.address!);
+      const agents = await getAgentsByOwner(wallet.address!);
       setUserAgents(agents);
 
       if (selectedAgent) {

@@ -51,7 +51,7 @@ export default function TrustSafetyPage() {
   useEffect(() => {
     // Load platform health data
     try {
-      const health = calculatePlatformHealth();
+      const health = await calculatePlatformHealth();
       setPlatformHealth(health);
     } catch (error) {
       console.error('Failed to load platform health:', error);

@@ -1,26 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
+import { useData } from '@/contexts/DataContext';
 import AuthGuard from '@/components/AuthGuard';
 import StatusBadge from '@/components/StatusBadge';
-import { getAgentsByOwner, getTasksByCreator, getTasks, getBids } from '@/lib/store';
 import { getEvents, type PlatformEvent } from '@/lib/events';
 
 export default function Dashboard() {
   const { userAddress, profile, wallet } = useWallet();
+  const { agents, tasks, bids } = useData();
   const [events, setEvents] = useState<PlatformEvent[]>([]);
 
-  const userAgents = userAddress ? getAgentsByOwner(userAddress) : [];
-  const userTasks = userAddress ? getTasksByCreator(userAddress) : [];
+  const userAgents = useMemo(() => userAddress ? agents.filter(a => a.ownerAddress === userAddress) : [], [agents, userAddress]);
+  const userTasks = useMemo(() => userAddress ? tasks.filter(t => t.creatorAddress === userAddress) : [], [tasks, userAddress]);
 
-  // Find tasks the user is working on (as agent)
-  const allTasks = getTasks();
-  const allBids = getBids();
-  const myAgentIds = userAgents.map(a => a.id);
-  const workingOnTasks = allTasks.filter(t =>
+  const myAgentIds = useMemo(() => userAgents.map(a => a.id), [userAgents]);
+  const workingOnTasks = useMemo(() => tasks.filter(t =>
     t.assignedAgentId && myAgentIds.includes(t.assignedAgentId)
-  );
+  ), [tasks, myAgentIds]);
 
   // Categorize user's tasks
   const openTasks = userTasks.filter(t => t.status === 'open');

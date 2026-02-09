@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
-import { getAgentsByOwner } from '@/lib/store';
+import { getAgentsByOwner } from '@/lib/supabaseStore';
 
 interface BidFormProps {
   taskId: string;
@@ -51,7 +51,7 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
 
     try {
       // Get user's agents to bid with
-      const userAgents = getAgentsByOwner(userAddress);
+      const userAgents = await getAgentsByOwner(userAddress);
       
       if (userAgents.length === 0) {
         throw new Error('You need to register an agent first to place bids');
@@ -60,7 +60,7 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
       // Use the first available agent (in a real app, user would select which agent)
       const agent = userAgents.find(a => a.status === 'available') || userAgents[0];
       
-      createBidData({
+      await createBidData({
         taskId,
         agentId: agent.id,
         agentName: agent.name,

@@ -45,9 +45,21 @@ export default function TaskDetailClient() {
   const [actionLoading, setActionLoading] = useState('');
 
   const taskId = params.id as string;
-  const task = getTask(taskId);
-  const bids = getTaskBids(taskId);
-  const assignedAgent = task?.assignedAgentId ? getAgent(task.assignedAgentId) : null;
+  const [task, setTask] = useState<Awaited<ReturnType<typeof getTask>>>(null);
+  const [bids, setBids] = useState<Awaited<ReturnType<typeof getTaskBids>>>([]);
+  const [assignedAgent, setAssignedAgent] = useState<Awaited<ReturnType<typeof getAgent>>>(null);
+  const [taskLoading, setTaskLoading] = useState(true);
+
+  const refreshTaskData = useCallback(async () => {
+    const t = await getTask(taskId);
+    setTask(t);
+    const b = await getTaskBids(taskId);
+    setBids(b);
+    if (t?.assignedAgentId) {
+      const a = await getAgent(t.assignedAgentId);
+      setAssignedAgent(a);
+    }
+  }, [taskId, getTask, getTaskBids, getAgent]);
 
   const refreshFlow = useCallback(() => {
     const f = getTaskFlow(taskId);
@@ -56,17 +68,21 @@ export default function TaskDetailClient() {
   }, [taskId]);
 
   useEffect(() => {
+    refreshTaskData().then(() => setTaskLoading(false));
     refreshFlow();
-  }, [refreshFlow]);
+  }, [refreshTaskData, refreshFlow]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      refreshTasks();
-      refreshBids();
+      refreshTaskData();
       refreshFlow();
     }, 30000);
     return () => clearInterval(interval);
-  }, [refreshTasks, refreshBids, refreshFlow]);
+  }, [refreshTaskData, refreshFlow]);
+
+  if (taskLoading) {
+    return <div className="min-h-screen bg-slate-900 flex items-center justify-center"><div className="text-gray-400">Loading...</div></div>;
+  }
 
   if (!task) {
     return notFound();
@@ -86,9 +102,9 @@ export default function TaskDetailClient() {
     });
   };
 
-  const handleAcceptBid = (bidId: string) => {
+  const handleAcceptBid = async (bidId: string) => {
     if (confirm('Accept this bid? This will assign the task to the agent.')) {
-      const success = acceptBidData(bidId);
+      const success = await acceptBidData(bidId);
       if (success) {
         // Init flow if needed and update
         if (!flow) initTaskFlow(taskId, userAddress || 'unknown');
@@ -104,7 +120,7 @@ export default function TaskDetailClient() {
     }
   };
 
-  const handleSubmitWork = () => {
+  const handleSubmitWork = async () => {
     if (!submitContent.trim()) return;
     setActionLoading('submit');
     try {
@@ -118,7 +134,7 @@ export default function TaskDetailClient() {
       });
 
       // Update task status
-      updateTaskData(taskId, { status: 'review' });
+      await updateTaskData(taskId, { status: 'review' });
 
       logEvent({
         type: 'work_submitted',
@@ -139,11 +155,11 @@ export default function TaskDetailClient() {
     }
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (!confirm('Approve this work and release payment?')) return;
     setActionLoading('approve');
     try {
-      updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
+      await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
       logEvent({
         type: 'work_approved',
         message: `Work approved for task "${task.title}"`,
@@ -159,11 +175,11 @@ export default function TaskDetailClient() {
     }
   };
 
-  const handleDispute = () => {
+  const handleDispute = async () => {
     if (!disputeReason.trim()) return;
     setActionLoading('dispute');
     try {
-      updateTaskData(taskId, { status: 'disputed' });
+      await updateTaskData(taskId, { status: 'disputed' });
       logEvent({
         type: 'work_disputed',
         message: `Work disputed for task "${task.title}": ${disputeReason}`,
@@ -182,11 +198,11 @@ export default function TaskDetailClient() {
     }
   };
 
-  const handleRequestRevision = () => {
+  const handleRequestRevision = async () => {
     if (!revisionNote.trim()) return;
     setActionLoading('revision');
     try {
-      updateTaskData(taskId, { status: 'in_progress' });
+      await updateTaskData(taskId, { status: 'in_progress' });
       logEvent({
         type: 'revision_requested',
         message: `Revision requested for task "${task.title}": ${revisionNote}`,
@@ -205,9 +221,9 @@ export default function TaskDetailClient() {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (!confirm('Cancel this task?')) return;
-    updateTaskData(taskId, { status: 'open' }); // or remove
+    await updateTaskData(taskId, { status: 'open' }); // or remove
     logEvent({
       type: 'task_cancelled',
       message: `Task "${task.title}" cancelled`,

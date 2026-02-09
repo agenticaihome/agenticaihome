@@ -17,7 +17,7 @@ import {
   WalletRejectedError,
 } from '@/lib/ergo/wallet';
 import { BALANCE_REFRESH_INTERVAL } from '@/lib/ergo/constants';
-import { WalletProfile, createOrUpdateWalletProfile, getWalletProfile } from '@/lib/store';
+import { WalletProfile, createOrUpdateWalletProfile, getWalletProfile } from '@/lib/supabaseStore';
 
 // Wallet context types
 interface WalletContextType {
@@ -138,8 +138,8 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
       if (reconnectedState && reconnectedState.address) {
         setWallet(reconnectedState);
         // Load or create wallet profile
-        const walletProfile = getWalletProfile(reconnectedState.address) || 
-                             createOrUpdateWalletProfile(reconnectedState.address);
+        const walletProfile = await getWalletProfile(reconnectedState.address) || 
+                             await createOrUpdateWalletProfile(reconnectedState.address);
         setProfile(walletProfile);
         startBalanceRefresh();
       }
@@ -165,8 +165,8 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
       
       if (walletState.address) {
         // Load or create wallet profile  
-        const walletProfile = getWalletProfile(walletState.address) || 
-                             createOrUpdateWalletProfile(walletState.address);
+        const walletProfile = await getWalletProfile(walletState.address) || 
+                             await createOrUpdateWalletProfile(walletState.address);
         setProfile(walletProfile);
       }
       
@@ -255,12 +255,12 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
   }, []);
 
   // Update wallet profile
-  const updateProfile = useCallback((displayName: string): WalletProfile => {
+  const updateProfile = useCallback(async (displayName: string): Promise<WalletProfile> => {
     if (!wallet.address) {
       throw new Error('Wallet not connected');
     }
     
-    const updatedProfile = createOrUpdateWalletProfile(wallet.address, displayName);
+    const updatedProfile = await createOrUpdateWalletProfile(wallet.address, displayName);
     setProfile(updatedProfile);
     return updatedProfile;
   }, [wallet.address]);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
+import { withWalletAuth, verifiedCreateTask } from '@/lib/supabaseStore';
 import AuthGuard from '@/components/AuthGuard';
 import SkillSelector from '@/components/SkillSelector';
 import StatusBadge from '@/components/StatusBadge';
@@ -24,6 +25,7 @@ export default function CreateTask() {
     deadline: ''
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -84,13 +86,28 @@ export default function CreateTask() {
         throw new Error('Wallet not connected');
       }
       
-      const newTask = await createTaskData({
+      const taskPayload = {
         title: formData.title.trim(),
         description: formData.description.trim(),
         skillsRequired: formData.skillsRequired,
         budgetErg: Number(formData.budgetErg),
         creatorName: profile?.displayName
-      }, userAddress);
+      };
+
+      let newTask;
+      try {
+        const auth = await withWalletAuth(userAddress, async (msg) => {
+          const ergo = (window as any).ergo;
+          if (!ergo?.auth) throw new Error('No wallet auth');
+          return await ergo.auth(userAddress, msg);
+        });
+        const result = await verifiedCreateTask(taskPayload, auth);
+        newTask = result as any;
+        setWalletVerified(true);
+      } catch {
+        newTask = await createTaskData(taskPayload, userAddress);
+        setWalletVerified(false);
+      }
 
       // Initialize task flow
       initTaskFlow(newTask.id, userAddress);
@@ -276,20 +293,24 @@ export default function CreateTask() {
                 )}
 
                 {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] hover:from-[var(--accent-cyan)]/90 hover:to-[var(--accent-green)]/90 disabled:from-gray-600 disabled:to-gray-600 text-[var(--bg-primary)] rounded-lg font-semibold transition-all duration-200 glow-hover-cyan disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Creating Task...
-                    </span>
-                  ) : (
-                    'Create Task'
-                  )}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] hover:from-[var(--accent-cyan)]/90 hover:to-[var(--accent-green)]/90 disabled:from-gray-600 disabled:to-gray-600 text-[var(--bg-primary)] rounded-lg font-semibold transition-all duration-200 glow-hover-cyan disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Creating Task...
+                      </span>
+                    ) : (
+                      'Create Task'
+                    )}
+                  </button>
+                  {walletVerified === true && <p className="text-center text-xs text-emerald-400">🔒 Wallet Verified</p>}
+                  {walletVerified === false && <p className="text-center text-xs text-yellow-400">⚠️ Unverified (direct write)</p>}
+                </div>
               </form>
             </div>
 

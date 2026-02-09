@@ -9,7 +9,7 @@ import StatusBadge from '@/components/StatusBadge';
 import EgoScore from '@/components/EgoScore';
 import Link from 'next/link';
 import { logEvent } from '@/lib/events';
-import { createDeliverable, updateDeliverableStatus, getDeliverablesForTask, updateAgentStats, updateTaskMetadata, updateTaskEscrow } from '@/lib/supabaseStore';
+import { createDeliverable, updateDeliverableStatus, getDeliverablesForTask, updateAgentStats, updateTaskMetadata, updateTaskEscrow, withWalletAuth, verifiedCreateBid, verifiedCreateDeliverable } from '@/lib/supabaseStore';
 import EscrowActions from '@/components/EscrowActions';
 import type { Task, Bid, Agent } from '@/lib/types';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';
@@ -65,6 +65,7 @@ function TaskDetailInner() {
   // Action states
   const [accepting, setAccepting] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
 
   // Escrow state
   const [escrowBoxId, setEscrowBoxId] = useState<string | undefined>(undefined);
@@ -156,14 +157,26 @@ function TaskDetailInner() {
     try {
       const agent = userAgents.find(a => a.id === bidAgentId);
       if (!agent) throw new Error('Agent not found');
-      await createBidData({
+      const bidPayload = {
         taskId,
         agentId: agent.id,
         agentName: agent.name,
         agentEgoScore: agent.egoScore,
         proposedRate: Number(bidRate),
         message: bidMessage,
-      });
+      };
+      try {
+        const auth = await withWalletAuth(userAddress!, async (msg) => {
+          const ergo = (window as any).ergo;
+          if (!ergo?.auth) throw new Error('No wallet auth');
+          return await ergo.auth(userAddress, msg);
+        });
+        await verifiedCreateBid(bidPayload, auth);
+        setWalletVerified(true);
+      } catch {
+        await createBidData(bidPayload);
+        setWalletVerified(false);
+      }
       logEvent({ type: 'bid_placed', message: `Bid placed on task`, taskId, actor: userAddress || '' });
       showSuccess('Bid placed successfully!');
       setShowBidForm(false);
@@ -209,13 +222,25 @@ function TaskDetailInner() {
       if (deliverableUrl && !deliverableUrl.startsWith('https://')) {
         throw new Error('Deliverable URL must start with https://');
       }
-      await createDeliverable({
+      const delPayload = {
         taskId,
         agentId: assignedAgent.id,
         content: deliverableContent,
         deliverableUrl: deliverableUrl || undefined,
         revisionNumber: deliverables.length + 1,
-      });
+      };
+      try {
+        const auth = await withWalletAuth(userAddress!, async (msg) => {
+          const ergo = (window as any).ergo;
+          if (!ergo?.auth) throw new Error('No wallet auth');
+          return await ergo.auth(userAddress, msg);
+        });
+        await verifiedCreateDeliverable(delPayload, auth);
+        setWalletVerified(true);
+      } catch {
+        await createDeliverable(delPayload);
+        setWalletVerified(false);
+      }
       await updateTaskData(taskId, { status: 'review' });
       logEvent({ type: 'work_submitted', message: `Work submitted for review`, taskId, actor: userAddress || '' });
       showSuccess('Work submitted for review!');
@@ -437,7 +462,7 @@ function TaskDetailInner() {
                       placeholder="Why are you the best fit for this task?"
                     />
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 items-center">
                     <button
                       type="submit"
                       disabled={submittingBid}
@@ -452,6 +477,8 @@ function TaskDetailInner() {
                     >
                       Cancel
                     </button>
+                    {walletVerified === true && <span className="text-xs text-emerald-400">🔒 Verified</span>}
+                    {walletVerified === false && <span className="text-xs text-yellow-400">⚠️ Unverified</span>}
                   </div>
                 </form>
               )}

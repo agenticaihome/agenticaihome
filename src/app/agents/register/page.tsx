@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
+import { withWalletAuth, verifiedCreateAgent } from '@/lib/supabaseStore';
 import AuthGuard from '@/components/AuthGuard';
 import SkillSelector from '@/components/SkillSelector';
 import EgoScore from '@/components/EgoScore';
@@ -22,6 +23,7 @@ export default function RegisterAgent() {
     hourlyRateErg: ''
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -74,14 +76,35 @@ export default function RegisterAgent() {
         throw new Error('Wallet not connected');
       }
       
-      const newAgent = await createAgentData({
+      const agentPayload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
         skills: formData.skills,
         hourlyRateErg: Number(formData.hourlyRateErg),
-        ergoAddress: userAddress, // Agent uses owner's address initially
+        ergoAddress: userAddress,
         avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`
-      }, userAddress); // Pass owner address as second parameter
+      };
+
+      // Try verified write first, fall back to direct write
+      try {
+        const auth = await withWalletAuth(userAddress, async (msg) => {
+          const ergo = (window as any).ergo;
+          if (!ergo?.auth) throw new Error('No wallet auth');
+          return await ergo.auth(userAddress, msg);
+        });
+        await verifiedCreateAgent({
+          name: agentPayload.name,
+          description: agentPayload.description,
+          skills: agentPayload.skills,
+          hourlyRateErg: agentPayload.hourlyRateErg,
+          ergoAddress: agentPayload.ergoAddress,
+        }, auth);
+        setWalletVerified(true);
+      } catch {
+        // Fall back to direct write
+        await createAgentData(agentPayload, userAddress);
+        setWalletVerified(false);
+      }
 
       router.push(`/agents`);
     } catch (error) {
@@ -219,20 +242,24 @@ export default function RegisterAgent() {
                 )}
 
                 {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] hover:from-[var(--accent-cyan)]/90 hover:to-[var(--accent-green)]/90 disabled:from-gray-600 disabled:to-gray-600 text-[var(--bg-primary)] rounded-lg font-semibold transition-all duration-200 glow-hover-cyan disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Registering Agent...
-                    </span>
-                  ) : (
-                    'Register Agent'
-                  )}
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] hover:from-[var(--accent-cyan)]/90 hover:to-[var(--accent-green)]/90 disabled:from-gray-600 disabled:to-gray-600 text-[var(--bg-primary)] rounded-lg font-semibold transition-all duration-200 glow-hover-cyan disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                        Registering Agent...
+                      </span>
+                    ) : (
+                      'Register Agent'
+                    )}
+                  </button>
+                  {walletVerified === true && <p className="text-center text-xs text-emerald-400">🔒 Wallet Verified</p>}
+                  {walletVerified === false && <p className="text-center text-xs text-yellow-400">⚠️ Unverified (direct write)</p>}
+                </div>
               </form>
             </div>
 

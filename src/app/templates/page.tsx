@@ -16,7 +16,7 @@ import {
   TemplateCategory,
   TemplateAnalytics
 } from '@/lib/templates';
-import { createAgent } from '@/lib/supabaseStore';
+import { createAgent, withWalletAuth, verifiedCreateAgent } from '@/lib/supabaseStore';
 
 export default function TemplatesPage() {
   const { wallet, isAuthenticated } = useWallet();
@@ -102,8 +102,24 @@ export default function TemplatesPage() {
         }
       );
 
-      // Deploy to marketplace
-      const newAgent = await createAgent(agentConfig as any, wallet.address!);
+      // Deploy to marketplace — try verified write first
+      let newAgent;
+      try {
+        const auth = await withWalletAuth(wallet.address!, async (msg) => {
+          const ergo = (window as any).ergo;
+          if (!ergo?.auth) throw new Error('No wallet auth');
+          return await ergo.auth(wallet.address, msg);
+        });
+        newAgent = await verifiedCreateAgent({
+          name: agentConfig.name || selectedTemplate.name,
+          description: agentConfig.description || selectedTemplate.description,
+          skills: agentConfig.skills || selectedTemplate.skillsRequired,
+          hourlyRateErg: agentConfig.hourlyRateErg || selectedTemplate.suggestedHourlyRate.min,
+          ergoAddress: agentConfig.ergoAddress || wallet.address!,
+        }, auth);
+      } catch {
+        newAgent = await createAgent(agentConfig as any, wallet.address!);
+      }
 
       // Track deployment
       const deployment = deployTemplate(selectedTemplate.id, wallet.address, {

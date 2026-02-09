@@ -110,7 +110,7 @@ export default function DashboardPage() {
       setStats({
         tasksCreated: userTasks.length,
         tasksCompleted: completedTasks.length,
-        totalEarned: earnings / 1e9 // Convert from nanoERG to ERG
+        totalEarned: earnings // Already in ERG
       });
 
       // Fetch recent activity (bids and completions)
@@ -265,7 +265,7 @@ export default function DashboardPage() {
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
             <p className="text-gray-400 text-sm mb-1">Total Earned</p>
             <p className="text-2xl font-bold text-purple-400">
-              Σ{stats.totalEarned.toFixed(4)} ERG
+              Σ{stats.totalEarned.toFixed(2)} ERG
             </p>
           </div>
         </div>
@@ -364,7 +364,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-4">
                         <span className="text-gray-500">
-                          Budget: <span className="text-emerald-400">Σ{(Number(task.budget_erg) / 1e9).toFixed(2)} ERG</span>
+                          Budget: <span className="text-emerald-400">Σ{Number(task.budget_erg).toFixed(2)} ERG</span>
                         </span>
                         <span className="text-gray-500">
                           Created: {formatDate(task.created_at)}
@@ -427,7 +427,7 @@ export default function DashboardPage() {
                   {activity.type === 'completion' && activity.data.erg_paid > 0 && (
                     <div className="text-right">
                       <p className="text-[var(--accent-green)] text-sm font-medium">
-                        +Σ{(Number(activity.data.erg_paid) / 1e9).toFixed(4)} ERG
+                        +Σ{Number(activity.data.erg_paid).toFixed(2)} ERG
                       </p>
                     </div>
                   )}

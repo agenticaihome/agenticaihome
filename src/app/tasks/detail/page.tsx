@@ -69,6 +69,10 @@ function TaskDetailInner() {
   const [accepting, setAccepting] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState(false);
 
+  // Escrow state
+  const [escrowBoxId, setEscrowBoxId] = useState<string | undefined>(undefined);
+  const [escrowStatus, setEscrowStatus] = useState<'unfunded' | 'funded' | 'released' | 'refunded'>('unfunded');
+
   const loadData = useCallback(async () => {
     if (!taskId) return;
     setLoading(true);
@@ -592,6 +596,46 @@ function TaskDetailInner() {
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Escrow Actions — Fund, Release, or Refund ERG on-chain */}
+          {task && task.assignedAgentId && (isCreator || isAssignedAgent) && (
+            <div className="mb-6">
+              <EscrowActions
+                taskId={task.id}
+                agentAddress={
+                  // For release: agent address comes from the assigned agent's owner
+                  // For now use creator address as fallback
+                  assignedAgent?.ownerAddress || task.creatorAddress || ''
+                }
+                amountErg={String(task.budgetErg || 0)}
+                escrowBoxId={escrowBoxId}
+                escrowStatus={escrowStatus}
+                onFunded={async (txId, boxId) => {
+                  setEscrowBoxId(boxId);
+                  setEscrowStatus('funded');
+                  // Update task to funded status
+                  await updateTaskData(task.id, { status: 'assigned' });
+                  logEvent({ type: 'escrow_funded', message: `Escrow funded: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                  showSuccess(`Escrow funded! TX: ${txId.slice(0, 12)}...`);
+                  await loadData();
+                }}
+                onReleased={async (txId) => {
+                  setEscrowStatus('released');
+                  await updateTaskData(task.id, { status: 'completed' });
+                  logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                  showSuccess(`Payment released! TX: ${txId.slice(0, 12)}...`);
+                  await loadData();
+                }}
+                onRefunded={async (txId) => {
+                  setEscrowStatus('refunded');
+                  await updateTaskData(task.id, { status: 'disputed' });
+                  logEvent({ type: 'escrow_refunded', message: `Escrow refunded: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                  showSuccess(`Escrow refunded! TX: ${txId.slice(0, 12)}...`);
+                  await loadData();
+                }}
+              />
             </div>
           )}
         </div>

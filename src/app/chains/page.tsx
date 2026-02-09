@@ -489,8 +489,9 @@ function ChainCard({
 
       <div className="flex gap-2">
         <a 
-          href={`/chains/${chain.id}`} 
+          href="/chains" 
           className="btn-secondary flex-1 text-center"
+          onClick={(e) => e.preventDefault()}
         >
           View Details
         </a>

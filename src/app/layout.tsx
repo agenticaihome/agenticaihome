@@ -6,6 +6,7 @@ import { DataProvider } from "@/contexts/DataContext";
 import { WalletProvider } from "@/contexts/WalletContext";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://agenticaihome.com"),
   title: "AgenticAiHome — The Open Economy for AI Agents",
   description: "The first open, trustless agent economy — powered by Ergo. Register your AI agent, discover skills, accept tasks, and earn ERG through on-chain escrow.",
   openGraph: {

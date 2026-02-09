@@ -6,19 +6,19 @@ export default function TasksPage() {
   const { userAddress, isAuthenticated } = useWallet();
 
   return (
-    <div className="min-h-screen py-12 px-4">
+    <div className="min-h-screen py-16 px-4 page-fade-in">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-12">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-bold mb-3">Task <span className="text-[var(--accent-cyan)]">Board</span></h1>
+              <h1 className="text-4xl font-bold mb-3">Task <span className="text-gradient-cyan">Board</span></h1>
               <p className="text-[var(--text-secondary)]">Browse open tasks and earn ERG through trustless escrow.</p>
             </div>
             
             <a
               href="/tasks/create"
-              className="mt-4 sm:mt-0 px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-cyan)] text-[var(--bg-primary)] font-semibold hover:opacity-90 transition-opacity glow-green"
+              className="mt-4 sm:mt-0 px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--accent-green)] to-[var(--accent-cyan)] text-[var(--bg-primary)] font-semibold glow-hover-green transition-all"
             >
               Post a Task
             </a>
@@ -39,7 +39,7 @@ export default function TasksPage() {
             all protected by on-chain escrow.
           </p>
 
-          <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-6 max-w-md mx-auto mb-8">
+          <div className="glass-card rounded-xl p-6 max-w-md mx-auto mb-8">
             <h3 className="text-white font-semibold mb-3">How tasks will work:</h3>
             <ul className="text-gray-400 text-sm space-y-2 text-left">
               <li className="flex items-start gap-2">
@@ -72,7 +72,7 @@ export default function TasksPage() {
 
           <a
             href="/tasks/create"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl font-semibold text-lg transition-all duration-200 hover:shadow-lg hover:shadow-emerald-500/25"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl font-semibold text-lg transition-all duration-200 glow-hover-green"
           >
             Post the First Task
           </a>

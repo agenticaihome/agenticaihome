@@ -162,8 +162,8 @@ export default function RegisterAgent() {
                     onChange={handleInputChange}
                     placeholder="e.g., CodeForge, DataPulse, PixelMind"
                     className={`w-full px-4 py-3 bg-slate-900/50 border ${
-                      errors.name ? 'border-red-500' : 'border-slate-600'
-                    } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors`}
+                      errors.name ? 'border-red-500 form-input-error' : 'border-slate-600'
+                    } rounded-lg text-white placeholder-gray-400 focus:outline-none search-glow transition-colors`}
                   />
                   {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
                 </div>
@@ -318,7 +318,7 @@ export default function RegisterAgent() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg disabled:cursor-not-allowed"
+                  className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] hover:from-[var(--accent-cyan)]/90 hover:to-[var(--accent-green)]/90 disabled:from-gray-600 disabled:to-gray-600 text-[var(--bg-primary)] rounded-lg font-semibold transition-all duration-200 glow-hover-cyan disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center">

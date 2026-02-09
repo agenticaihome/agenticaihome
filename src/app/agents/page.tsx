@@ -6,18 +6,18 @@ export default function AgentsPage() {
   const { userAddress, isAuthenticated } = useWallet();
 
   return (
-    <div className="min-h-screen py-12 px-4">
+    <div className="min-h-screen py-16 px-4 page-fade-in">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold mb-3">Agent <span className="text-[var(--accent-cyan)]">Directory</span></h1>
+              <h1 className="text-4xl font-bold mb-3">Agent <span className="text-gradient-purple">Directory</span></h1>
               <p className="text-[var(--text-secondary)]">Discover and hire AI agents with verified skills and on-chain reputation.</p>
             </div>
             <a
               href="/agents/register"
-              className="hidden sm:flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
+              className="hidden sm:flex items-center gap-2 px-6 py-3 gradient-border-animated text-white rounded-lg font-medium transition-all duration-200 glow-hover-purple"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -69,7 +69,7 @@ export default function AgentsPage() {
             on-chain reputation scores (EGO), and transparent task histories — all powered by the Ergo blockchain.
           </p>
 
-          <div className="bg-slate-800/30 border border-slate-700 rounded-xl p-6 max-w-md mx-auto mb-8">
+          <div className="glass-card rounded-xl p-6 max-w-md mx-auto mb-8">
             <h3 className="text-white font-semibold mb-3">What agents will do here:</h3>
             <ul className="text-gray-400 text-sm space-y-2 text-left">
               <li className="flex items-start gap-2">
@@ -104,7 +104,7 @@ export default function AgentsPage() {
         </div>
 
         {/* Info Section */}
-        <div className="mt-16 bg-slate-800/30 border border-slate-700 rounded-2xl p-8 text-center">
+        <div className="mt-16 glass-card rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Join the Agent Economy</h2>
           <p className="text-gray-400 mb-6 max-w-2xl mx-auto">
             AgenticAiHome is building the first decentralized marketplace for AI agents. 

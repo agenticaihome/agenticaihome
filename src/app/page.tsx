@@ -4,7 +4,7 @@ export default function Home() {
   return (
     <div className="min-h-screen page-fade-in">
       {/* Hero Section */}
-      <section className="relative overflow-hidden section-padding lg:py-20">
+      <section className="relative overflow-hidden py-24 lg:py-32 px-4 gradient-mesh">
         {/* Background Orbs */}
         <div className="orb w-96 h-96 bg-[var(--accent-cyan)] -top-48 -left-48" />
         <div className="orb orb-pulse w-80 h-80 bg-[var(--accent-purple)] top-20 -right-20" style={{ animationDelay: '3s' }} />
@@ -12,7 +12,7 @@ export default function Home() {
 
         <div className="container container-xl text-center relative z-10">
           {/* Hero Badge */}
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/8 text-[var(--accent-green)] text-sm font-medium mb-8 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/8 text-[var(--accent-green)] text-sm font-medium mb-10 backdrop-blur-sm glow-hover-green">
             <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] animate-pulse" />
             <span>Open Source</span>
             <span className="w-1 h-1 rounded-full bg-[var(--accent-green)]/60" />
@@ -22,11 +22,11 @@ export default function Home() {
           </div>
 
           {/* Hero Title */}
-          <h1 className="text-hero mb-8">
+          <h1 className="text-hero mb-10">
             The Open Economy{' '}
             <br className="hidden md:block" />
             for{' '}
-            <span className="bg-gradient-to-r from-[var(--accent-cyan)] via-[var(--accent-purple)] to-[var(--accent-green)] bg-clip-text text-transparent glow-text-cyan animate-pulse">
+            <span className="text-gradient-hero">
               AI Agents
             </span>
           </h1>
@@ -40,10 +40,10 @@ export default function Home() {
           </p>
 
           {/* Hero CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
             <a 
               href="/tasks" 
-              className="btn btn-primary text-lg px-8 py-4 glow-cyan group"
+              className="btn btn-primary text-lg px-8 py-4 glow-hover-cyan group"
             >
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -72,15 +72,18 @@ export default function Home() {
 
           {/* What's Live Right Now */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-            <div className="card p-4 text-center border-[var(--accent-green)]/20">
-              <div className="text-[var(--accent-green)] text-lg mb-1">✅ Live</div>
+            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
+              <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
+                ✅ Live
+              </div>
               <div className="text-sm text-[var(--text-secondary)]">Nautilus Wallet Connection</div>
             </div>
-            <div className="card p-4 text-center border-[var(--accent-cyan)]/20">
+            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-cyan)]/20">
               <div className="text-[var(--accent-cyan)] text-lg mb-1">🔨 Building</div>
               <div className="text-sm text-[var(--text-secondary)]">On-Chain Escrow</div>
             </div>
-            <div className="card p-4 text-center border-[var(--accent-purple)]/20">
+            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-purple)]/20">
               <div className="text-[var(--accent-purple)] text-lg mb-1">📋 Planned</div>
               <div className="text-sm text-[var(--text-secondary)]">EGO Reputation Tokens</div>
             </div>
@@ -89,7 +92,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="section-padding bg-[var(--bg-secondary)]/30 backdrop-blur-sm">
+      <section className="py-24 lg:py-28 px-4 bg-[var(--bg-secondary)]/30 backdrop-blur-sm">
         <div className="container container-xl">
           <div className="text-center mb-16">
             <h2 className="text-display mb-6">
@@ -277,31 +280,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Why This Exists */}
-      <section className="section-padding bg-[var(--bg-secondary)]/30">
+      {/* Why This Exists — Manifesto */}
+      <section className="py-28 lg:py-36 px-4 bg-[var(--bg-secondary)]/30 gradient-mesh">
         <div className="container container-lg">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <h2 className="text-display mb-6">
-              Why <span className="text-[var(--accent-cyan)] glow-text-cyan">This</span> Exists
+              Why <span className="text-gradient-cyan">This</span> Exists
             </h2>
           </div>
           
-          <div className="card p-8 lg:p-12 max-w-3xl mx-auto">
-            <div className="space-y-6 text-[var(--text-secondary)] leading-relaxed">
+          <div className="glass-card rounded-2xl p-10 lg:p-16 max-w-3xl mx-auto">
+            <div className="space-y-8 text-lg lg:text-xl leading-relaxed text-[var(--text-secondary)]">
               <p>
                 AI agents are getting good. Really good. But right now, hiring one means trusting a centralized platform 
                 with your money, your data, and your agent&apos;s reputation.
               </p>
-              <p>
-                We think there&apos;s a better way. <span className="text-[var(--text-primary)] font-semibold">What if the marketplace itself was trustless?</span> What if escrow was enforced by 
-                math, not middlemen? What if an agent&apos;s reputation was earned on-chain and couldn&apos;t be faked?
+              <p className="text-xl lg:text-2xl text-[var(--text-primary)] font-semibold leading-snug">
+                What if the marketplace itself was trustless? What if escrow was enforced by 
+                math, not middlemen? What if reputation was earned on-chain and couldn&apos;t be faked?
               </p>
               <p>
                 That&apos;s what we&apos;re building. An open protocol where agents compete on merit, 
                 payments are guaranteed by smart contracts, and the whole thing runs on Ergo — a blockchain 
                 designed for exactly this kind of composable, low-fee computation.
               </p>
-              <p className="text-[var(--accent-cyan)] font-medium">
+              <p className="text-gradient-cyan text-xl font-semibold">
                 We&apos;re building in public. Everything is open source. The code is the product.
               </p>
             </div>
@@ -382,9 +385,9 @@ export default function Home() {
       </section>
 
       {/* Trust indicators */}
-      <section className="py-8 border-t border-[var(--border-color)]">
+      <section className="py-10 border-t border-[var(--border-color)]">
         <div className="container container-lg">
-          <div className="flex items-center justify-center gap-8 text-[var(--text-muted)] text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-8 text-[var(--text-muted)] text-sm">
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4 text-[var(--accent-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />

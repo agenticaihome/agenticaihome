@@ -293,7 +293,7 @@ export default function ExplorerPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by transaction ID, block ID, address, or block height..."
-                className="w-full px-4 py-3 pl-10 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
+                className="w-full px-4 py-3 pl-10 bg-slate-800/50 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none search-glow transition-colors"
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
               <svg className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

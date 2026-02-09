@@ -185,15 +185,33 @@ export async function releaseEscrowTx(
   // Convert explorer box format to Fleet SDK format
   // Explorer returns additionalRegisters as objects {serializedValue, sigmaType, renderedValue}
   // Fleet SDK expects them as plain serialized hex strings
+  const convertedRegisters = Object.fromEntries(
+    Object.entries((rawBox as any).additionalRegisters || {}).map(([key, val]: [string, any]) => {
+      if (typeof val === 'object' && val?.serializedValue) {
+        // Validate the hex format
+        if (!/^[0-9a-fA-F]*$/.test(val.serializedValue)) {
+          throw new Error(`Invalid hex format in register ${key}: ${val.serializedValue}`);
+        }
+        return [key, val.serializedValue];
+      }
+      // Validate direct hex values too
+      if (typeof val === 'string' && !/^[0-9a-fA-F]*$/.test(val)) {
+        throw new Error(`Invalid hex format in register ${key}: ${val}`);
+      }
+      return [key, val];
+    })
+  );
+
   const escrowBox: any = {
     ...rawBox,
-    additionalRegisters: Object.fromEntries(
-      Object.entries((rawBox as any).additionalRegisters || {}).map(([key, val]: [string, any]) => [
-        key,
-        typeof val === 'object' && val?.serializedValue ? val.serializedValue : val
-      ])
-    ),
+    additionalRegisters: convertedRegisters,
   };
+
+  // Validate escrow box structure and data
+  const validation = validateEscrowBox(escrowBox, agentAddress);
+  if (!validation.valid) {
+    throw new Error(`Invalid escrow box: ${validation.errors.join(', ')}`);
+  }
 
   const escrowValue = BigInt(escrowBox.value);
   const fee = RECOMMENDED_TX_FEE;
@@ -248,16 +266,63 @@ export async function refundEscrowTx(
     throw new Error('Escrow box not found on-chain');
   }
 
-  // Convert explorer box format to Fleet SDK format
+  // Convert explorer box format to Fleet SDK format with validation
+  const convertedRegisters = Object.fromEntries(
+    Object.entries((rawBox as any).additionalRegisters || {}).map(([key, val]: [string, any]) => {
+      if (typeof val === 'object' && val?.serializedValue) {
+        // Validate the hex format
+        if (!/^[0-9a-fA-F]*$/.test(val.serializedValue)) {
+          throw new Error(`Invalid hex format in register ${key}: ${val.serializedValue}`);
+        }
+        return [key, val.serializedValue];
+      }
+      // Validate direct hex values too
+      if (typeof val === 'string' && !/^[0-9a-fA-F]*$/.test(val)) {
+        throw new Error(`Invalid hex format in register ${key}: ${val}`);
+      }
+      return [key, val];
+    })
+  );
+
   const escrowBox: any = {
     ...rawBox,
-    additionalRegisters: Object.fromEntries(
-      Object.entries((rawBox as any).additionalRegisters || {}).map(([key, val]: [string, any]) => [
-        key,
-        typeof val === 'object' && val?.serializedValue ? val.serializedValue : val
-      ])
-    ),
+    additionalRegisters: convertedRegisters,
   };
+
+  // Validate escrow box structure and data  
+  const validation = validateEscrowBox(escrowBox);
+  if (!validation.valid) {
+    throw new Error(`Invalid escrow box: ${validation.errors.join(', ')}`);
+  }
+
+  // Extract deadline from escrow box R6 register and validate height
+  const deadlineReg = escrowBox.additionalRegisters?.R6;
+  if (!deadlineReg) {
+    throw new Error('Missing deadline register R6 in escrow box');
+  }
+  
+  // R6 contains an SInt value - need to decode the hex properly
+  // SInt encoding: first byte is type (05 for SInt), then the int value in hex
+  let deadlineHeight: number;
+  try {
+    if (deadlineReg.startsWith('05')) {
+      // Remove type byte (05) and parse the remaining hex as little-endian int
+      const heightHex = deadlineReg.slice(2);
+      deadlineHeight = parseInt(heightHex, 16);
+    } else {
+      // Fallback: try parsing as direct hex
+      deadlineHeight = parseInt(deadlineReg, 16);
+    }
+  } catch (err) {
+    throw new Error(`Invalid deadline format in R6: ${deadlineReg}`);
+  }
+
+  if (currentHeight <= deadlineHeight) {
+    throw new Error(
+      `Cannot refund yet. Current height: ${currentHeight}, deadline: ${deadlineHeight}. ` +
+      `Need to wait ${deadlineHeight - currentHeight} more blocks.`
+    );
+  }
 
   const escrowValue = BigInt(escrowBox.value);
   const fee = RECOMMENDED_TX_FEE;
@@ -319,6 +384,85 @@ export async function getActiveEscrowsByAddress(address: string): Promise<Escrow
 }
 
 // ─── Validation ──────────────────────────────────────────────────────
+
+/**
+ * Validate an escrow box before attempting release/refund operations.
+ * Checks box structure, required registers, and data integrity.
+ */
+export function validateEscrowBox(
+  escrowBox: any,
+  expectedAgentAddress?: string
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (!escrowBox) {
+    errors.push('Escrow box is null or undefined');
+    return { valid: false, errors };
+  }
+
+  // Check basic box properties
+  if (!escrowBox.boxId) {
+    errors.push('Missing box ID');
+  }
+  if (!escrowBox.value || BigInt(escrowBox.value) < MIN_BOX_VALUE) {
+    errors.push('Box has insufficient value');
+  }
+
+  // Check required registers exist
+  const regs = escrowBox.additionalRegisters || {};
+  if (!regs.R4) errors.push('Missing client public key (R4)');
+  if (!regs.R5) errors.push('Missing agent proposition bytes (R5)');
+  if (!regs.R6) errors.push('Missing deadline (R6)');
+  if (!regs.R7) errors.push('Missing fee address (R7)');
+  if (!regs.R8) errors.push('Missing task ID (R8)');
+
+  // Validate register hex format
+  const registerKeys = ['R4', 'R5', 'R6', 'R7', 'R8'];
+  for (const key of registerKeys) {
+    const regValue = regs[key];
+    if (regValue && typeof regValue === 'string') {
+      if (!/^[0-9a-fA-F]*$/.test(regValue)) {
+        errors.push(`Invalid hex format in register ${key}: ${regValue}`);
+      }
+    }
+  }
+
+  // If agent address provided, validate it matches R5
+  if (expectedAgentAddress && regs.R5) {
+    try {
+      const expectedAgentBytes = propositionBytesFromAddress(expectedAgentAddress);
+      // R5 format: "0e20" + 32-byte hex (0e20 is SColl[SByte] prefix for 32 bytes)
+      const r5Hex = regs.R5.startsWith('0e20') ? regs.R5.slice(4) : regs.R5;
+      const r5Bytes = Buffer.from(r5Hex, 'hex');
+      
+      if (!Buffer.from(expectedAgentBytes).equals(r5Bytes)) {
+        errors.push('Agent address does not match R5 register');
+      }
+    } catch (err) {
+      errors.push(`Failed to validate agent address: ${(err as Error).message}`);
+    }
+  }
+
+  // Validate deadline format
+  if (regs.R6) {
+    try {
+      let deadlineHeight: number;
+      if (regs.R6.startsWith('05')) {
+        const heightHex = regs.R6.slice(2);
+        deadlineHeight = parseInt(heightHex, 16);
+      } else {
+        deadlineHeight = parseInt(regs.R6, 16);
+      }
+      if (deadlineHeight <= 0 || !Number.isInteger(deadlineHeight)) {
+        errors.push('Invalid deadline height in R6');
+      }
+    } catch (err) {
+      errors.push('Failed to parse deadline from R6');
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
 
 export function validateEscrowParams(params: EscrowParams): { valid: boolean; errors: string[] } {
   const errors: string[] = [];

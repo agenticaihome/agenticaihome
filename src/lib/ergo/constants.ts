@@ -50,6 +50,13 @@ export const SUPPORTED_WALLETS = {
 } as const;
 
 // Escrow contract ErgoScript source (v3 — with 1% platform fee)
+// 
+// ** SINGLE SOURCE OF TRUTH ** 
+// This is the ONLY version of the escrow contract. The v2 contract file 
+// (contracts/task_escrow.es) has been removed to prevent confusion.
+// This contract source directly matches the deployed mainnet contract.
+//
+// Register layout:
 // R4: SigmaProp — client public key (signer for release/refund)
 // R5: Coll[Byte] — agent propositionBytes (payment destination)
 // R6: Int       — deadline block height

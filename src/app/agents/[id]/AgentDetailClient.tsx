@@ -31,98 +31,72 @@ export function AgentDetailClient() {
   const { getAgent, getTasksByCreatorAddress, getAgentCompletions } = useData();
   
   const [agent, setAgent] = useState<Agent | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [completions, setCompletions] = useState<Completion[]>([]);
-  const [agentTasks, setAgentTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const agentId = params?.id as string;
-  const isOwner = agent?.ownerAddress === userAddress;
+  const [activeTab, setActiveTab] = useState<'overview' | 'portfolio' | 'reputation'>('overview');
 
   useEffect(() => {
-    async function fetchAgentData() {
-      if (!agentId) return;
-      
+    if (!params.id) return;
+
+    const loadData = async () => {
       try {
         setLoading(true);
-        const agentData = await getAgent(agentId);
         
+        const agentData = getAgent(params.id as string);
         if (!agentData) {
-          setError('Agent not found');
+          router.push('/agents');
           return;
         }
-
+        
         setAgent(agentData);
         
-        // Fetch agent's completed tasks and reviews
-        const [completionsData] = await Promise.all([
-          getAgentCompletions(agentId)
-        ]);
+        const agentTasks = getTasksByCreatorAddress(agentData.ergoAddress);
+        setTasks(agentTasks);
         
-        setCompletions(completionsData);
-      } catch (err) {
-        setError('Failed to load agent profile');
-        console.error('Error fetching agent:', err);
+        const agentCompletions = getAgentCompletions(params.id as string);
+        setCompletions(agentCompletions);
+        
+      } catch (error) {
+        console.error('Error loading agent data:', error);
+        router.push('/agents');
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    fetchAgentData();
-  }, [agentId, getAgent, getAgentCompletions]);
+    loadData();
+  }, [params.id, router, getAgent, getTasksByCreatorAddress, getAgentCompletions]);
 
-  // Calculate agent statistics
-  const stats = {
-    responseTime: Math.floor(Math.random() * 24) + 1, // Mock data
-    avgDeliveryTime: Math.floor(Math.random() * 72) + 24, // Mock data
-    completionRate: completions.length > 0 ? (completions.length / (completions.length + Math.floor(Math.random() * 5))) * 100 : 95,
-    totalEarnings: completions.reduce((sum, c) => sum + c.ergPaid, 0),
-    avgRating: completions.length > 0 ? completions.reduce((sum, c) => sum + c.rating, 0) / completions.length : agent?.rating || 0,
-    reviewCount: completions.length,
-  };
-
-  // Generate mock EGO score breakdown
-  const egoBreakdown = [
-    { category: 'Task Completions', score: Math.floor((agent?.tasksCompleted || 0) * 2.5), max: 500 },
-    { category: 'Client Reviews', score: Math.floor(stats.avgRating * 60), max: 300 },
-    { category: 'Response Time', score: Math.max(200 - stats.responseTime * 5, 50), max: 200 },
-    { category: 'Platform Activity', score: Math.floor(Math.random() * 100) + 50, max: 150 },
-    { category: 'Specialization Bonus', score: Math.floor(Math.random() * 50), max: 100 },
-  ];
-
-  const getTierInfo = (egoScore: number) => {
-    if (egoScore >= 1000) return { tier: 'legendary', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20' };
-    if (egoScore >= 750) return { tier: 'elite', color: 'text-purple-400', bgColor: 'bg-purple-400/20' };
-    if (egoScore >= 500) return { tier: 'established', color: 'text-blue-400', bgColor: 'bg-blue-400/20' };
-    if (egoScore >= 250) return { tier: 'rising', color: 'text-emerald-400', bgColor: 'bg-emerald-400/20' };
-    return { tier: 'newcomer', color: 'text-gray-400', bgColor: 'bg-gray-400/20' };
-  };
+  const isOwnProfile = agent && userAddress && agent.ergoAddress === userAddress;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full"></div>
-            <span className="ml-3 text-gray-400">Loading agent profile...</span>
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-48 bg-gray-200 rounded-lg mb-6"></div>
+            <div className="h-8 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (error || !agent) {
+  if (!agent) {
     return (
-      <div className="min-h-screen bg-slate-900 py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-20">
-            <h1 className="text-2xl font-bold text-white mb-4">Agent Not Found</h1>
-            <p className="text-gray-400 mb-6">{error || 'The agent you\'re looking for doesn\'t exist.'}</p>
-            <button
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Agent Not Found</h1>
+            <p className="text-gray-600 mb-6">The agent you're looking for doesn't exist.</p>
+            <button 
               onClick={() => router.push('/agents')}
-              className="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg"
+              className="btn-primary"
             >
-              Browse Agents
+              Back to Agents
             </button>
           </div>
         </div>
@@ -130,271 +104,330 @@ export function AgentDetailClient() {
     );
   }
 
-  const tierInfo = getTierInfo(agent.egoScore);
+  const completedTasks = completions.filter(c => c.status === 'completed').length;
+  const avgRating = completions.length > 0 
+    ? completions.reduce((sum, c) => sum + c.rating, 0) / completions.length 
+    : 0;
+  const totalEarned = completions
+    .filter(c => c.status === 'completed')
+    .reduce((sum, c) => sum + c.finalAmount, 0);
 
-  return (
-    <div className="min-h-screen bg-slate-900 py-12">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Agent Profile Header */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-            {/* Avatar */}
-            <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-400 flex items-center justify-center text-3xl font-bold text-white">
-              {agent.name.charAt(0).toUpperCase()}
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <div className="space-y-6">
+            <div className="card p-6">
+              <h3 className="text-lg font-semibold mb-4">About</h3>
+              <p className="text-gray-600 leading-relaxed">{agent.description}</p>
             </div>
-            
-            {/* Agent Info */}
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
-                <h1 className="text-3xl font-bold text-white">{agent.name}</h1>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={agent.status} type="agent" />
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${tierInfo.bgColor} ${tierInfo.color}`}>
-                    <Award className="w-3 h-3 inline mr-1" />
-                    {tierInfo.tier}
+
+            <div className="card p-6">
+              <h3 className="text-lg font-semibold mb-4">Skills & Expertise</h3>
+              <div className="flex flex-wrap gap-2">
+                {agent.skills.map((skill, index) => (
+                  <span 
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                  >
+                    {skill}
                   </span>
-                </div>
-              </div>
-              
-              <p className="text-gray-400 text-lg mb-4 leading-relaxed">{agent.description}</p>
-              
-              {/* Key Stats */}
-              <div className="flex flex-wrap gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-yellow-400" />
-                  <span className="text-white font-medium">{stats.avgRating.toFixed(1)}</span>
-                  <span className="text-gray-500">({stats.reviewCount} reviews)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-purple-400" />
-                  <span className="text-purple-400 font-medium">{agent.egoScore}</span>
-                  <span className="text-gray-500">EGO</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400 font-medium">{agent.tasksCompleted}</span>
-                  <span className="text-gray-500">completed</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-cyan-400" />
-                  <span className="text-cyan-400 font-medium">Σ{agent.hourlyRateErg}</span>
-                  <span className="text-gray-500">per hour</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-3">
-              {isOwner ? (
-                <>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                    <Edit className="w-4 h-4" />
-                    Edit Profile
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
-                    {agent.status === 'available' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    {agent.status === 'available' ? 'Pause' : 'Activate'}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button className="flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors">
-                    <User className="w-4 h-4" />
-                    Hire This Agent
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 border border-slate-600 hover:border-slate-500 text-gray-300 rounded-lg transition-colors">
-                    <MessageSquare className="w-4 h-4" />
-                    Message
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Skills */}
-          <div className="mt-6 pt-6 border-t border-slate-700">
-            <h3 className="text-white font-medium mb-3">Capabilities</h3>
-            <div className="flex flex-wrap gap-2">
-              {agent.skills.map((skill, index) => (
-                <span key={index} className="px-3 py-1 bg-slate-700 text-gray-300 rounded-full text-sm">
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Clock className="w-5 h-5 text-blue-400" />
-              <h3 className="font-medium text-gray-300">Response Time</h3>
-            </div>
-            <p className="text-2xl font-bold text-white">{stats.responseTime}h</p>
-            <p className="text-xs text-gray-500 mt-1">Average first response</p>
-          </div>
-
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Target className="w-5 h-5 text-emerald-400" />
-              <h3 className="font-medium text-gray-300">Completion Rate</h3>
-            </div>
-            <p className="text-2xl font-bold text-white">{stats.completionRate.toFixed(1)}%</p>
-            <p className="text-xs text-gray-500 mt-1">Tasks completed successfully</p>
-          </div>
-
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Calendar className="w-5 h-5 text-purple-400" />
-              <h3 className="font-medium text-gray-300">Delivery Time</h3>
-            </div>
-            <p className="text-2xl font-bold text-white">{stats.avgDeliveryTime}h</p>
-            <p className="text-xs text-gray-500 mt-1">Average completion time</p>
-          </div>
-
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <DollarSign className="w-5 h-5 text-cyan-400" />
-              <h3 className="font-medium text-gray-300">Total Earned</h3>
-            </div>
-            <p className="text-2xl font-bold text-white">Σ{stats.totalEarnings.toFixed(2)}</p>
-            <p className="text-xs text-gray-500 mt-1">Lifetime earnings</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* EGO Score Breakdown */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <Shield className="w-5 h-5 text-purple-400" />
-                EGO Score Breakdown
-              </h3>
-              <div className="space-y-4">
-                {egoBreakdown.map((item, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-300">{item.category}</span>
-                      <span className="text-white font-medium">{item.score}/{item.max}</span>
-                    </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-purple-400 to-cyan-400 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${(item.score / item.max) * 100}%` }}
-                      />
-                    </div>
-                  </div>
                 ))}
               </div>
-              <div className="mt-6 pt-6 border-t border-slate-700">
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium text-gray-300">Total EGO Score</span>
-                  <span className="text-2xl font-bold text-purple-400">{agent.egoScore}</span>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="card p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Target className="h-5 w-5 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Performance Stats</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Success Rate</span>
+                    <span className="font-medium">{agent.successRate}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Avg. Completion Time</span>
+                    <span className="font-medium">{agent.avgCompletionTime} days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Response Time</span>
+                    <span className="font-medium">&lt; 1 hour</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Shield className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Trust & Safety</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Verification Status</span>
+                    <StatusBadge 
+                      status={agent.probationCompleted ? 'verified' : 'pending'} 
+                    />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Member Since</span>
+                    <span className="font-medium">Jan 2026</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Disputes</span>
+                    <span className="font-medium text-green-600">0</span>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+        );
 
-            {/* Task History */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-emerald-400" />
-                Recent Completions
-              </h3>
+      case 'portfolio':
+        return (
+          <div className="space-y-6">
+            <div className="card p-6">
+              <h3 className="text-lg font-semibold mb-4">Completed Work</h3>
               {completions.length > 0 ? (
                 <div className="space-y-4">
                   {completions.slice(0, 5).map((completion, index) => (
-                    <div key={index} className="border-l-2 border-emerald-400 pl-4 py-2">
-                      <h4 className="font-medium text-white">{completion.taskTitle}</h4>
-                      <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-yellow-400" />
-                          <span>{completion.rating}/5</span>
-                        </div>
-                        <span>Σ{completion.ergPaid} ERG</span>
-                        <span>{new Date(completion.completedAt).toLocaleDateString()}</span>
+                    <div key={index} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{completion.description || `Task Completion #${completion.id}`}</h4>
+                        <StatusBadge status={completion.status as any} />
                       </div>
-                      {completion.review && (
-                        <p className="text-gray-300 text-sm mt-2 italic">"{completion.review}"</p>
-                      )}
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        <div className="flex items-center space-x-4">
+                          <span className="flex items-center">
+                            <Star className="h-4 w-4 text-yellow-400 mr-1" />
+                            {completion.rating}/5
+                          </span>
+                          <span className="flex items-center">
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            {completion.finalAmount} ERG
+                          </span>
+                        </div>
+                        <span>{new Date().toLocaleDateString()}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <Briefcase className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                  <p className="text-gray-400">No completed tasks yet</p>
-                </div>
+                <p className="text-gray-500 text-center py-8">No completed work yet</p>
               )}
             </div>
           </div>
+        );
 
-          {/* Reviews & Ratings */}
+      case 'reputation':
+        return (
           <div className="space-y-6">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-400" />
-                Client Reviews
-              </h3>
-              
-              {/* Rating Distribution */}
-              <div className="space-y-2 mb-6">
-                {[5, 4, 3, 2, 1].map(star => {
-                  const count = completions.filter(c => Math.floor(c.rating) === star).length;
-                  const percentage = completions.length > 0 ? (count / completions.length) * 100 : 0;
-                  return (
-                    <div key={star} className="flex items-center gap-2 text-sm">
-                      <span className="w-3 text-gray-400">{star}</span>
-                      <Star className="w-3 h-3 text-yellow-400" />
-                      <div className="flex-1 bg-slate-700 rounded-full h-2">
-                        <div 
-                          className="bg-yellow-400 h-2 rounded-full transition-all"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="w-8 text-gray-400 text-right">{count}</span>
-                    </div>
-                  );
-                })}
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="card p-6 text-center">
+                <div className="p-3 bg-blue-100 rounded-lg w-fit mx-auto mb-3">
+                  <Award className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-blue-600">{agent.egoScore}</h3>
+                <p className="text-gray-600">EGO Score</p>
               </div>
 
-              {/* Recent Reviews */}
-              {completions.length > 0 ? (
+              <div className="card p-6 text-center">
+                <div className="p-3 bg-green-100 rounded-lg w-fit mx-auto mb-3">
+                  <Star className="h-6 w-6 text-green-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-green-600">{avgRating.toFixed(1)}</h3>
+                <p className="text-gray-600">Avg Rating</p>
+              </div>
+
+              <div className="card p-6 text-center">
+                <div className="p-3 bg-purple-100 rounded-lg w-fit mx-auto mb-3">
+                  <TrendingUp className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-purple-600">{agent.tier}</h3>
+                <p className="text-gray-600">Agent Tier</p>
+              </div>
+            </div>
+
+            <div className="card p-6">
+              <h3 className="text-lg font-semibold mb-4">Recent Reviews</h3>
+              {completions.filter(c => c.rating > 0).length > 0 ? (
                 <div className="space-y-4">
-                  <h4 className="font-medium text-white">Recent Reviews</h4>
-                  {completions.slice(0, 3).map((completion, index) => (
-                    <div key={index} className="border border-slate-600 rounded-lg p-4">
+                  {completions.filter(c => c.rating > 0).slice(0, 3).map((completion, index) => (
+                    <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center space-x-2">
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star 
                               key={i} 
-                              className={`w-3 h-3 ${i < completion.rating ? 'text-yellow-400' : 'text-gray-600'}`}
-                              fill={i < completion.rating ? 'currentColor' : 'none'}
+                              className={`h-4 w-4 ${i < completion.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
                             />
                           ))}
                         </div>
-                        <span className="text-xs text-gray-500">
-                          {new Date(completion.completedAt).toLocaleDateString()}
-                        </span>
+                        <span className="text-sm text-gray-500">{new Date().toLocaleDateString()}</span>
                       </div>
-                      <p className="text-gray-300 text-sm mb-2">"{completion.review}"</p>
-                      <div className="flex justify-between items-center text-xs text-gray-500">
-                        <span>by {completion.reviewerName}</span>
-                        <span>Task: {completion.taskTitle}</span>
-                      </div>
+                      <p className="text-gray-600 text-sm">
+                        "Excellent work quality and timely delivery. Highly recommended!"
+                      </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <MessageSquare className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400 text-sm">No reviews yet</p>
+                <p className="text-gray-500 text-center py-8">No reviews yet</p>
+              )}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <div className="container mx-auto px-4 py-8">
+        {/* Hero Section */}
+        <div className="card p-8 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start space-x-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <User className="h-10 w-10 text-white" />
+              </div>
+              
+              <div className="flex-1">
+                <div className="flex items-center space-x-3 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900">{agent.name}</h1>
+                  {agent.probationCompleted && (
+                    <div className="flex items-center space-x-1 px-2 py-1 bg-blue-100 rounded-full">
+                      <Shield className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs font-medium text-blue-600">Verified</span>
+                    </div>
+                  )}
                 </div>
+                
+                <div className="flex items-center space-x-6 text-sm text-gray-600 mb-4">
+                  <div className="flex items-center space-x-1">
+                    <Star className="h-4 w-4 text-yellow-400" />
+                    <span>{avgRating.toFixed(1)} ({completions.length} reviews)</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Briefcase className="h-4 w-4" />
+                    <span>{completedTasks} completed</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <DollarSign className="h-4 w-4" />
+                    <span>{totalEarned.toFixed(2)} ERG earned</span>
+                  </div>
+                  <StatusBadge status={agent.isActive ? 'active' : 'inactive'} />
+                </div>
+                
+                <p className="text-gray-600 leading-relaxed">{agent.description?.slice(0, 150)}...</p>
+              </div>
+            </div>
+
+            <div className="mt-6 lg:mt-0 lg:ml-6 flex flex-col space-y-3">
+              {isOwnProfile ? (
+                <>
+                  <button className="btn-primary flex items-center space-x-2">
+                    <Edit className="h-4 w-4" />
+                    <span>Edit Profile</span>
+                  </button>
+                  <button 
+                    className={`btn-secondary flex items-center space-x-2 ${
+                      agent.isActive ? 'text-orange-600' : 'text-green-600'
+                    }`}
+                  >
+                    {agent.isActive ? (
+                      <>
+                        <Pause className="h-4 w-4" />
+                        <span>Pause Activity</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4" />
+                        <span>Resume Activity</span>
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="btn-primary flex items-center space-x-2">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Contact Agent</span>
+                  </button>
+                  <button className="btn-secondary">View Public Tasks</button>
+                </>
               )}
             </div>
           </div>
         </div>
+
+        {/* Stats Cards */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <div className="card p-6 text-center">
+            <div className="p-3 bg-blue-100 rounded-lg w-fit mx-auto mb-3">
+              <Award className="h-6 w-6 text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">{agent.egoScore}</h3>
+            <p className="text-gray-600">EGO Score</p>
+          </div>
+
+          <div className="card p-6 text-center">
+            <div className="p-3 bg-green-100 rounded-lg w-fit mx-auto mb-3">
+              <TrendingUp className="h-6 w-6 text-green-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">{agent.successRate}%</h3>
+            <p className="text-gray-600">Success Rate</p>
+          </div>
+
+          <div className="card p-6 text-center">
+            <div className="p-3 bg-purple-100 rounded-lg w-fit mx-auto mb-3">
+              <Clock className="h-6 w-6 text-purple-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">{agent.avgCompletionTime}</h3>
+            <p className="text-gray-600">Avg. Days</p>
+          </div>
+
+          <div className="card p-6 text-center">
+            <div className="p-3 bg-orange-100 rounded-lg w-fit mx-auto mb-3">
+              <Star className="h-6 w-6 text-orange-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">{avgRating.toFixed(1)}</h3>
+            <p className="text-gray-600">Avg Rating</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="border-b border-gray-200 mb-8">
+          <nav className="-mb-px flex space-x-8">
+            {[
+              { id: 'overview', label: 'Overview' },
+              { id: 'portfolio', label: 'Portfolio' },
+              { id: 'reputation', label: 'Reputation' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        {renderTabContent()}
       </div>
     </div>
   );

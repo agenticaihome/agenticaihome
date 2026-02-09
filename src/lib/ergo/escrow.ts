@@ -431,8 +431,23 @@ export function validateEscrowBox(
   if (expectedAgentAddress && regs.R5) {
     try {
       const expectedAgentBytes = propositionBytesFromAddress(expectedAgentAddress);
-      // R5 format: "0e20" + 32-byte hex (0e20 is SColl[SByte] prefix for 32 bytes)
-      const r5Hex = regs.R5.startsWith('0e20') ? regs.R5.slice(4) : regs.R5;
+      // R5 is SColl[SByte] serialized: 0e + VLQ-encoded length + raw bytes
+      // Strip the SColl header to get the raw proposition bytes
+      let r5Hex = regs.R5;
+      if (r5Hex.startsWith('0e')) {
+        // Read VLQ length after '0e' prefix
+        let offset = 2; // skip '0e'
+        let len = 0;
+        let shift = 0;
+        while (offset < r5Hex.length) {
+          const byte = parseInt(r5Hex.slice(offset, offset + 2), 16);
+          offset += 2;
+          len |= (byte & 0x7f) << (7 * shift);
+          shift++;
+          if ((byte & 0x80) === 0) break;
+        }
+        r5Hex = r5Hex.slice(offset);
+      }
       const r5Bytes = Buffer.from(r5Hex, 'hex');
       
       if (!Buffer.from(expectedAgentBytes).equals(r5Bytes)) {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
+import { createClient } from '@supabase/supabase-js';
 
 interface NetworkStats {
   height: number;
@@ -57,8 +58,30 @@ interface MempoolInfo {
   }>;
 }
 
+interface PlatformTransaction {
+  id: string;
+  task_id: string | null;
+  task_title: string | null;
+  amount_erg: number;
+  type: string;
+  date: string | null;
+  tx_id: string | null;
+}
+
+interface EscrowStats {
+  totalFunded: number;
+  totalReleased: number;
+  totalVolume: number;
+  transactionCount: number;
+}
+
 const ERGO_API = 'https://api.ergoplatform.com/api/v1';
 const CORS_PROXY = 'https://corsproxy.io/?';
+
+// Supabase configuration
+const SUPABASE_URL = 'https://thjialaevqwyiyyhbdxk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_d700Fgssg8ldOkwnLamEcg_g4fPKv8q';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function ergoFetch(path: string): Promise<Response> {
   try {
@@ -75,7 +98,9 @@ export default function ExplorerPage() {
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null);
   const [mempoolInfo, setMempoolInfo] = useState<MempoolInfo | null>(null);
-  const [activeTab, setActiveTab] = useState<'blocks' | 'transactions' | 'mempool' | 'address'>('blocks');
+  const [platformTransactions, setPlatformTransactions] = useState<PlatformTransaction[]>([]);
+  const [escrowStats, setEscrowStats] = useState<EscrowStats | null>(null);
+  const [activeTab, setActiveTab] = useState<'platform' | 'blocks' | 'transactions' | 'mempool' | 'address'>('platform');
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +109,45 @@ export default function ExplorerPage() {
 
   useEffect(() => {
     fetchNetworkData();
+    fetchPlatformData();
   }, []);
+
+  const fetchPlatformData = async () => {
+    try {
+      // Fetch platform transactions from Supabase
+      const { data: transactions, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      setPlatformTransactions(transactions || []);
+
+      // Calculate escrow stats
+      const stats: EscrowStats = {
+        totalFunded: 0,
+        totalReleased: 0,
+        totalVolume: 0,
+        transactionCount: (transactions || []).length
+      };
+
+      (transactions || []).forEach(tx => {
+        const amount = parseFloat(tx.amount_erg) / 1e9; // Convert from nanoERG to ERG
+        stats.totalVolume += amount;
+        
+        if (tx.type === 'escrow_fund') {
+          stats.totalFunded += amount;
+        } else if (tx.type === 'escrow_release') {
+          stats.totalReleased += amount;
+        }
+      });
+
+      setEscrowStats(stats);
+    } catch (error) {
+      console.error('Failed to fetch platform data:', error);
+    }
+  };
 
   const fetchNetworkData = async () => {
     setLoading(true);
@@ -397,6 +460,7 @@ export default function ExplorerPage() {
           <div className="border-b border-slate-700">
             <nav className="flex gap-8">
               {[
+                { key: 'platform', label: 'Platform Transactions', icon: '🏛️' },
                 { key: 'blocks', label: 'Recent Blocks', icon: '📦' },
                 { key: 'transactions', label: 'Recent Transactions', icon: '💸' },
                 { key: 'mempool', label: 'Mempool', icon: '⏳' },
@@ -421,6 +485,183 @@ export default function ExplorerPage() {
 
         {/* Content based on active tab */}
         <div>
+          {/* Platform Transactions */}
+          {activeTab === 'platform' && (
+            <div>
+              {/* Escrow Contract Stats */}
+              {escrowStats && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-4">Escrow Contract Stats</h2>
+                  <div className="grid md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                      <p className="text-gray-400 text-sm mb-1">Total Funded</p>
+                      <p className="text-2xl font-bold text-[var(--accent-cyan)]">Σ{escrowStats.totalFunded.toFixed(2)} ERG</p>
+                    </div>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                      <p className="text-gray-400 text-sm mb-1">Total Released</p>
+                      <p className="text-2xl font-bold text-emerald-400">Σ{escrowStats.totalReleased.toFixed(2)} ERG</p>
+                    </div>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                      <p className="text-gray-400 text-sm mb-1">Total Volume</p>
+                      <p className="text-2xl font-bold text-purple-400">Σ{escrowStats.totalVolume.toFixed(2)} ERG</p>
+                    </div>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                      <p className="text-gray-400 text-sm mb-1">Transactions</p>
+                      <p className="text-2xl font-bold text-yellow-400">{escrowStats.transactionCount}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-white">Platform Transactions</h2>
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-400">
+                    {platformTransactions.length} transactions
+                  </span>
+                  <button
+                    onClick={fetchPlatformData}
+                    className="text-sm text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)]/80 transition-colors"
+                  >
+                    ↻ Refresh
+                  </button>
+                </div>
+              </div>
+
+              {platformTransactions.length > 0 ? (
+                <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-700 text-gray-400">
+                          <th className="text-left p-4">TX Hash</th>
+                          <th className="text-left p-4">Type</th>
+                          <th className="text-left p-4">Task</th>
+                          <th className="text-left p-4">Amount</th>
+                          <th className="text-left p-4">Date</th>
+                          <th className="text-left p-4">Ergo Explorer</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {platformTransactions.map((tx) => (
+                          <tr key={tx.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+                            <td className="p-4">
+                              {tx.tx_id ? (
+                                <span className="font-mono text-xs text-[var(--accent-cyan)]">
+                                  {tx.tx_id.slice(0, 16)}...
+                                </span>
+                              ) : (
+                                <span className="text-gray-500 italic">N/A</span>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                tx.type === 'escrow_fund' 
+                                  ? 'bg-blue-500/20 text-blue-400' 
+                                  : tx.type === 'escrow_release'
+                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  : 'bg-gray-500/20 text-gray-400'
+                              }`}>
+                                {tx.type.replace('_', ' ').toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <div>
+                                {tx.task_title ? (
+                                  <p className="text-white font-medium">{tx.task_title}</p>
+                                ) : (
+                                  <p className="text-gray-500 italic">No task</p>
+                                )}
+                                {tx.task_id && (
+                                  <p className="text-gray-400 text-xs">ID: {tx.task_id}</p>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-emerald-400 font-medium">
+                                Σ{(Number(tx.amount_erg) / 1e9).toFixed(4)} ERG
+                              </span>
+                            </td>
+                            <td className="p-4 text-gray-300">
+                              {tx.date ? new Date(tx.date).toLocaleDateString() : 'Unknown'}
+                            </td>
+                            <td className="p-4">
+                              {tx.tx_id ? (
+                                <a
+                                  href={`https://explorer.ergoplatform.com/en/transactions/${tx.tx_id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[var(--accent-cyan)] hover:underline"
+                                >
+                                  View →
+                                </a>
+                              ) : (
+                                <span className="text-gray-500">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
+                  <div className="text-4xl mb-4">🏛️</div>
+                  <h3 className="text-lg font-semibold text-white mb-2">No Platform Transactions Yet</h3>
+                  <p className="text-gray-400">Platform transactions will appear here as the escrow system is used.</p>
+                  
+                  {/* Show hardcoded genesis transactions if no data */}
+                  <div className="mt-6 p-4 bg-slate-900 border border-slate-600 rounded-lg">
+                    <h4 className="text-white font-medium mb-3">Platform Genesis Transactions</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Fund TX:</span>
+                        <a 
+                          href="https://explorer.ergoplatform.com/en/transactions/e9f4dab8f64655027c8f1757b5f1235132283f1eae306ee5b4976f8f91361026"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--accent-cyan)] hover:underline font-mono"
+                        >
+                          e9f4dab8...1026
+                        </a>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-400">Release TX:</span>
+                        <a 
+                          href="https://explorer.ergoplatform.com/en/transactions/aed2c635b6f60118a601c5095cb3e14f242a6018047f39a66583da67af2501f6"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--accent-cyan)] hover:underline font-mono"
+                        >
+                          aed2c635...01f6
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-6 p-4 bg-slate-800/30 border border-slate-700 rounded-lg">
+                <h4 className="text-white font-medium mb-2">Contract Addresses</h4>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="text-gray-400">Escrow Contract: </span>
+                    <span className="font-mono text-[var(--accent-cyan)]">
+                      29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400">Platform Treasury: </span>
+                    <span className="font-mono text-[var(--accent-cyan)]">
+                      9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Recent Blocks */}
           {activeTab === 'blocks' && (
             <div>

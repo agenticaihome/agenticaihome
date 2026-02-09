@@ -2,24 +2,77 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
-import { useData } from '@/contexts/DataContext';
+import { createClient } from '@supabase/supabase-js';
 import AuthGuard from '@/components/AuthGuard';
 import StatusBadge from '@/components/StatusBadge';
 import { getEvents, type PlatformEvent } from '@/lib/events';
 import { LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Users, Clock, Star, Target, Activity } from 'lucide-react';
 
+// Supabase configuration
+const SUPABASE_URL = 'https://thjialaevqwyiyyhbdxk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_d700Fgssg8ldOkwnLamEcg_g4fPKv8q';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Types for real data
+interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  owner_address: string;
+  hourly_rate_erg: number;
+  ego_score: number;
+  rating: number;
+  tasks_completed: number;
+  status: string;
+  created_at: string;
+}
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  creator_address: string;
+  assigned_agent_id: string | null;
+  budget_erg: number;
+  status: string;
+  created_at: string;
+  completed_at: string | null;
+  deadline: string | null;
+}
+
+interface ReputationEvent {
+  id: string;
+  user_address: string;
+  ego_change: number;
+  reason: string;
+  created_at: string;
+}
+
+interface TaskEvent {
+  id: string;
+  task_id: string;
+  agent_id: string | null;
+  event_type: string;
+  description: string;
+  created_at: string;
+}
+
 export default function Dashboard() {
   const { userAddress, profile, wallet } = useWallet();
-  const { agents, tasks, bids } = useData();
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [reputationEvents, setReputationEvents] = useState<ReputationEvent[]>([]);
+  const [taskEvents, setTaskEvents] = useState<TaskEvent[]>([]);
   const [events, setEvents] = useState<PlatformEvent[]>([]);
-
-  const userAgents = useMemo(() => userAddress ? agents.filter(a => a.ownerAddress === userAddress) : [], [agents, userAddress]);
-  const userTasks = useMemo(() => userAddress ? tasks.filter(t => t.creatorAddress === userAddress) : [], [tasks, userAddress]);
+  const [loading, setLoading] = useState(true);
+  
+  const userAgents = useMemo(() => userAddress ? agents.filter(a => a.owner_address === userAddress) : [], [agents, userAddress]);
+  const userTasks = useMemo(() => userAddress ? tasks.filter(t => t.creator_address === userAddress) : [], [tasks, userAddress]);
 
   const myAgentIds = useMemo(() => userAgents.map(a => a.id), [userAgents]);
   const workingOnTasks = useMemo(() => tasks.filter(t =>
-    t.assignedAgentId && myAgentIds.includes(t.assignedAgentId)
+    t.assigned_agent_id && myAgentIds.includes(t.assigned_agent_id)
   ), [tasks, myAgentIds]);
 
   // Portfolio calculations
@@ -28,9 +81,9 @@ export default function Dashboard() {
     const workingTasksEarnings = workingOnTasks.filter(t => t.status === 'completed');
     const pendingEscrow = userTasks.filter(t => ['assigned', 'in_progress', 'review'].includes(t.status));
     
-    const totalErgEarned = workingTasksEarnings.reduce((sum, t) => sum + t.budgetErg, 0);
-    const totalErgSpent = completedUserTasks.reduce((sum, t) => sum + t.budgetErg, 0);
-    const pendingInEscrow = pendingEscrow.reduce((sum, t) => sum + t.budgetErg, 0);
+    const totalErgEarned = workingTasksEarnings.reduce((sum, t) => sum + t.budget_erg, 0);
+    const totalErgSpent = completedUserTasks.reduce((sum, t) => sum + t.budget_erg, 0);
+    const pendingInEscrow = pendingEscrow.reduce((sum, t) => sum + t.budget_erg, 0);
     const netPosition = totalErgEarned - totalErgSpent;
     
     return {
@@ -43,14 +96,14 @@ export default function Dashboard() {
 
   // Real earnings data from completed tasks (no fake data)
   const ergEarningsData = useMemo(() => {
-    const completed = workingOnTasks.filter(t => t.status === 'completed' && t.completedAt);
+    const completed = workingOnTasks.filter(t => t.status === 'completed' && t.completed_at);
     if (completed.length === 0) return [];
     
     // Group by date
     const byDate: Record<string, number> = {};
     completed.forEach(t => {
-      const date = new Date(t.completedAt!).toISOString().split('T')[0];
-      byDate[date] = (byDate[date] || 0) + t.budgetErg;
+      const date = new Date(t.completed_at!).toISOString().split('T')[0];
+      byDate[date] = (byDate[date] || 0) + t.budget_erg;
     });
     
     let cumulative = 0;
@@ -87,14 +140,14 @@ export default function Dashboard() {
     return userAgents.map(agent => ({
       date: new Date().toISOString().split('T')[0],
       agent: agent.name,
-      score: agent.egoScore,
+      score: agent.ego_score,
     }));
   }, [userAgents]);
 
   // Agent performance metrics
   const agentPerformance = useMemo(() => {
     return userAgents.map(agent => {
-      const agentTasks = workingOnTasks.filter(t => t.assignedAgentId === agent.id);
+      const agentTasks = workingOnTasks.filter(t => t.assigned_agent_id === agent.id);
       const completedTasks = agentTasks.filter(t => t.status === 'completed');
       
       return {
@@ -102,8 +155,8 @@ export default function Dashboard() {
         name: agent.name,
         completionRate: agentTasks.length > 0 ? (completedTasks.length / agentTasks.length) * 100 : 0,
         avgRating: agent.rating,
-        egoTrend: agent.egoScore >= 50 ? 'up' : 'down',
-        tasksCompleted: agent.tasksCompleted,
+        egoTrend: agent.ego_score >= 50 ? 'up' : 'down',
+        tasksCompleted: agent.tasks_completed,
         status: agent.status
       };
     });
@@ -116,11 +169,61 @@ export default function Dashboard() {
   const completedTasks = userTasks.filter(t => t.status === 'completed');
   const disputedTasks = userTasks.filter(t => t.status === 'disputed');
 
+  // Data fetching functions
+  const fetchUserData = async () => {
+    if (!userAddress) return;
+    
+    setLoading(true);
+    try {
+      // Fetch user's agents
+      const { data: agentsData, error: agentsError } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('owner_address', userAddress);
+
+      if (agentsError) throw agentsError;
+      setAgents(agentsData || []);
+
+      // Fetch all tasks (user created + assigned to user's agents)
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('tasks')
+        .select('*')
+        .or(`creator_address.eq.${userAddress},assigned_agent_id.in.(${(agentsData || []).map(a => a.id).join(',')})`);
+
+      if (tasksError && tasksError.message !== 'No rows found') throw tasksError;
+      setTasks(tasksData || []);
+
+      // Fetch reputation events for EGO score history
+      const { data: reputationData, error: reputationError } = await supabase
+        .from('reputation_events')
+        .select('*')
+        .eq('user_address', userAddress)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (reputationError && reputationError.message !== 'No rows found') throw reputationError;
+      setReputationEvents(reputationData || []);
+
+      // Fetch recent task events for activity feed
+      const { data: taskEventsData, error: taskEventsError } = await supabase
+        .from('task_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (taskEventsError && taskEventsError.message !== 'No rows found') throw taskEventsError;
+      setTaskEvents(taskEventsData || []);
+
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setEvents(getEvents(20));
-    const interval = setInterval(() => setEvents(getEvents(20)), 15000);
-    return () => clearInterval(interval);
-  }, []);
+    fetchUserData();
+  }, [userAddress]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -144,7 +247,25 @@ export default function Dashboard() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-slate-900 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Connect Wallet Prompt */}
+        {!userAddress && (
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12 text-center">
+              <div className="text-6xl mb-6">🔗</div>
+              <h1 className="text-4xl font-bold text-white mb-4">Connect Your Wallet</h1>
+              <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+                Connect your Ergo wallet to view your agents, tasks, earnings, and EGO score.
+              </p>
+              <p className="text-gray-500 text-sm">
+                Your dashboard will show real data from the AgenticAiHome platform once connected.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Dashboard Content */}
+        {userAddress && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">
@@ -413,8 +534,8 @@ export default function Dashboard() {
                           <StatusBadge status={task.status} type="task" />
                         </div>
                         <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-gray-500">{formatDate(task.createdAt)}</span>
-                          <span className="text-emerald-400">{task.budgetErg} ERG</span>
+                          <span className="text-gray-500">{formatDate(task.created_at)}</span>
+                          <span className="text-emerald-400">{task.budget_erg} ERG</span>
                         </div>
                         {task.status === 'review' && (
                           <div className="flex items-center gap-2 text-xs text-purple-400">
@@ -500,8 +621,8 @@ export default function Dashboard() {
                           <StatusBadge status={agent.status} type="agent" />
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500">{agent.tasksCompleted} tasks</span>
-                          <span className="text-emerald-400">{agent.hourlyRateErg} ERG/hr</span>
+                          <span className="text-gray-500">{agent.tasks_completed} tasks</span>
+                          <span className="text-emerald-400">{agent.hourly_rate_erg} ERG/hr</span>
                         </div>
                       </div>
                     ))}
@@ -517,29 +638,14 @@ export default function Dashboard() {
               {/* Recent Activity */}
               <div>
                 <h2 className="text-lg font-bold text-white mb-3">Recent Activity</h2>
-                {events.length > 0 ? (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {events.map(event => (
-                      <div key={event.id} className="bg-slate-800/30 border border-slate-700/50 rounded-lg p-3">
-                        <div className="flex items-start gap-2">
-                          <span className="text-sm">{eventIcon(event.type)}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-gray-300 text-xs leading-relaxed">{event.message}</p>
-                            <p className="text-gray-500 text-xs mt-1">{formatDate(event.createdAt)}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-slate-800/30 border border-slate-700 rounded-lg p-6 text-center">
-                    <p className="text-gray-500 text-sm">Activity will appear here as you use the platform.</p>
-                  </div>
-                )}
+                <div className="bg-slate-800/30 border border-slate-700 rounded-lg p-6 text-center">
+                  <p className="text-gray-500 text-sm">Activity will appear here as you use the platform.</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
+        )}
       </div>
     </AuthGuard>
   );

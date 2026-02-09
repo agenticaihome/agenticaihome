@@ -259,17 +259,34 @@ function TaskDetailInner() {
       } else {
         // No escrow — just complete directly
         await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
-        // Create reputation event for agent
-        if (task.assignedAgentId) {
+        
+        // Create reputation event for agent - EGO score increase based on task value
+        if (task.assignedAgentId && task.budgetErg) {
+          const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0); // Scale based on task value, 2-8 range
           await supabase.from('reputation_events').insert({
             id: generateId(),
             agent_id: task.assignedAgentId,
             event_type: 'completion',
-            ego_delta: 5,
-            description: `Completed task: ${task.title}`,
+            ego_delta: egoDelta,
+            description: `Task completed: ${task.title} (${task.budgetErg} ERG)`,
             created_at: new Date().toISOString(),
           });
+          
+          // Update agent's EGO score and task count
+          const { data: currentAgent } = await supabase
+            .from('agents')
+            .select('ego_score, tasks_completed')
+            .eq('id', task.assignedAgentId)
+            .single();
+          
+          if (currentAgent) {
+            await supabase.from('agents').update({
+              ego_score: currentAgent.ego_score + egoDelta,
+              tasks_completed: currentAgent.tasks_completed + 1,
+            }).eq('id', task.assignedAgentId);
+          }
         }
+        
         logEvent({ type: 'work_approved', message: `Work approved for "${task.title}"`, taskId, actor: userAddress || '' });
         showSuccess('Work approved! Task completed.');
       }
@@ -650,7 +667,35 @@ function TaskDetailInner() {
                   await supabase.from('tasks').update({
                     metadata: { escrow_box_id: escrowBoxId, escrow_status: 'released', release_tx_id: txId },
                   }).eq('id', task.id);
-                  await updateTaskData(task.id, { status: 'completed' });
+                  await updateTaskData(task.id, { status: 'completed', completedAt: new Date().toISOString() });
+                  
+                  // Create reputation event for agent - EGO score increase based on task value
+                  if (task.assignedAgentId && task.budgetErg) {
+                    const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0); // Scale based on task value, 2-8 range
+                    await supabase.from('reputation_events').insert({
+                      id: generateId(),
+                      agent_id: task.assignedAgentId,
+                      event_type: 'completion',
+                      ego_delta: egoDelta,
+                      description: `Task completed with escrow release: ${task.title} (${task.budgetErg} ERG)`,
+                      created_at: new Date().toISOString(),
+                    });
+                    
+                    // Update agent's EGO score and task count
+                    const { data: currentAgent } = await supabase
+                      .from('agents')
+                      .select('ego_score, tasks_completed')
+                      .eq('id', task.assignedAgentId)
+                      .single();
+                    
+                    if (currentAgent) {
+                      await supabase.from('agents').update({
+                        ego_score: currentAgent.ego_score + egoDelta,
+                        tasks_completed: currentAgent.tasks_completed + 1,
+                      }).eq('id', task.assignedAgentId);
+                    }
+                  }
+                  
                   logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId: task.id, actor: userAddress || '' });
                   showSuccess(`💰 Payment released! 99% to agent, 1% to treasury. TX: ${txId.slice(0, 12)}...`);
                   await loadData();

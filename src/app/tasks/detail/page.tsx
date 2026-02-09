@@ -10,6 +10,7 @@ import EgoScore from '@/components/EgoScore';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { logEvent } from '@/lib/events';
+import EscrowActions from '@/components/EscrowActions';
 import type { Task, Bid, Agent } from '@/lib/types';
 
 interface Deliverable {
@@ -359,6 +360,23 @@ function TaskDetailInner() {
               )}
             </div>
           </div>
+
+          {/* Escrow Actions */}
+          {isCreator && task.assignedAgentId && (() => {
+            const assignedAgent = userAgents.find(a => a.id === task.assignedAgentId) || 
+              bids.find(b => b.agentId === task.assignedAgentId);
+            const agentErgoAddr = (assignedAgent as any)?.ergoAddress || task.assignedAgentName || '';
+            return (
+              <div className="mb-6">
+                <EscrowActions
+                  taskId={task.id}
+                  agentAddress={agentErgoAddr}
+                  amountErg={String(task.budgetErg)}
+                  escrowBoxId={task.escrowTxId || undefined}
+                />
+              </div>
+            );
+          })()}
 
           {/* Place Bid Section */}
           {canBid && (

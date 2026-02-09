@@ -35,6 +35,14 @@ interface UserStats {
   totalEarned: number;
 }
 
+interface RecentActivity {
+  id: string;
+  type: 'bid' | 'completion';
+  description: string;
+  createdAt: string;
+  data: any;
+}
+
 export default function DashboardPage() {
   const { userAddress } = useWallet();
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -44,6 +52,7 @@ export default function DashboardPage() {
     tasksCompleted: 0,
     totalEarned: 0
   });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,6 +112,51 @@ export default function DashboardPage() {
         tasksCompleted: completedTasks.length,
         totalEarned: earnings / 1e9 // Convert from nanoERG to ERG
       });
+
+      // Fetch recent activity (bids and completions)
+      const activities: RecentActivity[] = [];
+
+      // Get recent bids by user's agents
+      if (agentIds.length > 0) {
+        const { data: recentBids } = await supabase
+          .from('bids')
+          .select('*, tasks(title)')
+          .in('agent_id', agentIds)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        recentBids?.forEach(bid => {
+          activities.push({
+            id: bid.id,
+            type: 'bid',
+            description: `${bid.agent_name} bid on "${bid.tasks?.title || 'Unknown Task'}"`,
+            createdAt: bid.created_at,
+            data: bid
+          });
+        });
+      }
+
+      // Get recent completions
+      const { data: recentCompletions } = await supabase
+        .from('completions')
+        .select('*')
+        .in('agent_id', agentIds)
+        .order('completed_at', { ascending: false })
+        .limit(5);
+
+      recentCompletions?.forEach(completion => {
+        activities.push({
+          id: completion.id,
+          type: 'completion',
+          description: `Completed "${completion.task_title}" - ${completion.rating}★ rating`,
+          createdAt: completion.completed_at,
+          data: completion
+        });
+      });
+
+      // Sort all activities by date and take the 10 most recent
+      activities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setRecentActivity(activities.slice(0, 10));
 
     } catch (err) {
       console.error('Error fetching user data:', err);
@@ -216,7 +270,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 mb-12">
           {/* My Agents */}
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -339,6 +393,56 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-white mb-6">Recent Activity</h2>
+          
+          {loading ? (
+            <div className="bg-[var(--bg-card)] border border-slate-700 rounded-lg p-6 text-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent-cyan)] mx-auto mb-3"></div>
+              <p className="text-[var(--text-secondary)]">Loading activity...</p>
+            </div>
+          ) : recentActivity.length > 0 ? (
+            <div className="bg-[var(--bg-card)] border border-slate-700 rounded-lg">
+              {recentActivity.map((activity, index) => (
+                <div 
+                  key={activity.id} 
+                  className={`p-4 flex items-center gap-4 hover:bg-slate-700/30 transition-colors ${
+                    index !== recentActivity.length - 1 ? 'border-b border-slate-700' : ''
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                    activity.type === 'bid' 
+                      ? 'bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)]' 
+                      : 'bg-[var(--accent-green)]/20 text-[var(--accent-green)]'
+                  }`}>
+                    {activity.type === 'bid' ? '💰' : '✅'}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-sm">{activity.description}</p>
+                    <p className="text-[var(--text-secondary)] text-xs">{formatDate(activity.createdAt)}</p>
+                  </div>
+                  {activity.type === 'completion' && activity.data.erg_paid > 0 && (
+                    <div className="text-right">
+                      <p className="text-[var(--accent-green)] text-sm font-medium">
+                        +Σ{(Number(activity.data.erg_paid) / 1e9).toFixed(4)} ERG
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-[var(--bg-card)]/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
+              <div className="text-4xl mb-4">📊</div>
+              <h3 className="text-lg font-semibold text-white mb-2">No Recent Activity</h3>
+              <p className="text-[var(--text-secondary)]">
+                Your recent bids and task completions will appear here
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}

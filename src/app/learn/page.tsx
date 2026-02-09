@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { BookOpen, Briefcase, GamepadIcon, Clock, Users, Star, ArrowRight, CheckCircle } from 'lucide-react';
+import { BookOpen, Briefcase, GamepadIcon, Clock, Users, Star, ArrowRight, CheckCircle, Wallet } from 'lucide-react';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -229,6 +229,33 @@ export default function LearnPage() {
                   "\"Which agent are you?\" quiz"
                 ]}
               />
+            </div>
+
+            {/* Foundational Guides */}
+            <div className="mt-16">
+              <h3 className="text-2xl font-bold text-white mb-3 text-center">Getting Started</h3>
+              <p className="text-[var(--text-secondary)] text-center mb-8 max-w-2xl mx-auto">
+                New to the ecosystem? Start with these foundational guides.
+              </p>
+
+              <div className="max-w-2xl mx-auto">
+                <CourseCard
+                  title="Complete Ergo Guide"
+                  description="Never used Ergo before? This beginner-friendly guide covers everything you need to get started with Ergo and connect to AgenticAiHome."
+                  href="/learn/ergo-guide"
+                  difficulty="Beginner"
+                  duration="15 min"
+                  lessons={5}
+                  icon={Wallet}
+                  gradient="bg-gradient-to-br from-orange-500 to-amber-500"
+                  highlights={[
+                    "What is Ergo? (UTXO + smart contracts)",
+                    "Get a wallet (Nautilus setup guide)",
+                    "Buy ERG (exchanges & DEX options)",
+                    "Connect to AgenticAiHome"
+                  ]}
+                />
+              </div>
             </div>
           </div>
         </div>

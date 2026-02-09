@@ -1,4 +1,5 @@
 import NewsletterForm from '@/components/NewsletterForm';
+import StatsBar from '@/components/StatsBar';
 
 export default function Home() {
   return (
@@ -129,27 +130,7 @@ export default function Home() {
       </section>
 
       {/* Live Stats Counter */}
-      <section className="py-16 px-4">
-        <div className="container container-xl">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {[
-              { number: '1', label: 'Agent Registered', delay: '0s' },
-              { number: '2', label: 'Mainnet Transactions', delay: '0.2s' },
-              { number: '0.1', label: 'ERG Total Volume', delay: '0.4s' },
-              { number: '1%', label: 'Protocol Fee', delay: '0.6s' }
-            ].map((stat, index) => (
-              <div key={stat.label} className="glass-card rounded-xl p-6 text-center card-hover" style={{ animationDelay: stat.delay }}>
-                <div className="text-4xl lg:text-5xl font-bold text-[var(--accent-cyan)] mb-2 glow-text-cyan animate-count-up">
-                  {stat.number}
-                </div>
-                <div className="text-sm text-[var(--text-secondary)] font-medium">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <StatsBar />
 
       {/* Animated Flow Diagram */}
       <section className="py-24 lg:py-28 px-4 bg-[var(--bg-secondary)]/30 backdrop-blur-sm">

@@ -1,54 +1,73 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
-interface NetworkStats {
-  height: number;
-  hashRate: string;
+interface StatData {
+  number: string;
+  label: string;
+  delay: string;
 }
 
 export default function StatsBar() {
-  const [stats, setStats] = useState<NetworkStats | null>(null);
+  const [stats, setStats] = useState<StatData[]>([
+    { number: '0', label: 'Agents Registered', delay: '0s' },
+    { number: '0', label: 'Mainnet Transactions', delay: '0.2s' },
+    { number: '0', label: 'ERG Total Volume', delay: '0.4s' },
+    { number: '1%', label: 'Protocol Fee', delay: '0.6s' }
+  ]);
 
   useEffect(() => {
-    fetch('https://api.ergoplatform.com/api/v1/networkState')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data) {
-          const hr = data.params?.hashRate || 0;
-          const hashRate = hr >= 1e15 ? `${(hr/1e15).toFixed(1)} PH/s` 
-            : hr >= 1e12 ? `${(hr/1e12).toFixed(1)} TH/s` 
-            : `${(hr/1e9).toFixed(1)} GH/s`;
-          setStats({ height: data.height, hashRate });
-        }
-      })
-      .catch(() => {});
+    const fetchStats = async () => {
+      try {
+        // Fetch agent count
+        const { count: agentCount } = await supabase
+          .from('agents')
+          .select('*', { count: 'exact', head: true });
+
+        // Fetch transaction count
+        const { count: transactionCount } = await supabase
+          .from('transactions')
+          .select('*', { count: 'exact', head: true });
+
+        // Fetch total volume (sum of amount_erg)
+        const { data: transactions } = await supabase
+          .from('transactions')
+          .select('amount_erg');
+
+        const totalVolume = transactions?.reduce((sum, tx) => sum + (tx.amount_erg || 0), 0) || 0;
+
+        setStats([
+          { number: (agentCount || 0).toString(), label: 'Agents Registered', delay: '0s' },
+          { number: (transactionCount || 0).toString(), label: 'Mainnet Transactions', delay: '0.2s' },
+          { number: totalVolume.toString(), label: 'ERG Total Volume', delay: '0.4s' },
+          { number: '1%', label: 'Protocol Fee', delay: '0.6s' }
+        ]);
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        // Keep default values on error
+      }
+    };
+
+    fetchStats();
   }, []);
 
   return (
-    <div className="card p-6 sm:p-8">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-        <div>
-          <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">0</div>
-          <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">Agents Registered</div>
-        </div>
-        <div>
-          <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">0</div>
-          <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">Tasks Completed</div>
-        </div>
-        <div>
-          <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">
-            {stats ? stats.height.toLocaleString() : '—'}
-          </div>
-          <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">Ergo Block Height</div>
-        </div>
-        <div>
-          <div className="text-2xl sm:text-4xl font-bold text-[var(--accent-cyan)]">
-            {stats ? stats.hashRate : '—'}
-          </div>
-          <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">Network Hash Rate</div>
+    <section className="py-16 px-4">
+      <div className="container container-xl">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          {stats.map((stat, index) => (
+            <div key={stat.label} className="glass-card rounded-xl p-6 text-center card-hover" style={{ animationDelay: stat.delay }}>
+              <div className="text-4xl lg:text-5xl font-bold text-[var(--accent-cyan)] mb-2 glow-text-cyan animate-count-up">
+                {stat.number}
+              </div>
+              <div className="text-sm text-[var(--text-secondary)] font-medium">
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }

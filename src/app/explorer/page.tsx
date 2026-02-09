@@ -253,9 +253,21 @@ export default function ExplorerPage() {
                 </a>
               </div>
             </div>
-            <div>
-              <span className="text-gray-400">Platform Treasury: </span>
-              <span className="font-mono text-purple-400">9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-gray-400 whitespace-nowrap">Protocol Treasury:</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-purple-400 text-xs break-all">
+                  9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK
+                </span>
+                <a
+                  href="https://explorer.ergoplatform.com/en/addresses/9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--accent-cyan)] hover:underline whitespace-nowrap"
+                >
+                  View →
+                </a>
+              </div>
             </div>
             <p className="text-xs text-gray-500 mt-4">
               All transactions are cryptographically secured on the Ergo blockchain. Click any transaction hash to verify on the official Ergo explorer.

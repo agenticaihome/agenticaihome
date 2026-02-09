@@ -564,6 +564,31 @@ body {
 }
 
 /* ========================================
+   STEP ANIMATION FOR FLOW DIAGRAM
+   ======================================== */
+@keyframes stepIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-step-in {
+  opacity: 0;
+  animation: stepIn 0.6s ease-out forwards;
+}
+
+/* ========================================
+   COUNT UP ANIMATION FOR STATS
+   ======================================== */
+@keyframes countUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-count-up {
+  animation: countUp 0.8s ease-out forwards;
+}
+
+/* ========================================
    CARD HOVER LIFT
    ======================================== */
 .card-hover {

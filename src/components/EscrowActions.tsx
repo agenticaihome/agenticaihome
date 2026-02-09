@@ -79,8 +79,27 @@ export default function EscrowActions({
       setTxId(id);
       setTxState('success');
 
+      // Get actual box ID from the signed transaction outputs
       // The escrow box is the first output (index 0)
-      const boxId = `${id}:0`;
+      let boxId = '';
+      try {
+        // signedTx may have outputs with boxId
+        const outputs: any[] = (signedTx as any)?.outputs || [];
+        if (outputs.length > 0 && outputs[0]?.boxId) {
+          boxId = outputs[0].boxId;
+        } else {
+          // Fallback: fetch from explorer after brief delay
+          await new Promise(r => setTimeout(r, 3000));
+          const { getTxById } = await import('@/lib/ergo/explorer');
+          const tx = await getTxById(id);
+          if (tx && (tx as any).outputs?.length > 0) {
+            boxId = (tx as any).outputs[0].boxId;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not get box ID from tx, using txId:0 fallback', e);
+      }
+      if (!boxId) boxId = `${id}:0`; // last resort fallback
       onFunded?.(id, boxId);
     } catch (err: any) {
       console.error('Fund escrow failed:', err);

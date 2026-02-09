@@ -116,7 +116,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   role="banner"
                   aria-label="Beta warning"
                 >
-                  ⚠️ <strong>BETA</strong> — Real Ergo blockchain integration. Escrow contracts are in development. Use testnet only.
+                  ⚠️ <strong>ALPHA RELEASE</strong> — Escrow contracts are live on mainnet. Trade responsibly.
                 </div>
                 <div className="grid-bg" aria-hidden="true" />
                 

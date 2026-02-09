@@ -39,13 +39,18 @@ export async function createNotification(notification: Omit<Notification, 'id' |
       .from('notifications')
       .insert([{
         ...notification,
+        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         is_read: false,
         created_at: new Date().toISOString()
       }])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Table might not exist yet - fail gracefully
+      console.warn('Notifications table not available:', error.message);
+      return null;
+    }
     return data;
   } catch (error) {
     console.error('Error creating notification:', error);
@@ -62,7 +67,14 @@ export async function getNotifications(userId: string, limit = 50) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
+    if (error) {
+      // Table might not exist - return empty array
+      if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+        console.warn('Notifications table not available');
+        return [];
+      }
+      throw error;
+    }
 
     return (data || []).map(item => ({
       id: item.id,
@@ -120,7 +132,13 @@ export async function getUnreadCount(userId: string): Promise<number> {
       .eq('user_id', userId)
       .eq('is_read', false);
 
-    if (error) throw error;
+    if (error) {
+      // Table might not exist - return 0
+      if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+        return 0;
+      }
+      throw error;
+    }
     return count || 0;
   } catch (error) {
     console.error('Error fetching unread count:', error);

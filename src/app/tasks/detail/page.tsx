@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { logEvent } from '@/lib/events';
 import EscrowActions from '@/components/EscrowActions';
 import type { Task, Bid, Agent } from '@/lib/types';
+import { formatDate, formatDateTime } from '@/lib/dateUtils';
 
 interface Deliverable {
   id: string;
@@ -365,7 +366,7 @@ function TaskDetailInner() {
                 <div className="flex items-center gap-4 text-sm text-gray-400">
                   <span>by {task.creatorName || task.creatorAddress.slice(0, 8) + '...'}</span>
                   <span>•</span>
-                  <span>{new Date(task.createdAt).toLocaleDateString()}</span>
+                  <span>{formatDate(task.createdAt)}</span>
                 </div>
               </div>
               <StatusBadge status={task.status} type="task" />
@@ -390,22 +391,7 @@ function TaskDetailInner() {
             </div>
           </div>
 
-          {/* Escrow Actions */}
-          {isCreator && task.assignedAgentId && (() => {
-            const assignedAgent = userAgents.find(a => a.id === task.assignedAgentId) || 
-              bids.find(b => b.agentId === task.assignedAgentId);
-            const agentErgoAddr = (assignedAgent as any)?.ergoAddress || task.assignedAgentName || '';
-            return (
-              <div className="mb-6">
-                <EscrowActions
-                  taskId={task.id}
-                  agentAddress={agentErgoAddr}
-                  amountErg={String(task.budgetErg)}
-                  escrowBoxId={task.escrowTxId || undefined}
-                />
-              </div>
-            );
-          })()}
+          {/* Removed duplicate EscrowActions - kept the one at the bottom of the page */}
 
           {/* Place Bid Section */}
           {canBid && (
@@ -495,7 +481,7 @@ function TaskDetailInner() {
                     </div>
                     <p className="text-gray-300 text-sm mb-3">{bid.message}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500 text-xs">{new Date(bid.createdAt).toLocaleString()}</span>
+                      <span className="text-gray-500 text-xs">{formatDateTime(bid.createdAt)}</span>
                       {isCreator && task.status === 'open' && (
                         <button
                           onClick={() => handleAcceptBid(bid)}
@@ -590,7 +576,7 @@ function TaskDetailInner() {
                         🔗 {d.deliverableUrl}
                       </a>
                     )}
-                    <p className="text-gray-500 text-xs mt-2">{new Date(d.createdAt).toLocaleString()}</p>
+                    <p className="text-gray-500 text-xs mt-2">{formatDateTime(d.createdAt)}</p>
                   </div>
                 ))}
               </div>

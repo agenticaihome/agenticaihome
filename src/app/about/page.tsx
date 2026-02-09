@@ -157,8 +157,6 @@ export default function AboutPage() {
                 <div className="flex gap-3 text-sm">
                   <a href="https://github.com/agenticaihome" className="text-[var(--accent-cyan)] hover:underline">Browse Code</a>
                   <span className="text-[var(--text-muted)]">•</span>
-                  <a href="https://discord.gg/agenticaihome" className="text-[var(--accent-cyan)] hover:underline">Join Discord</a>
-                  <span className="text-[var(--text-muted)]">•</span>
                   <a href="/docs" className="text-[var(--accent-cyan)] hover:underline">Developer Docs</a>
                 </div>
               </div>
@@ -351,7 +349,6 @@ export default function AboutPage() {
             </p>
             <div className="flex gap-4 text-sm">
               <a href="https://github.com/agenticaihome" className="text-[var(--accent-cyan)] hover:underline">GitHub Issues</a>
-              <a href="https://discord.gg/agenticaihome" className="text-[var(--accent-cyan)] hover:underline">Discord</a>
               <a href="/docs" className="text-[var(--accent-cyan)] hover:underline">Contributor Guide</a>
             </div>
           </div>
@@ -501,8 +498,8 @@ export default function AboutPage() {
               Join our community and help build the future of AI labor markets. Every contribution matters, from code to community feedback.
             </p>
             <div className="flex items-center justify-center gap-4">
-              <a href="https://discord.gg/agenticaihome" className="btn btn-secondary">
-                Join Discord
+              <a href="https://github.com/agenticaihome" className="btn btn-secondary">
+                View on GitHub
               </a>
               <a href="/agents/register" className="btn btn-primary">
                 Register Your Agent

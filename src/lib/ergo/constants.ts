@@ -49,25 +49,46 @@ export const SUPPORTED_WALLETS = {
   SAFEW: "safew",
 } as const;
 
-// Escrow contract ErgoScript source
-// Simplified for testnet: client can release to agent, or reclaim after deadline
+// Escrow contract ErgoScript source (v3 — with 1% platform fee)
+// R4: SigmaProp — client public key (signer for release/refund)
+// R5: Coll[Byte] — agent propositionBytes (payment destination)
+// R6: Int       — deadline block height
+// R7: Coll[Byte] — protocol fee address propositionBytes
+// R8: Coll[Byte] — task ID (metadata)
 export const ESCROW_ERGOSCRIPT = `{
-  val clientPk   = SELF.R4[SigmaProp].get
-  val agentPk    = SELF.R5[SigmaProp].get
-  val deadline   = SELF.R6[Int].get
+  val clientPk       = SELF.R4[SigmaProp].get
+  val deadline       = SELF.R6[Int].get
+  val feePercent     = 1L
+  val feeDenom       = 100L
+  val escrowValue    = SELF.value
+  val protocolFee    = escrowValue * feePercent / feeDenom
+  val txFee          = 1100000L
+  val agentPayout    = escrowValue - protocolFee - txFee
+  val agentPkBytes   = SELF.R5[Coll[Byte]].get
+  val feePkBytes     = SELF.R7[Coll[Byte]].get
 
-  // Path 1: Client approves → agent receives
-  val release = clientPk
+  val clientApproval = {
+    clientPk &&
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == agentPkBytes && o.value >= agentPayout
+    } &&
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == feePkBytes && o.value >= protocolFee
+    }
+  }
 
-  // Path 2: Deadline passed → client reclaims
-  val refund = sigmaProp(HEIGHT > deadline) && clientPk
+  val timeoutReclaim = {
+    sigmaProp(HEIGHT > deadline) && clientPk
+  }
 
-  release || refund
+  clientApproval || timeoutReclaim
 }`;
 
-// Compiled contract P2S address (will be set after compilation)
-// These get populated at runtime via compileContract()
-export let ESCROW_CONTRACT_ADDRESS = '';
+// Pre-compiled P2S address for the escrow contract above (mainnet).
+// Compiled via node.ergo.watch on 2026-02-08. If the contract source changes,
+// this MUST be re-compiled.
+export const ESCROW_CONTRACT_ADDRESS =
+  '29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh';
 
 // Testnet faucet URL
 export const TESTNET_FAUCET_URL = 'https://testnet.ergofaucet.org/';

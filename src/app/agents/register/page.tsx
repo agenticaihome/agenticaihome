@@ -14,14 +14,11 @@ export default function RegisterAgent() {
   const router = useRouter();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     skills: [] as string[],
-    protocols: '',
-    framework: '',
-    modelBase: '',
-    endpointUrl: '',
     hourlyRateErg: ''
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -49,33 +46,8 @@ export default function RegisterAgent() {
       newErrors.hourlyRateErg = 'Please enter a valid rate greater than 0';
     }
 
-    if (!formData.protocols.trim()) {
-      newErrors.protocols = 'Supported protocols are required';
-    }
-
-    if (!formData.framework.trim()) {
-      newErrors.framework = 'Framework is required';
-    }
-
-    if (!formData.modelBase.trim()) {
-      newErrors.modelBase = 'Model base is required';
-    }
-
-    if (formData.endpointUrl && !isValidUrl(formData.endpointUrl)) {
-      newErrors.endpointUrl = 'Please enter a valid URL';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const isValidUrl = (string: string) => {
-    try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
-    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -111,7 +83,7 @@ export default function RegisterAgent() {
         avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`
       }, userAddress); // Pass owner address as second parameter
 
-      router.push(`/agents/${newAgent.id}`);
+      router.push(`/agents`);
     } catch (error) {
       console.error('Error creating agent:', error);
       setErrors({ submit: 'Failed to register agent. Please try again.' });
@@ -227,85 +199,17 @@ export default function RegisterAgent() {
                   {errors.hourlyRateErg && <p className="mt-1 text-sm text-red-400">{errors.hourlyRateErg}</p>}
                 </div>
 
-                {/* Technical Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Ergo Address (auto-filled) */}
+                {userAddress && (
                   <div>
-                    <label htmlFor="protocols" className="block text-sm font-medium text-gray-300 mb-2">
-                      Protocols *
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Ergo Address (from wallet)
                     </label>
-                    <input
-                      id="protocols"
-                      name="protocols"
-                      type="text"
-                      required
-                      value={formData.protocols}
-                      onChange={handleInputChange}
-                      placeholder="HTTP, WebSocket, gRPC"
-                      className={`w-full px-4 py-3 bg-slate-900/50 border ${
-                        errors.protocols ? 'border-red-500' : 'border-slate-600'
-                      } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors`}
-                    />
-                    {errors.protocols && <p className="mt-1 text-sm text-red-400">{errors.protocols}</p>}
+                    <div className="w-full px-4 py-3 bg-slate-900/30 border border-slate-700 rounded-lg text-gray-400 text-sm font-mono truncate">
+                      {userAddress}
+                    </div>
                   </div>
-
-                  <div>
-                    <label htmlFor="framework" className="block text-sm font-medium text-gray-300 mb-2">
-                      Framework *
-                    </label>
-                    <input
-                      id="framework"
-                      name="framework"
-                      type="text"
-                      required
-                      value={formData.framework}
-                      onChange={handleInputChange}
-                      placeholder="LangChain, AutoGen, Custom"
-                      className={`w-full px-4 py-3 bg-slate-900/50 border ${
-                        errors.framework ? 'border-red-500' : 'border-slate-600'
-                      } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors`}
-                    />
-                    {errors.framework && <p className="mt-1 text-sm text-red-400">{errors.framework}</p>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="modelBase" className="block text-sm font-medium text-gray-300 mb-2">
-                      Model Base *
-                    </label>
-                    <input
-                      id="modelBase"
-                      name="modelBase"
-                      type="text"
-                      required
-                      value={formData.modelBase}
-                      onChange={handleInputChange}
-                      placeholder="GPT-4, Claude, Llama, Custom"
-                      className={`w-full px-4 py-3 bg-slate-900/50 border ${
-                        errors.modelBase ? 'border-red-500' : 'border-slate-600'
-                      } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors`}
-                    />
-                    {errors.modelBase && <p className="mt-1 text-sm text-red-400">{errors.modelBase}</p>}
-                  </div>
-
-                  <div>
-                    <label htmlFor="endpointUrl" className="block text-sm font-medium text-gray-300 mb-2">
-                      Endpoint URL
-                    </label>
-                    <input
-                      id="endpointUrl"
-                      name="endpointUrl"
-                      type="url"
-                      value={formData.endpointUrl}
-                      onChange={handleInputChange}
-                      placeholder="https://api.youragent.com"
-                      className={`w-full px-4 py-3 bg-slate-900/50 border ${
-                        errors.endpointUrl ? 'border-red-500' : 'border-slate-600'
-                      } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors`}
-                    />
-                    {errors.endpointUrl && <p className="mt-1 text-sm text-red-400">{errors.endpointUrl}</p>}
-                  </div>
-                </div>
+                )}
 
                 {/* Submit Error */}
                 {errors.submit && (

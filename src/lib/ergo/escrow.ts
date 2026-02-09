@@ -3,16 +3,20 @@ import {
   OutputBuilder,
   SConstant,
   SInt,
-  SLong,
   SColl,
   SByte,
+  SSigmaProp,
+  SGroupElement,
+  ErgoAddress,
 } from '@fleet-sdk/core';
 import { getCurrentHeight, getBoxesByAddress, getBoxById } from './explorer';
 import {
   MIN_BOX_VALUE,
   RECOMMENDED_TX_FEE,
   PLATFORM_FEE_PERCENT,
+  PLATFORM_FEE_ADDRESS,
   ESCROW_ERGOSCRIPT,
+  ESCROW_CONTRACT_ADDRESS,
   txExplorerUrl,
 } from './constants';
 import { compileErgoScript } from './compiler';
@@ -39,14 +43,46 @@ export interface EscrowBox {
   creationHeight: number;
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Extract the 33-byte compressed public key from a P2PK Ergo address.
+ * P2PK ergoTree = "0008cd" + 33-byte-hex-pubkey
+ */
+function pubkeyFromAddress(address: string): Uint8Array {
+  const ergoAddr = ErgoAddress.fromBase58(address);
+  const tree = ergoAddr.ergoTree; // hex string
+  // P2PK trees start with 0008cd
+  if (!tree.startsWith('0008cd')) {
+    throw new Error(`Address ${address} is not a P2PK address`);
+  }
+  const pubkeyHex = tree.slice(6); // remove "0008cd" prefix
+  return Uint8Array.from(Buffer.from(pubkeyHex, 'hex'));
+}
+
+/**
+ * Get propositionBytes (ergoTree bytes) for an address.
+ * This is what the contract compares OUTPUTS.propositionBytes against.
+ */
+function propositionBytesFromAddress(address: string): Uint8Array {
+  const ergoAddr = ErgoAddress.fromBase58(address);
+  return Uint8Array.from(Buffer.from(ergoAddr.ergoTree, 'hex'));
+}
+
 // ─── Contract compilation ────────────────────────────────────────────
 
 let _compiledAddress: string | null = null;
 
 /**
  * Get or compile the escrow contract P2S address.
+ * Uses pre-compiled address as primary, falls back to live compilation.
  */
 export async function getEscrowContractAddress(): Promise<string> {
+  // Use pre-compiled address if available
+  if (ESCROW_CONTRACT_ADDRESS) {
+    return ESCROW_CONTRACT_ADDRESS;
+  }
+
   if (_compiledAddress) return _compiledAddress;
 
   try {
@@ -62,22 +98,21 @@ export async function getEscrowContractAddress(): Promise<string> {
 // ─── Transaction builders ────────────────────────────────────────────
 
 /**
- * Create an escrow transaction: locks ERG at the P2S contract address
- * with registers encoding the escrow metadata.
+ * Create an escrow transaction: locks ERG at the P2S contract address.
  *
- * R4: client address (SigmaProp encoded as bytes)
- * R5: agent address (SigmaProp encoded as bytes)
- * R6: deadline block height (Int)
- * R7: task ID (Coll[Byte])
+ * Register layout (must match ESCROW_ERGOSCRIPT):
+ *   R4: SigmaProp — client public key
+ *   R5: Coll[Byte] — agent propositionBytes (ergoTree)
+ *   R6: Int        — deadline block height
+ *   R7: Coll[Byte] — platform fee address propositionBytes
+ *   R8: Coll[Byte] — task ID (UTF-8)
  *
- * Returns an EIP-12 unsigned transaction ready for wallet signing.
+ * Returns an EIP-12 unsigned transaction ready for Nautilus signing.
  */
 export async function createEscrowTx(
   params: EscrowParams,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   walletUtxos: any[],
   changeAddress: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const { clientAddress, agentAddress, amountNanoErg, deadlineHeight, taskId } = params;
 
@@ -91,29 +126,28 @@ export async function createEscrowTx(
   }
 
   const currentHeight = await getCurrentHeight();
+  const contractAddress = await getEscrowContractAddress();
 
-  // Get compiled contract address (P2S)
-  let contractAddress: string;
-  try {
-    contractAddress = await getEscrowContractAddress();
-  } catch {
-    // Fallback: lock at client's address (MVP approach)
-    console.warn('P2S compilation failed, falling back to P2PK escrow');
-    contractAddress = clientAddress;
-  }
+  // R4: client SigmaProp (the signer who can release/refund)
+  const clientPubkey = pubkeyFromAddress(clientAddress);
 
-  // Encode addresses as byte arrays for register storage
-  const clientBytes = new TextEncoder().encode(clientAddress);
-  const agentBytes = new TextEncoder().encode(agentAddress);
+  // R5: agent propositionBytes (where funds go on release)
+  const agentPropBytes = propositionBytesFromAddress(agentAddress);
+
+  // R7: platform fee address propositionBytes
+  const feePropBytes = propositionBytesFromAddress(PLATFORM_FEE_ADDRESS);
+
+  // R8: task ID as bytes
   const taskBytes = new TextEncoder().encode(taskId || '');
 
   // Build the escrow output at the contract address
   const escrowOutput = new OutputBuilder(amountNanoErg, contractAddress)
     .setAdditionalRegisters({
-      R4: SConstant(SColl(SByte, clientBytes)),
-      R5: SConstant(SColl(SByte, agentBytes)),
+      R4: SConstant(SSigmaProp(SGroupElement(clientPubkey))),
+      R5: SConstant(SColl(SByte, agentPropBytes)),
       R6: SConstant(SInt(deadlineHeight)),
-      R7: SConstant(SColl(SByte, taskBytes)),
+      R7: SConstant(SColl(SByte, feePropBytes)),
+      R8: SConstant(SColl(SByte, taskBytes)),
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)
@@ -128,7 +162,12 @@ export async function createEscrowTx(
 }
 
 /**
- * Release escrow: client sends the escrowed ERG to the agent.
+ * Release escrow: client approves → agent gets 99%, platform gets 1%.
+ *
+ * The contract requires:
+ *   - Client signature (R4 SigmaProp)
+ *   - Output to agent (R5 propositionBytes) with value >= agentPayout
+ *   - Output to fee address (R7 propositionBytes) with value >= protocolFee
  */
 export async function releaseEscrowTx(
   escrowBoxId: string,
@@ -145,19 +184,28 @@ export async function releaseEscrowTx(
 
   const escrowValue = BigInt(escrowBox.value);
   const fee = RECOMMENDED_TX_FEE;
-  const agentAmount = escrowValue - fee;
+  const protocolFee = escrowValue / 100n; // 1%
+  const agentAmount = escrowValue - protocolFee - fee;
 
   if (agentAmount < MIN_BOX_VALUE) {
     throw new Error('Escrow amount too small to release after fees');
   }
+  if (protocolFee < MIN_BOX_VALUE) {
+    throw new Error('Escrow amount too small for protocol fee minimum box value');
+  }
 
-  const releaseOutput = new OutputBuilder(agentAmount, agentAddress);
+  // Agent payout output
+  const agentOutput = new OutputBuilder(agentAmount, agentAddress);
 
+  // Protocol fee output
+  const feeOutput = new OutputBuilder(protocolFee, PLATFORM_FEE_ADDRESS);
+
+  // Inputs: escrow box first, then wallet UTXOs for miner fee
   const inputs: any[] = [escrowBox, ...(Array.isArray(walletUtxos) ? walletUtxos : [])];
 
   const unsignedTx = new TransactionBuilder(currentHeight)
     .from(inputs)
-    .to([releaseOutput])
+    .to([agentOutput, feeOutput])
     .sendChangeTo(changeAddress)
     .payFee(fee)
     .build()
@@ -167,7 +215,12 @@ export async function releaseEscrowTx(
 }
 
 /**
- * Refund escrow: client reclaims funds (after deadline).
+ * Refund escrow: client reclaims after deadline (no platform fee).
+ *
+ * The contract requires:
+ *   - HEIGHT > deadline (R6)
+ *   - Client signature (R4 SigmaProp)
+ *   - Output to client with value >= escrowValue - txFee
  */
 export async function refundEscrowTx(
   escrowBoxId: string,
@@ -227,7 +280,8 @@ export function parseEscrowBox(box: any): EscrowBox | null {
 
 export async function getActiveEscrowsByAddress(address: string): Promise<EscrowBox[]> {
   try {
-    const boxes = await getBoxesByAddress(address);
+    const contractAddress = await getEscrowContractAddress();
+    const boxes = await getBoxesByAddress(contractAddress);
     return boxes
       .filter((box: any) => {
         const regs = (box.additionalRegisters || {}) as Record<string, unknown>;
@@ -257,6 +311,12 @@ export function validateEscrowParams(params: EscrowParams): { valid: boolean; er
   if (params.amountNanoErg < MIN_BOX_VALUE) {
     errors.push(`Amount must be at least ${MIN_BOX_VALUE} nanoERG (0.001 ERG)`);
   }
+  // Minimum for release: need agentPayout >= MIN_BOX_VALUE and protocolFee >= MIN_BOX_VALUE
+  // protocolFee = amount/100, so amount >= 100 * MIN_BOX_VALUE = 0.1 ERG
+  const minForFee = MIN_BOX_VALUE * 100n;
+  if (params.amountNanoErg < minForFee) {
+    errors.push(`Amount must be at least ${Number(minForFee) / 1e9} ERG to cover protocol fee minimum`);
+  }
   if (params.deadlineHeight <= 0) {
     errors.push('Deadline must be a positive block height');
   }
@@ -271,7 +331,7 @@ export function calculateEscrowFee(amount: bigint): bigint {
 }
 
 export function calculateNetAmount(grossAmount: bigint): bigint {
-  return grossAmount - calculateEscrowFee(grossAmount);
+  return grossAmount - calculateEscrowFee(grossAmount) - RECOMMENDED_TX_FEE;
 }
 
 export function estimateTransactionFee(): bigint {

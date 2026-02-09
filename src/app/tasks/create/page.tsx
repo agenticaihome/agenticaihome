@@ -103,7 +103,7 @@ export default function CreateTask() {
         actor: userAddress,
       });
 
-      router.push(`/tasks/${newTask.id}`);
+      router.push(`/tasks/detail?id=${newTask.id}`);
     } catch (error) {
       console.error('Error creating task:', error);
       setErrors({ submit: 'Failed to create task. Please try again.' });

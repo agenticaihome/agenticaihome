@@ -5,8 +5,9 @@
  */
 
 const ERGO_NODES = [
-  'https://ergo-node-mainnet.anetabtc.io',
+  'https://node.ergo.watch',
   'https://node.sigmaspace.io',
+  'https://ergo-node-mainnet.anetabtc.io',
 ];
 
 const CACHE_KEY = 'aih_p2s_cache';

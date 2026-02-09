@@ -177,10 +177,23 @@ export async function releaseEscrowTx(
 ): Promise<any> {
   const currentHeight = await getCurrentHeight();
 
-  const escrowBox = await getBoxById(escrowBoxId);
-  if (!escrowBox) {
+  const rawBox = await getBoxById(escrowBoxId);
+  if (!rawBox) {
     throw new Error('Escrow box not found on-chain');
   }
+
+  // Convert explorer box format to Fleet SDK format
+  // Explorer returns additionalRegisters as objects {serializedValue, sigmaType, renderedValue}
+  // Fleet SDK expects them as plain serialized hex strings
+  const escrowBox: any = {
+    ...rawBox,
+    additionalRegisters: Object.fromEntries(
+      Object.entries((rawBox as any).additionalRegisters || {}).map(([key, val]: [string, any]) => [
+        key,
+        typeof val === 'object' && val?.serializedValue ? val.serializedValue : val
+      ])
+    ),
+  };
 
   const escrowValue = BigInt(escrowBox.value);
   const fee = RECOMMENDED_TX_FEE;
@@ -230,10 +243,21 @@ export async function refundEscrowTx(
 ): Promise<any> {
   const currentHeight = await getCurrentHeight();
 
-  const escrowBox = await getBoxById(escrowBoxId);
-  if (!escrowBox) {
+  const rawBox = await getBoxById(escrowBoxId);
+  if (!rawBox) {
     throw new Error('Escrow box not found on-chain');
   }
+
+  // Convert explorer box format to Fleet SDK format
+  const escrowBox: any = {
+    ...rawBox,
+    additionalRegisters: Object.fromEntries(
+      Object.entries((rawBox as any).additionalRegisters || {}).map(([key, val]: [string, any]) => [
+        key,
+        typeof val === 'object' && val?.serializedValue ? val.serializedValue : val
+      ])
+    ),
+  };
 
   const escrowValue = BigInt(escrowBox.value);
   const fee = RECOMMENDED_TX_FEE;

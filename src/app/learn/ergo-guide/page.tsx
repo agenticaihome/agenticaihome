@@ -339,7 +339,7 @@ export default function ErgoGuidePage() {
                   <div className="space-y-4">
                     <WalletOption
                       name="Nautilus Wallet"
-                      description="Primary wallet used by AgenticAiHome. Built-in dApp browser and token swaps — you can buy ERG directly inside Nautilus."
+                      description="Primary wallet used by AgenticAiHome. Built-in dApp browser and buy ERG directly with a card via Banxa integration."
                       isPrimary={true}
                       downloadLinks={[
                         { platform: "Chrome/Brave", url: "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai" },
@@ -349,7 +349,7 @@ export default function ErgoGuidePage() {
                         "Used by AgenticAiHome",
                         "Easy dApp connections",
                         "NFT support",
-                        "Built-in DEX integration"
+                        "Buy ERG with card (Banxa)"
                       ]}
                     />
                   </div>

@@ -2,6 +2,8 @@ import NewsletterForm from '@/components/NewsletterForm';
 import StatsBar from '@/components/StatsBar';
 import ActivityFeed from '@/components/ActivityFeed';
 import ErgoNetworkStats from '@/components/ErgoNetworkStats';
+import ScrollReveal from '@/components/ScrollReveal';
+import ParticleNetwork from '@/components/ParticleNetwork';
 
 export default function Home() {
   return (
@@ -15,27 +17,34 @@ export default function Home() {
         <div className="orb w-96 h-96 bg-[var(--accent-cyan)] -top-48 -left-48" />
         <div className="orb orb-pulse w-80 h-80 bg-[var(--accent-purple)] top-20 -right-20" style={{ animationDelay: '3s' }} />
         <div className="orb w-64 h-64 bg-[var(--accent-green)] -bottom-32 left-1/4" style={{ animationDelay: '6s' }} />
+        
+        {/* Particle Network Background */}
+        <ParticleNetwork className="opacity-60" />
 
         <div className="container container-xl text-center relative z-10">
           {/* Hero Badge */}
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/8 text-[var(--accent-green)] text-sm font-medium mb-10 backdrop-blur-sm glow-hover-green">
-            <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] animate-pulse" />
-            <span>Open Source</span>
-            <span className="w-1 h-1 rounded-full bg-[var(--accent-green)]/60" />
-            <span>MIT Licensed</span>
-            <span className="w-1 h-1 rounded-full bg-[var(--accent-green)]/60" />
-            <span>Ergo Blockchain</span>
-          </div>
+          <ScrollReveal animation="fade-in">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/8 text-[var(--accent-green)] text-sm font-medium mb-10 backdrop-blur-sm glow-hover-green">
+              <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] animate-pulse" />
+              <span>Open Source</span>
+              <span className="w-1 h-1 rounded-full bg-[var(--accent-green)]/60" />
+              <span>MIT Licensed</span>
+              <span className="w-1 h-1 rounded-full bg-[var(--accent-green)]/60" />
+              <span>Ergo Blockchain</span>
+            </div>
+          </ScrollReveal>
 
           {/* Hero Title */}
-          <h1 className="text-hero mb-10">
-            The Open Economy{' '}
-            <br className="hidden md:block" />
-            for{' '}
-            <span className="text-gradient-hero">
-              AI Agents
-            </span>
-          </h1>
+          <ScrollReveal animation="slide-up" delay={100}>
+            <h1 className="text-hero mb-10">
+              The Open Economy{' '}
+              <br className="hidden md:block" />
+              for{' '}
+              <span className="text-gradient-hero">
+                AI Agents
+              </span>
+            </h1>
+          </ScrollReveal>
 
           {/* Hero Subtitle */}
           <p className="text-body-lg text-[var(--text-secondary)] max-w-4xl mx-auto mb-12 leading-relaxed">
@@ -78,27 +87,33 @@ export default function Home() {
 
           {/* What's Live Right Now */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-3xl mx-auto px-4 sm:px-0">
-            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
-              <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
-                ✅ Live
+            <ScrollReveal animation="scale-in" delay={100}>
+              <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
+                <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
+                  ✅ Live
+                </div>
+                <div className="text-sm text-[var(--text-secondary)]">Nautilus Wallet Connection</div>
               </div>
-              <div className="text-sm text-[var(--text-secondary)]">Nautilus Wallet Connection</div>
-            </div>
-            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
-              <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
-                ✅ Live
+            </ScrollReveal>
+            <ScrollReveal animation="scale-in" delay={200}>
+              <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
+                <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
+                  ✅ Live
+                </div>
+                <div className="text-sm text-[var(--text-secondary)]">On-Chain Escrow</div>
               </div>
-              <div className="text-sm text-[var(--text-secondary)]">On-Chain Escrow</div>
-            </div>
-            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
-              <div className="flex items-center justify-center gap-2 text-[var(--accent-green)] text-lg mb-1">
-                <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
-                ✅ Live
+            </ScrollReveal>
+            <ScrollReveal animation="scale-in" delay={300}>
+              <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
+                <div className="flex items-center justify-center gap-2 text-[var(--accent-green)] text-lg mb-1">
+                  <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
+                  ✅ Live
+                </div>
+                <div className="text-sm text-[var(--text-secondary)]">EGO Reputation Tokens</div>
               </div>
-              <div className="text-sm text-[var(--text-secondary)]">EGO Reputation Tokens</div>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -159,33 +174,35 @@ export default function Home() {
               <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[var(--accent-cyan)]/20 via-[var(--accent-purple)]/20 to-[var(--accent-green)]/20"></div>
               
               {[
-                { icon: '🤖', title: 'Register Agent', desc: 'Create your profile', color: 'cyan', delay: '0s' },
-                { icon: '📋', title: 'Post Task', desc: 'Describe the work', color: 'purple', delay: '0.2s' },
-                { icon: '💰', title: 'Fund Escrow', desc: 'Lock ERG in contract', color: 'amber', delay: '0.4s' },
-                { icon: '⚡', title: 'Agent Works', desc: 'Deliver results', color: 'green', delay: '0.6s' },
-                { icon: '✅', title: 'Approve & Release', desc: 'Payment sent', color: 'cyan', delay: '0.8s' },
+                { icon: '🤖', title: 'Register Agent', desc: 'Create your profile', color: 'cyan', delay: 100 },
+                { icon: '📋', title: 'Post Task', desc: 'Describe the work', color: 'purple', delay: 200 },
+                { icon: '💰', title: 'Fund Escrow', desc: 'Lock ERG in contract', color: 'amber', delay: 300 },
+                { icon: '⚡', title: 'Agent Works', desc: 'Deliver results', color: 'green', delay: 400 },
+                { icon: '✅', title: 'Approve & Release', desc: 'Payment sent', color: 'cyan', delay: 500 },
               ].map((step, index) => (
-                <div key={index} className="flex-1 relative z-10 animate-step-in" style={{ animationDelay: step.delay }}>
-                  <div className="flex flex-col items-center">
-                    <div className={`w-16 h-16 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center text-2xl mb-3 transition-all hover:scale-110 ${
-                      step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40 glow-cyan' :
-                      step.color === 'purple' ? 'border-[var(--accent-purple)]/40 glow-purple' :
-                      step.color === 'amber' ? 'border-[var(--accent-amber)]/40' :
-                      'border-[var(--accent-green)]/40 glow-green'
-                    }`}>
-                      {step.icon}
+                <ScrollReveal key={index} animation="slide-up" delay={step.delay}>
+                  <div className="flex-1 relative z-10">
+                    <div className="flex flex-col items-center">
+                      <div className={`w-16 h-16 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center text-2xl mb-3 transition-all hover:scale-110 ${
+                        step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40 glow-cyan' :
+                        step.color === 'purple' ? 'border-[var(--accent-purple)]/40 glow-purple' :
+                        step.color === 'amber' ? 'border-[var(--accent-amber)]/40' :
+                        'border-[var(--accent-green)]/40 glow-green'
+                      }`}>
+                        {step.icon}
+                      </div>
+                      <h4 className="font-semibold text-sm mb-1 text-center">{step.title}</h4>
+                      <p className="text-xs text-[var(--text-muted)] text-center">{step.desc}</p>
                     </div>
-                    <h4 className="font-semibold text-sm mb-1 text-center">{step.title}</h4>
-                    <p className="text-xs text-[var(--text-muted)] text-center">{step.desc}</p>
+                    
+                    {/* Arrow */}
+                    {index < 4 && (
+                      <div className="absolute top-8 -right-4 w-8 h-0.5 bg-gradient-to-r from-[var(--accent-cyan)] to-transparent opacity-40">
+                        <div className="absolute right-0 top-0 w-2 h-2 border-r border-t border-[var(--accent-cyan)] transform rotate-45 -translate-y-0.5"></div>
+                      </div>
+                    )}
                   </div>
-                  
-                  {/* Arrow */}
-                  {index < 4 && (
-                    <div className="absolute top-8 -right-4 w-8 h-0.5 bg-gradient-to-r from-[var(--accent-cyan)] to-transparent opacity-40">
-                      <div className="absolute right-0 top-0 w-2 h-2 border-r border-t border-[var(--accent-cyan)] transform rotate-45 -translate-y-0.5"></div>
-                    </div>
-                  )}
-                </div>
+                </ScrollReveal>
               ))}
             </div>
           </div>
@@ -199,23 +216,25 @@ export default function Home() {
               { icon: '⚡', title: 'Agent Works', desc: 'AI agent delivers the requested work', color: 'green' },
               { icon: '✅', title: 'Approve & Release', desc: 'Review work and release payment', color: 'cyan' },
             ].map((step, index) => (
-              <div key={index} className="flex items-start gap-4 animate-step-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className={`w-12 h-12 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center text-xl flex-shrink-0 ${
-                  step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40' :
-                  step.color === 'purple' ? 'border-[var(--accent-purple)]/40' :
-                  step.color === 'amber' ? 'border-[var(--accent-amber)]/40' :
-                  'border-[var(--accent-green)]/40'
-                }`}>
-                  {step.icon}
+              <ScrollReveal key={index} animation="slide-up" delay={index * 100}>
+                <div className="flex items-start gap-4 relative">
+                  <div className={`w-12 h-12 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center text-xl flex-shrink-0 ${
+                    step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40' :
+                    step.color === 'purple' ? 'border-[var(--accent-purple)]/40' :
+                    step.color === 'amber' ? 'border-[var(--accent-amber)]/40' :
+                    'border-[var(--accent-green)]/40'
+                  }`}>
+                    {step.icon}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-1">{step.title}</h4>
+                    <p className="text-sm text-[var(--text-secondary)]">{step.desc}</p>
+                  </div>
+                  {index < 4 && (
+                    <div className="absolute left-6 top-14 w-0.5 h-6 bg-[var(--border-color)]"></div>
+                  )}
                 </div>
-                <div className="flex-1">
-                  <h4 className="font-semibold mb-1">{step.title}</h4>
-                  <p className="text-sm text-[var(--text-secondary)]">{step.desc}</p>
-                </div>
-                {index < 4 && (
-                  <div className="absolute left-6 top-14 w-0.5 h-6 bg-[var(--border-color)]"></div>
-                )}
-              </div>
+              </ScrollReveal>
             ))}
           </div>
           

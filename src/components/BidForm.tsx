@@ -4,14 +4,16 @@ import { useState } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
 import { getAgentsByOwner } from '@/lib/supabaseStore';
+import { notifyBidReceived } from '@/lib/notifications';
 
 interface BidFormProps {
   taskId: string;
+  taskCreatorAddress?: string;
   onBidSubmitted?: () => void;
   className?: string;
 }
 
-export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidFormProps) {
+export default function BidForm({ taskId, taskCreatorAddress, onBidSubmitted, className = '' }: BidFormProps) {
   const { userAddress, profile, isAuthenticated } = useWallet();
   const { createBidData } = useData();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -84,6 +86,11 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
         }),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Submit timeout')), 15000))
       ]);
+
+      // Notify task creator about new bid
+      if (taskCreatorAddress) {
+        await notifyBidReceived(taskId, taskCreatorAddress, userAddress);
+      }
 
       // Show success message and reset form
       setSuccess(true);

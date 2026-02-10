@@ -25,6 +25,12 @@ import { transitionTaskStatus, acceptBid } from '@/lib/supabaseStore';
 import { logEvent } from '@/lib/events';
 import { updateTaskMetadata, updateTaskEscrow, updateAgentStats } from '@/lib/supabaseStore';
 import { validateUserAction, getAvailableActions, TaskStatus } from '@/lib/taskLifecycle';
+import { 
+  notifyBidAccepted, 
+  notifyDeliverableSubmitted, 
+  notifyPaymentReleased, 
+  createNotification 
+} from '@/lib/notifications';
 
 export default function TaskDetailClient() {
   const params = useParams();
@@ -136,6 +142,26 @@ export default function TaskDetailClient() {
 
         const success = await acceptBid(bidId);
         if (success) {
+          // Find the accepted bid to get agent info
+          const acceptedBid = bids.find(bid => bid.id === bidId);
+          if (acceptedBid) {
+            // Get agent details to notify them
+            const agentDetails = await getAgent(acceptedBid.agentId);
+            if (agentDetails?.ergoAddress) {
+              // Notify the agent their bid was accepted
+              await notifyBidAccepted(taskId, agentDetails.ergoAddress);
+            }
+            
+            // Notify task poster as well
+            await createNotification({
+              recipientAddress: task.creatorAddress,
+              type: 'bid_accepted',
+              title: 'Bid Accepted',
+              message: `You accepted a bid for task "${task.title}". The agent can start working.`,
+              link: `/tasks/${taskId}`,
+            });
+          }
+          
           logEvent({
             type: 'bid_accepted',
             message: `Bid accepted for task "${task.title}"`,
@@ -176,6 +202,9 @@ export default function TaskDetailClient() {
         await updateTaskData(taskId, { status: 'review' });
       }
 
+      // Notify task creator that deliverable was submitted
+      await notifyDeliverableSubmitted(taskId, task.creatorAddress);
+
       logEvent({
         type: 'work_submitted',
         message: `Work submitted for task "${task.title}"`,
@@ -204,6 +233,18 @@ export default function TaskDetailClient() {
       if (!result.success) {
         await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
       }
+      
+      // Notify agent that work was approved
+      if (assignedAgent?.ergoAddress) {
+        await createNotification({
+          recipientAddress: assignedAgent.ergoAddress,
+          type: 'work_approved',
+          title: 'Work Approved! 🎉',
+          message: `Your work for task "${task.title}" has been approved. Payment will be released.`,
+          link: `/tasks/${taskId}`,
+        });
+      }
+      
       logEvent({
         type: 'work_approved',
         message: `Work approved for task "${task.title}"`,
@@ -224,6 +265,18 @@ export default function TaskDetailClient() {
     setActionLoading('dispute');
     try {
       await updateTaskData(taskId, { status: 'disputed' as any });
+      
+      // Notify agent about dispute
+      if (assignedAgent?.ergoAddress) {
+        await createNotification({
+          recipientAddress: assignedAgent.ergoAddress,
+          type: 'dispute_opened',
+          title: 'Work Disputed ⚠️',
+          message: `Your work for task "${task.title}" has been disputed. Reason: ${disputeReason}`,
+          link: `/tasks/${taskId}`,
+        });
+      }
+      
       logEvent({
         type: 'work_disputed',
         message: `Work disputed for task "${task.title}": ${disputeReason}`,
@@ -250,6 +303,18 @@ export default function TaskDetailClient() {
       if (!result.success) {
         await updateTaskData(taskId, { status: 'in_progress' });
       }
+      
+      // Notify agent about revision request
+      if (assignedAgent?.ergoAddress) {
+        await createNotification({
+          recipientAddress: assignedAgent.ergoAddress,
+          type: 'work_submitted', // Using existing type for revision
+          title: 'Revision Requested 📝',
+          message: `Revision requested for task "${task.title}". Note: ${revisionNote}`,
+          link: `/tasks/${taskId}`,
+        });
+      }
+      
       logEvent({
         type: 'revision_requested',
         message: `Revision requested for task "${task.title}": ${revisionNote}`,
@@ -576,7 +641,7 @@ export default function TaskDetailClient() {
                     <h3 className="text-white font-medium">Place Your Bid</h3>
                     <button onClick={() => setShowBidForm(false)} className="text-gray-400 hover:text-white transition-colors">✕</button>
                   </div>
-                  <BidForm taskId={taskId} onBidSubmitted={() => { setShowBidForm(false); }} />
+                  <BidForm taskId={taskId} taskCreatorAddress={task.creatorAddress} onBidSubmitted={() => { setShowBidForm(false); }} />
                 </div>
               )}
 

@@ -4,6 +4,7 @@ import ActivityFeed from '@/components/ActivityFeed';
 import ErgoNetworkStats from '@/components/ErgoNetworkStats';
 import ScrollReveal from '@/components/ScrollReveal';
 import ParticleNetwork from '@/components/ParticleNetwork';
+import EscrowVisualizer from '@/components/EscrowVisualizer';
 import CopyButton from '@/components/CopyButton';
 
 export default function Home() {
@@ -119,39 +120,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Live Proof Banner */}
-      <section className="py-8 px-4 bg-[var(--bg-secondary)]/20 backdrop-blur-sm">
-        <div className="container container-xl">
-          <div className="glass-card rounded-2xl p-6 lg:p-8 text-center max-w-4xl mx-auto relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-green)]/5 via-transparent to-[var(--accent-green)]/5 animate-pulse"></div>
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20 mb-4">
-                <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse"></span>
-                <span className="text-[var(--accent-green)] font-semibold text-sm glow-text-green">LIVE ON MAINNET</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">First trustless AI agent payment completed</h3>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-[var(--text-secondary)] mb-4">
-                <span className="font-semibold text-[var(--accent-green)]">0.1 ERG</span>
-                <span className="hidden sm:block">•</span>
-                <span className="font-mono text-sm">Fund TX: e9f4da...</span>
-                <span className="hidden sm:block">•</span>
-                <span className="font-mono text-sm">Release TX: aed2c6...</span>
-              </div>
-              <a 
-                href="https://explorer.ergoplatform.com/en/transactions/aed2c635b6f60118a601c5095cb3e14f242a6018047f39a66583da67af2501f6"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[var(--accent-cyan)] hover:text-[var(--accent-green)] transition-colors text-sm font-medium"
-              >
-                View on Ergo Explorer
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Live Escrow Visualization */}
+      <EscrowVisualizer />
 
       {/* Live Stats Counter */}
       <StatsBar />
@@ -875,6 +845,248 @@ export default function Home() {
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Ergo Ecosystem */}
+      <section className="py-24 lg:py-32 px-4 bg-[var(--bg-secondary)]/20 backdrop-blur-sm">
+        <div className="container container-xl">
+          <div className="text-center mb-16">
+            <ScrollReveal animation="fade-in">
+              <h2 className="text-display mb-6">
+                Part of the <span className="text-[var(--accent-green)] glow-text-green">Ergo</span> Ecosystem
+              </h2>
+              <p className="text-body-lg text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed">
+                AgenticAiHome joins a growing family of decentralized applications built on Ergo.
+              </p>
+            </ScrollReveal>
+          </div>
+
+          {/* Desktop Grid */}
+          <div className="hidden md:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+            {[
+              {
+                name: "AgenticAiHome",
+                description: "AI Agent Marketplace",
+                url: "https://agenticaihome.com",
+                icon: "🤖",
+                featured: true
+              },
+              {
+                name: "Nautilus Wallet",
+                description: "Browser wallet for Ergo",
+                url: "https://nautilus.app",
+                icon: "🚀"
+              },
+              {
+                name: "Spectrum DEX",
+                description: "Decentralized exchange",
+                url: "https://app.spectrum.fi",
+                icon: "🌊"
+              },
+              {
+                name: "SigmaFi",
+                description: "DeFi lending",
+                url: "https://sigmafi.app",
+                icon: "📊"
+              },
+              {
+                name: "Ergo Auction House",
+                description: "NFT marketplace",
+                url: "https://ergoauctions.org",
+                icon: "🎨"
+              },
+              {
+                name: "SigmaUSD",
+                description: "Algorithmic stablecoin",
+                url: "https://sigmausd.io",
+                icon: "💰"
+              },
+              {
+                name: "ErgoMixer",
+                description: "Privacy mixer",
+                url: "https://github.com/ergoMixer/ergoMixBack",
+                icon: "🔒"
+              },
+              {
+                name: "Rosen Bridge",
+                description: "Cross-chain bridge",
+                url: "https://rosen.tech",
+                icon: "🌉"
+              }
+            ].map((project, index) => (
+              <ScrollReveal key={project.name} animation="scale-in" delay={index * 100}>
+                <a 
+                  href={project.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block glass-card rounded-xl p-6 text-center card-hover group relative overflow-hidden transition-all ${
+                    project.featured 
+                      ? 'border-[var(--accent-green)]/40 bg-[var(--accent-green)]/5 glow-green' 
+                      : 'border-[var(--border-color)]'
+                  }`}
+                >
+                  {project.featured && (
+                    <div className="absolute top-3 right-3">
+                      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--accent-green)]/20 border border-[var(--accent-green)]/40 text-[var(--accent-green)] text-xs font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)] animate-pulse" />
+                        You're here
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">
+                    {project.icon}
+                  </div>
+                  
+                  <h3 className={`font-semibold text-lg mb-2 group-hover:text-[var(--accent-cyan)] transition-colors ${
+                    project.featured ? 'text-[var(--accent-green)]' : ''
+                  }`}>
+                    {project.name}
+                  </h3>
+                  
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                    {project.description}
+                  </p>
+                  
+                  <div className="mt-4 flex items-center justify-center gap-2 text-xs text-[var(--text-muted)] group-hover:text-[var(--accent-cyan)] transition-colors">
+                    <span>Visit</span>
+                    <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </div>
+                </a>
+              </ScrollReveal>
+            ))}
+          </div>
+
+          {/* Mobile Horizontal Scroll */}
+          <div className="md:hidden mb-12">
+            <div className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide">
+              {[
+                {
+                  name: "AgenticAiHome",
+                  description: "AI Agent Marketplace",
+                  url: "https://agenticaihome.com",
+                  icon: "🤖",
+                  featured: true
+                },
+                {
+                  name: "Nautilus Wallet",
+                  description: "Browser wallet for Ergo",
+                  url: "https://nautilus.app",
+                  icon: "🚀"
+                },
+                {
+                  name: "Spectrum DEX",
+                  description: "Decentralized exchange",
+                  url: "https://app.spectrum.fi",
+                  icon: "🌊"
+                },
+                {
+                  name: "SigmaFi",
+                  description: "DeFi lending",
+                  url: "https://sigmafi.app",
+                  icon: "📊"
+                },
+                {
+                  name: "Ergo Auction House",
+                  description: "NFT marketplace",
+                  url: "https://ergoauctions.org",
+                  icon: "🎨"
+                },
+                {
+                  name: "SigmaUSD",
+                  description: "Algorithmic stablecoin",
+                  url: "https://sigmausd.io",
+                  icon: "💰"
+                },
+                {
+                  name: "ErgoMixer",
+                  description: "Privacy mixer",
+                  url: "https://github.com/ergoMixer/ergoMixBack",
+                  icon: "🔒"
+                },
+                {
+                  name: "Rosen Bridge",
+                  description: "Cross-chain bridge",
+                  url: "https://rosen.tech",
+                  icon: "🌉"
+                }
+              ].map((project, index) => (
+                <a 
+                  key={project.name}
+                  href={project.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex-shrink-0 w-48 glass-card rounded-xl p-4 text-center card-hover group relative overflow-hidden ${
+                    project.featured 
+                      ? 'border-[var(--accent-green)]/40 bg-[var(--accent-green)]/5' 
+                      : 'border-[var(--border-color)]'
+                  }`}
+                >
+                  {project.featured && (
+                    <div className="absolute top-2 right-2">
+                      <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--accent-green)]/20 border border-[var(--accent-green)]/40 text-[var(--accent-green)] text-xs font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-green)] animate-pulse" />
+                        Here
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">
+                    {project.icon}
+                  </div>
+                  
+                  <h3 className={`font-semibold text-base mb-2 group-hover:text-[var(--accent-cyan)] transition-colors ${
+                    project.featured ? 'text-[var(--accent-green)]' : ''
+                  }`}>
+                    {project.name}
+                  </h3>
+                  
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">
+                    {project.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-center gap-2 text-xs text-[var(--text-muted)] group-hover:text-[var(--accent-cyan)] transition-colors">
+                    <span>Visit</span>
+                    <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="text-center">
+            <ScrollReveal animation="fade-in" delay={400}>
+              <div className="glass-card rounded-xl p-8 max-w-2xl mx-auto relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-green)]/5 via-transparent to-[var(--accent-green)]/5"></div>
+                <div className="relative z-10">
+                  <h3 className="text-xl font-bold mb-4">
+                    Building the Future Together
+                  </h3>
+                  <p className="text-[var(--text-secondary)] mb-6 leading-relaxed">
+                    The Ergo ecosystem is powered by innovators building truly decentralized applications. 
+                    From DeFi to NFTs to AI agents — all secured by the most advanced UTXO blockchain.
+                  </p>
+                  <a 
+                    href="https://ergoplatform.org/ecosystem"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary inline-flex items-center gap-2 glow-hover-green"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Explore Full Ecosystem
+                  </a>
+                </div>
+              </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>

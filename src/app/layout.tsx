@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import OnboardingWrapper from "@/components/OnboardingWrapper";
+import LayoutClient from "@/components/LayoutClient";
 import { DataProvider } from "@/contexts/DataContext";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { generateCSP } from "@/lib/sanitize";
 
 export const metadata: Metadata = {
@@ -110,42 +108,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <WalletProvider>
             <DataProvider>
               <ToastProvider>
-                {/* ALPHA WARNING - Real blockchain integration in development */}
-                <div 
-                  className="bg-amber-600 text-white text-center py-2 px-4 text-sm font-semibold border-b border-amber-700 relative z-50"
-                  role="banner"
-                  aria-label="Alpha warning"
-                >
-                  ⚠️ <strong>ALPHA RELEASE</strong> — Escrow contracts are live on mainnet. Trade responsibly.
-                </div>
-                <div className="grid-bg" aria-hidden="true" />
-                
-                <Navbar />
-                
-                <ErrorBoundary>
-                  <main 
-                    className="relative z-10 pt-16"
-                    role="main"
-                    id="main-content"
-                  >
-                    {children}
-                  </main>
-                </ErrorBoundary>
-                
-                <Footer />
-                <OnboardingWrapper />
+                <LayoutClient>
+                  {children}
+                </LayoutClient>
               </ToastProvider>
             </DataProvider>
           </WalletProvider>
         </ErrorBoundary>
-        
-        {/* Skip to main content link for accessibility */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 bg-blue-600 text-white px-4 py-2 z-50 focus:z-50"
-        >
-          Skip to main content
-        </a>
       </body>
     </html>
   );

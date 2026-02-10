@@ -133,13 +133,16 @@ export default function Navbar() {
 
           {/* User Actions */}
           <div className="hidden md:flex items-center gap-1">
-            {/* Search Button */}
+            {/* Search Button with ⌘K hint */}
             <button
               onClick={globalSearch.open}
               className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] rounded-lg transition-all flex items-center gap-2"
               title="Search (⌘K)"
             >
               <Search className="w-5 h-5" />
+              <span className="text-xs text-[var(--text-muted)] font-mono bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded border border-[var(--border-color)]">
+                ⌘K
+              </span>
             </button>
 
             {/* Notification Bell */}

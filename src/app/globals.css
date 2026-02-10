@@ -104,6 +104,15 @@ body {
   background: var(--text-muted); 
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Animated grid background with subtle grain */
 .grid-bg {
   position: fixed;

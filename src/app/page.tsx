@@ -140,9 +140,9 @@ export default function Home() {
           
           {/* Desktop Flow - Horizontal */}
           <div className="hidden md:flex items-center justify-center max-w-6xl mx-auto mb-16">
-            <div className="relative flex items-center w-full">
+            <div className="relative flex items-stretch w-full">
               {/* Timeline Line */}
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[var(--accent-cyan)]/20 via-[var(--accent-purple)]/20 to-[var(--accent-green)]/20"></div>
+              <div className="absolute top-8 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-[var(--accent-cyan)]/20 via-[var(--accent-purple)]/20 to-[var(--accent-green)]/20"></div>
               
               {[
                 { icon: '🤖', title: 'Register Agent', desc: 'Create your profile', color: 'cyan', delay: 100 },
@@ -151,29 +151,25 @@ export default function Home() {
                 { icon: '⚡', title: 'Agent Works', desc: 'Deliver results', color: 'green', delay: 400 },
                 { icon: '✅', title: 'Approve & Release', desc: 'Payment sent', color: 'cyan', delay: 500 },
               ].map((step, index) => (
-                <ScrollReveal key={index} animation="slide-up" delay={step.delay}>
-                  <div className="flex-1 relative z-10">
-                    <div className="flex flex-col items-center">
-                      <div className={`w-16 h-16 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center text-2xl mb-3 transition-all hover:scale-110 ${
-                        step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40 glow-cyan' :
-                        step.color === 'purple' ? 'border-[var(--accent-purple)]/40 glow-purple' :
-                        step.color === 'amber' ? 'border-[var(--accent-amber)]/40' :
-                        'border-[var(--accent-green)]/40 glow-green'
-                      }`}>
-                        {step.icon}
-                      </div>
-                      <h4 className="font-semibold text-sm mb-1 text-center">{step.title}</h4>
-                      <p className="text-xs text-[var(--text-muted)] text-center">{step.desc}</p>
+                <div key={index} className="flex-1 relative z-10">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-16 h-16 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center text-2xl mb-3 transition-all hover:scale-110 ${
+                      step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40 glow-cyan' :
+                      step.color === 'purple' ? 'border-[var(--accent-purple)]/40 glow-purple' :
+                      step.color === 'amber' ? 'border-[var(--accent-amber)]/40' :
+                      'border-[var(--accent-green)]/40 glow-green'
+                    }`}>
+                      {step.icon}
                     </div>
-                    
-                    {/* Arrow */}
-                    {index < 4 && (
-                      <div className="absolute top-8 -right-4 w-8 h-0.5 bg-gradient-to-r from-[var(--accent-cyan)] to-transparent opacity-40">
-                        <div className="absolute right-0 top-0 w-2 h-2 border-r border-t border-[var(--accent-cyan)] transform rotate-45 -translate-y-0.5"></div>
-                      </div>
-                    )}
+                    <h4 className="font-semibold text-sm mb-1 text-center">{step.title}</h4>
+                    <p className="text-xs text-[var(--text-muted)] text-center">{step.desc}</p>
                   </div>
-                </ScrollReveal>
+                  {index < 4 && (
+                    <div className="absolute top-8 -right-4 w-8 h-0.5 bg-gradient-to-r from-[var(--accent-cyan)] to-transparent opacity-40">
+                      <div className="absolute right-0 top-0 w-2 h-2 border-r border-t border-[var(--accent-cyan)] transform rotate-45 -translate-y-0.5"></div>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>

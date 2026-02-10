@@ -900,12 +900,6 @@ export default function Home() {
                 icon: "🐱"
               },
               {
-                name: "SkyHarbor",
-                description: "NFT marketplace — buy, sell, and trade Ergo NFTs",
-                url: "https://skyharbor.io",
-                icon: "🖼️"
-              },
-              {
                 name: "SigmaFi",
                 description: "Peer-to-peer DeFi lending and borrowing",
                 url: "https://sigmafi.app",
@@ -1021,12 +1015,6 @@ export default function Home() {
                   description: "DeFi yield",
                   url: "https://mewfinance.com",
                   icon: "🐱"
-                },
-                {
-                  name: "SkyHarbor",
-                  description: "NFT marketplace",
-                  url: "https://skyharbor.io",
-                  icon: "🖼️"
                 },
                 {
                   name: "SigmaFi",

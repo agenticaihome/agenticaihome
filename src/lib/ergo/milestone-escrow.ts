@@ -43,77 +43,51 @@ import { buildEgoMintTx } from './ego-token';
  * 4. Timeout refund: Client can reclaim if current milestone deadline passed
  */
 export const MILESTONE_ESCROW_ERGOSCRIPT = `{
-  // Extract milestone configuration from registers
   val clientPk = SELF.R4[SigmaProp].get
   val agentPkBytes = SELF.R5[Coll[Byte]].get
   val milestoneDeadlines = SELF.R6[Coll[Int]].get
-  val milestonePercentages = SELF.R7[Coll[Int]].get  // in basis points (100 = 1%)
+  val milestonePercentages = SELF.R7[Coll[Int]].get
   val currentMilestone = SELF.R8[Int].get
-  val taskMetadata = SELF.R9[Coll[Byte]].get
+  val feePkBytes = SELF.R9[Coll[Byte]].get
   
-  // Validate milestone configuration
   val totalMilestones = milestoneDeadlines.size
   val validConfig = milestoneDeadlines.size == milestonePercentages.size &&
                    currentMilestone >= 0 &&
-                   currentMilestone < totalMilestones &&
-                   milestonePercentages.fold(0, {(acc: Int, pct: Int) => acc + pct}) == 10000
+                   currentMilestone < totalMilestones
   
-  // Current milestone details
   val currentDeadline = milestoneDeadlines(currentMilestone)
   val currentPercentage = milestonePercentages(currentMilestone)
   
-  // Financial calculations
-  val protocolFeePercent = 100L  // 1% in basis points
   val escrowValue = SELF.value
-  val protocolFee = (escrowValue * protocolFeePercent) / 10000L
+  val protocolFee = escrowValue / 100L
   val txFee = 1100000L
-  val netEscrowValue = escrowValue - protocolFee
-  
-  // Current milestone payment amount
-  val milestonePayment = (netEscrowValue * currentPercentage) / 10000L - txFee
+  val milestonePayment = (escrowValue * currentPercentage) / 10000L - protocolFee - txFee
   val remainingValue = escrowValue - milestonePayment - protocolFee - txFee
   
-  // Check if this is the final milestone
   val isFinalMilestone = currentMilestone == (totalMilestones - 1)
   
-  // Milestone release path: client approves + valid outputs
   val milestoneRelease = {
     clientPk &&
     validConfig &&
-    // Agent receives milestone payment
     OUTPUTS.exists { (o: Box) =>
       o.propositionBytes == agentPkBytes && o.value >= milestonePayment
     } &&
-    // Protocol fee payment - NEEDS PLATFORM ADDRESS AFTER COMPILATION
     OUTPUTS.exists { (o: Box) =>
-      o.propositionBytes == blake2b256(fromBase64("PLACEHOLDER_PLATFORM_HASH")) &&
-      o.value >= protocolFee
+      o.propositionBytes == feePkBytes && o.value >= protocolFee
     } &&
-    // For non-final milestones: continuation box with next milestone
     (isFinalMilestone || OUTPUTS.exists { (o: Box) =>
       o.propositionBytes == SELF.propositionBytes &&
       o.value >= remainingValue &&
-      o.R4[SigmaProp].get == clientPk &&
-      o.R5[Coll[Byte]].get == agentPkBytes &&
-      o.R6[Coll[Int]].get == milestoneDeadlines &&
-      o.R7[Coll[Int]].get == milestonePercentages &&
-      o.R8[Int].get == (currentMilestone + 1) &&
-      o.R9[Coll[Byte]].get == taskMetadata
+      o.R8[Int].get == (currentMilestone + 1)
     })
   }
   
-  // Timeout refund: if current milestone deadline passed, client can reclaim all
   val timeoutRefund = {
     validConfig &&
     HEIGHT > currentDeadline &&
     clientPk &&
     OUTPUTS.exists { (o: Box) =>
-      o.propositionBytes == clientPk.propBytes &&
-      o.value >= (escrowValue - protocolFee - txFee)
-    } &&
-    OUTPUTS.exists { (o: Box) =>
-      o.propositionBytes == blake2b256(fromBase64("PLACEHOLDER_PLATFORM_HASH")) &&
-      o.value >= protocolFee
+      o.propositionBytes == feePkBytes && o.value >= protocolFee
     }
   }
   
@@ -124,7 +98,7 @@ export const MILESTONE_ESCROW_ERGOSCRIPT = `{
  * Pre-compiled P2S address for the milestone escrow contract.
  * NOTE: Needs compilation via node.ergo.watch with actual platform fee address hash
  */
-export let MILESTONE_ESCROW_CONTRACT_ADDRESS = '';
+export let MILESTONE_ESCROW_CONTRACT_ADDRESS = '5UXuLjRVH4rvrWic6CHmPY4gCGFuxesKTkwwkNb9ssonUZ4ewKWzeGKhLNTnM5Z6Q7TwVaPKmVhL2YqZSKtFJhhgHjptAjwy3q5M4QGgN9nvTrM8B767hJ1cDXTJWqBYPNGF9buwXosWCwbez7KnRb6om921qvtWSim6duxKpg2v6xvZ7b63EgTqwXXYVGHHnessAdZPLeVZ8N2tnoRPahf94s9uzmKjcgsekKMPFmugKBPBUtN6bnWzD8bQzzpLQo1cCsajvWdATQ1HG4io4dbftj4hQxkWUoHZfrpsm9DQ9tVnK5hSD49bcb8gnoS6JqFWYdCMsicoXAvmtMtMaDgj9WrUmCoQKtZyo4a4w6X7JtCkXNp';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -264,19 +238,7 @@ export async function createMilestoneEscrowTx(
   const milestonePercentages = milestones.map(m => Math.round(m.percentage * 100)); // Convert to basis points
   const clientPubKey = extractPubKey(clientAddress);
   const agentPropBytes = getPropositionBytes(agentAddress);
-
-  // Encode metadata with milestones and task info
-  const fullMetadata = {
-    taskId,
-    milestones: milestones.map(m => ({
-      name: m.name,
-      description: m.description,
-      deliverables: m.deliverables,
-      egoReward: m.egoReward || 10
-    })),
-    ...metadata
-  };
-  const metadataBytes = new TextEncoder().encode(JSON.stringify(fullMetadata));
+  const feePropBytes = getPropositionBytes(PLATFORM_FEE_ADDRESS);
 
   // Build milestone escrow output
   const escrowOutput = new OutputBuilder(totalAmountNanoErg, MILESTONE_ESCROW_CONTRACT_ADDRESS)
@@ -286,7 +248,7 @@ export async function createMilestoneEscrowTx(
       R6: SConstant(SColl(SInt, milestoneDeadlines)),           // Deadlines
       R7: SConstant(SColl(SInt, milestonePercentages)),         // Percentages (bp)
       R8: SConstant(SInt(0)),                                   // Current milestone = 0
-      R9: SConstant(SColl(SByte, metadataBytes)),               // Metadata
+      R9: SConstant(SColl(SByte, feePropBytes)),                // Fee address
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)

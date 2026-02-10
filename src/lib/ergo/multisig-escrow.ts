@@ -67,7 +67,7 @@ export const MULTISIG_ESCROW_ERGOSCRIPT = `{
  * Pre-compiled P2S address for the multi-sig escrow contract.
  * NOTE: Needs compilation via node.ergo.watch
  */
-export let MULTISIG_ESCROW_CONTRACT_ADDRESS = '';
+export let MULTISIG_ESCROW_CONTRACT_ADDRESS = '777XzGB9VzAtjbbr5DpEasgzN7HXVit8MqQjeJDvX4jdQGBjJj1dXrjPhrhxuPJnPq8nyM6zPksDtL8nNgK71wK1nsWiYCgb5kHW7AjRsYXWdfStXTNeQR6CeKvCV5zx736xNkYZsCLq5cLpisznZ6zKYCibvzEEJcnN8K82c9tai8Fkf';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -251,22 +251,26 @@ export async function createMultiSigEscrowTx(
 
   const currentHeight = await getCurrentHeight();
 
-  // Prepare register data
-  const participantPubKeys = participants.map(p => Array.from(p.pubKey));
+  // Prepare register data for 2-of-3 escrow
+  if (participants.length !== 3) {
+    throw new Error('Multi-sig escrow now supports exactly 3 participants (2-of-3)');
+  }
+  
+  const clientPubKey = participants[0].pubKey; // Client
+  const agentPubKey = participants[1].pubKey;  // Agent  
+  const mediatorPubKey = participants[2].pubKey; // Mediator
   const agentPropBytes = getPropositionBytes(agentAddress);
   const feePropBytes = getPropositionBytes(PLATFORM_FEE_ADDRESS);
-  const taskIdBytes = new TextEncoder().encode(taskId);
-  const config = [requiredSignatures, participants.length, timeoutRefundParticipant];
 
-  // Build multi-sig escrow output
+  // Build 2-of-3 multi-sig escrow output
   const escrowOutput = new OutputBuilder(amountNanoErg, MULTISIG_ESCROW_CONTRACT_ADDRESS)
     .setAdditionalRegisters({
-      R4: SConstant(SColl(SColl(SByte), participantPubKeys)),  // Participant keys
-      R5: SConstant(SColl(SByte, agentPropBytes)),             // Agent address
-      R6: SConstant(SInt(deadlineHeight)),                     // Deadline
-      R7: SConstant(SColl(SByte, feePropBytes)),               // Fee address
-      R8: SConstant(SColl(SByte, taskIdBytes)),                // Task ID
-      R9: SConstant(SColl(SInt, config)),                      // Configuration
+      R4: SConstant(SSigmaProp(SGroupElement(clientPubKey))),    // Client key
+      R5: SConstant(SSigmaProp(SGroupElement(agentPubKey))),     // Agent key
+      R6: SConstant(SSigmaProp(SGroupElement(mediatorPubKey))),  // Mediator key
+      R7: SConstant(SInt(deadlineHeight)),                       // Deadline
+      R8: SConstant(SColl(SByte, agentPropBytes)),               // Agent address
+      R9: SConstant(SColl(SByte, feePropBytes)),                 // Fee address
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)

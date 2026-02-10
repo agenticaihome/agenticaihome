@@ -36,39 +36,25 @@ import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, PLATFORM_FEE_ADDRESS } from './const
  * Anyone can read the data by referencing these boxes as data inputs.
  */
 export const REPUTATION_ORACLE_ERGOSCRIPT = `{
-  // Extract the treasury's public key from constants (hardcoded at compile time)
-  val treasuryPubKey = treasuryPK
+  val treasuryPk = SELF.R4[SigmaProp].get
+  val agentPubKey = SELF.R5[Coll[Byte]].get
+  val egoScore = SELF.R6[Long].get
+  val tasksCompleted = SELF.R7[Int].get
+  val disputeRate = SELF.R8[Int].get
+  val lastUpdated = SELF.R9[Int].get
   
-  // Extract current reputation data from registers
-  val agentPubKey = SELF.R4[Coll[Byte]].get
-  val egoScore = SELF.R5[Long].get
-  val tasksCompleted = SELF.R6[Int].get
-  val disputeRate = SELF.R7[Int].get
-  val lastUpdated = SELF.R8[Int].get
-  val agentIdentityHash = SELF.R9[Coll[Byte]].get
-  
-  // Validate that this is a legitimate update by the treasury
-  val treasuryApproval = treasuryPubKey
-  
-  // For oracle updates: ensure output maintains the same structure with updated data
   val validOracleUpdate = OUTPUTS.exists { (output: Box) =>
-    // Same contract address (oracle structure preserved)
     output.propositionBytes == SELF.propositionBytes &&
-    // Minimum box value maintained
     output.value >= SELF.value &&
-    // Agent identity preserved (R4 and R9 cannot change)
-    output.R4[Coll[Byte]].get == agentPubKey &&
-    output.R9[Coll[Byte]].get == agentIdentityHash &&
-    // Updated timestamp (R8 must be >= current)
-    output.R8[Int].get >= lastUpdated &&
-    // All required registers present
-    output.R5[Long].isDefined &&
-    output.R6[Int].isDefined &&
-    output.R7[Int].isDefined
+    output.R4[SigmaProp].get == treasuryPk &&
+    output.R5[Coll[Byte]].get == agentPubKey &&
+    output.R9[Int].get >= lastUpdated &&
+    output.R6[Long].isDefined &&
+    output.R7[Int].isDefined &&
+    output.R8[Int].isDefined
   }
   
-  // Only treasury can update oracle data
-  treasuryApproval && validOracleUpdate
+  treasuryPk && sigmaProp(validOracleUpdate)
 }`;
 
 /**
@@ -76,7 +62,7 @@ export const REPUTATION_ORACLE_ERGOSCRIPT = `{
  * NOTE: Needs compilation via node.ergo.watch
  * This address will be populated after compilation with the treasury public key.
  */
-export let REPUTATION_ORACLE_CONTRACT_ADDRESS = '';
+export let REPUTATION_ORACLE_CONTRACT_ADDRESS = '5f52ZtCEcmed7WoxtVEsN4yH1rCUBZ7epD82drP5xXAeufHaK6ZNpWY6L6fbdDgdmSSNUQGk5njhHBR6bw59FV7toH3umeA3gFHJH6YZrHdTs2a4WpfRFzsUKN7M8wRADVop';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -164,17 +150,17 @@ export async function createReputationOracleTx(
 
   const currentHeight = await getCurrentHeight();
   const agentPubKey = extractPubKeyFromAddress(agentAddress);
-  const agentIdentityHash = generateAgentIdentityHash(agentPubKey);
+  const treasuryPubKey = extractPubKeyFromAddress(PLATFORM_FEE_ADDRESS);
 
   // Create oracle box with reputation data
   const oracleOutput = new OutputBuilder(MIN_BOX_VALUE, REPUTATION_ORACLE_CONTRACT_ADDRESS)
     .setAdditionalRegisters({
-      R4: SConstant(SColl(SByte, agentPubKey)),           // Agent public key
-      R5: SConstant(SLong(egoScore)),                     // EGO score
-      R6: SConstant(SInt(tasksCompleted)),                // Tasks completed
-      R7: SConstant(SInt(disputeRate)),                   // Dispute rate (bp)
-      R8: SConstant(SInt(currentHeight)),                 // Last updated
-      R9: SConstant(SColl(SByte, agentIdentityHash)),     // Identity hash
+      R4: SConstant(SSigmaProp(SGroupElement(treasuryPubKey))), // Treasury key
+      R5: SConstant(SColl(SByte, agentPubKey)),                 // Agent public key
+      R6: SConstant(SLong(egoScore)),                           // EGO score
+      R7: SConstant(SInt(tasksCompleted)),                      // Tasks completed
+      R8: SConstant(SInt(disputeRate)),                         // Dispute rate (bp)
+      R9: SConstant(SInt(currentHeight)),                       // Last updated
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)
@@ -212,23 +198,23 @@ export async function updateReputationOracleTx(
     throw new Error('Oracle box not found');
   }
 
-  // Extract existing agent data (R4 and R9 must remain the same)
-  const existingAgentPubKey = existingBox.additionalRegisters?.R4;
-  const existingIdentityHash = existingBox.additionalRegisters?.R9;
+  // Extract existing data (R4=treasury, R5=agent must remain the same)
+  const existingTreasuryPk = existingBox.additionalRegisters?.R4;
+  const existingAgentPubKey = existingBox.additionalRegisters?.R5;
   
-  if (!existingAgentPubKey || !existingIdentityHash) {
-    throw new Error('Invalid oracle box: missing agent identity data');
+  if (!existingTreasuryPk || !existingAgentPubKey) {
+    throw new Error('Invalid oracle box: missing identity data');
   }
 
   // Create updated oracle box
   const updatedOracleOutput = new OutputBuilder(MIN_BOX_VALUE, REPUTATION_ORACLE_CONTRACT_ADDRESS)
     .setAdditionalRegisters({
-      R4: existingAgentPubKey,                            // Agent identity preserved
-      R5: SConstant(SLong(egoScore)),                     // Updated EGO score
-      R6: SConstant(SInt(tasksCompleted)),                // Updated tasks count
-      R7: SConstant(SInt(disputeRate)),                   // Updated dispute rate
-      R8: SConstant(SInt(currentHeight)),                 // Updated timestamp
-      R9: existingIdentityHash,                           // Identity hash preserved
+      R4: existingTreasuryPk,                             // Treasury key preserved
+      R5: existingAgentPubKey,                            // Agent key preserved
+      R6: SConstant(SLong(egoScore)),                     // Updated EGO score
+      R7: SConstant(SInt(tasksCompleted)),                // Updated tasks count
+      R8: SConstant(SInt(disputeRate)),                   // Updated dispute rate
+      R9: SConstant(SInt(currentHeight)),                 // Updated timestamp
     });
 
   const inputs = [existingBox, ...treasuryUtxos];
@@ -255,7 +241,7 @@ export async function findAgentOracleBox(agentAddress: string): Promise<any | nu
     const boxes = await getBoxesByAddress(REPUTATION_ORACLE_CONTRACT_ADDRESS);
     
     for (const box of boxes) {
-      const boxAgentPubKey = box.additionalRegisters?.R4;
+      const boxAgentPubKey = box.additionalRegisters?.R5; // Agent key now in R5
       if (boxAgentPubKey && Buffer.from(boxAgentPubKey, 'hex').equals(agentPubKey)) {
         return box;
       }
@@ -280,12 +266,12 @@ export function parseReputationOracleData(box: any): ReputationOracleData | null
     }
 
     return {
-      agentPubKey: Uint8Array.from(Buffer.from(registers.R4, 'hex')),
-      egoScore: BigInt(registers.R5),
-      tasksCompleted: parseInt(registers.R6),
-      disputeRate: parseInt(registers.R7),
-      lastUpdated: parseInt(registers.R8),
-      agentIdentityHash: Uint8Array.from(Buffer.from(registers.R9, 'hex')),
+      agentPubKey: Uint8Array.from(Buffer.from(registers.R5, 'hex')), // Agent key now in R5
+      egoScore: BigInt(registers.R6),                                  // EGO score now in R6
+      tasksCompleted: parseInt(registers.R7),                         // Tasks now in R7
+      disputeRate: parseInt(registers.R8),                            // Dispute rate now in R8
+      lastUpdated: parseInt(registers.R9),                            // Last updated now in R9
+      agentIdentityHash: new Uint8Array(32), // Removed identity hash for simplicity
     };
   } catch (error) {
     console.error('Error parsing oracle data:', error);

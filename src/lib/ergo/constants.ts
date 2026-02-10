@@ -126,16 +126,16 @@ export const SOULBOUND_EGO_CONTRACT_ADDRESS = '49AoNXDVGUF3Y1XVFRjUa22LFJjV2pwQi
 // ─── UPCOMING CONTRACT ADDRESSES (In development) ──────────────────────────
 
 // Reputation Oracle Contract - stores agent reputation data on-chain for dApPs to read
-// Register layout: R4=agent pubkey, R5=ego score, R6=tasks completed, R7=dispute rate, R8=last updated
-export const REPUTATION_ORACLE_CONTRACT_ADDRESS = 'NEEDS_COMPILATION'; // TODO: Compile via node.ergo.watch
+// Register layout: R4=treasury pubkey, R5=agent pubkey, R6=ego score, R7=tasks completed, R8=dispute rate, R9=last updated
+export const REPUTATION_ORACLE_CONTRACT_ADDRESS = '5f52ZtCEcmed7WoxtVEsN4yH1rCUBZ7epD82drP5xXAeufHaK6ZNpWY6L6fbdDgdmSSNUQGk5njhHBR6bw59FV7toH3umeA3gFHJH6YZrHdTs2a4WpfRFzsUKN7M8wRADVop';
 
-// Multi-Sig Escrow Contract - enhanced escrow supporting N-of-M signatures for high-value tasks  
-// Register layout: R4=participant keys array, R5=agent address, R6=deadline, R7=fee address, R8=task ID, R9=config
-export const MULTISIG_ESCROW_CONTRACT_ADDRESS = 'NEEDS_COMPILATION'; // TODO: Compile via node.ergo.watch
+// Multi-Sig Escrow Contract - 2-of-3 escrow: client + agent + mediator signatures
+// Register layout: R4=client pubkey, R5=agent pubkey, R6=mediator pubkey, R7=deadline, R8=agent address, R9=fee address
+export const MULTISIG_ESCROW_CONTRACT_ADDRESS = '777XzGB9VzAtjbbr5DpEasgzN7HXVit8MqQjeJDvX4jdQGBjJj1dXrjPhrhxuPJnPq8nyM6zPksDtL8nNgK71wK1nsWiYCgb5kHW7AjRsYXWdfStXTNeQR6CeKvCV5zx736xNkYZsCLq5cLpisznZ6zKYCibvzEEJcnN8K82c9tai8Fkf';
 
-// Milestone-Based Escrow Contract - complex tasks with multiple payment stages
-// Register layout: R4=client pubkey, R5=agent address, R6=deadlines, R7=percentages, R8=current milestone, R9=metadata  
-export const MILESTONE_ESCROW_CONTRACT_ADDRESS = 'NEEDS_COMPILATION'; // TODO: Compile via node.ergo.watch
+// Milestone-Based Escrow Contract - tasks with multiple payment stages
+// Register layout: R4=client pubkey, R5=agent address, R6=deadlines, R7=percentages, R8=current milestone, R9=fee address
+export const MILESTONE_ESCROW_CONTRACT_ADDRESS = '5UXuLjRVH4rvrWic6CHmPY4gCGFuxesKTkwwkNb9ssonUZ4ewKWzeGKhLNTnM5Z6Q7TwVaPKmVhL2YqZSKtFJhhgHjptAjwy3q5M4QGgN9nvTrM8B767hJ1cDXTJWqBYPNGF9buwXosWCwbez7KnRb6om921qvtWSim6duxKpg2v6xvZ7b63EgTqwXXYVGHHnessAdZPLeVZ8N2tnoRPahf94s9uzmKjcgsekKMPFmugKBPBUtN6bnWzD8bQzzpLQo1cCsajvWdATQ1HG4io4dbftj4hQxkWUoHZfrpsm9DQ9tVnK5hSD49bcb8gnoS6JqFWYdCMsicoXAvmtMtMaDgj9WrUmCoQKtZyo4a4w6X7JtCkXNp';
 
 // Testnet faucet URL
 export const TESTNET_FAUCET_URL = 'https://testnet.ergofaucet.org/';

@@ -5,6 +5,7 @@ import { Agent } from '@/lib/types';
 import EgoScore from '@/components/EgoScore';
 import AgentIdentityBadge from '@/components/AgentIdentityBadge';
 import { X, Briefcase, Star, Clock, Award, ExternalLink } from 'lucide-react';
+import AgentAvatar from '@/components/AgentAvatar';
 
 interface AgentCardModalProps {
   agent: Agent;
@@ -50,9 +51,8 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
 
         {/* Header */}
         <div className="p-6 pb-4 text-center">
-          {/* Avatar placeholder - will be replaced with AgentAvatar */}
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-400 to-purple-400 flex items-center justify-center text-3xl font-bold text-white mx-auto mb-4 shadow-lg">
-            {agent.name.charAt(0).toUpperCase()}
+          <div className="mx-auto mb-4 w-20 h-20">
+            <AgentAvatar address={agent.ownerAddress || agent.ergoAddress || agent.id} size={80} />
           </div>
           
           <h2 className="text-2xl font-bold text-white mb-1">{agent.name}</h2>

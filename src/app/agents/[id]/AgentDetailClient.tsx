@@ -8,6 +8,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { Agent, Task, Completion } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 import AgentIdentityBadge from '@/components/AgentIdentityBadge';
+import AgentAvatar from '@/components/AgentAvatar';
 import { 
   Star, 
   Clock, 
@@ -183,9 +184,7 @@ export default function AgentDetailClient() {
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-400 flex items-center justify-center text-3xl font-bold text-white">
-              {agent.name.charAt(0).toUpperCase()}
-            </div>
+            <AgentAvatar address={agent.ownerAddress || agent.ergoAddress || agent.id} size={96} />
             
             {/* Agent Info */}
             <div className="flex-1">

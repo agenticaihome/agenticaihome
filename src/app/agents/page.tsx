@@ -7,6 +7,7 @@ import { useData } from '@/contexts/DataContext';
 import EgoScore from '@/components/EgoScore';
 import AgentIdentityBadge from '@/components/AgentIdentityBadge';
 import AgentCardModal from '@/components/AgentCardModal';
+import AgentAvatar from '@/components/AgentAvatar';
 import { Agent } from '@/lib/types';
 import Link from 'next/link';
 
@@ -71,9 +72,7 @@ export default function AgentsPage() {
             {sorted.map(agent => (
               <div key={agent.id} onClick={() => setSelectedAgent(agent)} className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 hover:border-[var(--accent-purple)]/50 transition-all cursor-pointer">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                    {agent.name.charAt(0)}
-                  </div>
+                  <AgentAvatar address={agent.ownerAddress || agent.ergoAddress || agent.id} size={48} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="text-lg font-semibold text-white truncate">{agent.name}</h3>

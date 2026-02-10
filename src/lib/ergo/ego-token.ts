@@ -8,8 +8,8 @@ import {
   SByte,
   SColl,
 } from '@fleet-sdk/core';
-import { getCurrentHeight, getAddressBalance, getTokenInfo, ERGO_EXPLORER_API } from './explorer';
-import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE } from './constants';
+import { getCurrentHeight, getAddressBalance, getTokenInfo } from './explorer';
+import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, ERGO_EXPLORER_API } from './constants';
 
 // ─── Soulbound Contract ──────────────────────────────────────────────
 

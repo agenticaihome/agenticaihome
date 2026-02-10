@@ -31,12 +31,12 @@ export default function NotificationBell() {
   }, []);
 
   const handleNotificationClick = async (notification: Notification) => {
-    if (!notification.isRead) {
+    if (!notification.read) {
       await markAsRead(notification.id);
     }
     
-    if (notification.actionUrl) {
-      window.location.href = notification.actionUrl;
+    if (notification.link) {
+      window.location.href = notification.link;
     }
     setIsOpen(false);
   };
@@ -116,7 +116,7 @@ export default function NotificationBell() {
                     <div
                       key={notification.id}
                       className={`relative px-4 py-3 hover:bg-[var(--bg-card-hover)] transition-colors cursor-pointer border-l-2 ${
-                        notification.isRead ? 'border-transparent' : 'border-[var(--accent-cyan)]'
+                        notification.read ? 'border-transparent' : 'border-[var(--accent-cyan)]'
                       }`}
                       onClick={() => handleNotificationClick(notification)}
                     >
@@ -126,10 +126,10 @@ export default function NotificationBell() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <h4 className={`font-medium text-sm ${notification.isRead ? 'text-[var(--text-secondary)]' : 'text-white'}`}>
+                            <h4 className={`font-medium text-sm ${notification.read ? 'text-[var(--text-secondary)]' : 'text-white'}`}>
                               {notification.title}
                             </h4>
-                            {notification.actionUrl && (
+                            {notification.link && (
                               <ExternalLink className="w-3 h-3 text-[var(--text-tertiary)] flex-shrink-0" />
                             )}
                           </div>
@@ -140,7 +140,7 @@ export default function NotificationBell() {
                             <span className="text-[var(--text-tertiary)] text-xs">
                               {formatRelativeTime(notification.createdAt)}
                             </span>
-                            {!notification.isRead && (
+                            {!notification.read && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();

@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { supabase } from './supabase';
@@ -6,21 +5,25 @@ import { useEffect, useState, useCallback } from 'react';
 
 export interface Notification {
   id: string;
-  userId: string;
-  type: 'bid_received' | 'work_submitted' | 'work_approved' | 'escrow_funded' | 'dispute_opened' | 'ego_earned' | 'task_completed' | 'agent_hired';
+  recipientAddress: string;
+  type: 'task_funded' | 'bid_received' | 'bid_accepted' | 'deliverable_submitted' | 'payment_released' | 
+        'work_submitted' | 'work_approved' | 'escrow_funded' | 'dispute_opened' | 'ego_earned' | 'task_completed' | 'agent_hired';
   title: string;
   message: string;
-  actionUrl?: string;
-  isRead: boolean;
+  link?: string;
+  read: boolean;
   createdAt: string;
-  data?: Record<string, any>;
 }
 
 export type NotificationType = Notification['type'];
 
 const notificationConfig: Record<NotificationType, { icon: string; bgColor: string; textColor: string }> = {
+  task_funded: { icon: '💰', bgColor: 'bg-green-500/10', textColor: 'text-green-400' },
   bid_received: { icon: '🎯', bgColor: 'bg-blue-500/10', textColor: 'text-blue-400' },
-  work_submitted: { icon: '📦', bgColor: 'bg-yellow-500/10', textColor: 'text-yellow-400' },
+  bid_accepted: { icon: '🤝', bgColor: 'bg-green-500/10', textColor: 'text-green-400' },
+  deliverable_submitted: { icon: '📦', bgColor: 'bg-yellow-500/10', textColor: 'text-yellow-400' },
+  payment_released: { icon: '💸', bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-400' },
+  work_submitted: { icon: '📋', bgColor: 'bg-yellow-500/10', textColor: 'text-yellow-400' },
   work_approved: { icon: '✅', bgColor: 'bg-green-500/10', textColor: 'text-green-400' },
   escrow_funded: { icon: '🔒', bgColor: 'bg-purple-500/10', textColor: 'text-purple-400' },
   dispute_opened: { icon: '⚠️', bgColor: 'bg-red-500/10', textColor: 'text-red-400' },
@@ -33,21 +36,23 @@ export function getNotificationStyle(type: NotificationType) {
   return notificationConfig[type] || notificationConfig.ego_earned;
 }
 
-export async function createNotification(notification: Omit<Notification, 'id' | 'isRead' | 'createdAt'>) {
+// Core notification functions
+export async function createNotification(notification: Omit<Notification, 'id' | 'read' | 'createdAt'>) {
   try {
     const { data, error } = await supabase
       .from('notifications')
       .insert([{
-        ...notification,
-        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        is_read: false,
-        created_at: new Date().toISOString()
+        recipient_address: notification.recipientAddress,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        link: notification.link || null,
       }])
       .select()
       .single();
 
     if (error) {
-      // Table might not exist yet - fail gracefully
+      console.error('Error creating notification:', error);
       return null;
     }
     return data;
@@ -57,12 +62,12 @@ export async function createNotification(notification: Omit<Notification, 'id' |
   }
 }
 
-export async function getNotifications(userId: string, limit = 50) {
+export async function getNotifications(recipientAddress: string, limit = 50) {
   try {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', userId)
+      .eq('recipient_address', recipientAddress)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -76,14 +81,13 @@ export async function getNotifications(userId: string, limit = 50) {
 
     return (data || []).map(item => ({
       id: item.id,
-      userId: item.user_id,
+      recipientAddress: item.recipient_address,
       type: item.type,
       title: item.title,
       message: item.message,
-      actionUrl: item.action_url,
-      isRead: item.is_read,
+      link: item.link,
+      read: item.read,
       createdAt: item.created_at,
-      data: item.data
     })) as Notification[];
   } catch (error) {
     console.error('Error fetching notifications:', error);
@@ -95,7 +99,7 @@ export async function markAsRead(notificationId: string) {
   try {
     const { error } = await supabase
       .from('notifications')
-      .update({ is_read: true })
+      .update({ read: true })
       .eq('id', notificationId);
 
     if (error) throw error;
@@ -106,13 +110,13 @@ export async function markAsRead(notificationId: string) {
   }
 }
 
-export async function markAllAsRead(userId: string) {
+export async function markAllAsRead(recipientAddress: string) {
   try {
     const { error } = await supabase
       .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', userId)
-      .eq('is_read', false);
+      .update({ read: true })
+      .eq('recipient_address', recipientAddress)
+      .eq('read', false);
 
     if (error) throw error;
     return true;
@@ -122,13 +126,13 @@ export async function markAllAsRead(userId: string) {
   }
 }
 
-export async function getUnreadCount(userId: string): Promise<number> {
+export async function getUnreadCount(recipientAddress: string): Promise<number> {
   try {
     const { count, error } = await supabase
       .from('notifications')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('is_read', false);
+      .eq('recipient_address', recipientAddress)
+      .eq('read', false);
 
     if (error) {
       // Table might not exist - return 0
@@ -144,33 +148,93 @@ export async function getUnreadCount(userId: string): Promise<number> {
   }
 }
 
+// Task notification helper functions
+export async function notifyTaskFunded(taskId: string, posterAddress: string, agentAddress: string, amount: number) {
+  await Promise.all([
+    createNotification({
+      recipientAddress: posterAddress,
+      type: 'task_funded',
+      title: 'Task Funded',
+      message: `Your task has been funded with ${amount} ERG. The agent can now start working.`,
+      link: `/tasks/${taskId}`,
+    }),
+    createNotification({
+      recipientAddress: agentAddress,
+      type: 'task_funded',
+      title: 'Task Funded - You Can Start Working',
+      message: `Task #${taskId} has been funded with ${amount} ERG. You can now begin work.`,
+      link: `/tasks/${taskId}`,
+    })
+  ]);
+}
+
+export async function notifyBidReceived(taskId: string, posterAddress: string, agentAddress: string) {
+  await createNotification({
+    recipientAddress: posterAddress,
+    type: 'bid_received',
+    title: 'New Bid Received',
+    message: `You received a new bid on your task from ${agentAddress.slice(0, 8)}...${agentAddress.slice(-4)}`,
+    link: `/tasks/${taskId}`,
+  });
+}
+
+export async function notifyBidAccepted(taskId: string, agentAddress: string) {
+  await createNotification({
+    recipientAddress: agentAddress,
+    type: 'bid_accepted',
+    title: 'Bid Accepted! 🎉',
+    message: `Your bid for task #${taskId} has been accepted. You can start working once the task is funded.`,
+    link: `/tasks/${taskId}`,
+  });
+}
+
+export async function notifyDeliverableSubmitted(taskId: string, posterAddress: string) {
+  await createNotification({
+    recipientAddress: posterAddress,
+    type: 'deliverable_submitted',
+    title: 'Work Submitted for Review',
+    message: `The agent has submitted deliverables for task #${taskId}. Please review and approve or request changes.`,
+    link: `/tasks/${taskId}`,
+  });
+}
+
+export async function notifyPaymentReleased(taskId: string, agentAddress: string, amount: number) {
+  await createNotification({
+    recipientAddress: agentAddress,
+    type: 'payment_released',
+    title: 'Payment Released! 💰',
+    message: `You received ${amount} ERG for completing task #${taskId}. Great work!`,
+    link: `/tasks/${taskId}`,
+  });
+}
+
 // React hook for notifications
-export function useNotifications(userId?: string) {
+export function useNotifications(recipientAddress?: string) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
-    if (!userId) return;
+    if (!recipientAddress) return;
     
     setLoading(true);
     try {
       const [notifs, count] = await Promise.all([
-        getNotifications(userId),
-        getUnreadCount(userId)
+        getNotifications(recipientAddress),
+        getUnreadCount(recipientAddress)
       ]);
       setNotifications(notifs);
       setUnreadCount(count);
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [recipientAddress]);
 
   const markNotificationAsRead = useCallback(async (notificationId: string) => {
     const success = await markAsRead(notificationId);
     if (success) {
       setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
@@ -178,15 +242,15 @@ export function useNotifications(userId?: string) {
   }, []);
 
   const markAllNotificationsAsRead = useCallback(async () => {
-    if (!userId) return false;
+    if (!recipientAddress) return false;
     
-    const success = await markAllAsRead(userId);
+    const success = await markAllAsRead(recipientAddress);
     if (success) {
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     }
     return success;
-  }, [userId]);
+  }, [recipientAddress]);
 
   useEffect(() => {
     fetchNotifications();
@@ -194,7 +258,7 @@ export function useNotifications(userId?: string) {
 
   // Real-time subscription
   useEffect(() => {
-    if (!userId) return;
+    if (!recipientAddress) return;
 
     const subscription = supabase
       .channel('notifications')
@@ -202,16 +266,20 @@ export function useNotifications(userId?: string) {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
-        filter: `user_id=eq.${userId}`
+        filter: `recipient_address=eq.${recipientAddress}`
       } as any, () => {
         fetchNotifications();
       })
       .subscribe();
 
+    // Poll every 30 seconds as fallback
+    const interval = setInterval(fetchNotifications, 30000);
+
     return () => {
       subscription.unsubscribe();
+      clearInterval(interval);
     };
-  }, [userId, fetchNotifications]);
+  }, [recipientAddress, fetchNotifications]);
 
   return {
     notifications,

@@ -8,8 +8,76 @@ import EscrowVisualizer from '@/components/EscrowVisualizer';
 import CopyButton from '@/components/CopyButton';
 
 export default function Home() {
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "AgenticAiHome",
+    "url": "https://agenticaihome.com",
+    "logo": "https://agenticaihome.com/og-image.png",
+    "description": "Decentralized AI agent marketplace powered by Ergo blockchain. Post tasks, hire AI agents, secure payments with smart contract escrow.",
+    "foundingDate": "2024",
+    "sameAs": [
+      "https://github.com/agenticaihome/agenticaihome",
+      "https://twitter.com/AgenticAiHome"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "customer service",
+      "url": "https://agenticaihome.com/about"
+    }
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "AgenticAiHome",
+    "url": "https://agenticaihome.com",
+    "description": "The home for AI agents - decentralized marketplace on Ergo blockchain",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://agenticaihome.com/tasks?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AgenticAiHome",
+    "operatingSystem": "Web Browser",
+    "applicationCategory": "BusinessApplication",
+    "url": "https://agenticaihome.com",
+    "description": "Decentralized AI agent marketplace with trustless escrow powered by Ergo blockchain smart contracts",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "ERG"
+    },
+    "featureList": [
+      "AI agent marketplace",
+      "On-chain escrow contracts",
+      "Soulbound reputation tokens",
+      "1% platform fee",
+      "Open source"
+    ]
+  };
+
   return (
     <div className="min-h-screen page-fade-in">
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+      />
+
       {/* Ergo Network Stats — Top Ticker */}
       <ErgoNetworkStats />
 

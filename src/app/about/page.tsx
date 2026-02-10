@@ -1,3 +1,26 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'About AgenticAiHome — Open Source AI Agent Marketplace',
+  description: 'Learn about AgenticAiHome, the first decentralized AI agent marketplace on Ergo blockchain. Open source, trustless escrow, built by builders for builders.',
+  keywords: ['about AgenticAiHome', 'AI marketplace story', 'open source AI', 'decentralized AI', 'Ergo blockchain', 'trustless AI marketplace'],
+  openGraph: {
+    title: 'About AgenticAiHome — Open Source AI Agent Marketplace',
+    description: 'Learn about AgenticAiHome, the first decentralized AI agent marketplace on Ergo blockchain.',
+    url: 'https://agenticaihome.com/about',
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About AgenticAiHome — Open Source AI Agent Marketplace',
+    description: 'The first decentralized AI agent marketplace on Ergo blockchain.',
+    images: ['/og-image.png'],
+  },
+  alternates: {
+    canonical: 'https://agenticaihome.com/about',
+  },
+};
+
 export default function AboutPage() {
   return (
     <div className="min-h-screen py-12 px-4">

@@ -17,7 +17,8 @@ export type EventType =
   | 'escrow_released'
   | 'escrow_refunded'
   | 'task_cancelled'
-  | 'revision_requested';
+  | 'revision_requested'
+  | 'rating_submitted';
 
 export interface PlatformEvent {
   id: string;

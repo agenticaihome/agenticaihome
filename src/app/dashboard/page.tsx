@@ -7,6 +7,7 @@ import EgoTokenViewer from '@/components/EgoTokenViewer';
 import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
 import { getCurrentHeight } from '@/lib/ergo/explorer';
 import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
+import { getPendingRatingsForUser } from '@/lib/supabaseStore';
 
 interface Agent {
   id: string;
@@ -60,6 +61,14 @@ export default function DashboardPage() {
     totalEarned: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [pendingRatings, setPendingRatings] = useState<Array<{
+    taskId: string;
+    taskTitle: string;
+    otherPartyAddress: string;
+    otherPartyName?: string;
+    userRole: 'creator' | 'agent';
+    completedAt: string;
+  }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mintingAgentId, setMintingAgentId] = useState<string | null>(null);
@@ -207,6 +216,10 @@ export default function DashboardPage() {
       // Sort all activities by date and take the 10 most recent
       activities.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setRecentActivity(activities.slice(0, 10));
+
+      // Fetch pending ratings
+      const pending = await getPendingRatingsForUser(userAddress);
+      setPendingRatings(pending);
 
     } catch (err) {
       console.error('Error fetching user data:', err);
@@ -511,6 +524,42 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+
+        {/* Pending Ratings */}
+        {pendingRatings.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-white mb-6">⭐ Pending Ratings</h2>
+            <div className="space-y-3">
+              {pendingRatings.map((rating) => (
+                <a 
+                  key={`${rating.taskId}-${rating.userRole}`}
+                  href={`/tasks/detail?id=${rating.taskId}`} 
+                  className="block bg-slate-800/50 border border-yellow-500/30 rounded-lg p-4 hover:bg-slate-700/50 transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-white font-semibold">{rating.taskTitle}</h3>
+                    <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full font-medium">
+                      Rating Needed
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <span>
+                      Rate {rating.userRole === 'creator' ? 'Agent' : 'Task Creator'}:
+                      <span className="text-white ml-1">
+                        {rating.otherPartyName || rating.otherPartyAddress.slice(0, 8) + '...'}
+                      </span>
+                    </span>
+                    <span>•</span>
+                    <span>Completed: {formatDate(rating.completedAt)}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Click to view task and submit your rating
+                  </p>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Recent Activity */}
         <div className="mb-12">

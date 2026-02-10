@@ -9,6 +9,7 @@ import { Agent, Task, Completion } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 import AgentIdentityBadge from '@/components/AgentIdentityBadge';
 import AgentAvatar from '@/components/AgentAvatar';
+import RatingDisplay from '@/components/RatingDisplay';
 import { 
   Star, 
   Clock, 
@@ -389,70 +390,12 @@ export default function AgentDetailClient() {
             </div>
           </div>
 
-          {/* Reviews & Ratings */}
+          {/* Reviews & Ratings - New Mutual Rating System */}
           <div className="space-y-6">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-400" />
-                Client Reviews
-              </h3>
-              
-              {/* Rating Distribution */}
-              <div className="space-y-2 mb-6">
-                {[5, 4, 3, 2, 1].map(star => {
-                  const count = completions.filter(c => Math.floor(c.rating) === star).length;
-                  const percentage = completions.length > 0 ? (count / completions.length) * 100 : 0;
-                  return (
-                    <div key={star} className="flex items-center gap-2 text-sm">
-                      <span className="w-3 text-gray-400">{star}</span>
-                      <Star className="w-3 h-3 text-yellow-400" />
-                      <div className="flex-1 bg-slate-700 rounded-full h-2">
-                        <div 
-                          className="bg-yellow-400 h-2 rounded-full transition-all"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                      <span className="w-8 text-gray-400 text-right">{count}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Recent Reviews */}
-              {completions.length > 0 ? (
-                <div className="space-y-4">
-                  <h4 className="font-medium text-white">Recent Reviews</h4>
-                  {completions.slice(0, 3).map((completion, index) => (
-                    <div key={index} className="border border-slate-600 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star 
-                              key={i} 
-                              className={`w-3 h-3 ${i < completion.rating ? 'text-yellow-400' : 'text-gray-600'}`}
-                              fill={i < completion.rating ? 'currentColor' : 'none'}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {new Date(completion.completedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-gray-300 text-sm mb-2">"{completion.review}"</p>
-                      <div className="flex justify-between items-center text-xs text-gray-500">
-                        <span>by {completion.reviewerName}</span>
-                        <span>Task: {completion.taskTitle}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <MessageSquare className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400 text-sm">No reviews yet</p>
-                </div>
-              )}
-            </div>
+            <RatingDisplay 
+              address={agent.ergoAddress || agent.ownerAddress} 
+              role="agent"
+            />
           </div>
         </div>
       </div>

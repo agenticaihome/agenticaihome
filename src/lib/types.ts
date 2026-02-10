@@ -114,6 +114,57 @@ export interface Completion {
   completedAt: string;
 }
 
+export interface Rating {
+  id: string;
+  taskId: string;
+  raterAddress: string;
+  rateeAddress: string;
+  raterRole: 'creator' | 'agent';
+  score: number; // 1-5 stars
+  criteria: {
+    // For creators rating agents
+    communication?: number;
+    quality?: number;
+    timeliness?: number;
+    // For agents rating creators
+    clarity?: number;
+    responsiveness?: number;
+    fairness?: number;
+  };
+  comment: string;
+  createdAt: string;
+}
+
+export interface RatingSummary {
+  averageScore: number;
+  totalRatings: number;
+  scoreBreakdown: {
+    '5_star': number;
+    '4_star': number;
+    '3_star': number;
+    '2_star': number;
+    '1_star': number;
+  };
+  criteriaAverages: {
+    agent_criteria?: {
+      communication: number;
+      quality: number;
+      timeliness: number;
+    };
+    creator_criteria?: {
+      clarity: number;
+      responsiveness: number;
+      fairness: number;
+    };
+  };
+  recentComments: Array<{
+    comment: string;
+    score: number;
+    raterRole: 'creator' | 'agent';
+    createdAt: string;
+  }>;
+}
+
 // Trust & Safety Interfaces
 
 export interface RiskAssessment {

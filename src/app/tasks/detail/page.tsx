@@ -9,8 +9,9 @@ import StatusBadge from '@/components/StatusBadge';
 import EgoScore from '@/components/EgoScore';
 import Link from 'next/link';
 import { logEvent } from '@/lib/events';
-import { createDeliverable, updateDeliverableStatus, getDeliverablesForTask, updateAgentStats, updateTaskMetadata, updateTaskEscrow, withWalletAuth, verifiedCreateBid, verifiedCreateDeliverable } from '@/lib/supabaseStore';
+import { createDeliverable, updateDeliverableStatus, getDeliverablesForTask, updateAgentStats, updateTaskMetadata, updateTaskEscrow, withWalletAuth, verifiedCreateBid, verifiedCreateDeliverable, submitRating, getRatingForTask } from '@/lib/supabaseStore';
 import EscrowActions from '@/components/EscrowActions';
+import RatingForm from '@/components/RatingForm';
 import type { Task, Bid, Agent } from '@/lib/types';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';
 
@@ -66,6 +67,13 @@ function TaskDetailInner() {
   const [accepting, setAccepting] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
+
+  // Rating states
+  const [showCreatorRating, setShowCreatorRating] = useState(false);
+  const [showAgentRating, setShowAgentRating] = useState(false);
+  const [creatorRatingExists, setCreatorRatingExists] = useState(false);
+  const [agentRatingExists, setAgentRatingExists] = useState(false);
+  const [submittingRating, setSubmittingRating] = useState(false);
 
   // Escrow state
   const [escrowBoxId, setEscrowBoxId] = useState<string | undefined>(undefined);
@@ -131,6 +139,11 @@ function TaskDetailInner() {
         const agentData = await getAgent(t.assignedAgentId);
         setFetchedAgent(agentData);
       }
+
+      // Check for existing ratings when task is completed
+      if (t?.status === 'completed' && userAddress) {
+        await checkExistingRatings(t);
+      }
     } catch (err) {
       console.error('Error loading task:', err);
       setError('Failed to load task');
@@ -138,6 +151,67 @@ function TaskDetailInner() {
       setLoading(false);
     }
   }, [taskId, userAddress, getTask, getTaskBids, getAgentsByOwnerAddress, bidAgentId]);
+
+  const checkExistingRatings = async (task: Task) => {
+    if (!userAddress || !task.assignedAgentId) return;
+
+    try {
+      // Check if user (as creator) has rated the agent
+      if (task.creatorAddress === userAddress) {
+        const creatorRating = await getRatingForTask(task.id, userAddress);
+        setCreatorRatingExists(!!creatorRating);
+        if (!creatorRating) setShowCreatorRating(true);
+      }
+
+      // Check if user (as agent) has rated the creator  
+      const userAgentIds = userAgents.map(a => a.id);
+      const isAssignedAgent = userAgentIds.includes(task.assignedAgentId);
+      if (isAssignedAgent) {
+        const agentRating = await getRatingForTask(task.id, userAddress);
+        setAgentRatingExists(!!agentRating);
+        if (!agentRating) setShowAgentRating(true);
+      }
+    } catch (err) {
+      console.error('Error checking existing ratings:', err);
+    }
+  };
+
+  const handleRatingSubmit = async (ratingData: {
+    taskId: string;
+    raterAddress: string;
+    rateeAddress: string;
+    raterRole: 'creator' | 'agent';
+    score: number;
+    criteria: Record<string, number>;
+    comment: string;
+  }) => {
+    setSubmittingRating(true);
+    setError('');
+    
+    try {
+      await submitRating(ratingData);
+      
+      if (ratingData.raterRole === 'creator') {
+        setCreatorRatingExists(true);
+        setShowCreatorRating(false);
+      } else {
+        setAgentRatingExists(true);
+        setShowAgentRating(false);
+      }
+      
+      showSuccess('Rating submitted successfully!');
+      logEvent({ 
+        type: 'rating_submitted', 
+        message: `${ratingData.score}-star rating submitted by ${ratingData.raterRole}`,
+        taskId: taskId || undefined,
+        actor: userAddress || ''
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to submit rating');
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
 
   useEffect(() => {
     loadData();
@@ -294,6 +368,11 @@ function TaskDetailInner() {
         showSuccess('Work approved! Task completed.');
       }
       await loadData();
+      
+      // Check if user should rate after completion
+      if (userAddress) {
+        await checkExistingRatings(task);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve');
     } finally {
@@ -681,6 +760,11 @@ function TaskDetailInner() {
                   logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId: task.id, actor: userAddress || '' });
                   showSuccess(`💰 Payment released! 99% to agent, 1% to treasury. TX: ${txId.slice(0, 12)}...`);
                   await loadData();
+
+                  // Check if user should rate after completion
+                  if (userAddress) {
+                    await checkExistingRatings(task);
+                  }
                 }}
                 onRefunded={async (txId) => {
                   setEscrowStatus('refunded');
@@ -692,6 +776,43 @@ function TaskDetailInner() {
                 }}
               />
             </div>
+          )}
+
+          {/* Rating Forms - Show after task completion */}
+          {task?.status === 'completed' && userAddress && (
+            <>
+              {/* Creator Rating Agent */}
+              {task.creatorAddress === userAddress && task.acceptedAgentAddress && (
+                <div className="mb-6">
+                  <RatingForm
+                    taskId={task.id}
+                    raterAddress={userAddress}
+                    rateeAddress={task.acceptedAgentAddress}
+                    raterRole="creator"
+                    rateeName={task.assignedAgentName || 'Agent'}
+                    onSubmit={handleRatingSubmit}
+                    onSkip={() => setShowCreatorRating(false)}
+                    existingRating={creatorRatingExists}
+                  />
+                </div>
+              )}
+
+              {/* Agent Rating Creator */}
+              {fetchedAgent && userAgents.some(a => a.id === task.assignedAgentId) && (
+                <div className="mb-6">
+                  <RatingForm
+                    taskId={task.id}
+                    raterAddress={userAddress}
+                    rateeAddress={task.creatorAddress}
+                    raterRole="agent"
+                    rateeName={task.creatorName || 'Task Creator'}
+                    onSubmit={handleRatingSubmit}
+                    onSkip={() => setShowAgentRating(false)}
+                    existingRating={agentRatingExists}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

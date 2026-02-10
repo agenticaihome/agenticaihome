@@ -802,33 +802,9 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
       .eq('assigned_agent_id', agentId)
       .in('status', ['completed', 'disputed', 'cancelled']);
 
-    // SECURITY FIX: Get average rating from completions with valid blockchain proof
-    // Only count completions that have associated escrow release transactions
-    const { data: validCompletions, error: completionsError } = await supabase
-      .from('completions')
-      .select('rating, task_id')
-      .eq('agent_id', agentId);
-
-    // Filter completions to only include those with valid escrow transactions
-    let completions = validCompletions || [];
-    if (completions.length > 0) {
-      const taskIds = completions.map(c => c.task_id);
-      const { data: tasksWithEscrow } = await supabase
-        .from('tasks')
-        .select('id, escrow_tx_id')
-        .in('id', taskIds)
-        .not('escrow_tx_id', 'is', null);
-      
-      const validTaskIds = new Set(tasksWithEscrow?.map(t => t.id) || []);
-      completions = completions.filter(c => validTaskIds.has(c.task_id));
-    }
-
-    if (completionsError) {
-      console.error('Error fetching completions:', completionsError);
-    }
-
-    const ratings = completions.map(c => c.rating).filter(r => r > 0) || [];
-    const avgRating = ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 3.0;
+    // Get average rating from the new ratings table
+    // This is more accurate than the old completions system
+    const avgRating = await getAverageRating(agentData.ergo_address);
 
     // Calculate account age in days
     const accountAge = Math.floor((Date.now() - new Date(agentData.created_at).getTime()) / (1000 * 60 * 60 * 24));
@@ -1236,4 +1212,337 @@ export async function verifiedCreateDeliverable(
   auth: WalletAuth,
 ): Promise<Record<string, unknown>> {
   return verifiedWrite('create-deliverable', deliverable as unknown as Record<string, unknown>, auth);
+}
+
+// ============================================================
+// RATING SYSTEM - Mutual Rating Functions
+// Both parties (creator and agent) rate each other after task completion
+// ============================================================
+
+import { Rating, RatingSummary } from './types';
+
+function dbToRating(row: Record<string, unknown>): Rating {
+  return {
+    id: row.id as string,
+    taskId: row.task_id as string,
+    raterAddress: row.rater_address as string,
+    rateeAddress: row.ratee_address as string,
+    raterRole: (row.rater_role as 'creator' | 'agent'),
+    score: Number(row.score),
+    criteria: (row.criteria as Rating['criteria']) || {},
+    comment: (row.comment as string) || '',
+    createdAt: (row.created_at as string) || '',
+  };
+}
+
+function ratingToDb(r: Partial<Rating>): Record<string, unknown> {
+  const m: Record<string, unknown> = {};
+  if (r.id !== undefined) m.id = r.id;
+  if (r.taskId !== undefined) m.task_id = r.taskId;
+  if (r.raterAddress !== undefined) m.rater_address = r.raterAddress;
+  if (r.rateeAddress !== undefined) m.ratee_address = r.rateeAddress;
+  if (r.raterRole !== undefined) m.rater_role = r.raterRole;
+  if (r.score !== undefined) m.score = r.score;
+  if (r.criteria !== undefined) m.criteria = r.criteria;
+  if (r.comment !== undefined) m.comment = r.comment;
+  if (r.createdAt !== undefined) m.created_at = r.createdAt;
+  return m;
+}
+
+/**
+ * Submit a rating for a task
+ */
+export async function submitRating(rating: {
+  taskId: string;
+  raterAddress: string;
+  rateeAddress: string;
+  raterRole: 'creator' | 'agent';
+  score: number;
+  criteria: Record<string, number>;
+  comment: string;
+}): Promise<Rating> {
+  // Validate rating data
+  if (rating.score < 1 || rating.score > 5) {
+    throw new Error('Rating score must be between 1 and 5');
+  }
+
+  if (!validateErgoAddress(rating.raterAddress) || !validateErgoAddress(rating.rateeAddress)) {
+    throw new Error('Invalid Ergo address format');
+  }
+
+  const sanitizedRating = {
+    ...rating,
+    comment: sanitizeText(rating.comment, 1000),
+    score: Math.min(Math.max(Math.round(rating.score), 1), 5),
+    criteria: Object.fromEntries(
+      Object.entries(rating.criteria).map(([key, value]) => [
+        key,
+        Math.min(Math.max(Math.round(value), 1), 5)
+      ])
+    )
+  };
+
+  const newRating: Rating = {
+    ...sanitizedRating,
+    id: generateId(),
+    createdAt: new Date().toISOString(),
+  };
+
+  // Check if rating already exists for this task + rater
+  const existingRating = await getRatingForTask(rating.taskId, rating.raterAddress);
+  if (existingRating) {
+    throw new Error('You have already rated this task');
+  }
+
+  // Insert the rating
+  const { error } = await supabase
+    .from('ratings')
+    .insert(ratingToDb(newRating));
+
+  if (error) {
+    throw new Error(`Failed to submit rating: ${error.message}`);
+  }
+
+  // If rating an agent, trigger EGO score recalculation
+  if (rating.rateeAddress) {
+    const { data: agentData } = await supabase
+      .from('agents')
+      .select('id')
+      .or(`ergo_address.eq.${rating.rateeAddress},owner_address.eq.${rating.rateeAddress}`)
+      .single();
+
+    if (agentData) {
+      // Fire-and-forget EGO score recalculation
+      recalculateEgoScore(agentData.id).catch(error => {
+        console.error('Failed to recalculate EGO score after rating:', error);
+      });
+    }
+  }
+
+  return newRating;
+}
+
+/**
+ * Get ratings for a specific address
+ */
+export async function getRatingsForAddress(address: string): Promise<Rating[]> {
+  const { data, error } = await supabase
+    .from('ratings')
+    .select('*')
+    .eq('ratee_address', address)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching ratings:', error);
+    return [];
+  }
+
+  return (data || []).map(dbToRating);
+}
+
+/**
+ * Check if a specific rater has already rated a task
+ */
+export async function getRatingForTask(taskId: string, raterAddress: string): Promise<Rating | null> {
+  const { data, error } = await supabase
+    .from('ratings')
+    .select('*')
+    .eq('task_id', taskId)
+    .eq('rater_address', raterAddress)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error checking for existing rating:', error);
+    return null;
+  }
+
+  return data ? dbToRating(data) : null;
+}
+
+/**
+ * Get average rating for an address
+ */
+export async function getAverageRating(address: string): Promise<number> {
+  const { data, error } = await supabase
+    .rpc('get_average_rating', { p_address: address });
+
+  if (error) {
+    console.error('Error getting average rating:', error);
+    return 3.0; // Default neutral rating
+  }
+
+  return data?.[0]?.average_score || 3.0;
+}
+
+/**
+ * Get comprehensive rating summary for an address
+ */
+export async function getRatingSummaryForAddress(
+  address: string, 
+  role: 'creator' | 'agent' | 'all' = 'all'
+): Promise<RatingSummary> {
+  try {
+    // Get average rating and breakdown
+    const { data: avgData, error: avgError } = await supabase
+      .rpc('get_average_rating', { p_address: address, p_role: role });
+
+    if (avgError) {
+      console.error('Error getting average rating:', avgError);
+    }
+
+    const avgResult = avgData?.[0] || { average_score: 3.0, total_ratings: 0, score_breakdown: {} };
+
+    // Get criteria averages
+    const { data: criteriaData, error: criteriaError } = await supabase
+      .rpc('get_criteria_averages', { p_address: address, p_role: role });
+
+    if (criteriaError) {
+      console.error('Error getting criteria averages:', criteriaError);
+    }
+
+    const criteriaAverages = criteriaData || {};
+
+    // Get recent comments
+    let query = supabase
+      .from('ratings')
+      .select('comment, score, rater_role, created_at')
+      .eq('ratee_address', address)
+      .not('comment', 'eq', '')
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (role !== 'all') {
+      if (role === 'creator') {
+        query = query.eq('rater_role', 'agent'); // Comments from agents about creators
+      } else {
+        query = query.eq('rater_role', 'creator'); // Comments from creators about agents
+      }
+    }
+
+    const { data: commentsData, error: commentsError } = await query;
+
+    if (commentsError) {
+      console.error('Error getting recent comments:', commentsError);
+    }
+
+    const recentComments = (commentsData || []).map(comment => ({
+      comment: comment.comment,
+      score: comment.score,
+      raterRole: comment.rater_role as 'creator' | 'agent',
+      createdAt: comment.created_at,
+    }));
+
+    return {
+      averageScore: Number(avgResult.average_score) || 3.0,
+      totalRatings: Number(avgResult.total_ratings) || 0,
+      scoreBreakdown: {
+        '5_star': Number(avgResult.score_breakdown?.['5_star'] || 0),
+        '4_star': Number(avgResult.score_breakdown?.['4_star'] || 0),
+        '3_star': Number(avgResult.score_breakdown?.['3_star'] || 0),
+        '2_star': Number(avgResult.score_breakdown?.['2_star'] || 0),
+        '1_star': Number(avgResult.score_breakdown?.['1_star'] || 0),
+      },
+      criteriaAverages,
+      recentComments,
+    };
+  } catch (error) {
+    console.error('Error getting rating summary:', error);
+    return {
+      averageScore: 3.0,
+      totalRatings: 0,
+      scoreBreakdown: {
+        '5_star': 0,
+        '4_star': 0,
+        '3_star': 0,
+        '2_star': 0,
+        '1_star': 0,
+      },
+      criteriaAverages: {},
+      recentComments: [],
+    };
+  }
+}
+
+/**
+ * Get pending ratings for a user (tasks completed but not yet rated)
+ */
+export async function getPendingRatingsForUser(userAddress: string): Promise<Array<{
+  taskId: string;
+  taskTitle: string;
+  otherPartyAddress: string;
+  otherPartyName?: string;
+  userRole: 'creator' | 'agent';
+  completedAt: string;
+}>> {
+  try {
+    // Get completed tasks where user was creator or assigned agent
+    let creatorTasks: any[] = [];
+    let agentTasks: any[] = [];
+
+    // Tasks where user was creator
+    const { data: creatorTasksData } = await supabase
+      .from('tasks')
+      .select('id, title, creator_address, accepted_agent_address, assigned_agent_name, completed_at')
+      .eq('creator_address', userAddress)
+      .eq('status', 'completed')
+      .not('accepted_agent_address', 'is', null);
+
+    creatorTasks = creatorTasksData || [];
+
+    // Tasks where user was agent (need to check agents table for match)
+    const { data: userAgents } = await supabase
+      .from('agents')
+      .select('id, ergo_address, owner_address')
+      .or(`ergo_address.eq.${userAddress},owner_address.eq.${userAddress}`);
+
+    if (userAgents && userAgents.length > 0) {
+      const agentIds = userAgents.map(agent => agent.id);
+      const { data: agentTasksData } = await supabase
+        .from('tasks')
+        .select('id, title, creator_address, creator_name, assigned_agent_id, completed_at')
+        .in('assigned_agent_id', agentIds)
+        .eq('status', 'completed');
+
+      agentTasks = agentTasksData || [];
+    }
+
+    const pendingRatings = [];
+
+    // Check creator tasks (user rates agent)
+    for (const task of creatorTasks) {
+      const existingRating = await getRatingForTask(task.id, userAddress);
+      if (!existingRating) {
+        pendingRatings.push({
+          taskId: task.id,
+          taskTitle: task.title,
+          otherPartyAddress: task.accepted_agent_address,
+          otherPartyName: task.assigned_agent_name,
+          userRole: 'creator' as const,
+          completedAt: task.completed_at,
+        });
+      }
+    }
+
+    // Check agent tasks (user rates creator)
+    for (const task of agentTasks) {
+      const existingRating = await getRatingForTask(task.id, userAddress);
+      if (!existingRating) {
+        pendingRatings.push({
+          taskId: task.id,
+          taskTitle: task.title,
+          otherPartyAddress: task.creator_address,
+          otherPartyName: task.creator_name,
+          userRole: 'agent' as const,
+          completedAt: task.completed_at,
+        });
+      }
+    }
+
+    return pendingRatings.sort((a, b) => 
+      new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+    );
+  } catch (error) {
+    console.error('Error getting pending ratings:', error);
+    return [];
+  }
 }

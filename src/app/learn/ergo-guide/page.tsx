@@ -129,11 +129,17 @@ const ExchangeOption = ({
   description 
 }: { 
   name: string; 
-  type: 'CEX' | 'DEX';
+  type: 'CEX' | 'DEX' | 'Lending' | 'Bridge';
   url: string; 
   description: string; 
 }) => {
-  const typeColor = type === 'CEX' ? 'text-blue-400 bg-blue-400/20 border-blue-400/30' : 'text-purple-400 bg-purple-400/20 border-purple-400/30';
+  const typeColors: Record<string, string> = {
+    CEX: 'text-blue-400 bg-blue-400/20 border-blue-400/30',
+    DEX: 'text-purple-400 bg-purple-400/20 border-purple-400/30',
+    Lending: 'text-yellow-400 bg-yellow-400/20 border-yellow-400/30',
+    Bridge: 'text-green-400 bg-green-400/20 border-green-400/30',
+  };
+  const typeColor = typeColors[type] || typeColors.DEX;
   
   return (
     <div className="flex items-center justify-between p-4 bg-[var(--bg-secondary)]/30 border border-[var(--border-color)] rounded-xl">
@@ -211,7 +217,7 @@ export default function ErgoGuidePage() {
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--accent-cyan)] text-white text-xs font-bold flex-shrink-0 mt-0.5">2</span>
                   <div>
                     <div className="font-medium text-white">Buy ERG</div>
-                    <div className="text-[var(--text-secondary)]">KuCoin or Spectrum DEX</div>
+                    <div className="text-[var(--text-secondary)]">KuCoin, Mew DEX, or Rosen Bridge</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
@@ -333,7 +339,7 @@ export default function ErgoGuidePage() {
                   <div className="space-y-4">
                     <WalletOption
                       name="Nautilus Wallet"
-                      description="Primary wallet used by AgenticAiHome. Most user-friendly with built-in dApp browser."
+                      description="Primary wallet used by AgenticAiHome. Built-in dApp browser and token swaps — you can buy ERG directly inside Nautilus."
                       isPrimary={true}
                       downloadLinks={[
                         { platform: "Chrome/Brave", url: "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai" },
@@ -344,20 +350,6 @@ export default function ErgoGuidePage() {
                         "Easy dApp connections",
                         "NFT support",
                         "Built-in DEX integration"
-                      ]}
-                    />
-
-                    <WalletOption
-                      name="SAFEW"
-                      description="Simple, lightweight browser wallet for basic transactions."
-                      downloadLinks={[
-                        { platform: "GitHub", url: "https://github.com/nicola/safew" }
-                      ]}
-                      features={[
-                        "Lightweight",
-                        "Open source",
-                        "Basic functionality",
-                        "Privacy-focused"
                       ]}
                     />
                   </div>
@@ -484,16 +476,32 @@ export default function ErgoGuidePage() {
                   </p>
                   <div className="space-y-3">
                     <ExchangeOption
-                      name="Spectrum DEX"
+                      name="Mew DEX"
                       type="DEX"
-                      url="https://app.spectrum.fi/ergo/swap"
-                      description="Main DEX on Ergo. Swap other tokens for ERG directly from your wallet."
+                      url="https://www.mewfinance.com"
+                      description="The leading DEX on Ergo. Swap tokens for ERG directly from your Nautilus wallet."
                     />
                     <ExchangeOption
                       name="SigmaFi"
-                      type="DEX"
+                      type="Lending"
                       url="https://sigmafi.app"
-                      description="Lending and borrowing platform. Can be used to get ERG through collateralized loans."
+                      description="Lending and borrowing platform. Borrow ERG against collateral."
+                    />
+                  </div>
+                </div>
+
+                {/* Cross-Chain Bridge */}
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-4">🌉 Cross-Chain Bridge</h3>
+                  <p className="text-[var(--text-secondary)] mb-4">
+                    Already have ADA (Cardano)? Bridge it to Ergo using Rosen Bridge to get rsERG, then swap for native ERG on Mew DEX.
+                  </p>
+                  <div className="space-y-3">
+                    <ExchangeOption
+                      name="Rosen Bridge"
+                      type="Bridge"
+                      url="https://rosen.tech"
+                      description="Bridge ADA → rsERG (wrapped ERG on Ergo). Then swap rsERG → ERG on Mew DEX. Trustless and decentralized."
                     />
                   </div>
                 </div>

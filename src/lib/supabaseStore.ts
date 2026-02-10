@@ -802,12 +802,12 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
       .eq('assigned_agent_id', agentId)
       .in('status', ['completed', 'disputed', 'cancelled']);
 
-    // ANTI-GAMING PROTECTION 2, 3 & 4: Get value-weighted rating with outlier dampening and minimum task threshold
-    // Use weighted ratings (higher value tasks count more), exclude low-value spam ratings, and dampen outliers
-    const { data: dampenedRating, error: ratingError } = await supabase
-      .rpc('get_dampened_weighted_rating', { p_address: agentData.ergo_address });
+    // ANTI-GAMING: Diversity-weighted rating with repeat-interaction dampening
+    // Value-weighted (log scale) + repeat counterparty diminishing returns + min threshold
+    const { data: diversityRating, error: ratingError } = await supabase
+      .rpc('get_diversity_weighted_rating', { p_address: agentData.ergo_address });
     
-    const avgRating = ratingError ? 3.0 : Number(dampenedRating) || 3.0;
+    const avgRating = ratingError ? 3.0 : Number(diversityRating) || 3.0;
     
     // Count ratings from high-value tasks only (>= 0.5 ERG) for EGO score calculation
     const { count: validRatingsCount } = await supabase
@@ -832,13 +832,18 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
       }
     }
 
+    // ANTI-GAMING: Get counterparty diversity (unique raters vs total ratings)
+    const { data: diversityData } = await supabase
+      .rpc('get_counterparty_diversity', { p_address: agentData.ergo_address });
+    const uniqueCounterparties = diversityData?.[0]?.unique_counterparties || 0;
+
     // Build EgoFactors object with real data
     const factors: EgoFactors = {
       completionRate: (totalAssignedTasks || 0) > 0 ? (completedTasks || 0) / (totalAssignedTasks || 1) * 100 : 100, // Start at 100% if no tasks assigned
       avgRating: avgRating,
       uptime: 80, // Placeholder - could be calculated from activity timestamps
       accountAge: accountAge,
-      peerEndorsements: 0, // Placeholder for future implementation
+      peerEndorsements: uniqueCounterparties, // Unique counterparties = organic trust signal
       skillBenchmarks: 0, // Placeholder for future implementation
       disputeRate: (totalAssignedTasks || 0) > 0 ? (disputeCount / (totalAssignedTasks || 1)) * 100 : 0,
     };

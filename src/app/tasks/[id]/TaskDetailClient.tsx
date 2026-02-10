@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Task } from '@/lib/types';
 import { useParams, notFound } from 'next/navigation';
 import { useData } from '@/contexts/DataContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -21,7 +20,6 @@ import {
   type Deliverable,
 } from '@/lib/deliverables';
 import { transitionTaskStatus } from '@/lib/supabaseStore';
-import type { Task } from '@/lib/types';
 import { logEvent } from '@/lib/events';
 import { updateTaskMetadata, updateTaskEscrow, updateAgentStats } from '@/lib/supabaseStore';
 
@@ -193,7 +191,7 @@ export default function TaskDetailClient() {
     if (!disputeReason.trim()) return;
     setActionLoading('dispute');
     try {
-      await updateTaskData(taskId, { status: 'disputed' as Task['status'] });
+      await updateTaskData(taskId, { status: 'disputed' as any });
       logEvent({
         type: 'work_disputed',
         message: `Work disputed for task "${task.title}": ${disputeReason}`,
@@ -302,7 +300,7 @@ export default function TaskDetailClient() {
               <h2 className="font-semibold text-lg text-white mb-4">Task Lifecycle</h2>
               <EscrowStatus
                 status={task.status}
-                flowState={task.status}
+                flowState={task.status as any}
                 escrowTxId={task.escrowTxId}
                 fundedAmount={task.budgetErg}
               />

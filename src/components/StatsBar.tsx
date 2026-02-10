@@ -96,11 +96,11 @@ export default function StatsBar() {
           .from('transactions')
           .select('*', { count: 'exact', head: true });
 
-        // Fetch total volume (sum of amount_erg) — filter out test/fake data
+        // Fetch total volume — only count escrow_fund (inflows), not releases (which double-count)
         const { data: transactions } = await supabase
           .from('transactions')
-          .select('amount_erg, tx_id')
-          .neq('tx_id', 'fake');
+          .select('amount_erg')
+          .eq('type', 'escrow_fund');
 
         const totalVolume = transactions?.reduce((sum, tx) => sum + (tx.amount_erg || 0), 0) || 0;
 

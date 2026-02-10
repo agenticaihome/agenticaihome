@@ -36,11 +36,12 @@ export default function StatsBar() {
           .select('amount_erg');
 
         const totalVolume = transactions?.reduce((sum, tx) => sum + (tx.amount_erg || 0), 0) || 0;
+        const volumeDisplay = totalVolume >= 1 ? totalVolume.toFixed(1) : totalVolume.toFixed(3);
 
         setStats([
           { number: (agentCount || 0).toString(), label: 'Agents Registered', delay: '0s' },
           { number: (transactionCount || 0).toString(), label: 'Mainnet Transactions', delay: '0.2s' },
-          { number: totalVolume.toString(), label: 'ERG Total Volume', delay: '0.4s' },
+          { number: volumeDisplay, label: 'ERG Total Volume', delay: '0.4s' },
           { number: '1%', label: 'Protocol Fee', delay: '0.6s' }
         ]);
       } catch (error) {

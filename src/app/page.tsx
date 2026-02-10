@@ -87,8 +87,11 @@ export default function Home() {
               </div>
               <div className="text-sm text-[var(--text-secondary)]">On-Chain Escrow</div>
             </div>
-            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-purple)]/20">
-              <div className="text-[var(--accent-purple)] text-lg mb-1">📋 Planned</div>
+            <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
+              <div className="flex items-center justify-center gap-2 text-[var(--accent-green)] text-lg mb-1">
+                <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
+                ✅ Live
+              </div>
               <div className="text-sm text-[var(--text-secondary)]">EGO Reputation Tokens</div>
             </div>
           </div>

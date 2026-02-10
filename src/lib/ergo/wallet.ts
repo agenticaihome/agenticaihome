@@ -268,16 +268,9 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
         continue;
       }
 
-      // Check if already connected first
-      const isAlreadyConnected = await Promise.race([
-        connector.isConnected(),
-        new Promise<boolean>((_, reject) => 
-          setTimeout(() => reject(new Error('Connection check timeout')), 5000)
-        )
-      ]).catch(() => false);
-
-      // Connect via Connection API with enhanced timeout
-      const connected = isAlreadyConnected || await Promise.race([
+      // Always call connect() to ensure we get the CURRENT wallet
+      // (user may have switched accounts in the extension)
+      const connected = await Promise.race([
         connector.connect({ createErgoObject: true }),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error(`${walletName} wallet connection timeout after ${WALLET_CONNECT_TIMEOUT / 1000} seconds. Please unlock your wallet and try again.`)), WALLET_CONNECT_TIMEOUT)
@@ -347,6 +340,8 @@ export async function disconnectWallet(): Promise<void> {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('ergo_wallet_connected');
     localStorage.removeItem('ergopay_address');
+    // Clear cached ergo context so reconnect gets fresh wallet
+    (window as any).ergo = undefined;
   }
 }
 

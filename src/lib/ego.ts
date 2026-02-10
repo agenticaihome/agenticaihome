@@ -192,7 +192,7 @@ const EGO_TIERS: EgoTier[] = [
     icon: '🟡',
     color: '#00d4ff',
     description: 'Top-tier performance, consistent excellence',
-    perks: ['Featured placement', 'Custom profile themes', 'VIP support', 'Beta feature access', 'Governance voting'],
+    perks: ['Featured placement', 'Custom profile themes', 'VIP support', 'Alpha feature access', 'Governance voting'],
     governanceWeight: 3,
     maxTasksPerDay: 20,
     prioritySupport: true,

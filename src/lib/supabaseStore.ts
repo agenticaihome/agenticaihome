@@ -1,4 +1,4 @@
-import { supabase, requestChallenge, verifiedWrite, type WalletAuth, supabaseUrl, supabaseAnonKey } from './supabase';
+import { supabase, requestChallenge, verifiedWrite, type WalletAuth, supabaseUrl, supabaseAnonKey, EDGE_FUNCTION_BASE } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 
 // SECURITY FIX: Service client removed from client-side code to prevent key exposure
@@ -400,12 +400,27 @@ export async function createTask(
   return newTask;
 }
 
+async function serviceUpdate(table: string, data: Record<string, unknown>, match: Record<string, string>): Promise<void> {
+  try {
+    const res = await fetch(`${EDGE_FUNCTION_BASE}/task-update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table, data, match }),
+    });
+    const result = await res.json();
+    if (result.error) console.error(`serviceUpdate(${table}) error:`, result.error);
+  } catch (err) {
+    console.error(`serviceUpdate(${table}) failed:`, err);
+    // Fallback to direct update
+    await supabase.from(table).update(data).match(match);
+  }
+}
+
 export async function updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
-  const { data } = await supabase.from('tasks')
-    .update(taskToDb(updates))
-    .eq('id', id)
-    .select()
-    .single();
+  const dbUpdates = taskToDb(updates);
+  await serviceUpdate('tasks', dbUpdates, { id });
+  // Re-fetch to return fresh data
+  const { data } = await supabase.from('tasks').select('*').eq('id', id).single();
   return data ? dbToTask(data) : null;
 }
 
@@ -488,16 +503,17 @@ export async function acceptBid(bidId: string): Promise<boolean> {
   const agentAddress = agentData?.ergo_address as string || '';
 
   // Update task with accepted bid info and transition to in_progress
-  await supabase.from('tasks').update({
+  await serviceUpdate('tasks', {
     status: 'in_progress',
     assigned_agent_id: bid.agentId,
     assigned_agent_name: bid.agentName,
     accepted_bid_id: bid.id,
     accepted_agent_address: agentAddress,
-  }).eq('id', bid.taskId);
+  }, { id: bid.taskId });
 
   // Mark accepted bid, reject others
-  await supabase.from('bids').update({ status: 'accepted' }).eq('id', bidId);
+  await serviceUpdate('bids', { status: 'accepted' }, { id: bidId });
+  // Reject other bids (can't use neq with serviceUpdate, use direct for this)
   await supabase.from('bids').update({ status: 'rejected' }).eq('task_id', bid.taskId).neq('id', bidId);
 
   // Minor EGO score boost for getting a bid accepted
@@ -735,14 +751,11 @@ export async function updateAgentStats(agentId: string, egoDelta: number, descri
 }
 
 export async function updateTaskMetadata(taskId: string, metadata: Record<string, string>): Promise<void> {
-  await supabase.from('tasks').update({ metadata }).eq('id', taskId);
+  await serviceUpdate('tasks', { metadata }, { id: taskId });
 }
 
 export async function updateTaskEscrow(taskId: string, escrowTxId: string, metadata: Record<string, string>): Promise<void> {
-  await supabase.from('tasks').update({
-    escrow_tx_id: escrowTxId,
-    metadata,
-  }).eq('id', taskId);
+  await serviceUpdate('tasks', { escrow_tx_id: escrowTxId, metadata }, { id: taskId });
 }
 
 // ============================================================

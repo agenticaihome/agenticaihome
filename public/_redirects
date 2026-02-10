@@ -1,2 +1,10 @@
-/agents/* /agents/placeholder/index.html 200
-/tasks/* /tasks/placeholder/index.html 200
+# SPA fallback for dynamic routes — Cloudflare Pages
+# Specific routes first (higher priority)
+/tasks/detail /tasks/detail.html 200
+/tasks/create /tasks/create.html 200
+/tasks/analytics /tasks/analytics.html 200
+/agents/register /agents/register.html 200
+
+# Dynamic catch-all routes (agent/task detail by ID)
+/agents/:id /agents/placeholder.html 200
+/tasks/:id /tasks/placeholder.html 200

@@ -35,67 +35,32 @@ import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, PLATFORM_FEE_ADDRESS } from './const
  * 3. Platform fee: Always deducted and sent to protocol treasury
  */
 export const MULTISIG_ESCROW_ERGOSCRIPT = `{
-  // Extract configuration from registers
-  val participantKeys = SELF.R4[Coll[Coll[Byte]]].get
-  val agentPkBytes = SELF.R5[Coll[Byte]].get
-  val deadline = SELF.R6[Int].get
-  val feePkBytes = SELF.R7[Coll[Byte]].get
-  val taskId = SELF.R8[Coll[Byte]].get
-  val config = SELF.R9[Coll[Int]].get
+  val clientPk = SELF.R4[SigmaProp].get
+  val agentPk = SELF.R5[SigmaProp].get  
+  val mediatorPk = SELF.R6[SigmaProp].get
+  val deadline = SELF.R7[Int].get
+  val agentPkBytes = SELF.R8[Coll[Byte]].get
+  val feePkBytes = SELF.R9[Coll[Byte]].get
   
-  // Parse configuration
-  val requiredSigs = config(0)
-  val totalParticipants = config(1)
-  val timeoutRefundIndex = config(2) // Which participant gets refund (usually 0 = client)
-  
-  // Financial calculations
-  val feePercent = 1L
-  val feeDenom = 100L
   val escrowValue = SELF.value
-  val protocolFee = escrowValue * feePercent / feeDenom
+  val feePercent = 100L  // 1% in basis points  
+  val protocolFee = escrowValue * feePercent / 10000L
   val txFee = 1100000L
   val agentPayout = escrowValue - protocolFee - txFee
   
-  // Validate configuration
-  val validConfig = requiredSigs > 0 && 
-                   requiredSigs <= totalParticipants &&
-                   totalParticipants == participantKeys.size &&
-                   timeoutRefundIndex >= 0 &&
-                   timeoutRefundIndex < totalParticipants
-  
-  // Convert participant keys to SigmaProps for signature checking
-  def keyToSigmaProp(keyBytes: Coll[Byte]): SigmaProp = {
-    proveDlog(decodePoint(keyBytes))
+  // Release: any 2-of-3 approve + correct outputs
+  val validOutputs = OUTPUTS.exists { (o: Box) => 
+    o.propositionBytes == agentPkBytes && o.value >= agentPayout
+  } && OUTPUTS.exists { (o: Box) =>
+    o.propositionBytes == feePkBytes && o.value >= protocolFee  
   }
   
-  // Count valid signatures from participants
-  def countValidSignatures(): Int = {
-    val signatures = participantKeys.map(keyToSigmaProp)
-    signatures.fold(0, { (acc: Int, sig: SigmaProp) => 
-      if (sig) acc + 1 else acc 
-    })
-  }
+  val release = atLeast(2, Coll(clientPk, agentPk, mediatorPk)) && sigmaProp(validOutputs)
   
-  // Multi-signature approval: N-of-M participants agree + valid outputs
-  val multiSigApproval = {
-    validConfig &&
-    countValidSignatures() >= requiredSigs &&
-    OUTPUTS.exists { (o: Box) =>
-      o.propositionBytes == agentPkBytes && o.value >= agentPayout
-    } &&
-    OUTPUTS.exists { (o: Box) =>
-      o.propositionBytes == feePkBytes && o.value >= protocolFee
-    }
-  }
+  // Timeout refund: client can reclaim after deadline
+  val refund = clientPk && sigmaProp(HEIGHT > deadline)
   
-  // Timeout refund: After deadline, designated participant can reclaim
-  val timeoutReclaim = {
-    validConfig &&
-    sigmaProp(HEIGHT > deadline) &&
-    keyToSigmaProp(participantKeys(timeoutRefundIndex))
-  }
-  
-  multiSigApproval || timeoutReclaim
+  release || refund
 }`;
 
 /**

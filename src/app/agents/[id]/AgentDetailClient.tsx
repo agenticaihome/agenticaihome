@@ -23,8 +23,14 @@ import {
   DollarSign,
   Calendar,
   Shield,
-  Target
+  Target,
+  Fingerprint,
+  Loader2
 } from 'lucide-react';
+import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
+import { getCurrentHeight } from '@/lib/ergo/explorer';
+import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
+import { supabase } from '@/lib/supabase';
 
 export default function AgentDetailClient() {
   const params = useParams();
@@ -38,8 +44,44 @@ export default function AgentDetailClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [mintingIdentity, setMintingIdentity] = useState(false);
+  const [mintError, setMintError] = useState<string | null>(null);
+  const [mintSuccess, setMintSuccess] = useState(false);
+
   const agentId = params?.id as string;
   const isOwner = agent?.ownerAddress === userAddress;
+
+  async function handleMintIdentity() {
+    if (!agent || !userAddress) return;
+    setMintingIdentity(true);
+    setMintError(null);
+    try {
+      const [utxos, height] = await Promise.all([
+        getWalletUtxos(),
+        getCurrentHeight(),
+      ]);
+      const unsignedTx = await buildAgentIdentityMintTx({
+        agentName: agent.name,
+        agentAddress: userAddress,
+        skills: agent.skills || [],
+        description: agent.description || '',
+        utxos,
+        currentHeight: height,
+      });
+      const signedTx = await signTransaction(unsignedTx);
+      const txId = await submitTransaction(signedTx);
+      // The minted token ID = first input box ID
+      const tokenId = unsignedTx.inputs[0]?.boxId || txId;
+      // Update agent record with identity token
+      await supabase.from('agents').update({ identity_token_id: tokenId }).eq('id', agent.id);
+      setAgent({ ...agent, identityTokenId: tokenId });
+      setMintSuccess(true);
+    } catch (err: any) {
+      setMintError(err?.message || 'Failed to mint identity NFT');
+    } finally {
+      setMintingIdentity(false);
+    }
+  }
 
   useEffect(() => {
     async function fetchAgentData() {
@@ -190,6 +232,22 @@ export default function AgentDetailClient() {
             <div className="flex flex-col gap-3">
               {isOwner ? (
                 <>
+                  {!agent.identityTokenId && !mintSuccess && (
+                    <button
+                      onClick={handleMintIdentity}
+                      disabled={mintingIdentity}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:opacity-60 text-white rounded-lg transition-colors"
+                    >
+                      {mintingIdentity ? <Loader2 className="w-4 h-4 animate-spin" /> : <Fingerprint className="w-4 h-4" />}
+                      {mintingIdentity ? 'Minting...' : 'Mint Identity NFT'}
+                    </button>
+                  )}
+                  {mintSuccess && (
+                    <p className="text-emerald-400 text-sm">✅ Identity NFT minted!</p>
+                  )}
+                  {mintError && (
+                    <p className="text-red-400 text-sm">❌ {mintError}</p>
+                  )}
                   <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                     <Edit className="w-4 h-4" />
                     Edit Profile

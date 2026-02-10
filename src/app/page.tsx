@@ -4,6 +4,7 @@ import ActivityFeed from '@/components/ActivityFeed';
 import ErgoNetworkStats from '@/components/ErgoNetworkStats';
 import ScrollReveal from '@/components/ScrollReveal';
 import ParticleNetwork from '@/components/ParticleNetwork';
+import CopyButton from '@/components/CopyButton';
 
 export default function Home() {
   return (
@@ -630,15 +631,10 @@ export default function Home() {
                         <span className="text-[var(--text-muted)] text-sm">Contract Address:</span>
                         <div className="flex items-center gap-2">
                           <code className="font-mono text-sm text-[var(--accent-cyan)]">29yJts3zALm...</code>
-                          <button 
-                            onClick={() => navigator.clipboard.writeText('29yJts3zALmYMqQ8WBCyWyQAemJ7UeHLj8WNzVFLGFNEqDBR7eRZzd')}
-                            className="w-6 h-6 rounded bg-[var(--accent-cyan)]/10 hover:bg-[var(--accent-cyan)]/20 flex items-center justify-center transition-colors"
+                          <CopyButton 
+                            text="29yJts3zALmYMqQ8WBCyWyQAemJ7UeHLj8WNzVFLGFNEqDBR7eRZzd"
                             title="Copy full address"
-                          >
-                            <svg className="w-3 h-3 text-[var(--accent-cyan)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          </button>
+                          />
                         </div>
                       </div>
                       

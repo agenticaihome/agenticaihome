@@ -19,13 +19,14 @@ import {
   submitDeliverable,
   type Deliverable,
 } from '@/lib/deliverables';
-import { transitionTaskStatus } from '@/lib/supabaseStore';
+import { transitionTaskStatus, acceptBid } from '@/lib/supabaseStore';
 import { logEvent } from '@/lib/events';
 import { updateTaskMetadata, updateTaskEscrow, updateAgentStats } from '@/lib/supabaseStore';
+import { validateUserAction, getAvailableActions, TaskStatus } from '@/lib/taskLifecycle';
 
 export default function TaskDetailClient() {
   const params = useParams();
-  const { getTask, getTaskBids, getAgent, acceptBidData, refreshTasks, refreshBids, updateTaskData } = useData();
+  const { getTask, getTaskBids, getAgent, refreshTasks, refreshBids, updateTaskData } = useData();
   const { userAddress, isAuthenticated } = useWallet();
   const [showBidForm, setShowBidForm] = useState(false);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
@@ -96,6 +97,12 @@ export default function TaskDetailClient() {
 
   const isCreator = userAddress === task.creatorAddress;
   const isAssignedAgent = userAddress && (task.acceptedAgentAddress === userAddress || (task.assignedAgentId && assignedAgent?.ergoAddress === userAddress));
+  
+  // Get user role for UI state management
+  const userRole: 'poster' | 'agent' | 'viewer' = isCreator ? 'poster' : (isAssignedAgent ? 'agent' : 'viewer');
+  
+  // Get available actions for this user and task state
+  const availableActions = getAvailableActions(task.status as TaskStatus, userRole);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -109,17 +116,40 @@ export default function TaskDetailClient() {
 
   const handleAcceptBid = async (bidId: string) => {
     if (confirm('Accept this bid? This will assign the task to the agent.')) {
-      const success = await acceptBidData(bidId);
-      if (success) {
-        logEvent({
-          type: 'bid_accepted',
-          message: `Bid accepted for task "${task.title}"`,
-          taskId,
-          actor: userAddress || 'unknown',
-          metadata: { bidId },
-        });
-        await refreshTaskData();
-        refreshDeliverables();
+      setActionLoading('accept-bid');
+      try {
+        // Validate user can perform this action
+        const validation = validateUserAction(
+          task.status as TaskStatus,
+          'in_progress',
+          userAddress || '',
+          task.creatorAddress,
+          task.acceptedAgentAddress
+        );
+        
+        if (!validation.valid) {
+          alert(validation.reason || 'You cannot accept bids on this task');
+          return;
+        }
+
+        const success = await acceptBid(bidId);
+        if (success) {
+          logEvent({
+            type: 'bid_accepted',
+            message: `Bid accepted for task "${task.title}"`,
+            taskId,
+            actor: userAddress || 'unknown',
+            metadata: { bidId },
+          });
+          await refreshTaskData();
+          refreshDeliverables();
+        } else {
+          alert('Failed to accept bid');
+        }
+      } catch (err) {
+        alert(err instanceof Error ? err.message : 'Failed to accept bid');
+      } finally {
+        setActionLoading('');
       }
     }
   };
@@ -253,7 +283,7 @@ export default function TaskDetailClient() {
   };
 
   const canPlaceBid = isAuthenticated && userAddress && (task.status === 'open' || task.status === 'funded') && !isCreator;
-  const canAcceptBids = isCreator && (task.status === 'open' || task.status === 'funded');
+  const canAcceptBids = isCreator && (task.status === 'open' || task.status === 'funded') && bids.length > 0;
 
   const latestDeliverable = deliverables.length > 0 ? deliverables[deliverables.length - 1] : null;
 
@@ -349,7 +379,7 @@ export default function TaskDetailClient() {
             )}
 
             {/* Work Submission Form (for assigned agent) */}
-            {isAssignedAgent && (task.status === 'in_progress' || task.status === 'assigned') && (
+            {isAssignedAgent && task.status === 'in_progress' && (
               <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
                 <h2 className="font-semibold text-lg text-white mb-4">Submit Your Work</h2>
                 {!showSubmitForm ? (
@@ -589,7 +619,7 @@ export default function TaskDetailClient() {
                       key={bid.id}
                       bid={bid}
                       onAccept={canAcceptBids ? handleAcceptBid : undefined}
-                      canAccept={canAcceptBids}
+                      canAccept={canAcceptBids && actionLoading !== 'accept-bid'}
                     />
                   ))}
                 </div>

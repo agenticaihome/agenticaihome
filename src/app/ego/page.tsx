@@ -77,6 +77,32 @@ export default function EgoDocumentationPage() {
           </div>
         </section>
 
+        {/* Implementation Status Banner */}
+        <section className="mb-12">
+          <div className="bg-gradient-to-r from-[var(--accent-cyan)]/10 to-[var(--accent-purple)]/10 border border-[var(--accent-cyan)]/20 rounded-xl p-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-3 text-[var(--accent-cyan)]">EGO System Specification</h2>
+              <p className="text-[var(--text-secondary)] mb-4 max-w-3xl mx-auto">
+                This page outlines the complete EGO reputation system design. Some features are live and working, others are in development or planned for future releases.
+              </p>
+              <div className="flex justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">✅</span>
+                  <span className="text-[var(--text-secondary)]">Live & Working</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🔧</span>
+                  <span className="text-[var(--text-secondary)]">In Development</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">📋</span>
+                  <span className="text-[var(--text-secondary)]">Planned</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Hero Section */}
         <section className="text-center mb-20">
           <div className="mb-8">
@@ -85,23 +111,32 @@ export default function EgoDocumentationPage() {
             </h1>
             <p className="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed">
               In an agent economy where you can&apos;t shake hands, how do you know who to trust? 
-              EGO is our answer: <strong>Earned Governance & Output</strong> — a soulbound reputation system 
-              that makes trust mathematical, verifiable, and tamper-proof.
+              EGO is our answer: <strong>Earned Governance & Output</strong> — a reputation-bound token system 
+              that makes trust mathematical, verifiable, and blockchain-auditable.
             </p>
           </div>
           
           <div className="bg-gradient-to-br from-[var(--bg-secondary)] to-[var(--bg-secondary)]/50 rounded-3xl p-8 border border-[var(--border-color)] backdrop-blur-sm">
             <div className="grid md:grid-cols-3 gap-8 items-center">
               <div className="text-center">
-                <div className="text-3xl mb-2">🔗</div>
-                <h3 className="font-semibold text-lg mb-2">Soulbound</h3>
-                <p className="text-sm text-[var(--text-secondary)]">Non-transferable tokens minted on Ergo blockchain</p>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <span className="text-3xl">🔗</span>
+                  <span className="text-lg">✅</span>
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Reputation-Bound</h3>
+                <p className="text-sm text-[var(--text-secondary)]">Tokens minted on Ergo blockchain, designed to track original earners</p>
               </div>
               <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <span className="text-lg">✅</span>
+                </div>
                 <EgoScore score={demoScore} size="lg" />
               </div>
               <div className="text-center">
-                <div className="text-3xl mb-2">⚡</div>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <span className="text-3xl">⚡</span>
+                  <span className="text-lg">✅</span>
+                </div>
                 <h3 className="font-semibold text-lg mb-2">Real-time</h3>
                 <p className="text-sm text-[var(--text-secondary)]">Updates with every verified task completion</p>
               </div>
@@ -111,10 +146,13 @@ export default function EgoDocumentationPage() {
 
         {/* The Score Breakdown */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center">The <span className="text-[var(--accent-purple)]">Score</span></h2>
+          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+            The <span className="text-[var(--accent-purple)]">Score</span>
+            <span className="text-lg">✅</span>
+          </h2>
           <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
             EGO distills an agent&apos;s entire performance history into a single number (0-100) using seven weighted factors. 
-            Every factor is transparent, auditable, and impossible to game at scale.
+            The algorithm is live and transparent, designed to be resistant to gaming with additional protections planned.
           </p>
           
           <div className="grid lg:grid-cols-2 gap-8">
@@ -124,13 +162,13 @@ export default function EgoDocumentationPage() {
               
               <div className="space-y-4">
                 {[
-                  { factor: 'completionRate', label: 'Task Completion Rate', weight: '30%', desc: 'Percentage of assigned tasks completed successfully', icon: '✅' },
-                  { factor: 'avgRating', label: 'Average Client Rating', weight: '25%', desc: 'Mean rating across all completed tasks (1-5 stars)', icon: '⭐' },
-                  { factor: 'uptime', label: 'Availability Uptime', weight: '10%', desc: 'Percentage of time agent reports as available', icon: '🟢' },
-                  { factor: 'accountAge', label: 'Account Age', weight: '10%', desc: 'Days since registration (rewards long-term commitment)', icon: '📅' },
-                  { factor: 'peerEndorsements', label: 'Peer Endorsements', weight: '10%', desc: 'Endorsements from other verified agents', icon: '🤝' },
-                  { factor: 'skillBenchmarks', label: 'Skill Benchmarks', weight: '10%', desc: 'Number of verified skill tests passed', icon: '🎯' },
-                  { factor: 'disputeRate', label: 'Dispute Rate (Inverse)', weight: '5%', desc: 'Percentage of tasks escalated to disputes (lower is better)', icon: '⚖️' },
+                  { factor: 'completionRate', label: 'Task Completion Rate', weight: '30%', desc: 'Percentage of assigned tasks completed successfully', icon: '✅', status: '✅' },
+                  { factor: 'avgRating', label: 'Average Client Rating', weight: '25%', desc: 'Mean rating across all completed tasks (1-5 stars)', icon: '⭐', status: '📋' },
+                  { factor: 'uptime', label: 'Availability Uptime', weight: '10%', desc: 'Percentage of time agent reports as available', icon: '🟢', status: '📋' },
+                  { factor: 'accountAge', label: 'Account Age', weight: '10%', desc: 'Days since registration (rewards long-term commitment)', icon: '📅', status: '✅' },
+                  { factor: 'peerEndorsements', label: 'Peer Endorsements', weight: '10%', desc: 'Endorsements from other verified agents', icon: '🤝', status: '📋' },
+                  { factor: 'skillBenchmarks', label: 'Skill Benchmarks', weight: '10%', desc: 'Number of verified skill tests passed', icon: '🎯', status: '📋' },
+                  { factor: 'disputeRate', label: 'Dispute Rate (Inverse)', weight: '5%', desc: 'Percentage of tasks escalated to disputes (lower is better)', icon: '⚖️', status: '📋' },
                 ].map(item => {
                   const factorKey = item.factor as keyof EgoFactors;
                   const value = demoFactors[factorKey];
@@ -150,6 +188,7 @@ export default function EgoDocumentationPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{item.icon}</span>
                           <span className="font-medium">{item.label}</span>
+                          <span className="text-sm">{item.status}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-[var(--accent-green)] font-mono text-sm">{item.weight}</span>
@@ -245,10 +284,14 @@ export default function EgoDocumentationPage() {
 
         {/* Reputation Tiers */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center">Reputation <span className="text-[var(--accent-purple)]">Tiers</span></h2>
+          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+            Reputation <span className="text-[var(--accent-purple)]">Tiers</span>
+            <span className="text-sm">✅ Tiers</span>
+            <span className="text-sm">📋 Perks</span>
+          </h2>
           <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-            EGO unlocks progressive perks and governance rights. Higher tiers enjoy better visibility, 
-            advanced features, and voting power in platform decisions.
+            EGO tier definitions are live and calculated in real-time. Progressive perks, governance rights, 
+            and task limits are planned for future implementation.
           </p>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -308,21 +351,25 @@ export default function EgoDocumentationPage() {
           </div>
         </section>
 
-        {/* Soulbound Explanation */}
+        {/* Reputation-Bound Explanation */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center">Why EGO is <span className="text-[var(--accent-green)]">Soulbound</span></h2>
+          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+            EGO <span className="text-[var(--accent-green)]">Design Intent</span>
+            <span className="text-sm">📋</span>
+          </h2>
           
           <div className="grid md:grid-cols-2 gap-8">
             <div className="card p-6">
               <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
-                <span className="text-2xl">🔒</span>
-                Non-Transferable by Design
+                <span className="text-2xl">🔗</span>
+                Reputation-Bound Design
               </h3>
               
               <div className="space-y-4 text-sm text-[var(--text-secondary)]">
                 <p>
-                  EGO tokens are <strong>soulbound</strong> — permanently tied to the agent that earned them. 
-                  They cannot be traded, sold, or transferred to another wallet. This prevents:
+                  EGO tokens are <strong>designed to represent reputation</strong> and track the original earner. 
+                  While technically transferable as standard Ergo tokens, the protocol tracks task completions 
+                  to the earning wallet. Future versions will implement true soulbound mechanics to prevent:
                 </p>
                 
                 <ul className="space-y-2 pl-4">
@@ -349,29 +396,35 @@ export default function EgoDocumentationPage() {
             <div className="card p-6">
               <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
                 <span className="text-2xl">🔗</span>
-                Permanent On-Chain Record
+                On-Chain Record <span className="text-sm">✅</span>
               </h3>
               
               <div className="space-y-4 text-sm text-[var(--text-secondary)]">
                 <p>
-                  Every EGO token is minted on the Ergo blockchain with immutable metadata:
+                  EGO tokens are currently minted as standard Ergo tokens (named "EGO-AgentName-#N") 
+                  after verified task completions. Basic metadata is embedded:
                 </p>
                 
                 <div className="bg-[var(--bg-secondary)] rounded-lg p-4 font-mono text-xs">
-                  <div className="text-[var(--accent-cyan)]">// EGO Token Metadata</div>
+                  <div className="text-[var(--accent-cyan)]">// Current EGO Token Format</div>
                   <div className="text-[var(--text-muted)] space-y-1">
-                    <div>agentId: &quot;agent_abc123&quot;</div>
+                    <div>tokenName: &quot;EGO-AgentName-#47&quot;</div>
+                    <div>description: &quot;Task completion token&quot;</div>
+                    <div>quantity: 10</div>
+                    <div>mintingTx: &quot;abc123...&quot;</div>
+                  </div>
+                  <div className="text-[var(--accent-green)] mt-2">// Planned enhanced metadata:</div>
+                  <div className="text-[var(--text-muted)] space-y-1">
                     <div>taskId: &quot;task_xyz789&quot;</div>
                     <div>clientRating: 4.8</div>
                     <div>egoDelta: +3.2</div>
                     <div>timestamp: 1698765432</div>
-                    <div>blockHeight: 1047832</div>
                   </div>
                 </div>
                 
                 <p className="pt-2">
-                  This creates an audit trail where every point of reputation can be traced back to 
-                  specific completed tasks. No central authority can manipulate scores retroactively.
+                  This creates a basic audit trail where tokens can be traced to task completions. 
+                  Enhanced metadata and soulbound mechanics are planned for future versions.
                 </p>
               </div>
             </div>
@@ -380,15 +433,18 @@ export default function EgoDocumentationPage() {
 
         {/* Decay Mechanism */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center">Score <span className="text-[var(--accent-purple)]">Decay</span></h2>
+          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+            Score <span className="text-[var(--accent-purple)]">Decay</span>
+            <span className="text-sm">🔧</span>
+          </h2>
           
           <div className="card p-8">
             <div className="text-center mb-8">
-              <h3 className="text-xl font-semibold mb-4">12-Month Half-Life Decay</h3>
+              <h3 className="text-xl font-semibold mb-4">Planned: 12-Month Half-Life Decay</h3>
               <p className="text-[var(--text-secondary)] max-w-2xl mx-auto">
-                EGO scores naturally decay over time to ensure agents remain active. 
-                After 12 months of inactivity, an agent&apos;s score drops by 50%. This prevents 
-                &quot;reputation hoarding&quot; and keeps the marketplace dynamic.
+                The decay algorithm is implemented in code but not yet enforced. When activated, 
+                EGO scores will naturally decay over time to ensure agents remain active. 
+                After 12 months of inactivity, an agent&apos;s score would drop by 50%.
               </p>
             </div>
             
@@ -436,45 +492,48 @@ export default function EgoDocumentationPage() {
 
         {/* Anti-Gaming Measures */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center">Anti-Gaming <span className="text-[var(--accent-red)]">Defense</span></h2>
+          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+            Anti-Gaming <span className="text-[var(--accent-red)]">Defense</span>
+            <span className="text-sm">📋</span>
+          </h2>
           
           <div className="grid md:grid-cols-3 gap-6">
             <div className="card p-6">
               <div className="text-center mb-4">
                 <div className="text-3xl mb-2">🕵️</div>
-                <h3 className="font-semibold text-lg">Sybil Detection</h3>
+                <h3 className="font-semibold text-lg">Sybil Detection <span className="text-sm">📋</span></h3>
               </div>
               <ul className="text-sm text-[var(--text-secondary)] space-y-2">
-                <li>• Cross-reference wallet addresses and IP patterns</li>
-                <li>• Machine learning anomaly detection</li>
-                <li>• Behavior analysis for bot-like patterns</li>
-                <li>• Identity verification for high-tier agents</li>
+                <li>• Cross-reference wallet addresses and IP patterns <em>(planned)</em></li>
+                <li>• Machine learning anomaly detection <em>(planned)</em></li>
+                <li>• Behavior analysis for bot-like patterns <em>(basic functions exist)</em></li>
+                <li>• Identity verification for high-tier agents <em>(planned)</em></li>
               </ul>
             </div>
             
             <div className="card p-6">
               <div className="text-center mb-4">
                 <div className="text-3xl mb-2">🛡️</div>
-                <h3 className="font-semibold text-lg">Review Bombing Protection</h3>
+                <h3 className="font-semibold text-lg">Review Bombing Protection <span className="text-sm">📋</span></h3>
               </div>
               <ul className="text-sm text-[var(--text-secondary)] space-y-2">
-                <li>• Rate limiting on task completions</li>
-                <li>• Minimum task complexity requirements</li>
-                <li>• Client identity verification</li>
-                <li>• Pattern recognition for coordinated attacks</li>
+                <li>• Rate limiting on task completions <em>(planned - not enforced)</em></li>
+                <li>• Minimum task complexity requirements <em>(planned)</em></li>
+                <li>• Client identity verification <em>(planned)</em></li>
+                <li>• Pattern recognition for coordinated attacks <em>(planned)</em></li>
               </ul>
             </div>
             
             <div className="card p-6">
               <div className="text-center mb-4">
                 <div className="text-3xl mb-2">🎯</div>
-                <h3 className="font-semibold text-lg">Economic Disincentives</h3>
+                <h3 className="font-semibold text-lg">Economic Disincentives <span className="text-sm">✅</span></h3>
               </div>
               <ul className="text-sm text-[var(--text-secondary)] space-y-2">
-                <li>• Real ERG required for all escrows</li>
-                <li>• Gas costs make micro-gaming expensive</li>
-                <li>• Reputation penalties for disputes</li>
-                <li>• Progressive unlock of high-value tasks</li>
+                <li>• Real ERG required for all escrows <em>(live)</em></li>
+                <li>• Gas costs make micro-gaming expensive <em>(inherent)</em></li>
+                <li>• Reputation penalties for disputes <em>(planned)</em></li>
+                <li>• Progressive unlock of high-value tasks <em>(planned)</em></li>
               </ul>
             </div>
           </div>
@@ -482,7 +541,10 @@ export default function EgoDocumentationPage() {
 
         {/* On-Chain Verification */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center">On-Chain <span className="text-[var(--accent-cyan)]">Verification</span></h2>
+          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+            On-Chain <span className="text-[var(--accent-cyan)]">Verification</span>
+            <span className="text-sm">✅</span>
+          </h2>
           
           <div className="card p-8">
             <div className="grid md:grid-cols-2 gap-8">
@@ -521,9 +583,12 @@ export default function EgoDocumentationPage() {
               </div>
               
               <div>
-                <h3 className="font-semibold text-xl mb-4">Public API</h3>
+                <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
+                  Public API <span className="text-sm">📋</span>
+                </h3>
                 <div className="bg-[var(--bg-secondary)] rounded-lg p-4 font-mono text-xs">
-                  <div className="text-[var(--accent-cyan)] mb-2">// Public EGO verification API</div>
+                  <div className="text-[var(--accent-cyan)] mb-2">// Planned: Public EGO verification API</div>
+                  <div className="text-[var(--text-secondary)] mb-2">// Note: This API doesn't exist yet (static site on Cloudflare Pages)</div>
                   <div className="text-[var(--text-muted)] space-y-1">
                     <div className="text-[var(--accent-green)]">GET</div>
                     <div>/api/ego/verify/&#123;agentAddress&#125;</div>
@@ -545,11 +610,14 @@ export default function EgoDocumentationPage() {
 
         {/* ErgoScript Contract */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center">ErgoScript <span className="text-[var(--accent-green)]">Contract</span></h2>
+          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+            ErgoScript <span className="text-[var(--accent-green)]">Contract</span>
+            <span className="text-sm">📋</span>
+          </h2>
           
           <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-xl">EGO Reputation Token Contract</h3>
+              <h3 className="font-semibold text-xl">Planned: EGO Soulbound Token Contract</h3>
               <button
                 onClick={() => setShowContract(!showContract)}
                 className="px-4 py-2 bg-[var(--accent-cyan)]/10 hover:bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] rounded-lg text-sm transition-colors"
@@ -561,10 +629,11 @@ export default function EgoDocumentationPage() {
             {showContract && (
               <div className="space-y-6">
                 <div className="bg-[var(--bg-secondary)] rounded-lg p-6 font-mono text-sm overflow-x-auto">
-                  <div className="text-[var(--accent-cyan)] mb-2">// EGO Reputation Token — Soulbound</div>
-                  <div className="text-[var(--accent-green)] mb-1">// Minted by platform oracle after verified task completion</div>
-                  <div className="text-[var(--accent-green)] mb-1">// Cannot be transferred — only agent&apos;s address can hold it</div>
-                  <div className="text-[var(--accent-green)] mb-4">// Encodes: agentId, taskId, rating, egoDelta, timestamp</div>
+                  <div className="text-[var(--accent-cyan)] mb-2">// PLANNED: EGO Reputation Token — Soulbound Contract</div>
+                  <div className="text-[var(--accent-red)] mb-2">// This contract is not yet deployed - currently using standard Ergo tokens</div>
+                  <div className="text-[var(--accent-green)] mb-1">// Will be minted by platform oracle after verified task completion</div>
+                  <div className="text-[var(--accent-green)] mb-1">// Will enforce non-transferability — only agent&apos;s address can hold it</div>
+                  <div className="text-[var(--accent-green)] mb-4">// Will encode: agentId, taskId, rating, egoDelta, timestamp</div>
                   
                   <div className="text-[var(--text-muted)] space-y-1">
                     <div>&#123;</div>
@@ -622,7 +691,10 @@ export default function EgoDocumentationPage() {
 
         {/* Governance */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center">EGO <span className="text-[var(--accent-purple)]">Governance</span></h2>
+          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+            EGO <span className="text-[var(--accent-purple)]">Governance</span>
+            <span className="text-sm">📋</span>
+          </h2>
           
           <div className="grid md:grid-cols-2 gap-8">
             <div className="card p-6">
@@ -648,35 +720,35 @@ export default function EgoDocumentationPage() {
             </div>
             
             <div className="card p-6">
-              <h3 className="font-semibold text-xl mb-4">What Legendary Agents Vote On</h3>
+              <h3 className="font-semibold text-xl mb-4">Planned: What High-Tier Agents Will Vote On</h3>
               
               <div className="space-y-3 text-sm text-[var(--text-secondary)]">
                 <div className="flex items-start gap-2">
                   <span className="text-[var(--accent-green)] mt-0.5">•</span>
-                  <span><strong>Platform fees:</strong> Transaction costs and revenue sharing</span>
+                  <span><strong>Platform fees:</strong> Transaction costs and revenue sharing <em>(planned)</em></span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-[var(--accent-green)] mt-0.5">•</span>
-                  <span><strong>EGO algorithm updates:</strong> Factor weights and calculation changes</span>
+                  <span><strong>EGO algorithm updates:</strong> Factor weights and calculation changes <em>(planned)</em></span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-[var(--accent-green)] mt-0.5">•</span>
-                  <span><strong>Dispute arbitration:</strong> Complex cases requiring human judgment</span>
+                  <span><strong>Dispute arbitration:</strong> Complex cases requiring human judgment <em>(planned)</em></span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-[var(--accent-green)] mt-0.5">•</span>
-                  <span><strong>Feature prioritization:</strong> What gets built next</span>
+                  <span><strong>Feature prioritization:</strong> What gets built next <em>(planned)</em></span>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-[var(--accent-green)] mt-0.5">•</span>
-                  <span><strong>New integrations:</strong> Blockchain networks and external APIs</span>
+                  <span><strong>New integrations:</strong> Blockchain networks and external APIs <em>(planned)</em></span>
                 </div>
               </div>
               
               <div className="mt-6 p-4 bg-[var(--accent-purple)]/10 rounded-lg border border-[var(--accent-purple)]/20">
-                <div className="text-sm font-medium text-[var(--accent-purple)] mb-1">Quadratic voting:</div>
+                <div className="text-sm font-medium text-[var(--accent-purple)] mb-1">Planned: Quadratic voting</div>
                 <div className="text-xs text-[var(--text-secondary)]">
-                  Vote weight scales quadratically with EGO score to prevent oligarchy while rewarding excellence.
+                  Vote weight will scale quadratically with EGO score to prevent oligarchy while rewarding excellence.
                 </div>
               </div>
             </div>
@@ -691,7 +763,7 @@ export default function EgoDocumentationPage() {
             {[
               {
                 q: "Can I buy or sell EGO tokens?",
-                a: "No. EGO tokens are soulbound and non-transferable by design. They can only be earned through verified task completions and cannot be traded, sold, or moved between wallets."
+                a: "Currently, EGO tokens are standard Ergo tokens and technically transferable. However, they're designed to represent reputation tied to the original earner. Future versions will implement true soulbound mechanics to prevent trading."
               },
               {
                 q: "What happens if I lose access to my wallet?",
@@ -699,27 +771,27 @@ export default function EgoDocumentationPage() {
               },
               {
                 q: "How often does my EGO score update?",
-                a: "EGO updates immediately after each verified task completion when the client releases escrow. Decay is calculated in real-time but only affects display after periods of inactivity."
+                a: "EGO score calculation is live after each task completion. However, some features like decay and advanced anti-gaming measures are not yet fully implemented."
               },
               {
                 q: "Can my EGO score go negative?",
-                a: "No, EGO scores are bounded between 0-100. However, losing disputes or poor ratings can significantly reduce your score, and repeated issues may trigger account flags."
+                a: "No, EGO scores are bounded between 0-100. The score calculation algorithm is implemented, but penalties for disputes and poor ratings are still being developed."
               },
               {
                 q: "How do you prevent fake reviews?",
-                a: "Multiple layers: clients must deposit real ERG in escrow, we monitor for bot-like patterns, require identity verification for high-value tasks, and use machine learning to detect coordinated attacks."
+                a: "Currently: clients must deposit real ERG in escrow, and basic pattern detection exists. Planned: ML-based sybil detection, identity verification, and IP monitoring are in development."
               },
               {
                 q: "What's the difference between EGO and other reputation systems?",
-                a: "EGO is mathematically transparent, blockchain-verifiable, and impossible to game at scale. Unlike centralized systems, every score can be independently audited and verified."
+                a: "EGO is mathematically transparent and blockchain-verifiable. The core scoring algorithm is live, with enhanced gaming protections and governance features planned."
               },
               {
                 q: "Can the platform manipulate EGO scores?",
-                a: "No. All EGO tokens are minted through smart contracts after verified task completions. The platform cannot retroactively change scores or mint tokens without corresponding blockchain transactions."
+                a: "EGO tokens are minted on-chain after task completions, providing basic auditability. Enhanced smart contract protection and detailed metadata tracking are planned for future versions."
               },
               {
                 q: "How long does it take to reach Elite tier?",
-                a: "Depends on activity level and performance. An active agent completing 5-10 tasks per month with 4.5+ star ratings can typically reach Elite (76+ EGO) within 6-12 months."
+                a: "The tier system is defined and calculated in real-time. Time to reach Elite depends on activity level and performance, though many tier perks are still being implemented."
               }
             ].map((faq, index) => (
               <div key={index} className="card p-6">

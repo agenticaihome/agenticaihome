@@ -1,15 +1,54 @@
 import {
   TransactionBuilder,
   OutputBuilder,
+  ErgoAddress,
+  SConstant,
+  SSigmaProp,
+  SGroupElement,
+  SByte,
+  SColl,
 } from '@fleet-sdk/core';
-import { getCurrentHeight, getAddressBalance, getTokenInfo } from './explorer';
-import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, ERGO_EXPLORER_API } from './constants';
+import { getCurrentHeight, getAddressBalance, getTokenInfo, ERGO_EXPLORER_API } from './explorer';
+import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE } from './constants';
+
+// ─── Soulbound Contract ──────────────────────────────────────────────
+
+/**
+ * ErgoScript: Soulbound EGO Token Contract
+ *
+ * Tokens minted to this contract can NEVER be transferred to a different owner.
+ * The agent's SigmaProp is stored in R4. To spend the box:
+ *   1. Agent must sign (R4 SigmaProp)
+ *   2. Token must go to an output with the SAME contract (propositionBytes)
+ *   3. That output must have the SAME agent in R4
+ *
+ * This means the token is permanently bound to the agent who earned it.
+ */
+export const SOULBOUND_ERGOSCRIPT = `{
+  val agentPk = SELF.R4[SigmaProp].get
+  val egoTokenId = SELF.tokens(0)._1
+  val tokenOutputs = OUTPUTS.filter { (box: Box) =>
+    box.tokens.exists { (t: (Coll[Byte], Long)) => t._1 == egoTokenId }
+  }
+  val soulbound = tokenOutputs.size == 1 &&
+    tokenOutputs(0).propositionBytes == SELF.propositionBytes &&
+    tokenOutputs(0).R4[SigmaProp].get == agentPk
+  agentPk && sigmaProp(soulbound)
+}`;
+
+/**
+ * Pre-compiled P2S address for the soulbound contract (mainnet).
+ * Compiled via node.ergo.watch on 2026-02-09.
+ * If SOULBOUND_ERGOSCRIPT changes, this MUST be re-compiled.
+ */
+export const SOULBOUND_CONTRACT_ADDRESS =
+  '49AoNXDVGUF3Y1XVFRjUa22LFJjV2pwQiLCd3usdRaAFvZGNXVCMMqaCL8pEBpqFLko8Bmh222hNh7w722E8bMJRuWT3QG2LCxGjRnv6AKrLAY2ZEA1BrngJynGAT79Z';
 
 // ─── Constants ───────────────────────────────────────────────────────
 
 const EGO_TOKEN_PREFIX = 'EGO-';
 const EGO_TOKENS_PER_COMPLETION = 10;
-const EGO_DESCRIPTION_PREFIX = 'AgenticAiHome Reputation Token for';
+const EGO_DESCRIPTION_PREFIX = 'AgenticAiHome Soulbound Reputation Token for';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -21,52 +60,116 @@ export interface EgoToken {
 }
 
 export interface EgoMintParams {
-  agentAddress: string;
+  agentAddress: string;  // Agent's P2PK address (goes into R4 as SigmaProp)
   agentName: string;
-  amount?: number; // defaults to EGO_TOKENS_PER_COMPLETION
-  completionNumber?: number; // for naming: EGO-AgentName-#N
-  minterAddress: string; // client paying for mint
+  amount?: number;       // defaults to EGO_TOKENS_PER_COMPLETION
+  completionNumber?: number;
+  minterAddress: string; // Client paying for mint
   minterUtxos: any[];
   currentHeight: number;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Extract 33-byte compressed public key from a P2PK address.
+ */
+function pubkeyFromAddress(address: string): Uint8Array {
+  const ergoAddr = ErgoAddress.fromBase58(address);
+  const tree = ergoAddr.ergoTree;
+  if (!tree.startsWith('0008cd')) {
+    throw new Error(`Address ${address} is not a P2PK address — cannot extract pubkey for soulbound contract`);
+  }
+  const pubkeyHex = tree.slice(6);
+  return Uint8Array.from(Buffer.from(pubkeyHex, 'hex'));
 }
 
 // ─── Token Query Functions ───────────────────────────────────────────
 
 /**
- * Get all EGO tokens held by an address.
- * Filters tokens whose name starts with "EGO-".
+ * Get all EGO tokens held at the soulbound contract address.
+ * Since all agents' EGO tokens live at the same contract address,
+ * we need to check R4 to filter by agent.
+ *
+ * For now, we query the contract address and filter by token name prefix.
+ * In the future, we can filter by R4 register value.
  */
-export async function getAllEgoTokens(address: string): Promise<EgoToken[]> {
+export async function getAllEgoTokens(agentAddress: string): Promise<EgoToken[]> {
   try {
-    const balance = await getAddressBalance(address);
-    const tokens = balance.confirmed.tokens || [];
+    // Check both: tokens at agent's direct address (legacy) and at soulbound contract
+    const [directBalance, contractBoxes] = await Promise.all([
+      getAddressBalance(agentAddress).catch(() => ({ confirmed: { tokens: [] } })),
+      getContractBoxesForAgent(agentAddress).catch(() => []),
+    ]);
 
     const egoTokens: EgoToken[] = [];
 
-    for (const token of tokens) {
+    // Legacy: tokens sent directly to agent address (old mints)
+    const directTokens = directBalance.confirmed.tokens || [];
+    for (const token of directTokens) {
       const name = token.name || '';
       if (name.startsWith(EGO_TOKEN_PREFIX)) {
-        // Try to get description from token info
         let description = '';
         try {
           const info = await getTokenInfo(token.tokenId);
           description = info?.description || '';
-        } catch {
-          // ignore — description is optional
-        }
+        } catch { /* ignore */ }
+        egoTokens.push({ tokenId: token.tokenId, name, amount: BigInt(token.amount), description });
+      }
+    }
 
-        egoTokens.push({
-          tokenId: token.tokenId,
-          name,
-          amount: BigInt(token.amount),
-          description,
-        });
+    // New: tokens at soulbound contract boxes with this agent's key in R4
+    for (const box of contractBoxes) {
+      for (const token of (box.assets || [])) {
+        const name = token.name || '';
+        if (name.startsWith(EGO_TOKEN_PREFIX)) {
+          egoTokens.push({
+            tokenId: token.tokenId,
+            name,
+            amount: BigInt(token.amount),
+            description: `Soulbound EGO token (contract-locked)`,
+          });
+        }
       }
     }
 
     return egoTokens;
   } catch (error) {
     console.error('Failed to fetch EGO tokens:', error);
+    return [];
+  }
+}
+
+/**
+ * Get unspent boxes at the soulbound contract address that belong to a specific agent.
+ * Checks R4 register for matching agent SigmaProp.
+ */
+async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
+  try {
+    const response = await fetch(
+      `${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    const boxes = data.items || data || [];
+
+    // Get agent's ergoTree to match against R4
+    const agentErgoTree = ErgoAddress.fromBase58(agentAddress).ergoTree;
+
+    // Filter boxes where R4 contains this agent's SigmaProp
+    return boxes.filter((box: any) => {
+      try {
+        const r4 = box.additionalRegisters?.R4;
+        if (!r4) return false;
+        // R4 contains serialized SigmaProp — the rendered value should contain the pubkey
+        // For P2PK addresses, the pubkey hex is in the ergoTree after "0008cd"
+        const pubkeyHex = agentErgoTree.startsWith('0008cd') ? agentErgoTree.slice(6) : '';
+        return r4.renderedValue?.includes(pubkeyHex) || r4.serializedValue?.includes(pubkeyHex);
+      } catch {
+        return false;
+      }
+    });
+  } catch {
     return [];
   }
 }
@@ -81,7 +184,6 @@ export async function getTotalEgoScore(address: string): Promise<bigint> {
 
 /**
  * Check if an agent already has any EGO tokens.
- * Returns the first EGO token ID found, or null.
  */
 export async function getAgentEgoTokenId(agentAddress: string): Promise<string | null> {
   const tokens = await getAllEgoTokens(agentAddress);
@@ -94,24 +196,20 @@ export async function getAgentEgoTokenId(agentAddress: string): Promise<string |
 export async function getEgoBalance(address: string): Promise<{ tokenId: string; amount: bigint } | null> {
   const tokens = await getAllEgoTokens(address);
   if (tokens.length === 0) return null;
-
   const totalAmount = tokens.reduce((sum, t) => sum + t.amount, 0n);
-  return {
-    tokenId: tokens[0].tokenId,
-    amount: totalAmount,
-  };
+  return { tokenId: tokens[0].tokenId, amount: totalAmount };
 }
 
-// ─── Token Minting ──────────────────────────────────────────────────
+// ─── Token Minting (Soulbound) ──────────────────────────────────────
 
 /**
- * Build an EGO token mint transaction.
+ * Build a SOULBOUND EGO token mint transaction.
  *
- * Creates a new EGO token batch and sends it to the agent's address.
+ * Tokens are minted to the soulbound contract address with the agent's
+ * SigmaProp in R4. This makes them permanently bound to the agent —
+ * they can never be transferred to a different address.
+ *
  * The minter (client) pays for the transaction.
- *
- * On Ergo, each mint creates a NEW unique token (token ID = first input box ID).
- * Token follows EIP-4 standard (name, description, decimals in registers).
  */
 export async function buildEgoMintTx(params: EgoMintParams): Promise<any> {
   const {
@@ -137,21 +235,27 @@ export async function buildEgoMintTx(params: EgoMintParams): Promise<any> {
     throw new Error('Amount must be positive');
   }
 
-  // Token naming: EGO-AgentName or EGO-AgentName-#N
+  // Token naming: EGO-AgentName-#N
   const tokenName = completionNumber
     ? `${EGO_TOKEN_PREFIX}${agentName}-#${completionNumber}`
     : `${EGO_TOKEN_PREFIX}${agentName}`;
 
-  const tokenDescription = `${EGO_DESCRIPTION_PREFIX} ${agentName}. Earned through verified task completion. Soulbound.`;
+  const tokenDescription = `${EGO_DESCRIPTION_PREFIX} ${agentName}. Soulbound — locked by ErgoScript contract.`;
 
-  // Build output: tokens go to the agent's address
-  // The output needs at least MIN_BOX_VALUE in ERG
-  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, agentAddress)
+  // Extract agent's public key for R4
+  const agentPubkey = pubkeyFromAddress(agentAddress);
+
+  // Build output: token goes to SOULBOUND CONTRACT, not agent's wallet
+  // R4 = agent's SigmaProp (only they can interact with this box)
+  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_CONTRACT_ADDRESS)
     .mintToken({
       amount: BigInt(amount).toString(),
       name: tokenName,
       decimals: 0,
       description: tokenDescription,
+    })
+    .setAdditionalRegisters({
+      R4: SConstant(SSigmaProp(SGroupElement(agentPubkey))),
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)
@@ -167,7 +271,6 @@ export async function buildEgoMintTx(params: EgoMintParams): Promise<any> {
 
 /**
  * Build an EGO reward transaction for subsequent task completions.
- * Same as buildEgoMintTx but with explicit completion numbering.
  */
 export async function buildEgoRewardTx(params: {
   agentAddress: string;
@@ -186,13 +289,7 @@ export async function buildEgoRewardTx(params: {
 
 /**
  * Mint EGO tokens after a successful escrow release.
- *
- * This is a convenience wrapper that:
- * 1. Determines the completion number for the agent
- * 2. Builds the mint transaction
- * 3. Returns the unsigned TX for the client to sign
- *
- * The client pays ~0.0021 ERG (MIN_BOX_VALUE + TX fee) for the mint.
+ * Convenience wrapper that determines completion number automatically.
  */
 export async function mintEgoAfterRelease(params: {
   agentAddress: string;
@@ -202,10 +299,8 @@ export async function mintEgoAfterRelease(params: {
 }): Promise<any> {
   const { agentAddress, agentName, minterAddress, minterUtxos } = params;
 
-  // Determine completion number from existing EGO tokens
   const existingTokens = await getAllEgoTokens(agentAddress);
   const completionNumber = existingTokens.length + 1;
-
   const currentHeight = await getCurrentHeight();
 
   return buildEgoMintTx({
@@ -223,6 +318,10 @@ export async function mintEgoAfterRelease(params: {
 
 export function egoTokenExplorerUrl(tokenId: string): string {
   return `https://explorer.ergoplatform.com/en/token/${tokenId}`;
+}
+
+export function soulboundContractExplorerUrl(): string {
+  return `https://explorer.ergoplatform.com/en/addresses/${SOULBOUND_CONTRACT_ADDRESS}`;
 }
 
 export { EGO_TOKENS_PER_COMPLETION, EGO_TOKEN_PREFIX };

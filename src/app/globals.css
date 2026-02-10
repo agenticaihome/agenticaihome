@@ -316,6 +316,11 @@ body {
     0 0 30px rgba(0,212,255,0.15),
     0 0 0 1px rgba(0,212,255,0.1);
 }
+.glow-cyan-subtle {
+  box-shadow: 
+    0 0 15px rgba(0,212,255,0.08),
+    0 0 0 1px rgba(0,212,255,0.05);
+}
 .glow-green { 
   box-shadow: 
     0 0 30px rgba(0,255,136,0.15),

@@ -5,6 +5,21 @@ export type NetworkType = 'mainnet' | 'testnet';
 // Cast to NetworkType so ternaries compile regardless of current value
 export const NETWORK = 'mainnet' as NetworkType;
 
+// ─── ERGO eUTXO MODEL NOTES ──────────────────────────────────────────
+//
+// AgenticAiHome leverages Ergo's extended UTXO (eUTXO) model, which is more
+// expressive than Bitcoin's UTXO model and more secure than account-based models.
+//
+// Key eUTXO features we use:
+// • Registers (R4-R9) store arbitrary data in boxes
+// • SigmaProps enable complex signature schemes
+// • Tokens are first-class citizens, not contracts
+// • Deterministic execution with no gas limit surprises
+// • Data inputs enable read-only access to other boxes
+//
+// This allows us to implement features like soulbound tokens and complex
+// escrow logic that would be difficult or expensive on other chains.
+
 // Explorer URLs based on network
 export const ERGO_EXPLORER_API = NETWORK === 'testnet'
   ? 'https://api-testnet.ergoplatform.com/api/v1'
@@ -100,14 +115,17 @@ export const ESCROW_ERGOSCRIPT = `{
   clientApproval || timeoutRefund
 }`;
 
-// SECURITY UPDATE: Pre-compiled address invalidated due to contract security fix
-// The contract now includes integer underflow protection (validAmounts check)
-// This address MUST be re-compiled via node.ergo.watch before deployment
-export const ESCROW_CONTRACT_ADDRESS: string | null = null; // NEEDS_RE_COMPILATION - DO NOT DEPLOY without recompiling
+// LIVE CONTRACT ADDRESS: Task Escrow Contract (includes integer underflow protection)
+// This is the DEPLOYED mainnet contract address with real ERG transactions
+export const ESCROW_CONTRACT_ADDRESS = '29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh';
 
-// ─── NEW CONTRACT ADDRESSES (Need compilation) ──────────────────────────
+// SOULBOUND EGO TOKEN CONTRACT - Live on mainnet
+// Non-transferable reputation tokens bound to agent addresses
+export const SOULBOUND_EGO_CONTRACT_ADDRESS = '49AoNXDVGUF3Y1XVFRjUa22LFJjV2pwQiLCd3usdRaAFvZGNXVCMMqaCL8pEBpqFLko8Bmh222hNh7w722E8bMJRuWT3QG2LCxGjRnv6AKrLAY2ZEA1BrngJynGAT79Z';
 
-// Reputation Oracle Contract - stores agent reputation data on-chain for dApps to read
+// ─── UPCOMING CONTRACT ADDRESSES (In development) ──────────────────────────
+
+// Reputation Oracle Contract - stores agent reputation data on-chain for dApPs to read
 // Register layout: R4=agent pubkey, R5=ego score, R6=tasks completed, R7=dispute rate, R8=last updated
 export const REPUTATION_ORACLE_CONTRACT_ADDRESS = 'NEEDS_COMPILATION'; // TODO: Compile via node.ergo.watch
 

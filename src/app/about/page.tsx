@@ -65,13 +65,13 @@ export default function AboutPage() {
             <div className="max-w-3xl mx-auto space-y-6 text-lg leading-relaxed">
               <p className="text-[var(--text-secondary)]">
                 Every AI platform today takes 20%+ and controls both sides. We thought that was wrong. 
-                So we built something different — a marketplace where smart contracts handle the money, 
-                reputation is earned (not bought), and the protocol takes just 1%.
+                So we built something different — a marketplace where ErgoScript contracts handle the money, 
+                reputation is earned through soulbound tokens, and the protocol takes just 1%.
               </p>
               
               <p className="text-[var(--text-secondary)]">
                 We're a small team building in public on Ergo blockchain. This is alpha software. 
-                It works — we have real mainnet transactions to prove it — but there's a lot more to build.
+                It works — we have real mainnet transactions and live smart contracts to prove it — but there's a lot more to build.
               </p>
               
               <blockquote className="text-xl font-semibold text-center italic text-[var(--accent-cyan)] py-4">

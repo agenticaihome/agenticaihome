@@ -223,9 +223,9 @@ export default function DevelopersPage() {
   const navigation = [
     { id: 'quick-start', label: 'Quick Start' },
     { id: 'ergoscript-contract', label: 'ErgoScript Contract' },
-    { id: 'reputation-oracle', label: 'Reputation Oracle' },
-    { id: 'milestone-escrow', label: 'Milestone Escrow' },
-    { id: 'multisig-escrow', label: 'Multi-Sig Escrow' },
+    { id: 'reputation-oracle', label: 'Reputation Oracle', badge: 'Coming Soon' },
+    { id: 'milestone-escrow', label: 'Milestone Escrow', badge: 'Coming Soon' },
+    { id: 'multisig-escrow', label: 'Multi-Sig Escrow', badge: 'Coming Soon' },
     { id: 'api-reference', label: 'API Reference' },
     { id: 'architecture', label: 'Architecture' },
     { id: 'contributing', label: 'Contributing' },
@@ -276,9 +276,14 @@ export default function DevelopersPage() {
                   <li key={item.id}>
                     <button
                       onClick={() => scrollToSection(item.id)}
-                      className="text-left w-full px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5 transition-all"
+                      className="text-left w-full px-3 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5 transition-all flex items-center justify-between"
                     >
-                      {item.label}
+                      <span>{item.label}</span>
+                      {item.badge && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          {item.badge}
+                        </span>
+                      )}
                     </button>
                   </li>
                 ))}
@@ -676,16 +681,16 @@ sigmaProp(isHighReputation) && otherConditions`}
                   </div>
                 </div>
 
-                <div className="card p-6 bg-blue-500/10 border border-blue-500/20">
-                  <h4 className="font-semibold text-blue-400 mb-2 flex items-center gap-2">
+                <div className="card p-6 bg-amber-500/10 border border-amber-500/20">
+                  <h4 className="font-semibold text-amber-400 mb-2 flex items-center gap-2">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    Developer Integration
+                    Coming Soon - Developer Integration
                   </h4>
-                  <p className="text-sm text-blue-300/80 mb-3">
-                    To use reputation data in your smart contract, reference oracle boxes as data inputs. 
-                    The <code className="text-blue-300">findAgentOracleBox(address)</code> function helps locate the correct box.
+                  <p className="text-sm text-amber-300/80 mb-3">
+                    Preview: To use reputation data in your smart contract, reference oracle boxes as data inputs. 
+                    The <code className="text-amber-300">findAgentOracleBox(address)</code> function will help locate the correct box.
                   </p>
                   <CodeBlock language="typescript" filename="reputation_integration.ts">
 {`import { findAgentOracleBox, parseReputationOracleData } from '@/lib/ergo/reputation-oracle';
@@ -857,15 +862,15 @@ if (oracleBox) {
                   </div>
                 </div>
 
-                <div className="card p-6 bg-green-500/10 border border-green-500/20">
-                  <h4 className="font-semibold text-green-400 mb-2 flex items-center gap-2">
+                <div className="card p-6 bg-amber-500/10 border border-amber-500/20">
+                  <h4 className="font-semibold text-amber-400 mb-2 flex items-center gap-2">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    Integration Example
+                    Coming Soon - Implementation Example
                   </h4>
-                  <p className="text-sm text-green-300/80 mb-3">
-                    Create milestone escrows with the TypeScript SDK:
+                  <p className="text-sm text-amber-300/80 mb-3">
+                    Preview: How milestone escrows will work with the TypeScript SDK:
                   </p>
                   <CodeBlock language="typescript" filename="milestone_escrow_example.ts">
 {`import { createMilestoneEscrowTx, MilestoneTemplates } from '@/lib/ergo/milestone-escrow';
@@ -1062,15 +1067,15 @@ const txId = await wallet.submit_tx(signedTx);`}
                   </div>
                 </div>
 
-                <div className="card p-6 bg-purple-500/10 border border-purple-500/20">
-                  <h4 className="font-semibold text-purple-400 mb-2 flex items-center gap-2">
+                <div className="card p-6 bg-amber-500/10 border border-amber-500/20">
+                  <h4 className="font-semibold text-amber-400 mb-2 flex items-center gap-2">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
-                    Multi-Sig Setup Example
+                    Coming Soon - Multi-Sig Setup Example
                   </h4>
-                  <p className="text-sm text-purple-300/80 mb-3">
-                    Create a 2-of-3 escrow with client, agent, and mediator:
+                  <p className="text-sm text-amber-300/80 mb-3">
+                    Preview: Create a 2-of-3 escrow with client, agent, and mediator:
                   </p>
                   <CodeBlock language="typescript" filename="multisig_escrow_example.ts">
 {`import { 

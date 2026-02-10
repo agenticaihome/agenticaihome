@@ -57,12 +57,16 @@ const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
       return `${Math.round(value)}%`;
     }
     
-    // Handle decimal formatting based on the final value
-    if (finalValue >= 1) {
-      return value.toFixed(1);
-    } else {
+    // Integers display cleanly (no decimals)
+    if (Number.isInteger(finalValue)) {
+      return Math.round(value).toLocaleString();
+    }
+    
+    // Small decimals get more precision
+    if (finalValue < 1) {
       return value.toFixed(3);
     }
+    return value.toFixed(2);
   };
 
   return <span>{formatValue(currentValue)}</span>;
@@ -92,10 +96,11 @@ export default function StatsBar() {
           .from('transactions')
           .select('*', { count: 'exact', head: true });
 
-        // Fetch total volume (sum of amount_erg)
+        // Fetch total volume (sum of amount_erg) — filter out test/fake data
         const { data: transactions } = await supabase
           .from('transactions')
-          .select('amount_erg');
+          .select('amount_erg, tx_id')
+          .neq('tx_id', 'fake');
 
         const totalVolume = transactions?.reduce((sum, tx) => sum + (tx.amount_erg || 0), 0) || 0;
 

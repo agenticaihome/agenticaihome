@@ -75,8 +75,16 @@ export const ESCROW_ERGOSCRIPT = `{
   val agentPkBytes   = SELF.R5[Coll[Byte]].get
   val feePkBytes     = SELF.R7[Coll[Byte]].get
 
+  // SECURITY FIX: Prevent integer underflow and ensure valid amounts
+  val validAmounts = agentPayout >= 0L && 
+                    protocolFee >= 0L && 
+                    agentPayout <= escrowValue &&
+                    protocolFee <= escrowValue &&
+                    (agentPayout + protocolFee + txFee) <= escrowValue
+
   val clientApproval = {
     clientPk &&
+    validAmounts &&
     OUTPUTS.exists { (o: Box) =>
       o.propositionBytes == agentPkBytes && o.value >= agentPayout
     } &&
@@ -85,18 +93,17 @@ export const ESCROW_ERGOSCRIPT = `{
     }
   }
 
-  val timeoutReclaim = {
+  val timeoutRefund = {
     sigmaProp(HEIGHT > deadline) && clientPk
   }
 
-  clientApproval || timeoutReclaim
+  clientApproval || timeoutRefund
 }`;
 
-// Pre-compiled P2S address for the escrow contract above (mainnet).
-// Compiled via node.ergo.watch on 2026-02-08. If the contract source changes,
-// this MUST be re-compiled.
-export const ESCROW_CONTRACT_ADDRESS =
-  '29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh';
+// SECURITY UPDATE: Pre-compiled address invalidated due to contract security fix
+// The contract now includes integer underflow protection (validAmounts check)
+// This address MUST be re-compiled via node.ergo.watch before deployment
+export const ESCROW_CONTRACT_ADDRESS: string | null = null; // NEEDS_RE_COMPILATION - DO NOT DEPLOY without recompiling
 
 // ─── NEW CONTRACT ADDRESSES (Need compilation) ──────────────────────────
 

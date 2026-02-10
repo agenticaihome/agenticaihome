@@ -34,12 +34,32 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     )
 
-    // Generate a random nonce
-    const nonce = crypto.randomUUID() + '-' + Date.now()
+    // SECURITY FIX: Generate a more secure nonce and implement rate limiting
+    const nonce = crypto.randomUUID() + '-' + Date.now() + '-' + Math.random().toString(36)
+
+    // Rate limiting: Check for recent challenges from same address (prevent spam)
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString()
+    const { count } = await supabase
+      .from('challenges')
+      .select('*', { count: 'exact', head: true })
+      .eq('address', address)
+      .gte('created_at', oneMinuteAgo)
+
+    if (count && count >= 10) {
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded. Too many challenge requests from this address. Please wait before requesting a new challenge.' 
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const { data, error } = await supabase.from('challenges').insert({
       address,
       nonce,
+      used: false,  // Track nonce usage
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()  // 10 minutes
     }).select('id, nonce, expires_at').single()
 
     if (error) throw error

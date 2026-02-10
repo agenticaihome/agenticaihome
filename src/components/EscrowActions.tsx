@@ -256,6 +256,26 @@ export default function EscrowActions({
     setEgoMintResult(null);
     setTxState('connecting');
 
+    // SECURITY FIX: Validate agent address matches task record to prevent payment redirection
+    try {
+      const { getTaskById } = await import('@/lib/supabaseStore');
+      const task = await getTaskById(taskId);
+      if (!task) {
+        throw new Error('Task not found - cannot validate agent address');
+      }
+      if (task.acceptedAgentAddress && task.acceptedAgentAddress !== agentAddress) {
+        throw new Error('Security Error: Agent address does not match task record. Potential payment redirection attempt detected.');
+      }
+      if (task.status !== 'in_progress' && task.status !== 'review') {
+        throw new Error('Task is not in the correct status for payment release');
+      }
+    } catch (validationError: any) {
+      console.error('Agent address validation failed:', validationError);
+      setError(validationError?.message || 'Security validation failed');
+      setTxState('error');
+      return;
+    }
+
     try {
       // Enhanced wallet connection with timeout
       const connectPromise = connectWallet('nautilus');

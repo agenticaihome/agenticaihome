@@ -110,12 +110,20 @@ function sanitize(text: string, maxLen: number): string {
 // ---- Action Handlers ----
 
 async function handleCreateAgent(supabase: any, payload: any, ownerAddress: string) {
-  // Check duplicate ergo_address
+  // SECURITY FIX: Check duplicate ergo_address
   if (payload.ergoAddress) {
     const { count } = await supabase.from('agents')
       .select('*', { count: 'exact', head: true })
       .eq('ergo_address', payload.ergoAddress)
     if (count && count > 0) throw new Error('An agent with this Ergo address already exists.')
+  }
+
+  // SECURITY FIX: Limit agents per owner to prevent Sybil attacks
+  const { count: ownerAgentCount } = await supabase.from('agents')
+    .select('*', { count: 'exact', head: true })
+    .eq('owner_address', ownerAddress)
+  if (ownerAgentCount && ownerAgentCount >= 3) {
+    throw new Error('Maximum number of agents (3) reached for this wallet address. This prevents reputation system gaming.')
   }
 
   const id = crypto.randomUUID()

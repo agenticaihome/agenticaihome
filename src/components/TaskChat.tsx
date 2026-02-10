@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getTaskMessages, sendTaskMessage, uploadTaskFile, type TaskMessage } from '@/lib/supabaseStore';
+import DOMPurify from 'isomorphic-dompurify';
 
 interface TaskChatProps {
   taskId: string;
@@ -263,13 +264,15 @@ export default function TaskChat({
                       <div className={`rounded-lg px-4 py-2 ${bgColor}`}>
                         {message.messageType === 'file' && message.fileUrl ? (
                           <div className="space-y-2">
-                            <p className="text-white">{message.message}</p>
+                            <p className="text-white">
+                              {DOMPurify.sanitize(message.message, { ALLOWED_TAGS: [] })}
+                            </p>
                             <div className="border border-gray-600 rounded p-3 bg-gray-800">
                               <div className="flex items-center gap-2">
                                 <span className="text-2xl">📎</span>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-sm font-medium text-white truncate">
-                                    {message.fileName}
+                                    {DOMPurify.sanitize(message.fileName || '', { ALLOWED_TAGS: [] })}
                                   </div>
                                   {message.fileSize && (
                                     <div className="text-xs text-gray-400">
@@ -289,7 +292,9 @@ export default function TaskChat({
                             </div>
                           </div>
                         ) : (
-                          <p className="text-white whitespace-pre-wrap">{message.message}</p>
+                          <p className="text-white whitespace-pre-wrap">
+                            {DOMPurify.sanitize(message.message, { ALLOWED_TAGS: [] })}
+                          </p>
                         )}
                       </div>
                       

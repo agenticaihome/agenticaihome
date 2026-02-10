@@ -295,14 +295,22 @@ export default function TestWalletPage() {
         detail: `Block #${height.toLocaleString()} | Network: ${NETWORK}`
       });
 
-      // Check escrow contract address for boxes
+      // Check escrow contract address for boxes (if available)
       try {
-        const escrowBoxes = await getBoxesByAddress(ESCROW_CONTRACT_ADDRESS);
-        health.explorerHealth.push({
-          label: 'Escrow Contract Status',
-          status: escrowBoxes.length >= 0 ? 'ok' : 'warn',
-          detail: `${escrowBoxes.length} box(es) at escrow contract | ${ESCROW_CONTRACT_ADDRESS.slice(0, 20)}...`
-        });
+        if (ESCROW_CONTRACT_ADDRESS) {
+          const escrowBoxes = await getBoxesByAddress(ESCROW_CONTRACT_ADDRESS);
+          health.explorerHealth.push({
+            label: 'Escrow Contract Status',
+            status: escrowBoxes.length >= 0 ? 'ok' : 'warn',
+            detail: `${escrowBoxes.length} box(es) at escrow contract | ${ESCROW_CONTRACT_ADDRESS ? ESCROW_CONTRACT_ADDRESS.slice(0, 20) + '...' : 'Address pending recompilation'}`
+          });
+        } else {
+          health.explorerHealth.push({
+            label: 'Escrow Contract Status',
+            status: 'warn',
+            detail: 'Contract needs recompilation after security fix'
+          });
+        }
       } catch (e) {
         health.explorerHealth.push({
           label: 'Escrow Contract Check',
@@ -344,9 +352,18 @@ export default function TestWalletPage() {
     ];
 
     for (const contract of contracts) {
+      // Handle null addresses
+      if (!contract.address) {
+        health.contractVerification.push({
+          label: contract.name,
+          status: 'warn',
+          detail: 'Contract address missing - needs compilation after security update'
+        });
+        continue;
+      }
+
       // Validate Ergo address format
-      const isValidAddress = contract.address && 
-        contract.address !== 'NEEDS_COMPILATION' && 
+      const isValidAddress = contract.address !== 'NEEDS_COMPILATION' && 
         contract.address.length >= 30 && 
         contract.address.length <= 120 && 
         /^[1-9A-HJ-NP-Za-km-z]+$/.test(contract.address);

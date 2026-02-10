@@ -1,20 +1,9 @@
-import { supabase, requestChallenge, verifiedWrite, type WalletAuth } from './supabase';
+import { supabase, requestChallenge, verifiedWrite, type WalletAuth, supabaseUrl, supabaseAnonKey } from './supabase';
 import { createClient } from '@supabase/supabase-js';
 
-// Service client for operations that need to bypass RLS (like EGO score updates)
-// Lazy-initialized to avoid "supabaseKey is required" error during SSR/build
-let _supabaseServiceClient: ReturnType<typeof createClient> | null = null;
-function getServiceClient() {
-  if (_supabaseServiceClient) return _supabaseServiceClient;
-  const key = typeof process !== 'undefined' ? process.env?.SUPABASE_SERVICE_ROLE_KEY : undefined;
-  if (!key) return null;
-  _supabaseServiceClient = createClient(
-    'https://thjialaevqwyiyyhbdxk.supabase.co',
-    key,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-  return _supabaseServiceClient;
-}
+// SECURITY FIX: Service client removed from client-side code to prevent key exposure
+// EGO score updates now handled via secure edge functions only
+// This prevents direct service role key access from browser environment
 import { Agent, Task, Bid, Transaction, Completion, ReputationEvent, WalletProfile, User } from './types';
 import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress } from './sanitize';
 import { computeEgoScore, type EgoFactors } from './ego';
@@ -307,10 +296,16 @@ export async function createAgent(
     ergoAddress: sanitizeErgoAddress(agentData.ergoAddress),
   };
 
-  // Check duplicate ergo address
+  // SECURITY FIX: Check duplicate ergo address
   const { count } = await supabase.from('agents').select('*', { count: 'exact', head: true }).eq('ergo_address', sanitizedData.ergoAddress);
   if (sanitizedData.ergoAddress && count && count > 0) {
     throw new Error('An agent with this Ergo address already exists.');
+  }
+
+  // SECURITY FIX: Limit agents per owner to prevent Sybil attacks
+  const { count: ownerAgentCount } = await supabase.from('agents').select('*', { count: 'exact', head: true }).eq('owner_address', ownerAddress);
+  if (ownerAgentCount && ownerAgentCount >= 3) {
+    throw new Error('Maximum number of agents (3) reached for this wallet address. This prevents reputation system gaming.');
   }
 
   const newAgent: Agent = {
@@ -794,17 +789,32 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
       .eq('assigned_agent_id', agentId)
       .in('status', ['completed', 'disputed', 'cancelled']);
 
-    // Get average rating from completions
-    const { data: completions, error: completionsError } = await supabase
+    // SECURITY FIX: Get average rating from completions with valid blockchain proof
+    // Only count completions that have associated escrow release transactions
+    const { data: validCompletions, error: completionsError } = await supabase
       .from('completions')
-      .select('rating')
+      .select('rating, task_id')
       .eq('agent_id', agentId);
+
+    // Filter completions to only include those with valid escrow transactions
+    let completions = validCompletions || [];
+    if (completions.length > 0) {
+      const taskIds = completions.map(c => c.task_id);
+      const { data: tasksWithEscrow } = await supabase
+        .from('tasks')
+        .select('id, escrow_tx_id')
+        .in('id', taskIds)
+        .not('escrow_tx_id', 'is', null);
+      
+      const validTaskIds = new Set(tasksWithEscrow?.map(t => t.id) || []);
+      completions = completions.filter(c => validTaskIds.has(c.task_id));
+    }
 
     if (completionsError) {
       console.error('Error fetching completions:', completionsError);
     }
 
-    const ratings = completions?.map(c => c.rating).filter(r => r > 0) || [];
+    const ratings = completions.map(c => c.rating).filter(r => r > 0) || [];
     const avgRating = ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 3.0;
 
     // Calculate account age in days
@@ -840,21 +850,37 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
     // Compute the new EGO score
     const newScore = computeEgoScore(factors, Math.min(stakingMultiplier, 1.1)); // Cap staking boost at 10%
 
-    // Update the agent's ego_score using the service client to bypass RLS restrictions
-    // The ego_score column is RLS-locked from API access, only service client can write
-    const serviceClient = getServiceClient();
-    if (!serviceClient) {
-      console.error('Service client unavailable — cannot update EGO score (no SUPABASE_SERVICE_ROLE_KEY)');
-      return { success: false, newScore: 0, error: 'Service client unavailable' };
-    }
-    const { error: updateError } = await (serviceClient as any)
-      .from('agents')
-      .update({ ego_score: newScore })
-      .eq('id', agentId);
+    // SECURITY FIX: Update EGO score via secure edge function instead of direct service client
+    // This prevents service role key exposure in browser environment
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/update-ego-score`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          agentId,
+          newScore,
+          factors,
+          completedTasks: completedTasks || 0,
+          avgRating,
+        }),
+      });
 
-    if (updateError) {
-      console.error('Error updating EGO score:', updateError);
-      return { success: false, newScore: 0, error: updateError.message };
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Error updating EGO score via edge function:', errorData);
+        return { success: false, newScore: 0, error: errorData.error || 'EGO score update failed' };
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        return { success: false, newScore: 0, error: result.error || 'EGO score update failed' };
+      }
+    } catch (fetchError) {
+      console.error('Network error updating EGO score:', fetchError);
+      return { success: false, newScore: 0, error: 'Network error updating reputation' };
     }
 
     // Create a reputation event for this recalculation
@@ -1047,29 +1073,48 @@ export async function uploadTaskFile(
       throw new Error('File size exceeds 50MB limit');
     }
 
-    // Validate file type
+    // SECURITY FIX: Validate file type by content, not just MIME type
     const allowedTypes = [
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'application/pdf', 'application/zip', 'application/x-zip-compressed',
+      'application/pdf', 'application/zip',
       'text/plain', 'text/csv', 'application/json',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'application/msword', 'application/vnd.ms-excel', 'application/vnd.ms-powerpoint'
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     ];
 
+    // Check MIME type first (basic check)
     if (!allowedTypes.includes(file.type)) {
-      throw new Error('File type not allowed');
+      throw new Error('File type not allowed based on MIME type');
+    }
+
+    // SECURITY FIX: Validate file type by analyzing file content
+    const { fileTypeFromBuffer } = await import('file-type');
+    const buffer = await file.arrayBuffer();
+    const detectedType = await fileTypeFromBuffer(new Uint8Array(buffer));
+    
+    // For files that can be detected, verify the content matches the MIME type
+    if (detectedType && !allowedTypes.includes(detectedType.mime)) {
+      throw new Error('File content does not match allowed types. Potential file type spoofing detected.');
+    }
+
+    // Additional security: reject files with suspicious extensions
+    const suspiciousExtensions = ['.js', '.html', '.php', '.exe', '.scr', '.bat', '.cmd', '.com', '.pif', '.vbs', '.jar'];
+    const fileName = file.name.toLowerCase();
+    for (const ext of suspiciousExtensions) {
+      if (fileName.endsWith(ext)) {
+        throw new Error(`File extension ${ext} is not allowed for security reasons`);
+      }
     }
 
     // Generate unique filename
     const fileExt = file.name.split('.').pop();
-    const fileName = `${taskId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
+    const uniqueFileName = `${taskId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from('task-files')
-      .upload(fileName, file, {
+      .upload(uniqueFileName, file, {
         cacheControl: '3600',
         upsert: false
       });

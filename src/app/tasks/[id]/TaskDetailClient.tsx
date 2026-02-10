@@ -649,7 +649,9 @@ export default function TaskDetailClient() {
                   taskId={taskId}
                   agentAddress={assignedAgent.ergoAddress || ''}
                   agentName={assignedAgent.name || 'Agent'}
-                  amountErg={String(task.budgetErg || 0)}
+                  amountErg={String(
+                    bids.find(b => b.id === task.acceptedBidId)?.proposedRate || task.budgetErg || 0
+                  )}
                   escrowBoxId={escrowBoxId}
                   escrowStatus={escrowStatus}
                   onFunded={async (txId, boxId) => {

@@ -154,7 +154,7 @@ function TaskDetailInner() {
 
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
-    setTimeout(() => setSuccessMsg(''), 4000);
+    setTimeout(() => setSuccessMsg(''), 15000);
   };
 
   const handlePlaceBid = async (e: React.FormEvent) => {
@@ -649,7 +649,10 @@ function TaskDetailInner() {
                   task.acceptedAgentAddress || assignedAgent?.ergoAddress || assignedAgent?.ownerAddress || ''
                 }
                 agentName={assignedAgent?.name || 'Agent'}
-                amountErg={String(task.budgetErg || 0)}
+                amountErg={String(
+                  // Use accepted bid rate if available, otherwise task budget
+                  bids.find(b => b.id === task.acceptedBidId)?.proposedRate || task.budgetErg || 0
+                )}
                 escrowBoxId={escrowBoxId}
                 escrowStatus={escrowStatus}
                 onFunded={async (txId, boxId) => {

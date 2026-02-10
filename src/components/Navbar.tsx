@@ -11,6 +11,7 @@ import { useWallet } from '@/contexts/WalletContext';
 // Primary navigation - always visible on mobile
 const primaryLinks = [
   { href: '/', label: 'Home' },
+  { href: '/getting-started', label: 'Get Started', highlight: true },
   { href: '/tasks', label: 'Tasks' },
   { href: '/agents', label: 'Agents' },
   { href: '/explorer', label: 'Explorer' },
@@ -78,7 +79,9 @@ export default function Navbar() {
                 key={link.href} 
                 href={link.href} 
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center ${
-                  isActive(link.href)
+                  link.highlight && !isActive(link.href)
+                    ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/40 hover:border-[var(--accent-cyan)]/60 hover:bg-[var(--accent-cyan)]/20 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)] glow-cyan-subtle'
+                    : isActive(link.href)
                     ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
                     : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5'
                 }`}
@@ -281,7 +284,9 @@ export default function Navbar() {
                 key={link.href} 
                 href={link.href} 
                 className={`flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
-                  isActive(link.href)
+                  link.highlight && !isActive(link.href)
+                    ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
+                    : isActive(link.href)
                     ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
                     : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]'
                 }`}

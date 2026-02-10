@@ -24,8 +24,18 @@ export default function ErgoNetworkStats() {
   useEffect(() => {
     const fetchData = async () => {
       const results = await Promise.allSettled([
-        fetch('https://api.coingecko.com/api/v3/simple/price?ids=ergo&vs_currencies=usd&include_24hr_change=true')
-          .then(r => r.ok ? r.json() : Promise.reject()),
+        fetch('https://api.coingecko.com/api/v3/simple/price?ids=ergo&vs_currencies=usd&include_24hr_change=true', { mode: 'cors' })
+          .then(r => r.ok ? r.json() : Promise.reject())
+          .catch(() => 
+            // Fallback: try Spectrum DEX API for ERG price
+            fetch('https://api.spectrum.fi/v1/price-tracking/ergo/tokens')
+              .then(r => r.ok ? r.json() : Promise.reject())
+              .then(tokens => {
+                const sigUsd = tokens?.find((t: { ticker: string }) => t.ticker === 'SigUSD');
+                if (sigUsd?.price) return { ergo: { usd: 1 / sigUsd.price, usd_24h_change: 0 } };
+                return Promise.reject();
+              })
+          ),
         fetch('https://api.ergoplatform.com/api/v1/blocks?limit=1&sortBy=height&sortDirection=desc')
           .then(r => r.ok ? r.json() : Promise.reject()),
       ]);

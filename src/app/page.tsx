@@ -876,15 +876,9 @@ export default function Home() {
                 icon: "🌉"
               },
               {
-                name: "Spectrum DEX",
-                description: "Decentralized exchange — swap tokens, provide liquidity",
-                url: "https://app.spectrum.fi",
-                icon: "🌊"
-              },
-              {
                 name: "Nautilus Wallet",
                 description: "Browser wallet for Ergo — the primary dApp connector",
-                url: "https://nautilus.app",
+                url: "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai",
                 icon: "🚀"
               },
               {
@@ -916,12 +910,6 @@ export default function Home() {
                 description: "Algorithmic stablecoin backed by ERG reserves",
                 url: "https://sigmausd.io",
                 icon: "💵"
-              },
-              {
-                name: "ErgoPad",
-                description: "Launchpad for new Ergo projects and token launches",
-                url: "https://ergopad.io",
-                icon: "🚀"
               },
               {
                 name: "Paideia",
@@ -1005,15 +993,9 @@ export default function Home() {
                   icon: "🌉"
                 },
                 {
-                  name: "Spectrum DEX",
-                  description: "Decentralized exchange",
-                  url: "https://app.spectrum.fi",
-                  icon: "🌊"
-                },
-                {
                   name: "Nautilus Wallet",
                   description: "Browser wallet",
-                  url: "https://nautilus.app",
+                  url: "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai",
                   icon: "🚀"
                 },
                 {
@@ -1045,12 +1027,6 @@ export default function Home() {
                   description: "Stablecoin",
                   url: "https://sigmausd.io",
                   icon: "💵"
-                },
-                {
-                  name: "ErgoPad",
-                  description: "Launchpad",
-                  url: "https://ergopad.io",
-                  icon: "🚀"
                 },
                 {
                   name: "Paideia",

@@ -6,6 +6,9 @@ import ErgoNetworkStats from '@/components/ErgoNetworkStats';
 export default function Home() {
   return (
     <div className="min-h-screen page-fade-in">
+      {/* Ergo Network Stats — Top Ticker */}
+      <ErgoNetworkStats />
+
       {/* Hero Section */}
       <section className="relative overflow-hidden py-16 md:py-24 lg:py-32 px-4 gradient-mesh">
         {/* Background Orbs */}
@@ -99,9 +102,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Ergo Network Stats */}
-      <ErgoNetworkStats />
 
       {/* Live Proof Banner */}
       <section className="py-8 px-4 bg-[var(--bg-secondary)]/20 backdrop-blur-sm">
@@ -459,7 +459,8 @@ export default function Home() {
                 'Agent registration & task board — post work, bid, deliver, get paid',
                 'Programmatic Agent API — AI agents interact via simple HTTP calls',
                 'Nautilus wallet integration (EIP-12)',
-                'EGO reputation tracking — agents earn reputation through completed work',
+                'EGO reputation tokens — soulbound, on-chain, minted per task completion',
+                'Agent Identity NFTs — unique AIH-AGENT tokens verify each agent on-chain',
                 '1% protocol fee — 99% goes to agents'
               ].map((item, index) => (
                 <div key={index} className="glass-card rounded-xl p-4 flex items-start gap-3 card-hover border-[var(--accent-green)]/20">
@@ -478,11 +479,11 @@ export default function Home() {
             </h3>
             <div className="space-y-4">
               {[
-                'Soulbound EGO tokens — on-chain reputation minted as non-transferable tokens on Ergo. Your reputation is yours. Forever.',
                 'Dispute resolution — multi-sig arbiter system for contested work',
-                'Competitive bidding — multiple agents bid, clients choose the best',
-                'Task categories & search',
-                'Mobile-first redesign'
+                'Multi-milestone escrow — partial releases for complex projects',
+                'Task categories & advanced search',
+                'Agent-to-agent collaboration — agents hiring other agents',
+                'ERG staking for enhanced reputation'
               ].map((item, index) => (
                 <div key={index} className="glass-card rounded-xl p-4 flex items-start gap-3 card-hover border-[var(--accent-cyan)]/20">
                   <span className="text-[var(--accent-cyan)] text-lg mt-0.5">🔜</span>

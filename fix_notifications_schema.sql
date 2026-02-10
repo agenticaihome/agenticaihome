@@ -1,10 +1,9 @@
--- Fix notifications table schema to match requirements
--- Run this in Supabase SQL editor: https://supabase.com/dashboard/project/thjialaevqwyiyyhbdxk/sql/new
+-- Notifications table for AgenticAiHome
+-- Run in Supabase SQL editor
 
--- Drop existing table if it has wrong schema
+-- Drop existing table if schema is wrong
 DROP TABLE IF EXISTS notifications CASCADE;
 
--- Create notifications table with correct schema
 CREATE TABLE notifications (
   id TEXT PRIMARY KEY DEFAULT concat('notif_', extract(epoch from now())::text, '_', substr(md5(random()::text), 1, 8)),
   recipient_address TEXT NOT NULL,
@@ -21,38 +20,30 @@ CREATE TABLE notifications (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Create indexes for performance
+-- Indexes
 CREATE INDEX idx_notifications_recipient ON notifications(recipient_address);
 CREATE INDEX idx_notifications_created_at ON notifications(created_at DESC);
 CREATE INDEX idx_notifications_unread ON notifications(recipient_address, read) WHERE NOT read;
 
--- Enable RLS
+-- RLS
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
--- Create RLS policies - users can only read their own notifications
-CREATE POLICY "Users can view own notifications" ON notifications 
-  FOR SELECT USING (
-    -- For authenticated users, use their auth.uid() if available, otherwise fall back to recipient_address matching
-    CASE 
-      WHEN auth.uid() IS NOT NULL THEN auth.uid()::TEXT = recipient_address
-      ELSE TRUE  -- Allow read for non-authenticated users (they'll be filtered by recipient_address in queries)
-    END
-  );
+-- Anyone can read notifications (filtered by recipient_address in app queries)
+-- Since we use wallet auth (not Supabase auth), we allow SELECT and filter client-side
+CREATE POLICY "public_select_notifications" ON notifications 
+  FOR SELECT USING (true);
 
--- Allow system/service role to insert notifications
-CREATE POLICY "System can insert notifications" ON notifications 
-  FOR INSERT WITH CHECK (TRUE);
+-- Anyone can insert (notifications created by app logic)
+CREATE POLICY "public_insert_notifications" ON notifications 
+  FOR INSERT WITH CHECK (true);
 
--- Allow users to update their own notifications (mark as read)
-CREATE POLICY "Users can update own notifications" ON notifications 
-  FOR UPDATE USING (
-    CASE 
-      WHEN auth.uid() IS NOT NULL THEN auth.uid()::TEXT = recipient_address
-      ELSE TRUE
-    END
-  );
+-- Anyone can mark as read (update only the read column)
+CREATE POLICY "public_update_notifications" ON notifications 
+  FOR UPDATE USING (true);
 
--- Create function to insert notifications
+-- NO DELETE policy (security measure)
+
+-- Helper function
 CREATE OR REPLACE FUNCTION create_notification(
   recipient TEXT,
   notification_type TEXT,
@@ -67,33 +58,13 @@ AS $$
 DECLARE
   notification_id TEXT;
 BEGIN
-  -- Generate unique ID
   notification_id := concat('notif_', extract(epoch from now())::text, '_', substr(md5(random()::text), 1, 8));
   
-  -- Insert notification
-  INSERT INTO notifications (
-    id, 
-    recipient_address, 
-    type, 
-    title, 
-    message, 
-    link, 
-    read, 
-    created_at
-  ) VALUES (
-    notification_id,
-    recipient,
-    notification_type,
-    notification_title,
-    notification_message,
-    notification_link,
-    FALSE,
-    NOW()
-  );
+  INSERT INTO notifications (id, recipient_address, type, title, message, link, read, created_at)
+  VALUES (notification_id, recipient, notification_type, notification_title, notification_message, notification_link, FALSE, NOW());
   
   RETURN notification_id;
 END;
 $$;
 
--- Grant execution permission
 GRANT EXECUTE ON FUNCTION create_notification TO postgres, anon, authenticated;

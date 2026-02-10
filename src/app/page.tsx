@@ -924,6 +924,12 @@ export default function Home() {
                 icon: "🦆"
               },
               {
+                name: "SkyHarbor",
+                description: "NFT marketplace — buy, sell, and trade digital assets on Ergo",
+                url: "https://skyharbor.io",
+                icon: "🌌"
+              },
+              {
                 name: "Ergo Auction House",
                 description: "NFT auctions and collectibles marketplace",
                 url: "https://ergoauctions.org",
@@ -1039,6 +1045,12 @@ export default function Home() {
                   description: "Lending pools",
                   url: "https://duckpools.io",
                   icon: "🦆"
+                },
+                {
+                  name: "SkyHarbor",
+                  description: "NFT marketplace",
+                  url: "https://skyharbor.io",
+                  icon: "🌌"
                 },
                 {
                   name: "Ergo Auction House",

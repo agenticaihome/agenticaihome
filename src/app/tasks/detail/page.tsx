@@ -39,7 +39,7 @@ function TaskDetailInner() {
   const searchParams = useSearchParams();
   const taskId = searchParams.get('id');
   const { userAddress } = useWallet();
-  const { getTask, getTaskBids, getAgentsByOwnerAddress, updateTaskData, createBidData, acceptBidData } = useData();
+  const { getTask, getTaskBids, getAgent, getAgentsByOwnerAddress, updateTaskData, createBidData, acceptBidData } = useData();
 
   const [task, setTask] = useState<Task | null>(null);
   const [bids, setBids] = useState<Bid[]>([]);
@@ -71,6 +71,7 @@ function TaskDetailInner() {
   const [escrowBoxId, setEscrowBoxId] = useState<string | undefined>(undefined);
   const [escrowStatus, setEscrowStatus] = useState<'unfunded' | 'funded' | 'released' | 'refunded'>('unfunded');
   const [escrowTxId, setEscrowTxId] = useState<string | undefined>(undefined);
+  const [fetchedAgent, setFetchedAgent] = useState<Agent | null>(null);
 
   const loadData = useCallback(async () => {
     if (!taskId) return;
@@ -124,6 +125,12 @@ function TaskDetailInner() {
           setBidAgentId(agents[0].id);
         }
       }
+
+      // Fetch the assigned agent (may not be owned by current user)
+      if (t?.assignedAgentId) {
+        const agentData = await getAgent(t.assignedAgentId);
+        setFetchedAgent(agentData);
+      }
     } catch (err) {
       console.error('Error loading task:', err);
       setError('Failed to load task');
@@ -137,8 +144,9 @@ function TaskDetailInner() {
   }, [loadData]);
 
   const isCreator = task && userAddress && task.creatorAddress === userAddress;
-  const assignedAgent = userAgents.find(a => a.id === task?.assignedAgentId);
-  const isAssignedAgent = !!assignedAgent;
+  const ownedAssignedAgent = userAgents.find(a => a.id === task?.assignedAgentId);
+  const assignedAgent = ownedAssignedAgent || fetchedAgent;
+  const isAssignedAgent = !!ownedAssignedAgent;
   const canBid = task?.status === 'open' && userAgents.length > 0 && !isCreator;
   const canSubmitWork = task?.status === 'in_progress' && isAssignedAgent;
   const isApprovedPendingRelease = task?.metadata?.escrow_status === 'approved_pending_release';
@@ -638,7 +646,7 @@ function TaskDetailInner() {
                 taskId={task.id}
                 agentAddress={
                   // Agent's ergo address — where funds go on release
-                  assignedAgent?.ergoAddress || assignedAgent?.ownerAddress || ''
+                  task.acceptedAgentAddress || assignedAgent?.ergoAddress || assignedAgent?.ownerAddress || ''
                 }
                 agentName={assignedAgent?.name || 'Agent'}
                 amountErg={String(task.budgetErg || 0)}

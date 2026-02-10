@@ -13,6 +13,7 @@ import BidForm from '@/components/BidForm';
 import EscrowActions from '@/components/EscrowActions';
 import TaskChat from '@/components/TaskChat';
 import DeliverableSubmit from '@/components/DeliverableSubmit';
+import TaskStatusTimeline from '@/components/TaskStatusTimeline';
 
 import { mintEgoAfterRelease, egoTokenExplorerUrl } from '@/lib/ergo/ego-token';
 import { getUtxos } from '@/lib/ergo/wallet';
@@ -399,16 +400,13 @@ export default function TaskDetailClient() {
               taskAgentAddress={task.acceptedAgentAddress}
             />
 
-            {/* Status Tracker */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-              <h2 className="font-semibold text-lg text-white mb-4">Task Lifecycle</h2>
-              <EscrowStatus
-                status={task.status}
-                flowState={task.status as any}
-                escrowTxId={task.escrowTxId}
-                fundedAmount={task.budgetErg}
-              />
-            </div>
+            {/* Status Timeline */}
+            <TaskStatusTimeline
+              task={task}
+              escrowStatus={escrowStatus}
+              escrowTxId={task.escrowTxId}
+              releaseTxId={task.metadata?.release_tx_id}
+            />
 
             {/* Deliverables Section */}
             {deliverables.length > 0 && (

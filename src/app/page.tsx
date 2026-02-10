@@ -870,46 +870,76 @@ export default function Home() {
                 featured: true
               },
               {
-                name: "Nautilus Wallet",
-                description: "Browser wallet for Ergo",
-                url: "https://nautilus.app",
-                icon: "🚀"
+                name: "Rosen Bridge",
+                description: "Cross-chain bridge — move assets between Ergo, Cardano, Bitcoin & Ethereum",
+                url: "https://rosen.tech",
+                icon: "🌉"
               },
               {
                 name: "Spectrum DEX",
-                description: "Decentralized exchange",
+                description: "Decentralized exchange — swap tokens, provide liquidity",
                 url: "https://app.spectrum.fi",
                 icon: "🌊"
               },
               {
+                name: "Nautilus Wallet",
+                description: "Browser wallet for Ergo — the primary dApp connector",
+                url: "https://nautilus.app",
+                icon: "🚀"
+              },
+              {
+                name: "Lithos Protocol",
+                description: "Decentralized mining pools — on-chain, trustless, miner-controlled",
+                url: "https://lithos.org",
+                icon: "⛏️"
+              },
+              {
+                name: "Mew Finance",
+                description: "DeFi yield and liquidity management on Ergo",
+                url: "https://mewfinance.com",
+                icon: "🐱"
+              },
+              {
+                name: "SkyHarbor",
+                description: "NFT marketplace — buy, sell, and trade Ergo NFTs",
+                url: "https://skyharbor.io",
+                icon: "🖼️"
+              },
+              {
                 name: "SigmaFi",
-                description: "DeFi lending",
+                description: "Peer-to-peer DeFi lending and borrowing",
                 url: "https://sigmafi.app",
                 icon: "📊"
               },
               {
+                name: "SigmaUSD",
+                description: "Algorithmic stablecoin backed by ERG reserves",
+                url: "https://sigmausd.io",
+                icon: "💵"
+              },
+              {
+                name: "ErgoPad",
+                description: "Launchpad for new Ergo projects and token launches",
+                url: "https://ergopad.io",
+                icon: "🚀"
+              },
+              {
+                name: "Paideia",
+                description: "DAO governance toolkit — create and manage DAOs on Ergo",
+                url: "https://paideia.im",
+                icon: "🏛️"
+              },
+              {
+                name: "DuckPools",
+                description: "Decentralized lending pools on Ergo",
+                url: "https://duckpools.io",
+                icon: "🦆"
+              },
+              {
                 name: "Ergo Auction House",
-                description: "NFT marketplace",
+                description: "NFT auctions and collectibles marketplace",
                 url: "https://ergoauctions.org",
                 icon: "🎨"
-              },
-              {
-                name: "SigmaUSD",
-                description: "Algorithmic stablecoin",
-                url: "https://sigmausd.io",
-                icon: "💰"
-              },
-              {
-                name: "ErgoMixer",
-                description: "Privacy mixer",
-                url: "https://github.com/ergoMixer/ergoMixBack",
-                icon: "🔒"
-              },
-              {
-                name: "Rosen Bridge",
-                description: "Cross-chain bridge",
-                url: "https://rosen.tech",
-                icon: "🌉"
               }
             ].map((project, index) => (
               <ScrollReveal key={project.name} animation="scale-in" delay={index * 100}>
@@ -969,10 +999,10 @@ export default function Home() {
                   featured: true
                 },
                 {
-                  name: "Nautilus Wallet",
-                  description: "Browser wallet for Ergo",
-                  url: "https://nautilus.app",
-                  icon: "🚀"
+                  name: "Rosen Bridge",
+                  description: "Cross-chain bridge",
+                  url: "https://rosen.tech",
+                  icon: "🌉"
                 },
                 {
                   name: "Spectrum DEX",
@@ -981,34 +1011,64 @@ export default function Home() {
                   icon: "🌊"
                 },
                 {
+                  name: "Nautilus Wallet",
+                  description: "Browser wallet",
+                  url: "https://nautilus.app",
+                  icon: "🚀"
+                },
+                {
+                  name: "Lithos Protocol",
+                  description: "Decentralized mining",
+                  url: "https://lithos.org",
+                  icon: "⛏️"
+                },
+                {
+                  name: "Mew Finance",
+                  description: "DeFi yield",
+                  url: "https://mewfinance.com",
+                  icon: "🐱"
+                },
+                {
+                  name: "SkyHarbor",
+                  description: "NFT marketplace",
+                  url: "https://skyharbor.io",
+                  icon: "🖼️"
+                },
+                {
                   name: "SigmaFi",
                   description: "DeFi lending",
                   url: "https://sigmafi.app",
                   icon: "📊"
                 },
                 {
+                  name: "SigmaUSD",
+                  description: "Stablecoin",
+                  url: "https://sigmausd.io",
+                  icon: "💵"
+                },
+                {
+                  name: "ErgoPad",
+                  description: "Launchpad",
+                  url: "https://ergopad.io",
+                  icon: "🚀"
+                },
+                {
+                  name: "Paideia",
+                  description: "DAO governance",
+                  url: "https://paideia.im",
+                  icon: "🏛️"
+                },
+                {
+                  name: "DuckPools",
+                  description: "Lending pools",
+                  url: "https://duckpools.io",
+                  icon: "🦆"
+                },
+                {
                   name: "Ergo Auction House",
-                  description: "NFT marketplace",
+                  description: "NFT auctions",
                   url: "https://ergoauctions.org",
                   icon: "🎨"
-                },
-                {
-                  name: "SigmaUSD",
-                  description: "Algorithmic stablecoin",
-                  url: "https://sigmausd.io",
-                  icon: "💰"
-                },
-                {
-                  name: "ErgoMixer",
-                  description: "Privacy mixer",
-                  url: "https://github.com/ergoMixer/ergoMixBack",
-                  icon: "🔒"
-                },
-                {
-                  name: "Rosen Bridge",
-                  description: "Cross-chain bridge",
-                  url: "https://rosen.tech",
-                  icon: "🌉"
                 }
               ].map((project, index) => (
                 <a 

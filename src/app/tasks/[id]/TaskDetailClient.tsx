@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import type { Task } from '@/lib/types';
 import { useParams, notFound } from 'next/navigation';
 import { useData } from '@/contexts/DataContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -12,16 +13,6 @@ import BidCard from '@/components/BidCard';
 import BidForm from '@/components/BidForm';
 import EscrowActions from '@/components/EscrowActions';
 
-import {
-  getTaskFlow,
-  initTaskFlow,
-  approveWork,
-  disputeWork,
-  cancelTask,
-  requestRevision,
-  type TaskFlowEntry,
-  type TaskFlowState,
-} from '@/lib/taskFlow';
 import { mintEgoAfterRelease, egoTokenExplorerUrl } from '@/lib/ergo/ego-token';
 import { getUtxos } from '@/lib/ergo/wallet';
 import {
@@ -29,6 +20,8 @@ import {
   submitDeliverable,
   type Deliverable,
 } from '@/lib/deliverables';
+import { transitionTaskStatus } from '@/lib/supabaseStore';
+import type { Task } from '@/lib/types';
 import { logEvent } from '@/lib/events';
 import { updateTaskMetadata, updateTaskEscrow, updateAgentStats } from '@/lib/supabaseStore';
 
@@ -37,7 +30,6 @@ export default function TaskDetailClient() {
   const { getTask, getTaskBids, getAgent, acceptBidData, refreshTasks, refreshBids, updateTaskData } = useData();
   const { userAddress, isAuthenticated } = useWallet();
   const [showBidForm, setShowBidForm] = useState(false);
-  const [flow, setFlow] = useState<TaskFlowEntry | null>(null);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const [submitContent, setSubmitContent] = useState('');
   const [submitUrl, setSubmitUrl] = useState('');
@@ -79,24 +71,22 @@ export default function TaskDetailClient() {
     }
   }, [taskId, getTask, getTaskBids, getAgent]);
 
-  const refreshFlow = useCallback(() => {
-    const f = getTaskFlow(taskId);
-    setFlow(f);
+  const refreshDeliverables = useCallback(() => {
     setDeliverables(getDeliverablesByTask(taskId));
   }, [taskId]);
 
   useEffect(() => {
     refreshTaskData().then(() => setTaskLoading(false));
-    refreshFlow();
-  }, [refreshTaskData, refreshFlow]);
+    refreshDeliverables();
+  }, [refreshTaskData, refreshDeliverables]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       refreshTaskData();
-      refreshFlow();
+      refreshDeliverables();
     }, 30000);
     return () => clearInterval(interval);
-  }, [refreshTaskData, refreshFlow]);
+  }, [refreshTaskData, refreshDeliverables]);
 
   if (taskLoading) {
     return <div className="min-h-screen bg-slate-900 flex items-center justify-center"><div className="text-gray-400">Loading...</div></div>;
@@ -107,8 +97,7 @@ export default function TaskDetailClient() {
   }
 
   const isCreator = userAddress === task.creatorAddress;
-  const isAssignedAgent = userAddress && task.assignedAgentId && assignedAgent?.ergoAddress === userAddress;
-  const flowState: TaskFlowState = flow?.state || 'DRAFT';
+  const isAssignedAgent = userAddress && (task.acceptedAgentAddress === userAddress || (task.assignedAgentId && assignedAgent?.ergoAddress === userAddress));
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -124,8 +113,6 @@ export default function TaskDetailClient() {
     if (confirm('Accept this bid? This will assign the task to the agent.')) {
       const success = await acceptBidData(bidId);
       if (success) {
-        // Init flow if needed and update
-        if (!flow) initTaskFlow(taskId, userAddress || 'unknown');
         logEvent({
           type: 'bid_accepted',
           message: `Bid accepted for task "${task.title}"`,
@@ -133,7 +120,8 @@ export default function TaskDetailClient() {
           actor: userAddress || 'unknown',
           metadata: { bidId },
         });
-        refreshFlow();
+        await refreshTaskData();
+        refreshDeliverables();
       }
     }
   };
@@ -151,8 +139,12 @@ export default function TaskDetailClient() {
         urls,
       });
 
-      // Update task status
-      await updateTaskData(taskId, { status: 'review' });
+      // Transition task status via state machine
+      const result = await transitionTaskStatus(taskId, 'review', userAddress || '');
+      if (!result.success) {
+        // Fallback to direct update if RPC not available
+        await updateTaskData(taskId, { status: 'review' });
+      }
 
       logEvent({
         type: 'work_submitted',
@@ -164,7 +156,8 @@ export default function TaskDetailClient() {
       setSubmitContent('');
       setSubmitUrl('');
       setShowSubmitForm(false);
-      refreshFlow();
+      await refreshTaskData();
+      refreshDeliverables();
       refreshTasks();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to submit work');
@@ -177,14 +170,17 @@ export default function TaskDetailClient() {
     if (!confirm('Approve this work and release payment?')) return;
     setActionLoading('approve');
     try {
-      await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
+      const result = await transitionTaskStatus(taskId, 'completed', userAddress || '');
+      if (!result.success) {
+        await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
+      }
       logEvent({
         type: 'work_approved',
         message: `Work approved for task "${task.title}"`,
         taskId,
         actor: userAddress || 'unknown',
       });
-      refreshFlow();
+      refreshDeliverables(); refreshTaskData();
       refreshTasks();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to approve');
@@ -197,7 +193,7 @@ export default function TaskDetailClient() {
     if (!disputeReason.trim()) return;
     setActionLoading('dispute');
     try {
-      await updateTaskData(taskId, { status: 'disputed' });
+      await updateTaskData(taskId, { status: 'disputed' as Task['status'] });
       logEvent({
         type: 'work_disputed',
         message: `Work disputed for task "${task.title}": ${disputeReason}`,
@@ -207,7 +203,7 @@ export default function TaskDetailClient() {
       });
       setDisputeReason('');
       setShowDisputeForm(false);
-      refreshFlow();
+      refreshDeliverables(); refreshTaskData();
       refreshTasks();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to dispute');
@@ -220,7 +216,10 @@ export default function TaskDetailClient() {
     if (!revisionNote.trim()) return;
     setActionLoading('revision');
     try {
-      await updateTaskData(taskId, { status: 'in_progress' });
+      const result = await transitionTaskStatus(taskId, 'in_progress', userAddress || '');
+      if (!result.success) {
+        await updateTaskData(taskId, { status: 'in_progress' });
+      }
       logEvent({
         type: 'revision_requested',
         message: `Revision requested for task "${task.title}": ${revisionNote}`,
@@ -230,7 +229,7 @@ export default function TaskDetailClient() {
       });
       setRevisionNote('');
       setShowRevisionForm(false);
-      refreshFlow();
+      refreshDeliverables(); refreshTaskData();
       refreshTasks();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to request revision');
@@ -241,18 +240,22 @@ export default function TaskDetailClient() {
 
   const handleCancel = async () => {
     if (!confirm('Cancel this task?')) return;
-    await updateTaskData(taskId, { status: 'open' }); // or remove
+    const result = await transitionTaskStatus(taskId, 'cancelled', userAddress || '');
+    if (!result.success) {
+      await updateTaskData(taskId, { status: 'cancelled' });
+    }
     logEvent({
       type: 'task_cancelled',
       message: `Task "${task.title}" cancelled`,
       taskId,
       actor: userAddress || 'unknown',
     });
-    refreshFlow();
+    refreshDeliverables(); refreshTaskData();
     refreshTasks();
   };
 
-  const canPlaceBid = isAuthenticated && userAddress && task.status === 'open' && !isCreator;
+  const canPlaceBid = isAuthenticated && userAddress && (task.status === 'open' || task.status === 'funded') && !isCreator;
+  const canAcceptBids = isCreator && (task.status === 'open' || task.status === 'funded');
 
   const latestDeliverable = deliverables.length > 0 ? deliverables[deliverables.length - 1] : null;
 
@@ -299,9 +302,9 @@ export default function TaskDetailClient() {
               <h2 className="font-semibold text-lg text-white mb-4">Task Lifecycle</h2>
               <EscrowStatus
                 status={task.status}
-                flowState={flow?.state}
-                escrowTxId={task.escrowTxId || flow?.escrowTxId}
-                fundedAmount={flow?.fundedAmount}
+                flowState={task.status}
+                escrowTxId={task.escrowTxId}
+                fundedAmount={task.budgetErg}
               />
             </div>
 
@@ -587,8 +590,8 @@ export default function TaskDetailClient() {
                     <BidCard
                       key={bid.id}
                       bid={bid}
-                      onAccept={isCreator && task.status === 'open' ? handleAcceptBid : undefined}
-                      canAccept={isCreator && task.status === 'open'}
+                      onAccept={canAcceptBids ? handleAcceptBid : undefined}
+                      canAccept={canAcceptBids}
                     />
                   ))}
                 </div>
@@ -619,7 +622,7 @@ export default function TaskDetailClient() {
                 </button>
               )}
 
-              {(!isAuthenticated || !userAddress) && task.status === 'open' && (
+              {(!isAuthenticated || !userAddress) && (task.status === 'open' || task.status === 'funded') && (
                 <a href="/auth" className="w-full block px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium rounded-lg text-center">
                   Sign In to Bid
                 </a>
@@ -714,7 +717,7 @@ export default function TaskDetailClient() {
               <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
                 <h3 className="font-semibold text-sm mb-4 text-gray-400 uppercase tracking-wide">Creator Actions</h3>
                 <div className="space-y-3">
-                  {task.status === 'open' && (
+                  {(task.status === 'open' || task.status === 'funded') && (
                     <button
                       onClick={handleCancel}
                       className="w-full px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm transition-colors border border-red-500/20"
@@ -722,11 +725,23 @@ export default function TaskDetailClient() {
                       Cancel Task
                     </button>
                   )}
-                  {task.status === 'open' && bids.length > 0 && (
+                  {(task.status === 'open' || task.status === 'funded') && bids.length > 0 && (
                     <p className="text-sm text-gray-400">Review bids above and accept the best one.</p>
                   )}
-                  {(task.status === 'assigned' || task.status === 'in_progress') && (
+                  {task.status === 'in_progress' && (
                     <p className="text-sm text-gray-400">Work is in progress. Wait for the agent to submit.</p>
+                  )}
+                  {task.status === 'review' && (
+                    <p className="text-sm text-gray-400">Review the submitted work above.</p>
+                  )}
+                  {task.status === 'completed' && (
+                    <p className="text-sm text-emerald-400">✅ Task completed successfully!</p>
+                  )}
+                  {task.status === 'cancelled' && (
+                    <p className="text-sm text-gray-400">This task has been cancelled.</p>
+                  )}
+                  {task.status === 'refunded' && (
+                    <p className="text-sm text-purple-400">Escrow has been refunded.</p>
                   )}
                 </div>
               </div>

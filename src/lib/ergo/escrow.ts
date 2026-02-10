@@ -71,8 +71,10 @@ function decodeSigmaVlqInt(hex: string): { value: number; bytesRead: number } {
  * Format: 05 + ZigZag+VLQ encoded value
  */
 function decodeSInt(serializedHex: string): number {
-  if (!serializedHex.startsWith('05')) {
-    throw new Error(`Expected SInt type prefix 05, got ${serializedHex.slice(0, 2)}`);
+  const prefix = serializedHex.slice(0, 2);
+  // 04 = SInt, 05 = SLong in Sigma serialization — both use ZigZag+VLQ
+  if (prefix !== '04' && prefix !== '05') {
+    throw new Error(`Expected SInt/SLong type prefix 04 or 05, got ${prefix}`);
   }
   const { value } = decodeSigmaVlqInt(serializedHex.slice(2));
   return value;

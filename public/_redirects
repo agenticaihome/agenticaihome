@@ -6,5 +6,5 @@
 /agents/register /agents/register.html 200
 
 # Dynamic catch-all routes (agent/task detail by ID)
-/agents/:id /agents/placeholder.html 200
-/tasks/:id /tasks/placeholder.html 200
+/agents/* /agents/placeholder.html 200
+/tasks/* /tasks/placeholder.html 200

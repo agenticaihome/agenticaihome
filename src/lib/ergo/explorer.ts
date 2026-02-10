@@ -113,8 +113,9 @@ class ExplorerAPI {
   }
 
   async getBoxesByAddress(address: string): Promise<Box[]> {
-    const response = await this.request<{ items: Box[] }>(`/addresses/${address}/boxes`);
-    return response.items;
+    // Use the unspent boxes endpoint — /boxes/unspent/byAddress/{address}
+    const response = await this.request<Box[]>(`/boxes/unspent/byAddress/${address}`);
+    return Array.isArray(response) ? response : (response as any).items || [];
   }
 
   async getTxById(txId: string): Promise<Transaction | null> {
@@ -182,8 +183,13 @@ export function nanoErgToErg(nanoErg: bigint | string): string {
 }
 
 export function ergToNanoErg(erg: string | number): bigint {
-  const ergNumber = typeof erg === 'string' ? parseFloat(erg) : erg;
-  return BigInt(Math.floor(ergNumber * Number(NANOERG_FACTOR)));
+  // Use string-based math to avoid floating-point precision errors
+  // e.g., 0.3 * 1e9 = 299999999.99... but should be 300000000
+  const ergStr = typeof erg === 'number' ? erg.toString() : erg;
+  const parts = ergStr.split('.');
+  const whole = parts[0] || '0';
+  const frac = (parts[1] || '').padEnd(9, '0').slice(0, 9); // 9 decimal places for nanoERG
+  return BigInt(whole) * NANOERG_FACTOR + BigInt(frac);
 }
 
 export function formatErgAmount(nanoErg: bigint | string): string {

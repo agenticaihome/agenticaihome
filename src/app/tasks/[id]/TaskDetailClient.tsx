@@ -10,6 +10,7 @@ import EscrowStatus from '@/components/EscrowStatus';
 import StatusBadge from '@/components/StatusBadge';
 import BidCard from '@/components/BidCard';
 import BidForm from '@/components/BidForm';
+import EscrowActions from '@/components/EscrowActions';
 
 import {
   getTaskFlow,
@@ -29,6 +30,7 @@ import {
   type Deliverable,
 } from '@/lib/deliverables';
 import { logEvent } from '@/lib/events';
+import { updateTaskMetadata, updateTaskEscrow, updateAgentStats } from '@/lib/supabaseStore';
 
 export default function TaskDetailClient() {
   const params = useParams();
@@ -47,6 +49,8 @@ export default function TaskDetailClient() {
   const [actionLoading, setActionLoading] = useState('');
   const [egoMintTxId, setEgoMintTxId] = useState<string | null>(null);
   const [egoMintError, setEgoMintError] = useState<string | null>(null);
+  const [escrowBoxId, setEscrowBoxId] = useState<string | undefined>(undefined);
+  const [escrowStatus, setEscrowStatus] = useState<'unfunded' | 'funded' | 'released' | 'refunded'>('unfunded');
 
   const taskId = params.id as string;
   const [task, setTask] = useState<Awaited<ReturnType<typeof getTask>>>(null);
@@ -57,6 +61,16 @@ export default function TaskDetailClient() {
   const refreshTaskData = useCallback(async () => {
     const t = await getTask(taskId);
     setTask(t);
+    // Load escrow state from task metadata
+    if (t?.metadata?.escrow_box_id) {
+      setEscrowBoxId(t.metadata.escrow_box_id);
+      const rawStatus = t.metadata.escrow_status || 'funded';
+      const statusMap: Record<string, 'unfunded' | 'funded' | 'released' | 'refunded'> = {
+        unfunded: 'unfunded', funded: 'funded', released: 'released', refunded: 'refunded',
+        approved_pending_release: 'funded',
+      };
+      setEscrowStatus(statusMap[rawStatus] || 'funded');
+    }
     const b = await getTaskBids(taskId);
     setBids(b);
     if (t?.assignedAgentId) {

@@ -103,7 +103,17 @@ export default function EscrowActions({
       onFunded?.(id, boxId);
     } catch (err: any) {
       console.error('Fund escrow failed:', err);
-      setError(err?.message || 'Transaction failed');
+      const msg = err?.message || 'Transaction failed';
+      // Friendly messages for common errors
+      if (msg.includes('rejected') || msg.includes('denied') || msg.includes('cancelled')) {
+        setError('Transaction cancelled in wallet. You can try again.');
+      } else if (msg.includes('not found') || msg.includes('Not Found')) {
+        setError('Nautilus wallet not found. Please install and unlock it.');
+      } else if (msg.includes('UTXO') || msg.includes('utxo') || msg.includes('No UTXOs')) {
+        setError('Insufficient funds. Make sure your wallet has enough ERG.');
+      } else {
+        setError(msg);
+      }
       setTxState('error');
     }
   }, [taskId, agentAddress, amountErg, deadlineHeight, onFunded]);
@@ -133,7 +143,14 @@ export default function EscrowActions({
       onReleased?.(id);
     } catch (err: any) {
       console.error('Release escrow failed:', err);
-      setError(err?.message || 'Transaction failed');
+      const msg = err?.message || 'Transaction failed';
+      if (msg.includes('rejected') || msg.includes('denied') || msg.includes('cancelled')) {
+        setError('Transaction cancelled in wallet. You can try again.');
+      } else if (msg.includes('not found on-chain')) {
+        setError('Escrow box not found on-chain. It may have already been spent.');
+      } else {
+        setError(msg);
+      }
       setTxState('error');
     }
   }, [escrowBoxId, agentAddress, onReleased]);
@@ -163,7 +180,16 @@ export default function EscrowActions({
       onRefunded?.(id);
     } catch (err: any) {
       console.error('Refund escrow failed:', err);
-      setError(err?.message || 'Transaction failed');
+      const msg = err?.message || 'Transaction failed';
+      if (msg.includes('rejected') || msg.includes('denied') || msg.includes('cancelled')) {
+        setError('Transaction cancelled in wallet. You can try again.');
+      } else if (msg.includes('Cannot refund yet')) {
+        setError(msg); // Already has helpful block height info
+      } else if (msg.includes('not found on-chain')) {
+        setError('Escrow box not found on-chain. It may have already been spent.');
+      } else {
+        setError(msg);
+      }
       setTxState('error');
     }
   }, [escrowBoxId, onRefunded]);
@@ -192,6 +218,14 @@ export default function EscrowActions({
           {isProcessing && <span className="inline-block animate-spin mr-2">⟳</span>}
           {stateLabels[txState]}
           {error && <div className="mt-1 text-xs opacity-80">{error}</div>}
+          {txState === 'error' && (
+            <button
+              onClick={() => { setTxState('idle'); setError(null); }}
+              className="mt-1 text-xs underline opacity-70 hover:opacity-100"
+            >
+              Dismiss & try again
+            </button>
+          )}
         </div>
       )}
 

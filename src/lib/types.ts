@@ -55,11 +55,13 @@ export interface Task {
   description: string;
   skillsRequired: string[];
   budgetErg: number;
-  status: 'open' | 'assigned' | 'in_progress' | 'review' | 'completed' | 'disputed';
+  status: 'open' | 'funded' | 'assigned' | 'in_progress' | 'review' | 'completed' | 'disputed' | 'cancelled' | 'refunded';
   creatorAddress: string; // Wallet address of task creator
   creatorName?: string; // Optional display name
   assignedAgentId?: string;
   assignedAgentName?: string;
+  acceptedBidId?: string;
+  acceptedAgentAddress?: string;
   escrowTxId?: string;
   bidsCount: number;
   createdAt: string;

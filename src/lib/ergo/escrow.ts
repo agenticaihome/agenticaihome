@@ -46,6 +46,38 @@ export interface EscrowBox {
 // ─── Helpers ─────────────────────────────────────────────────────────
 
 /**
+ * Decode a Sigma ZigZag+VLQ encoded integer from hex bytes.
+ * Used to read SInt register values from serialized box data.
+ */
+function decodeSigmaVlqInt(hex: string): { value: number; bytesRead: number } {
+  let offset = 0;
+  let vlq = 0;
+  let shift = 0;
+  while (offset < hex.length) {
+    const byte = parseInt(hex.slice(offset, offset + 2), 16);
+    offset += 2;
+    vlq |= (byte & 0x7f) << (7 * shift);
+    shift++;
+    if ((byte & 0x80) === 0) break;
+  }
+  // ZigZag decode: (vlq >>> 1) ^ -(vlq & 1)
+  const value = (vlq >>> 1) ^ -(vlq & 1);
+  return { value, bytesRead: offset / 2 };
+}
+
+/**
+ * Decode an SInt constant from its serialized hex representation.
+ * Format: 05 + ZigZag+VLQ encoded value
+ */
+function decodeSInt(serializedHex: string): number {
+  if (!serializedHex.startsWith('05')) {
+    throw new Error(`Expected SInt type prefix 05, got ${serializedHex.slice(0, 2)}`);
+  }
+  const { value } = decodeSigmaVlqInt(serializedHex.slice(2));
+  return value;
+}
+
+/**
  * Extract the 33-byte compressed public key from a P2PK Ergo address.
  * P2PK ergoTree = "0008cd" + 33-byte-hex-pubkey
  */
@@ -301,20 +333,12 @@ export async function refundEscrowTx(
     throw new Error('Missing deadline register R6 in escrow box');
   }
   
-  // R6 contains an SInt value - need to decode the hex properly
-  // SInt encoding: first byte is type (05 for SInt), then the int value in hex
+  // R6 contains an SInt value — Sigma uses ZigZag + VLQ encoding
   let deadlineHeight: number;
   try {
-    if (deadlineReg.startsWith('05')) {
-      // Remove type byte (05) and parse the remaining hex as little-endian int
-      const heightHex = deadlineReg.slice(2);
-      deadlineHeight = parseInt(heightHex, 16);
-    } else {
-      // Fallback: try parsing as direct hex
-      deadlineHeight = parseInt(deadlineReg, 16);
-    }
+    deadlineHeight = decodeSInt(deadlineReg);
   } catch (err) {
-    throw new Error(`Invalid deadline format in R6: ${deadlineReg}`);
+    throw new Error(`Invalid deadline format in R6: ${deadlineReg} — ${(err as Error).message}`);
   }
 
   if (currentHeight <= deadlineHeight) {
@@ -458,21 +482,15 @@ export function validateEscrowBox(
     }
   }
 
-  // Validate deadline format
+  // Validate deadline format (SInt: ZigZag + VLQ encoded)
   if (regs.R6) {
     try {
-      let deadlineHeight: number;
-      if (regs.R6.startsWith('05')) {
-        const heightHex = regs.R6.slice(2);
-        deadlineHeight = parseInt(heightHex, 16);
-      } else {
-        deadlineHeight = parseInt(regs.R6, 16);
-      }
+      const deadlineHeight = decodeSInt(regs.R6);
       if (deadlineHeight <= 0 || !Number.isInteger(deadlineHeight)) {
         errors.push('Invalid deadline height in R6');
       }
     } catch (err) {
-      errors.push('Failed to parse deadline from R6');
+      errors.push(`Failed to parse deadline from R6: ${(err as Error).message}`);
     }
   }
 

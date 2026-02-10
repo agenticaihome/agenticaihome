@@ -636,9 +636,8 @@ function TaskDetailInner() {
               <EscrowActions
                 taskId={task.id}
                 agentAddress={
-                  // For release: agent address comes from the assigned agent's owner
-                  // For now use creator address as fallback
-                  assignedAgent?.ownerAddress || task.creatorAddress || ''
+                  // Agent's ergo address — where funds go on release
+                  assignedAgent?.ergoAddress || assignedAgent?.ownerAddress || ''
                 }
                 amountErg={String(task.budgetErg || 0)}
                 escrowBoxId={escrowBoxId}

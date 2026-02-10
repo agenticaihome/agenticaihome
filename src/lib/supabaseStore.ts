@@ -83,6 +83,8 @@ function taskToDb(t: Partial<Task>): Record<string, unknown> {
   if (t.creatorName !== undefined) m.creator_name = t.creatorName;
   if (t.assignedAgentId !== undefined) m.assigned_agent_id = t.assignedAgentId;
   if (t.assignedAgentName !== undefined) m.assigned_agent_name = t.assignedAgentName;
+  if (t.acceptedBidId !== undefined) m.accepted_bid_id = t.acceptedBidId;
+  if (t.acceptedAgentAddress !== undefined) m.accepted_agent_address = t.acceptedAgentAddress;
   if (t.escrowTxId !== undefined) m.escrow_tx_id = t.escrowTxId;
   if (t.bidsCount !== undefined) m.bids_count = t.bidsCount;
   if (t.createdAt !== undefined) m.created_at = t.createdAt;
@@ -102,6 +104,8 @@ function dbToTask(row: Record<string, unknown>): Task {
     creatorName: row.creator_name as string | undefined,
     assignedAgentId: row.assigned_agent_id as string | undefined,
     assignedAgentName: row.assigned_agent_name as string | undefined,
+    acceptedBidId: row.accepted_bid_id as string | undefined,
+    acceptedAgentAddress: row.accepted_agent_address as string | undefined,
     escrowTxId: row.escrow_tx_id as string | undefined,
     bidsCount: Number(row.bids_count) || 0,
     createdAt: (row.created_at as string) || '',
@@ -119,6 +123,7 @@ function bidToDb(b: Partial<Bid>): Record<string, unknown> {
   if (b.agentEgoScore !== undefined) m.agent_ego_score = b.agentEgoScore;
   if (b.proposedRate !== undefined) m.proposed_rate = b.proposedRate;
   if (b.message !== undefined) m.message = b.message;
+  if (b.status !== undefined) m.status = b.status;
   if (b.createdAt !== undefined) m.created_at = b.createdAt;
   return m;
 }
@@ -132,6 +137,7 @@ function dbToBid(row: Record<string, unknown>): Bid {
     agentEgoScore: Number(row.agent_ego_score) || 0,
     proposedRate: Number(row.proposed_rate) || 0,
     message: (row.message as string) || '',
+    status: (row.status as Bid['status']) || 'pending',
     createdAt: (row.created_at as string) || '',
   };
 }
@@ -453,13 +459,42 @@ export async function acceptBid(bidId: string): Promise<boolean> {
   if (!bids) return false;
   const bid = dbToBid(bids);
 
+  // Get agent's ergo address
+  const { data: agentData } = await supabase.from('agents').select('ergo_address').eq('id', bid.agentId).single();
+  const agentAddress = agentData?.ergo_address as string || '';
+
+  // Update task with accepted bid info and transition to in_progress
   await supabase.from('tasks').update({
-    status: 'assigned',
+    status: 'in_progress',
     assigned_agent_id: bid.agentId,
     assigned_agent_name: bid.agentName,
+    accepted_bid_id: bid.id,
+    accepted_agent_address: agentAddress,
   }).eq('id', bid.taskId);
 
+  // Mark accepted bid, reject others
+  await supabase.from('bids').update({ status: 'accepted' }).eq('id', bidId);
+  await supabase.from('bids').update({ status: 'rejected' }).eq('task_id', bid.taskId).neq('id', bidId);
+
   return true;
+}
+
+// ---- Task Status Transitions ----
+
+export async function transitionTaskStatus(
+  taskId: string,
+  newStatus: string,
+  actorAddress: string,
+): Promise<{ success: boolean; error?: string; from?: string; to?: string }> {
+  const { data, error } = await supabase.rpc('transition_task_status', {
+    p_task_id: taskId,
+    p_new_status: newStatus,
+    p_actor_address: actorAddress,
+  });
+
+  if (error) return { success: false, error: error.message };
+  if (data?.error) return { success: false, error: data.error };
+  return { success: true, from: data?.from, to: data?.to };
 }
 
 // ---- Transaction Management ----

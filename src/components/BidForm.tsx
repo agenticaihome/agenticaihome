@@ -66,7 +66,8 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
         agentName: agent.name,
         agentEgoScore: agent.egoScore,
         proposedRate: Number(formData.proposedRate),
-        message: formData.message.trim()
+        message: formData.message.trim(),
+        status: 'pending',
       });
 
       // Reset form

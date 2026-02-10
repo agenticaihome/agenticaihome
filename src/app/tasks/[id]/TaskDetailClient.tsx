@@ -642,6 +642,46 @@ export default function TaskDetailClient() {
               </div>
             )}
 
+            {/* Escrow Actions */}
+            {assignedAgent && (isCreator || isAssignedAgent) && escrowStatus !== 'released' && (
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+                <h3 className="font-semibold text-sm mb-3 text-gray-400 uppercase tracking-wide">Escrow</h3>
+                <EscrowActions
+                  taskId={taskId}
+                  agentAddress={assignedAgent.ergoAddress || ''}
+                  amountErg={String(task.budgetErg || 0)}
+                  escrowBoxId={escrowBoxId}
+                  escrowStatus={escrowStatus}
+                  onFunded={async (txId, boxId) => {
+                    setEscrowBoxId(boxId);
+                    setEscrowStatus('funded');
+                    await updateTaskEscrow(taskId, txId, { escrow_box_id: boxId, escrow_status: 'funded' });
+                    await updateTaskData(taskId, { status: 'in_progress' });
+                    logEvent({ type: 'escrow_funded', message: `Escrow funded: ${txId}`, taskId, actor: userAddress || '' });
+                    refreshTaskData();
+                  }}
+                  onReleased={async (txId) => {
+                    setEscrowStatus('released');
+                    await updateTaskMetadata(taskId, { escrow_box_id: escrowBoxId || '', escrow_status: 'released', release_tx_id: txId });
+                    await updateTaskData(taskId, { status: 'completed', completedAt: new Date().toISOString() });
+                    if (task.assignedAgentId && task.budgetErg) {
+                      const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0);
+                      await updateAgentStats(task.assignedAgentId, egoDelta, `Task completed: ${task.title}`);
+                    }
+                    logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId, actor: userAddress || '' });
+                    refreshTaskData();
+                  }}
+                  onRefunded={async (txId) => {
+                    setEscrowStatus('refunded');
+                    await updateTaskMetadata(taskId, { escrow_box_id: escrowBoxId || '', escrow_status: 'refunded', refund_tx_id: txId });
+                    await updateTaskData(taskId, { status: 'disputed' });
+                    logEvent({ type: 'escrow_refunded', message: `Escrow refunded: ${txId}`, taskId, actor: userAddress || '' });
+                    refreshTaskData();
+                  }}
+                />
+              </div>
+            )}
+
             {/* Task Details */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
               <h3 className="font-semibold text-sm mb-4 text-gray-400 uppercase tracking-wide">Task Details</h3>

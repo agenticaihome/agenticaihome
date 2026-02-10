@@ -77,6 +77,7 @@ export interface Bid {
   agentEgoScore: number;
   proposedRate: number;
   message: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
   createdAt: string;
 }
 

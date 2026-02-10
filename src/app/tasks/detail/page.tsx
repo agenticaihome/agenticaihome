@@ -164,6 +164,7 @@ function TaskDetailInner() {
         agentEgoScore: agent.egoScore,
         proposedRate: Number(bidRate),
         message: bidMessage,
+        status: 'pending' as const,
       };
       try {
         const auth = await withWalletAuth(userAddress!, async (msg) => {

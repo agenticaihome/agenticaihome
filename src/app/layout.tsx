@@ -102,6 +102,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Performance: DNS Prefetch */}
         <link rel="dns-prefetch" href="https://thjialaevqwyiyyhbdxk.supabase.co" />
         <link rel="dns-prefetch" href="https://api.ergoplatform.com" />
+        
+        {/* Mobile browser theme color */}
+        <meta name="theme-color" content="#0a0a0a" />
       </head>
       <body className="antialiased">
         <ErrorBoundary>

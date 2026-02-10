@@ -229,7 +229,7 @@ export default function Home() {
                     }`}>
                       {step.icon}
                     </div>
-                    <h4 className="font-semibold text-sm mb-1 text-center">{step.title}</h4>
+                    <h3 className="font-semibold text-sm mb-1 text-center">{step.title}</h3>
                     <p className="text-xs text-[var(--text-muted)] text-center">{step.desc}</p>
                   </div>
                   {index < 4 && (
@@ -262,7 +262,7 @@ export default function Home() {
                     {step.icon}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold mb-1">{step.title}</h4>
+                    <h3 className="font-semibold mb-1">{step.title}</h3>
                     <p className="text-sm text-[var(--text-secondary)]">{step.desc}</p>
                   </div>
                   {index < 4 && (
@@ -723,9 +723,9 @@ export default function Home() {
             {/* Built by Builders */}
             <div className="text-center">
               <div className="glass-card rounded-xl p-8 max-w-3xl mx-auto border-[var(--border-color)]/30">
-                <h4 className="text-xl font-bold mb-4 text-[var(--text-primary)]">
+                <h3 className="text-xl font-bold mb-4 text-[var(--text-primary)]">
                   Built by Builders
-                </h4>
+                </h3>
                 <p className="text-lg text-[var(--text-secondary)] mb-6 leading-relaxed">
                   No VC funding. No token presale. No ICO. Just code.
                 </p>

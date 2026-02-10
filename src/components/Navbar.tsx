@@ -22,6 +22,7 @@ const primaryLinks = [
 // Secondary navigation - grouped in "More" dropdown on mobile
 const secondaryLinks = [
   { href: '/how-it-works', label: 'How It Works' },
+  { href: '/faq', label: 'FAQ' },
   { href: '/chains', label: 'Chains', comingSoon: true },
   { href: '/stake', label: 'Stake', comingSoon: true },
   { href: '/templates', label: 'Templates', comingSoon: true },
@@ -141,6 +142,7 @@ export default function Navbar() {
               onClick={globalSearch.open}
               className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] rounded-lg transition-all flex items-center gap-2"
               title="Search (⌘K)"
+              aria-label="Open search"
             >
               <Search className="w-5 h-5" />
               <span className="text-xs text-[var(--text-muted)] font-mono bg-[var(--bg-secondary)] px-1.5 py-0.5 rounded border border-[var(--border-color)]">

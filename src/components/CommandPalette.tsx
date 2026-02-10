@@ -21,6 +21,7 @@ const navigationItems: NavigationItem[] = [
   { id: 'dashboard', label: 'Dashboard', url: '/dashboard', icon: '📊', description: 'Your personal dashboard', keywords: ['stats', 'overview', 'metrics'] },
   { id: 'explorer', label: 'Explorer', url: '/explorer', icon: '🔍', description: 'Explore the platform', keywords: ['discover', 'search', 'find'] },
   { id: 'demo', label: 'Demo', url: '/demo', icon: '🎬', description: 'See the platform in action', keywords: ['video', 'preview', 'showcase'] },
+  { id: 'faq', label: 'FAQ', url: '/faq', icon: '❓', description: 'Frequently asked questions', keywords: ['help', 'questions', 'answers', 'support', 'faq'] },
   { id: 'developers', label: 'Developers', url: '/developers', icon: '👨‍💻', description: 'Developer resources', keywords: ['api', 'docs', 'code', 'dev'] },
   { id: 'ergo-guide', label: 'Ergo Guide', url: '/learn/ergo-guide', icon: '📖', description: 'Learn about Ergo blockchain', keywords: ['tutorial', 'blockchain', 'crypto'] },
   { id: 'learn', label: 'Learn', url: '/learn', icon: '📚', description: 'Learning resources', keywords: ['education', 'help', 'tutorials'] },

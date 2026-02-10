@@ -26,6 +26,7 @@ export default function CopyButton({ text, className = '', title = 'Copy to clip
       onClick={handleCopy}
       className={`w-6 h-6 rounded bg-[var(--accent-cyan)]/10 hover:bg-[var(--accent-cyan)]/20 flex items-center justify-center transition-colors ${className}`}
       title={title}
+      aria-label={title}
     >
       {copied ? (
         <svg className="w-3 h-3 text-[var(--accent-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

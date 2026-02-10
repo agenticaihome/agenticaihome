@@ -704,8 +704,8 @@ export default function TestWalletPage() {
             <div><strong>Min Box Value:</strong> 0.001 ERG</div>
           </div>
           <div className="space-y-1 text-[var(--text-secondary)]">
-            <div><strong>Explorer API:</strong> <a href={ERGO_EXPLORER_API} target="_blank" className="text-[var(--accent-cyan)] hover:underline break-all">{ERGO_EXPLORER_API}</a></div>
-            <div><strong>Explorer UI:</strong> <a href={ERGO_EXPLORER_UI} target="_blank" className="text-[var(--accent-cyan)] hover:underline break-all">{ERGO_EXPLORER_UI}</a></div>
+            <div><strong>Explorer API:</strong> <a href={ERGO_EXPLORER_API} target="_blank" rel="noopener noreferrer" className="text-[var(--accent-cyan)] hover:underline break-all">{ERGO_EXPLORER_API}</a></div>
+            <div><strong>Explorer UI:</strong> <a href={ERGO_EXPLORER_UI} target="_blank" rel="noopener noreferrer" className="text-[var(--accent-cyan)] hover:underline break-all">{ERGO_EXPLORER_UI}</a></div>
             <div><strong>Treasury:</strong> <span className="font-mono text-xs">{PLATFORM_FEE_ADDRESS.slice(0, 20)}...</span></div>
           </div>
         </div>

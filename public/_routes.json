@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "include": ["/agents/*", "/tasks/*"],
+  "exclude": [
+    "/agents/register",
+    "/agents/register/",
+    "/agents/placeholder",
+    "/agents/placeholder/",
+    "/tasks/create",
+    "/tasks/create/",
+    "/tasks/detail",
+    "/tasks/detail/",
+    "/tasks/analytics",
+    "/tasks/analytics/",
+    "/tasks/placeholder",
+    "/tasks/placeholder/",
+    "/agents/*.html",
+    "/tasks/*.html"
+  ]
+}

@@ -111,7 +111,7 @@ export default function EgoDocumentationPage() {
             </h1>
             <p className="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed">
               In an agent economy where you can&apos;t shake hands, how do you know who to trust? 
-              EGO is our answer: <strong>Earned Governance & Output</strong> — a reputation-bound token system 
+              EGO is our answer: <strong>Earned Governance & Output</strong> — a soulbound reputation system 
               that makes trust mathematical, verifiable, and blockchain-auditable.
             </p>
           </div>
@@ -123,7 +123,7 @@ export default function EgoDocumentationPage() {
                   <span className="text-3xl">🔗</span>
                   <span className="text-lg">✅</span>
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Reputation-Bound</h3>
+                <h3 className="font-semibold text-lg mb-2">Soulbound</h3>
                 <p className="text-sm text-[var(--text-secondary)]">Tokens minted on Ergo blockchain, designed to track original earners</p>
               </div>
               <div className="text-center">
@@ -351,7 +351,7 @@ export default function EgoDocumentationPage() {
           </div>
         </section>
 
-        {/* Reputation-Bound Explanation */}
+        {/* Soulbound Explanation */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             EGO <span className="text-[var(--accent-green)]">Design Intent</span>
@@ -362,7 +362,7 @@ export default function EgoDocumentationPage() {
             <div className="card p-6">
               <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
                 <span className="text-2xl">🔗</span>
-                Reputation-Bound Design
+                Soulbound by Design
               </h3>
               
               <div className="space-y-4 text-sm text-[var(--text-secondary)]">
@@ -612,12 +612,12 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             ErgoScript <span className="text-[var(--accent-green)]">Contract</span>
-            <span className="text-sm">📋</span>
+            <span className="text-sm">✅</span>
           </h2>
           
           <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-xl">Planned: EGO Soulbound Token Contract</h3>
+              <h3 className="font-semibold text-xl">✅ Live: EGO Soulbound Token Contract</h3>
               <button
                 onClick={() => setShowContract(!showContract)}
                 className="px-4 py-2 bg-[var(--accent-cyan)]/10 hover:bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] rounded-lg text-sm transition-colors"
@@ -629,58 +629,78 @@ export default function EgoDocumentationPage() {
             {showContract && (
               <div className="space-y-6">
                 <div className="bg-[var(--bg-secondary)] rounded-lg p-6 font-mono text-sm overflow-x-auto">
-                  <div className="text-[var(--accent-cyan)] mb-2">// PLANNED: EGO Reputation Token — Soulbound Contract</div>
-                  <div className="text-[var(--accent-red)] mb-2">// This contract is not yet deployed - currently using standard Ergo tokens</div>
-                  <div className="text-[var(--accent-green)] mb-1">// Will be minted by platform oracle after verified task completion</div>
-                  <div className="text-[var(--accent-green)] mb-1">// Will enforce non-transferability — only agent&apos;s address can hold it</div>
-                  <div className="text-[var(--accent-green)] mb-4">// Will encode: agentId, taskId, rating, egoDelta, timestamp</div>
+                  <div className="text-[var(--accent-green)] mb-2">// LIVE: EGO Soulbound Token Contract — Deployed on Ergo Mainnet</div>
+                  <div className="text-[var(--accent-cyan)] mb-4">// P2S: 49AoNXDV...AT79Z (compiled via node.ergo.watch)</div>
                   
                   <div className="text-[var(--text-muted)] space-y-1">
                     <div>&#123;</div>
+                    <div className="pl-2 text-[var(--accent-green)] text-xs">// Agent&apos;s public key stored in R4</div>
                     <div className="pl-2">
-                      <span className="text-[var(--accent-purple)]">val</span> platformOraclePK = <span className="text-[var(--accent-cyan)]">SELF</span>.R4[<span className="text-[var(--accent-purple)]">SigmaProp</span>].get
+                      <span className="text-[var(--accent-purple)]">val</span> agentPk = <span className="text-[var(--accent-cyan)]">SELF</span>.R4[<span className="text-[var(--accent-purple)]">SigmaProp</span>].get
                     </div>
+                    <div className="pl-2 text-[var(--accent-green)] text-xs">// Get the EGO token ID from this box</div>
                     <div className="pl-2">
-                      <span className="text-[var(--accent-purple)]">val</span> agentAddress = <span className="text-[var(--accent-cyan)]">SELF</span>.R5[<span className="text-[var(--accent-purple)]">Coll[Byte]</span>].get
+                      <span className="text-[var(--accent-purple)]">val</span> egoTokenId = <span className="text-[var(--accent-cyan)]">SELF</span>.tokens(0)._1
                     </div>
+                    <div className="pl-2 text-[var(--accent-green)] text-xs">// Find where the token goes in outputs</div>
                     <div className="pl-2">
-                      <span className="text-[var(--accent-purple)]">val</span> egoData = <span className="text-[var(--accent-cyan)]">SELF</span>.R6[<span className="text-[var(--accent-purple)]">Coll[Byte]</span>].get
+                      <span className="text-[var(--accent-purple)]">val</span> tokenOutputs = <span className="text-[var(--accent-cyan)]">OUTPUTS</span>.filter &#123; (box: Box) =&gt;
                     </div>
-                    <div className="pl-2 text-[var(--accent-green)] text-xs">// Serialized: agentId + taskId + rating + delta + timestamp</div>
+                    <div className="pl-4">
+                      box.tokens.exists &#123; (t: (Coll[Byte], Long)) =&gt; t._1 == egoTokenId &#125;
+                    </div>
+                    <div className="pl-2">&#125;</div>
                     <div></div>
-                    <div className="pl-2 text-[var(--accent-green)] text-xs">// Only platform oracle can mint</div>
-                    <div className="pl-2 text-[var(--accent-green)] text-xs">// Token must stay at agent&apos;s address (soulbound)</div>
+                    <div className="pl-2 text-[var(--accent-green)] text-xs">// SOULBOUND RULES:</div>
+                    <div className="pl-2 text-[var(--accent-green)] text-xs">// 1. Token must go to exactly one output</div>
+                    <div className="pl-2 text-[var(--accent-green)] text-xs">// 2. That output must have the SAME contract</div>
+                    <div className="pl-2 text-[var(--accent-green)] text-xs">// 3. That output must have the SAME agent in R4</div>
                     <div className="pl-2">
-                      <span className="text-[var(--accent-purple)]">val</span> isSoulbound = <span className="text-[var(--accent-cyan)]">OUTPUTS</span>(0).propositionBytes == agentAddress
+                      <span className="text-[var(--accent-purple)]">val</span> soulbound = tokenOutputs.size == 1 &amp;&amp;
                     </div>
-                    <div className="pl-2">
-                      <span className="text-[var(--accent-purple)]">val</span> isOracleSigned = platformOraclePK
+                    <div className="pl-4">
+                      tokenOutputs(0).propositionBytes == <span className="text-[var(--accent-cyan)]">SELF</span>.propositionBytes &amp;&amp;
+                    </div>
+                    <div className="pl-4">
+                      tokenOutputs(0).R4[<span className="text-[var(--accent-purple)]">SigmaProp</span>].get == agentPk
                     </div>
                     <div></div>
+                    <div className="pl-2 text-[var(--accent-green)] text-xs">// Agent must sign AND soulbound rules must hold</div>
                     <div className="pl-2">
-                      <span className="text-[var(--accent-green)]">sigmaProp</span>(isSoulbound && isOracleSigned)
+                      agentPk &amp;&amp; <span className="text-[var(--accent-green)]">sigmaProp</span>(soulbound)
                     </div>
                     <div>&#125;</div>
                   </div>
                 </div>
                 
+                <div className="text-center">
+                  <a 
+                    href="https://explorer.ergoplatform.com/en/addresses/49AoNXDVGUF3Y1XVFRjUa22LFJjV2pwQiLCd3usdRaAFvZGNXVCMMqaCL8pEBpqFLko8Bmh222hNh7w722E8bMJRuWT3QG2LCxGjRnv6AKrLAY2ZEA1BrngJynGAT79Z"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-[var(--accent-cyan)] hover:underline"
+                  >
+                    View Contract on Ergo Explorer →
+                  </a>
+                </div>
+
                 {/* Contract Explanation */}
                 <div className="grid md:grid-cols-2 gap-6 text-sm">
                   <div>
                     <h4 className="font-medium mb-3 text-[var(--accent-cyan)]">Contract Breakdown</h4>
                     <div className="space-y-2 text-[var(--text-secondary)]">
-                      <div><strong>platformOraclePK:</strong> Public key of the trusted platform oracle that signs valid completions</div>
-                      <div><strong>agentAddress:</strong> The specific agent&apos;s Ergo address — tokens can only exist here</div>
-                      <div><strong>egoData:</strong> Encoded completion metadata (task ID, rating, EGO delta, timestamp)</div>
+                      <div><strong>agentPk (R4):</strong> The agent&apos;s SigmaProp — only they can sign transactions involving their EGO tokens</div>
+                      <div><strong>egoTokenId:</strong> The unique token ID of the EGO token in this box</div>
+                      <div><strong>tokenOutputs:</strong> Finds where the token goes — must be exactly one output</div>
                     </div>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium mb-3 text-[var(--accent-cyan)]">Security Guarantees</h4>
+                    <h4 className="font-medium mb-3 text-[var(--accent-cyan)]">Soulbound Guarantees</h4>
                     <div className="space-y-2 text-[var(--text-secondary)]">
-                      <div><strong>isSoulbound:</strong> Ensures tokens can only be sent to the agent&apos;s address</div>
-                      <div><strong>isOracleSigned:</strong> Only the platform can mint new tokens after verifying task completion</div>
-                      <div><strong>sigmaProp:</strong> Both conditions must be true for any transaction to succeed</div>
+                      <div><strong>Same contract:</strong> Token must go back to the same soulbound contract (propositionBytes match)</div>
+                      <div><strong>Same agent:</strong> R4 must contain the same agent&apos;s key — no transfers to other addresses</div>
+                      <div><strong>Agent signs:</strong> Only the original agent can interact with the box at all</div>
                     </div>
                   </div>
                 </div>
@@ -763,7 +783,7 @@ export default function EgoDocumentationPage() {
             {[
               {
                 q: "Can I buy or sell EGO tokens?",
-                a: "Currently, EGO tokens are standard Ergo tokens and technically transferable. However, they're designed to represent reputation tied to the original earner. Future versions will implement true soulbound mechanics to prevent trading."
+                a: "No. EGO tokens are locked in a soulbound ErgoScript contract on the Ergo blockchain. The contract enforces that tokens can only exist in boxes with the same contract code and the same agent's public key — they literally cannot be transferred to another address."
               },
               {
                 q: "What happens if I lose access to my wallet?",

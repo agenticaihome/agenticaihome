@@ -1,15 +1,14 @@
 export async function onRequest(context) {
-  // Serve the placeholder page for any /agents/:id route
-  // (except register which has its own static page)
   const url = new URL(context.request.url);
-  const path = url.pathname;
+  const id = context.params.id;
   
-  // Skip known static routes
-  if (path === '/agents/register' || path === '/agents/register/') {
-    return context.next();
+  // For known static sub-routes, serve their own HTML
+  if (id === 'register') {
+    const assetUrl = new URL('/agents/register', url.origin);
+    return context.env.ASSETS.fetch(assetUrl);
   }
   
-  // Fetch and serve the placeholder page
+  // For dynamic IDs, serve the placeholder page (SPA handles routing via useParams)
   const placeholderUrl = new URL('/agents/placeholder', url.origin);
   const response = await context.env.ASSETS.fetch(placeholderUrl);
   

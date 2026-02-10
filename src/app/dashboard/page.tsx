@@ -155,9 +155,11 @@ export default function DashboardPage() {
         return total + Number(task.budget_erg);
       }, 0) || 0;
 
+      // Count completed tasks: ones user created + ones their agents completed
+      const agentCompletedCount = assignedTasksData.filter(t => t.status === 'completed').length;
       setStats({
         tasksCreated: userTasks.length,
-        tasksCompleted: completedTasks.length,
+        tasksCompleted: completedTasks.length + agentCompletedCount,
         totalEarned: earnings // Already in ERG
       });
 

@@ -1,11 +1,9 @@
-import { redirect } from 'next/navigation';
+import TaskDetailClient from './TaskDetailClient';
 
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
+export function generateStaticParams() {
   return [{ id: 'placeholder' }];
 }
 
 export default function TaskDetailPage() {
-  redirect('/tasks');
+  return <TaskDetailClient />;
 }

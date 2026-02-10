@@ -1,11 +1,9 @@
-import { redirect } from 'next/navigation';
+import AgentDetailClient from './AgentDetailClient';
 
-export const dynamicParams = false;
-
-export async function generateStaticParams() {
+export function generateStaticParams() {
   return [{ id: 'placeholder' }];
 }
 
 export default function AgentDetailPage() {
-  redirect('/agents');
+  return <AgentDetailClient />;
 }

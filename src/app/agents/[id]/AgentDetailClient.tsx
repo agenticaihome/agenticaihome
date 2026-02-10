@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useData } from '@/contexts/DataContext';
@@ -33,6 +33,8 @@ import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
 import { getCurrentHeight } from '@/lib/ergo/explorer';
 import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
 import { supabase } from '@/lib/supabase';
+import { isMobileDevice, createErgoPayRequest } from '@/lib/ergo/ergopay';
+import ErgoPayModal from '@/components/ErgoPayModal';
 
 export default function AgentDetailClient() {
   const params = useParams();
@@ -49,12 +51,26 @@ export default function AgentDetailClient() {
   const [mintingIdentity, setMintingIdentity] = useState(false);
   const [mintError, setMintError] = useState<string | null>(null);
   const [mintSuccess, setMintSuccess] = useState(false);
+  const [ergoPayModal, setErgoPayModal] = useState<{
+    isOpen: boolean;
+    ergoPayUrl: string;
+    qrCode: string;
+    requestId: string;
+  } | null>(null);
 
   // Use pathname for agent ID — useParams() returns 'placeholder' on static export
   const agentId = (typeof window !== 'undefined' 
     ? window.location.pathname.split('/agents/')[1]?.split('/')[0] || (params?.id as string)
     : params?.id as string);
   const isOwner = agent?.ownerAddress === userAddress;
+
+  const handleErgoPaySuccess = useCallback(async (txId: string) => {
+    if (!agent) return;
+    await supabase.from('agents').update({ identity_token_id: txId }).eq('id', agent.id);
+    setAgent({ ...agent, identityTokenId: txId });
+    setMintSuccess(true);
+    setTimeout(() => setErgoPayModal(null), 2000);
+  }, [agent]);
 
   async function handleMintIdentity() {
     if (!agent || !userAddress) return;
@@ -73,11 +89,30 @@ export default function AgentDetailClient() {
         utxos,
         currentHeight: height,
       });
+
+      // Mobile or no Nautilus: use ErgoPay
+      if (isMobileDevice() || !window.ergoConnector?.nautilus) {
+        const ergoPayData = await createErgoPayRequest(
+          unsignedTx,
+          userAddress,
+          `Mint Identity NFT for ${agent.name}`
+        );
+        setErgoPayModal({
+          isOpen: true,
+          ergoPayUrl: ergoPayData.ergoPayUrl,
+          qrCode: ergoPayData.qrCode,
+          requestId: ergoPayData.requestId,
+        });
+        if (isMobileDevice()) {
+          window.location.href = ergoPayData.ergoPayUrl;
+        }
+        return;
+      }
+
+      // Desktop + Nautilus: existing flow
       const signedTx = await signTransaction(unsignedTx);
       const txId = await submitTransaction(signedTx);
-      // The minted token ID = first input box ID
       const tokenId = unsignedTx.inputs[0]?.boxId || txId;
-      // Update agent record with identity token
       await supabase.from('agents').update({ identity_token_id: tokenId }).eq('id', agent.id);
       setAgent({ ...agent, identityTokenId: tokenId });
       setMintSuccess(true);
@@ -471,6 +506,17 @@ export default function AgentDetailClient() {
           </div>
         </div>
       </div>
+      {ergoPayModal?.isOpen && (
+        <ErgoPayModal
+          isOpen={true}
+          onClose={() => setErgoPayModal(null)}
+          ergoPayUrl={ergoPayModal.ergoPayUrl}
+          qrCode={ergoPayModal.qrCode}
+          requestId={ergoPayModal.requestId}
+          onSuccess={handleErgoPaySuccess}
+          message={`Sign the transaction in your Terminus wallet`}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { supabase } from '@/lib/supabase';
 import EgoTokenViewer from '@/components/EgoTokenViewer';
@@ -8,6 +8,8 @@ import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
 import { getCurrentHeight } from '@/lib/ergo/explorer';
 import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
 import { getPendingRatingsForUser } from '@/lib/supabaseStore';
+import { isMobileDevice, createErgoPayRequest } from '@/lib/ergo/ergopay';
+import ErgoPayModal from '@/components/ErgoPayModal';
 
 interface Agent {
   id: string;
@@ -73,6 +75,22 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [mintingAgentId, setMintingAgentId] = useState<string | null>(null);
   const [mintResult, setMintResult] = useState<{ agentId: string; success: boolean; message: string } | null>(null);
+  const [ergoPayModal, setErgoPayModal] = useState<{
+    isOpen: boolean;
+    ergoPayUrl: string;
+    qrCode: string;
+    requestId: string;
+    agentId: string;
+  } | null>(null);
+
+  const handleErgoPaySuccess = useCallback(async (txId: string) => {
+    if (!ergoPayModal) return;
+    const agentId = ergoPayModal.agentId;
+    await supabase.from('agents').update({ identity_token_id: txId }).eq('id', agentId);
+    setAgents(prev => prev.map(a => a.id === agentId ? { ...a, identity_token_id: txId } : a));
+    setMintResult({ agentId, success: true, message: 'Identity NFT minted via ErgoPay! ✅' });
+    setTimeout(() => setErgoPayModal(null), 2000);
+  }, [ergoPayModal]);
 
   const handleMintIdentity = async (agent: Agent) => {
     if (!userAddress) return;
@@ -88,6 +106,29 @@ export default function DashboardPage() {
         utxos,
         currentHeight: height,
       });
+
+      // Mobile or no Nautilus: use ErgoPay
+      if (isMobileDevice() || !window.ergoConnector?.nautilus) {
+        const ergoPayData = await createErgoPayRequest(
+          unsignedTx,
+          userAddress,
+          `Mint Identity NFT for ${agent.name}`
+        );
+        setErgoPayModal({
+          isOpen: true,
+          ergoPayUrl: ergoPayData.ergoPayUrl,
+          qrCode: ergoPayData.qrCode,
+          requestId: ergoPayData.requestId,
+          agentId: agent.id,
+        });
+        // On mobile, auto-open deep link
+        if (isMobileDevice()) {
+          window.location.href = ergoPayData.ergoPayUrl;
+        }
+        return;
+      }
+
+      // Desktop + Nautilus: existing flow
       const signedTx = await signTransaction(unsignedTx);
       const txId = await submitTransaction(signedTx);
       const tokenId = unsignedTx.inputs[0]?.boxId || txId;
@@ -656,6 +697,17 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      {ergoPayModal?.isOpen && (
+        <ErgoPayModal
+          isOpen={true}
+          onClose={() => setErgoPayModal(null)}
+          ergoPayUrl={ergoPayModal.ergoPayUrl}
+          qrCode={ergoPayModal.qrCode}
+          requestId={ergoPayModal.requestId}
+          onSuccess={handleErgoPaySuccess}
+          message={`Sign the transaction in your Terminus wallet`}
+        />
+      )}
     </div>
   );
 }

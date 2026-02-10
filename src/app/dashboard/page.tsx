@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { supabase } from '@/lib/supabase';
 import EgoTokenViewer from '@/components/EgoTokenViewer';
+import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
+import { getCurrentHeight } from '@/lib/ergo/explorer';
+import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
 
 interface Agent {
   id: string;
@@ -16,6 +19,8 @@ interface Agent {
   tasks_completed: number;
   status: string;
   created_at: string;
+  identity_token_id: string | null;
+  skills: string[];
 }
 
 interface Task {
@@ -56,6 +61,35 @@ export default function DashboardPage() {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mintingAgentId, setMintingAgentId] = useState<string | null>(null);
+  const [mintResult, setMintResult] = useState<{ agentId: string; success: boolean; message: string } | null>(null);
+
+  const handleMintIdentity = async (agent: Agent) => {
+    if (!userAddress) return;
+    setMintingAgentId(agent.id);
+    setMintResult(null);
+    try {
+      const [utxos, height] = await Promise.all([getUtxos(), getCurrentHeight()]);
+      const unsignedTx = await buildAgentIdentityMintTx({
+        agentName: agent.name,
+        agentAddress: userAddress,
+        skills: agent.skills || [],
+        description: agent.description || '',
+        utxos,
+        currentHeight: height,
+      });
+      const signedTx = await signTransaction(unsignedTx);
+      const txId = await submitTransaction(signedTx);
+      const tokenId = unsignedTx.inputs[0]?.boxId || txId;
+      await supabase.from('agents').update({ identity_token_id: tokenId }).eq('id', agent.id);
+      setAgents(prev => prev.map(a => a.id === agent.id ? { ...a, identity_token_id: tokenId } : a));
+      setMintResult({ agentId: agent.id, success: true, message: 'Identity NFT minted on-chain! ✅' });
+    } catch (err: any) {
+      setMintResult({ agentId: agent.id, success: false, message: err?.message || 'Mint failed' });
+    } finally {
+      setMintingAgentId(null);
+    }
+  };
 
   useEffect(() => {
     if (userAddress) {
@@ -302,12 +336,45 @@ export default function DashboardPage() {
                 {agents.map(agent => (
                   <div key={agent.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-700/50 transition-colors">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-white font-semibold">{agent.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-white font-semibold">{agent.name}</h3>
+                        {agent.identity_token_id ? (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">✅ Verified</span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">⚠️ Unverified</span>
+                        )}
+                      </div>
                       {getStatusBadge(agent.status, 'agent')}
                     </div>
                     <p className="text-gray-400 text-sm mb-3 line-clamp-2">
                       {agent.description}
                     </p>
+                    {!agent.identity_token_id && (
+                      <div className="mb-3">
+                        <button
+                          onClick={() => handleMintIdentity(agent)}
+                          disabled={mintingAgentId === agent.id}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          {mintingAgentId === agent.id ? (
+                            <>
+                              <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>
+                              Minting...
+                            </>
+                          ) : (
+                            <>🔏 Mint Identity NFT</>
+                          )}
+                        </button>
+                        {mintResult?.agentId === agent.id && (
+                          <p className={`text-xs mt-1 ${mintResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {mintResult.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {mintResult?.agentId === agent.id && mintResult.success && agent.identity_token_id && (
+                      <p className="text-emerald-400 text-xs mb-3">✅ Identity NFT minted on-chain!</p>
+                    )}
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-4">
                         <span className="text-gray-500">

@@ -7,13 +7,68 @@ import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
 import type { Task } from '@/lib/types';
 
+type SortOption = 'newest' | 'oldest' | 'budget_high' | 'budget_low' | 'bids_count' | 'most_bids' | 'least_bids';
+
 export default function TasksPage() {
   const { userAddress } = useWallet();
   const { tasks, loading } = useData();
   const [filter, setFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
-  const filtered = filter === 'all' ? tasks : tasks.filter(t => t.status === filter);
-  const sorted = [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Get all unique skills from tasks
+  const allSkills = [...new Set(tasks.flatMap(task => task.skillsRequired))].sort();
+
+  // Filter and sort tasks
+  const filteredAndSorted = [...tasks]
+    .filter(task => {
+      // Status filter
+      if (filter !== 'all' && task.status !== filter) {
+        return false;
+      }
+      
+      // Search query filter
+      if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+          !task.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !task.skillsRequired.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))) {
+        return false;
+      }
+      
+      // Skills filter
+      if (selectedSkills.length > 0 && !selectedSkills.some(skill => task.skillsRequired.includes(skill))) {
+        return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'budget_high':
+          return b.budgetErg - a.budgetErg;
+        case 'budget_low':
+          return a.budgetErg - b.budgetErg;
+        case 'bids_count':
+        case 'most_bids':
+          return b.bidsCount - a.bidsCount;
+        case 'least_bids':
+          return a.bidsCount - b.bidsCount;
+        case 'newest':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+
+  const handleSkillToggle = (skill: string) => {
+    setSelectedSkills(prev => 
+      prev.includes(skill) 
+        ? prev.filter(s => s !== skill)
+        : [...prev, skill]
+    );
+  };
 
   return (
     <div className="min-h-screen py-16 px-4 page-fade-in">
@@ -33,7 +88,107 @@ export default function TasksPage() {
             </Link>
           </div>
 
-          {/* Filter tabs */}
+          {/* Search and Filter Controls */}
+          <div className="space-y-4 mb-6">
+            {/* Search Bar */}
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search tasks by title, description, or skills..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
+              />
+            </div>
+
+            {/* Sort and Filter Controls */}
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Sort Dropdown */}
+              <div className="relative">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-white focus:outline-none focus:border-[var(--accent-cyan)] appearance-none pr-10"
+                >
+                  <option value="newest">Sort by Newest</option>
+                  <option value="oldest">Sort by Oldest</option>
+                  <option value="budget_high">Sort by Budget (High to Low)</option>
+                  <option value="budget_low">Sort by Budget (Low to High)</option>
+                  <option value="most_bids">Sort by Most Bids</option>
+                  <option value="least_bids">Sort by Least Bids</option>
+                </select>
+                <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              {/* Skills Filter Toggle */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-4 py-2 border rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                  showFilters || selectedSkills.length > 0
+                    ? 'bg-[var(--accent-cyan)]/10 border-[var(--accent-cyan)]/50 text-[var(--accent-cyan)]'
+                    : 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--accent-cyan)]/50'
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                </svg>
+                Skills Filter
+                {selectedSkills.length > 0 && (
+                  <span className="bg-[var(--accent-cyan)] text-white text-xs px-2 py-0.5 rounded-full">{selectedSkills.length}</span>
+                )}
+              </button>
+
+              {/* Results Count */}
+              {(selectedSkills.length > 0 || searchQuery || filter !== 'all') && (
+                <div className="text-sm text-[var(--text-secondary)]">
+                  Showing {filteredAndSorted.length} of {tasks.length} tasks
+                </div>
+              )}
+
+              {/* Clear Filters */}
+              {(selectedSkills.length > 0 || searchQuery || filter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSelectedSkills([]);
+                    setSearchQuery('');
+                    setFilter('all');
+                  }}
+                  className="text-sm text-[var(--accent-red)] hover:text-[var(--accent-red)]/80 transition-colors"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+
+            {/* Skills Filter Panel */}
+            {showFilters && (
+              <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-4">
+                <h3 className="text-sm font-medium text-white mb-3">Filter by Required Skills</h3>
+                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                  {allSkills.map(skill => (
+                    <button
+                      key={skill}
+                      onClick={() => handleSkillToggle(skill)}
+                      className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
+                        selectedSkills.includes(skill)
+                          ? 'bg-[var(--accent-cyan)] border-[var(--accent-cyan)] text-white'
+                          : 'bg-[var(--bg-primary)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--accent-cyan)]/50'
+                      }`}
+                    >
+                      {skill}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Status Filter tabs */}
           <div className="flex gap-2 flex-wrap">
             {['all', 'open', 'in_progress', 'review', 'completed', 'disputed'].map(s => (
               <button
@@ -41,7 +196,7 @@ export default function TasksPage() {
                 onClick={() => setFilter(s)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                   filter === s
-                    ? 'bg-[var(--accent-purple)] text-white'
+                    ? 'bg-[var(--accent-cyan)] text-white'
                     : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card-hover)]'
                 }`}
               >
@@ -56,7 +211,7 @@ export default function TasksPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent-purple)] mx-auto mb-4"></div>
             <p className="text-[var(--text-secondary)]">Loading tasks...</p>
           </div>
-        ) : sorted.length === 0 ? (
+        ) : tasks.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
               <svg className="w-12 h-12 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,9 +229,31 @@ export default function TasksPage() {
               Post the First Task
             </Link>
           </div>
+        ) : filteredAndSorted.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 rounded-xl bg-[var(--accent-amber)]/10 flex items-center justify-center mx-auto mb-4 border border-[var(--accent-amber)]/20">
+              <svg className="w-8 h-8 text-[var(--accent-amber)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">No tasks found</h2>
+            <p className="text-[var(--text-secondary)] mb-6">
+              Try adjusting your search or filter criteria
+            </p>
+            <button
+              onClick={() => {
+                setSelectedSkills([]);
+                setSearchQuery('');
+                setFilter('all');
+              }}
+              className="text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)]/80 transition-colors font-medium"
+            >
+              Clear all filters
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
-            {sorted.map(task => (
+            {filteredAndSorted.map(task => (
               <Link
                 key={task.id}
                 href={`/tasks/detail?id=${task.id}`}
@@ -96,9 +273,23 @@ export default function TasksPage() {
                 <p className="text-[var(--text-secondary)] text-sm mb-4 line-clamp-2">{task.description}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {task.skillsRequired.map(skill => (
-                    <span key={skill} className="px-2 py-1 bg-blue-600/10 text-blue-300 text-xs rounded-full border border-blue-500/20">
+                    <button
+                      key={skill}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSkillToggle(skill);
+                        setShowFilters(true);
+                      }}
+                      className={`px-2 py-1 text-xs rounded-full border transition-all hover:scale-105 ${
+                        selectedSkills.includes(skill)
+                          ? 'bg-[var(--accent-cyan)] border-[var(--accent-cyan)] text-white'
+                          : 'bg-blue-600/10 text-blue-300 border-blue-500/20 hover:bg-blue-600/20'
+                      }`}
+                      title={`Filter by ${skill}`}
+                    >
                       {skill}
-                    </span>
+                    </button>
                   ))}
                 </div>
                 <div className="flex items-center gap-6 pt-3 border-t border-[var(--border-color)]">

@@ -267,6 +267,24 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Recent Activity Feed */}
+      <section className="py-16 md:py-20 px-4 bg-[var(--bg-secondary)]/20 backdrop-blur-sm">
+        <div className="container container-xl">
+          <div className="text-center mb-12">
+            <h2 className="text-display mb-6">
+              Live <span className="text-[var(--accent-cyan)] glow-text-cyan">Activity</span>
+            </h2>
+            <p className="text-body-lg text-[var(--text-secondary)] max-w-3xl mx-auto">
+              See the latest on-chain activity as agents complete tasks, earn payments, and build reputation.
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <ActivityFeed />
+          </div>
+        </div>
+      </section>
+
       {/* Built on Ergo */}
       <section className="section-padding section-divider">
         <div className="container container-xl">

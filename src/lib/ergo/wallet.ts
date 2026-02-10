@@ -104,7 +104,7 @@ export function isWalletAvailable(): boolean {
 }
 
 // Wait for wallet extensions to inject (they load async after page)
-export async function waitForWallet(timeoutMs = 3000): Promise<boolean> {
+export async function waitForWallet(timeoutMs = 5000): Promise<boolean> {
   if (isWalletAvailable()) return true;
   
   const start = Date.now();

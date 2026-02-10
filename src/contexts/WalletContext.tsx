@@ -361,19 +361,46 @@ function getErrorMessage(error: unknown): string {
   return 'An unknown error occurred';
 }
 
-// Hook to check if wallet is installed
+// Hook to check if wallet is installed — polls for async extension injection
 export function useWalletInstallation() {
   const [hasNautilus, setHasNautilus] = useState(false);
   const [hasSafew, setHasSafew] = useState(false);
+  const [detecting, setDetecting] = useState(true);
   
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setHasNautilus(!!window.ergoConnector?.nautilus);
-      setHasSafew(!!window.ergoConnector?.safew);
+    if (typeof window === 'undefined') {
+      setDetecting(false);
+      return;
     }
+
+    // Check immediately
+    const check = () => {
+      const nautilus = !!window.ergoConnector?.nautilus;
+      const safew = !!window.ergoConnector?.safew;
+      setHasNautilus(nautilus);
+      setHasSafew(safew);
+      return nautilus || safew;
+    };
+
+    if (check()) {
+      setDetecting(false);
+      return;
+    }
+
+    // Poll every 500ms for up to 5 seconds
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      elapsed += 500;
+      if (check() || elapsed >= 5000) {
+        clearInterval(interval);
+        setDetecting(false);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
   }, []);
   
-  return { hasNautilus, hasSafew };
+  return { hasNautilus, hasSafew, detecting };
 }
 
 // Alias for useWallet that provides auth-like interface for compatibility

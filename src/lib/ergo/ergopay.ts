@@ -1,9 +1,10 @@
 import QRCode from 'qrcode';
 import { EDGE_FUNCTION_BASE } from '@/lib/supabase';
+import { reduceTransaction } from './transaction-reducer';
 
 const ERGOPAY_ENDPOINT = `${EDGE_FUNCTION_BASE}/ergopay`;
 
-// EIP-20 ErgoPay types (kept for backward compat)
+// EIP-20 ErgoPay types
 export interface ErgoPaySigningRequest {
   reducedTx: string;
   address?: string;
@@ -30,13 +31,21 @@ export function isTransactionSuitableForErgoPay(_unsignedTx: any): boolean {
 }
 
 /**
- * Create an ErgoPay request by POSTing unsigned tx to the edge function.
- * Supports both new signature (unsignedTx, address, message) and legacy (unsignedTx, options).
+ * Create an ErgoPay request.
+ * 
+ * The client reduces the transaction using ergo-lib-wasm-browser, then sends
+ * the base64url-encoded sigma-serialized ReducedTransaction bytes to the edge function.
+ * 
+ * @param unsignedTx - EIP-12 unsigned transaction object
+ * @param addressOrOptions - Ergo address string or options object
+ * @param messageArg - Optional message for the signing request
+ * @param inputBoxes - Full input box objects (from window.ergo.get_utxos() or explorer)
  */
 export async function createErgoPayRequest(
   unsignedTx: any,
   addressOrOptions?: string | { userAddress?: string; message?: string; messageSeverity?: string },
-  messageArg?: string
+  messageArg?: string,
+  inputBoxes?: any[]
 ): Promise<{
   requestId: string;
   ergoPayUrl: string;
@@ -55,10 +64,29 @@ export async function createErgoPayRequest(
     message = messageArg || 'Sign transaction for AgenticAiHome';
   }
 
+  // Reduce the transaction client-side
+  let reducedTx: string | null = null;
+  if (inputBoxes && inputBoxes.length > 0) {
+    try {
+      reducedTx = await reduceTransaction(unsignedTx, inputBoxes);
+    } catch (err) {
+      console.error('Client-side tx reduction failed:', err);
+      // Fall through — send unsignedTx as fallback
+    }
+  }
+
+  const body: Record<string, any> = { address, message };
+  if (reducedTx) {
+    body.reducedTx = reducedTx;
+  } else {
+    // Fallback: send unsigned tx (won't work with Terminus but preserves backward compat)
+    body.unsignedTx = unsignedTx;
+  }
+
   const res = await fetch(ERGOPAY_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ unsignedTx, address, message }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {
@@ -101,11 +129,9 @@ export async function pollErgoPayStatus(
     throw new Error('Failed to check ErgoPay status');
   }
   const data = await res.json();
-  // If the response has a status field (signed), return it
   if (data.status === 'signed') {
     return { status: 'signed', txId: data.txId };
   }
-  // Otherwise it's still pending (the GET returns the signing request)
   return { status: 'pending' };
 }
 
@@ -115,7 +141,7 @@ export async function pollErgoPayStatus(
  */
 export function waitForErgoPayCompletion(
   requestId: string,
-  timeoutMs: number = 300000, // 5 minutes
+  timeoutMs: number = 300000,
   intervalMs: number = 3000
 ): Promise<{ txId: string }> {
   return new Promise((resolve, reject) => {

@@ -19,12 +19,21 @@ serve(async (req) => {
 
   try {
     // POST: Store a new ErgoPay request
+    // Client sends { reducedTx (base64url string), address, message }
+    // The client performs tx reduction using ergo-lib-wasm-browser
     if (req.method === 'POST') {
-      const { unsignedTx, address, message } = await req.json()
+      const { reducedTx, address, message, unsignedTx } = await req.json()
 
-      if (!unsignedTx || !address) {
+      if (!address) {
         return new Response(
-          JSON.stringify({ error: 'unsignedTx and address are required' }),
+          JSON.stringify({ error: 'address is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      if (!reducedTx && !unsignedTx) {
+        return new Response(
+          JSON.stringify({ error: 'reducedTx or unsignedTx is required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
@@ -32,7 +41,8 @@ serve(async (req) => {
       const { data, error } = await supabase
         .from('ergopay_requests')
         .insert({
-          unsigned_tx: unsignedTx,
+          reduced_tx: reducedTx || null,
+          unsigned_tx: unsignedTx || null,
           address,
           message: message || 'Sign transaction with Terminus',
           status: 'pending',
@@ -97,17 +107,10 @@ serve(async (req) => {
         )
       }
 
-      // Return ErgoPay signing request format
-      // Per EIP-20, if we have a reducedTx we send that; otherwise send the unsigned tx
-      // Terminus/ErgoPay wallets expect: { reducedTx, address, message, messageSeverity }
-      // Since we can't easily reduce in Deno, we pass the full unsigned tx
-      // and hope the wallet handles EIP-12 format. If not, we'd need sigma-rust WASM.
-      
-      // ErgoPay response - using the unsigned tx directly
-      // The wallet needs to reduce it itself or we need to add reduction later
+      // EIP-20 ErgoPay response format
+      // Terminus expects: { reducedTx (base64url sigma-serialized bytes), address, message, messageSeverity }
       const response: Record<string, unknown> = {
-        // If we had a reduced tx, we'd use it. For now, encode the EIP-12 tx as hex.
-        reducedTx: data.reduced_tx || uint8ArrayToHex(new TextEncoder().encode(JSON.stringify(data.unsigned_tx))),
+        reducedTx: data.reduced_tx,
         address: data.address,
         message: data.message || 'Sign transaction for AgenticAiHome',
         messageSeverity: 'INFORMATION',
@@ -162,7 +165,3 @@ serve(async (req) => {
     )
   }
 })
-
-function uint8ArrayToHex(bytes: Uint8Array): string {
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
-}

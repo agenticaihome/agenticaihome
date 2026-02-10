@@ -1,0 +1,89 @@
+// ─── Core Contracts ──────────────────────────────────────────────────
+
+export * from './constants';
+export * from './compiler';
+export * from './explorer';
+export * from './price';
+
+// Export wallet functions explicitly to avoid conflicts
+export {
+  connectWallet,
+  disconnectWallet,
+  getWalletState,
+  getBalance,
+  getAddress,
+  getUtxos,
+  signTransaction,
+  submitTransaction,
+  autoReconnectWallet,
+  isWalletAvailable,
+  waitForWallet,
+  isNautilusAvailable,
+  isSafewAvailable,
+  getCurrentWalletInfo,
+  WalletError,
+  WalletNotFoundError,
+  WalletConnectionError,
+  WalletRejectedError
+} from './wallet';
+
+// ─── Existing Contracts ───────────────────────────────────────────────
+
+export * from './escrow';
+export * from './ego-token';
+export * from './dispute';
+export * from './reputation';
+export * from './staking';
+export * from './agent-identity';
+
+// ─── NEW: Advanced Contract System ───────────────────────────────────
+
+// Reputation Oracle: On-chain reputation data for dApp integration
+export * from './reputation-oracle';
+
+// Multi-Sig Escrow: N-of-M signature schemes for high-value tasks
+export * from './multisig-escrow';
+
+// Milestone-Based Escrow: Complex tasks with multiple deliverable stages  
+export * from './milestone-escrow';
+
+// ─── Contract Addresses (for easy import) ────────────────────────────
+
+export {
+  ESCROW_CONTRACT_ADDRESS,
+  REPUTATION_ORACLE_CONTRACT_ADDRESS,
+  MULTISIG_ESCROW_CONTRACT_ADDRESS,
+  MILESTONE_ESCROW_CONTRACT_ADDRESS,
+} from './constants';
+
+// ─── Contract Types ───────────────────────────────────────────────────
+
+export type EscrowType = 'simple' | 'multisig' | 'milestone';
+
+export interface ContractSystemInfo {
+  escrowTypes: {
+    simple: string;      // Original 1-of-1 escrow 
+    multisig: string;    // N-of-M signature escrow
+    milestone: string;   // Multi-stage payment escrow
+  };
+  oracleSystem: {
+    reputation: string;  // On-chain reputation data
+  };
+  tokenSystem: {
+    soulbound: string;   // EGO token contract
+  };
+}
+
+export const CONTRACT_SYSTEM: ContractSystemInfo = {
+  escrowTypes: {
+    simple: ESCROW_CONTRACT_ADDRESS,
+    multisig: MULTISIG_ESCROW_CONTRACT_ADDRESS,
+    milestone: MILESTONE_ESCROW_CONTRACT_ADDRESS,
+  },
+  oracleSystem: {
+    reputation: REPUTATION_ORACLE_CONTRACT_ADDRESS,
+  },
+  tokenSystem: {
+    soulbound: 'SOULBOUND_CONTRACT_ADDRESS', // From ego-token.ts
+  },
+};

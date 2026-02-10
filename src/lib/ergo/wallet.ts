@@ -130,7 +130,7 @@ export function isSafewAvailable(): boolean {
 export async function connectWallet(preferredWallet?: string): Promise<WalletState> {
   const available = await waitForWallet(5000); // Increased to 5 seconds
   if (!available) {
-    throw new WalletNotFoundError('No Ergo wallet extensions found. Please install Nautilus Wallet from the Chrome Web Store.');
+    throw new WalletNotFoundError('Nautilus Wallet not found. Please install Nautilus Wallet from the Chrome Web Store, then refresh this page.');
   }
 
   const walletsToTry = preferredWallet 
@@ -167,7 +167,7 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
         // Wait for window.ergo (Context API) to be injected with longer timeout
         const contextReady = await waitForErgoContext(5000);
         if (!contextReady) {
-          throw new WalletConnectionError(`${walletName} wallet connected but context API not available. Please refresh the page and try again.`);
+          throw new WalletConnectionError(`${walletName} wallet is locked or unavailable. Please unlock your wallet and refresh the page.`);
         }
 
         currentConnector = connector;
@@ -199,11 +199,11 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
 
   // Provide helpful final error message
   if (lastError instanceof WalletNotFoundError) {
-    throw new WalletNotFoundError('No compatible Ergo wallets found. Please install Nautilus Wallet from the Chrome Web Store.');
+    throw new WalletNotFoundError('Nautilus Wallet not found. Please install Nautilus Wallet from the Chrome Web Store and refresh this page.');
   } else if (lastError instanceof WalletRejectedError) {
     throw new WalletRejectedError();
   } else {
-    throw new WalletConnectionError(`Failed to connect to any wallet. Please make sure your wallet is installed, unlocked, and try again. ${lastError?.message || ''}`);
+    throw new WalletConnectionError(`Failed to connect to Nautilus Wallet. Please make sure it's installed, unlocked, and try again. ${lastError?.message || ''}`);
   }
 }
 

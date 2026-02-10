@@ -79,7 +79,7 @@ export interface Block {
 
 class ExplorerAPI {
   private baseUrl: string;
-  private readonly REQUEST_TIMEOUT = 15000; // 15 seconds
+  private readonly REQUEST_TIMEOUT = 10000; // 10 seconds
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY = 1000; // 1 second
 

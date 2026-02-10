@@ -102,7 +102,7 @@ export default function RegisterAgent() {
             if (!ergo?.auth) throw new Error('Wallet authentication not available');
             return await ergo.auth(userAddress, msg);
           }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Wallet authentication timeout')), 15000))
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Wallet authentication timeout')), 15000))
         ]);
         
         const created = await Promise.race([
@@ -113,7 +113,7 @@ export default function RegisterAgent() {
             hourlyRateErg: agentPayload.hourlyRateErg,
             ergoAddress: agentPayload.ergoAddress,
           }, auth),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
         ]);
         
         createdAgentId = (created as any)?.id;
@@ -124,7 +124,7 @@ export default function RegisterAgent() {
         try {
           const created = await Promise.race([
             createAgentData(agentPayload, userAddress),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
           ]);
           createdAgentId = (created as any)?.id;
           setWalletVerified(false);
@@ -151,49 +151,75 @@ export default function RegisterAgent() {
       try {
         setMintStatus('minting');
         const ergo = (window as any).ergo;
-        if (!ergo) throw new Error('Nautilus wallet not available');
+        if (!ergo) throw new Error('Nautilus wallet not available for NFT minting');
 
-        const utxos = await ergo.get_utxos();
-        const currentHeight = await getCurrentHeight();
+        const [utxos, currentHeight] = await Promise.all([
+          ergo.get_utxos(),
+          getCurrentHeight()
+        ]);
 
-        const unsignedTx = await buildAgentIdentityMintTx({
-          agentName: formData.name.trim(),
-          agentAddress: userAddress,
-          skills: formData.skills,
-          description: formData.description.trim(),
-          utxos,
-          currentHeight,
-        });
+        const unsignedTx = await Promise.race([
+          buildAgentIdentityMintTx({
+            agentName: formData.name.trim(),
+            agentAddress: userAddress,
+            skills: formData.skills,
+            description: formData.description.trim(),
+            utxos,
+            currentHeight,
+          }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('NFT transaction build timeout')), 20000))
+        ]);
 
-        const signedTx = await ergo.sign_tx(unsignedTx);
-        const txId = await ergo.submit_tx(signedTx);
+        const signedTx = await Promise.race([
+          ergo.sign_tx(unsignedTx),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('User cancelled NFT signing')), 30000))
+        ]);
+        
+        const txId = await Promise.race([
+          ergo.submit_tx(signedTx),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('NFT transaction submission timeout')), 30000))
+        ]);
 
         // Token ID = first input box ID (Ergo convention)
         const tokenId = unsignedTx.inputs[0]?.boxId || txId;
         setMintedTokenId(tokenId);
         setMintStatus('success');
 
-        // Update agent record with token ID
+        // Update agent record with token ID (non-blocking)
         if (createdAgentId) {
-          try {
-            await updateAgent(createdAgentId, { identityTokenId: tokenId });
-          } catch {
-            // non-critical
-          }
+          updateAgent(createdAgentId, { identityTokenId: tokenId }).catch(() => {
+            // non-critical failure
+          });
         }
-      } catch (mintError) {
+      } catch (mintError: any) {
         console.error('NFT minting failed:', mintError);
         setMintStatus('failed');
+        
         // Don't block registration — agent is already created
+        // But provide helpful error message
+        const mintErrorMsg = mintError?.message || 'Unknown NFT minting error';
+        console.log(`NFT minting failed: ${mintErrorMsg}`);
       }
 
-      if (mintStatus !== 'minting') {
-        // Show success inline instead of immediate redirect
-        setSuccessMsg(createdAgentId ? 'Agent registered successfully!' : 'Agent registered!');
-      }
-    } catch (error) {
+      // Show success message
+      setSuccessMsg('Agent registered successfully!');
+      
+    } catch (error: any) {
       console.error('Error creating agent:', error);
-      setErrors({ submit: 'Failed to register agent. Please try again.' });
+      
+      const errorMessage = error?.message || 'Unknown error occurred';
+      
+      if (errorMessage.includes('connect your wallet') || errorMessage.includes('Wallet not connected')) {
+        setErrors({ submit: 'Please connect your wallet and try again.' });
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+        setNetworkError('Request timed out. Please check your connection and try again.');
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('NetworkError')) {
+        setNetworkError('Network error. Please check your internet connection and try again.');
+      } else if (errorMessage.includes('database') || errorMessage.includes('PGRST') || errorMessage.includes('Supabase')) {
+        setNetworkError('Database temporarily unavailable. Please try again in a moment.');
+      } else {
+        setErrors({ submit: errorMessage });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -318,10 +344,35 @@ export default function RegisterAgent() {
                   </div>
                 )}
 
+                {/* Network Error */}
+                {networkError && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 text-sm">
+                    <div className="flex items-start gap-2">
+                      <span className="text-amber-400">⚠️</span>
+                      <div>
+                        <div className="font-medium">Connection Issue</div>
+                        <div className="mt-1">{networkError}</div>
+                        <button
+                          onClick={() => setNetworkError(null)}
+                          className="mt-2 text-xs underline opacity-80 hover:opacity-100"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Submit Error */}
                 {errors.submit && (
                   <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
                     {errors.submit}
+                    <button
+                      onClick={() => setErrors({})}
+                      className="mt-1 ml-2 text-xs underline opacity-70 hover:opacity-100"
+                    >
+                      Dismiss
+                    </button>
                   </div>
                 )}
 

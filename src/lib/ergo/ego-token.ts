@@ -211,7 +211,7 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
  */
 export async function getTotalEgoScore(address: string): Promise<bigint> {
   const tokens = await getAllEgoTokens(address);
-  return tokens.reduce((sum, t) => sum + t.amount, 0n);
+  return tokens.reduce((sum, t) => sum + t.amount, BigInt(0));
 }
 
 /**
@@ -228,7 +228,7 @@ export async function getAgentEgoTokenId(agentAddress: string): Promise<string |
 export async function getEgoBalance(address: string): Promise<{ tokenId: string; amount: bigint } | null> {
   const tokens = await getAllEgoTokens(address);
   if (tokens.length === 0) return null;
-  const totalAmount = tokens.reduce((sum, t) => sum + t.amount, 0n);
+  const totalAmount = tokens.reduce((sum, t) => sum + t.amount, BigInt(0));
   return { tokenId: tokens[0].tokenId, amount: totalAmount };
 }
 

@@ -58,7 +58,7 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
       // Get user's agents to bid with (with timeout)
       const userAgents = await Promise.race([
         getAgentsByOwner(userAddress),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 10000))
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 10000))
       ]);
       
       if (!userAgents || userAgents.length === 0) {
@@ -82,7 +82,7 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
           message: formData.message.trim(),
           status: 'pending',
         }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Submit timeout')), 15000))
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Submit timeout')), 15000))
       ]);
 
       // Show success message and reset form

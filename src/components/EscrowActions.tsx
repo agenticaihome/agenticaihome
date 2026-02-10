@@ -154,11 +154,11 @@ export default function EscrowActions({
       if (msg.includes('rejected') || msg.includes('denied') || msg.includes('cancelled')) {
         setError('Transaction cancelled in wallet. No funds were transferred. You can try again.');
       } else if (msg.includes('not found') || msg.includes('Not Found') || msg.includes('wallet not available')) {
-        setError('Nautilus wallet not found or locked. Please install Nautilus Wallet and unlock it, then try again.');
+        setError('Nautilus Wallet not found. Please install Nautilus Wallet from the Chrome Web Store, unlock it, and refresh this page.');
       } else if (msg.includes('UTXO') || msg.includes('utxo') || msg.includes('No UTXOs') || msg.includes('Insufficient funds')) {
-        setError(msg.includes('Need ') ? msg : 'Insufficient funds. Please add more ERG to your wallet and try again.');
+        setError(msg.includes('Need ') ? msg : 'Insufficient ERG in wallet. Please add more ERG to your Nautilus wallet and try again.');
       } else if (msg.includes('timeout') || msg.includes('Timeout')) {
-        setError('Connection or transaction timeout. Your funds are safe. Please check the transaction explorer or try again.');
+        setError('Network timeout after 30-60 seconds. Your funds are safe - no transaction was completed. Check your internet connection and try again.');
       } else if (msg.includes('network') || msg.includes('Network')) {
         setError('Network error. Please check your connection and try again.');
       } else {
@@ -296,9 +296,9 @@ export default function EscrowActions({
       } else if (msg.includes('not found on-chain') || msg.includes('Escrow box not found')) {
         setError('Escrow box not found. It may have already been released/refunded or the box ID is incorrect.');
       } else if (msg.includes('already been spent')) {
-        setError('This escrow has already been spent (released or refunded). Check the transaction history.');
+        setError('Escrow already spent. This escrow has already been released or refunded. No further action is needed.');
       } else if (msg.includes('timeout') || msg.includes('Timeout')) {
-        setError('Connection or transaction timeout. Funds remain safe in escrow. Please try again.');
+        setError('Network timeout during release. Funds remain safely locked in escrow. Check your internet connection and try again.');
       } else if (msg.includes('Insufficient funds') || msg.includes('UTXO')) {
         setError('Insufficient ERG for transaction fees. Please add more ERG to your wallet.');
       } else {
@@ -378,7 +378,7 @@ export default function EscrowActions({
       } else if (msg.includes('not found on-chain')) {
         setError('Escrow box not found. It may have already been released/refunded.');
       } else if (msg.includes('timeout') || msg.includes('Timeout')) {
-        setError('Connection or transaction timeout. Funds remain safe in escrow. Please try again.');
+        setError('Network timeout during refund. Funds remain safely locked in escrow. Check your internet connection and try again.');
       } else if (msg.includes('Insufficient funds') || msg.includes('UTXO')) {
         setError('Insufficient ERG for transaction fees. Please add more ERG to your wallet.');
       } else {

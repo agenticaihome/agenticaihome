@@ -2,9 +2,32 @@
 
 import { useState, useEffect } from 'react';
 import { AlertTriangle, Clock, CheckCircle, XCircle, Scale, Loader2 } from 'lucide-react';
-import { StatusBadge } from './StatusBadge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import StatusBadge from './StatusBadge';
+// import { Button } from '@/components/ui/button';
+// import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+// Temporary replacements for UI components until they are implemented
+const Button = ({ children, onClick, disabled, className, variant, size }: any) => (
+  <button onClick={onClick} disabled={disabled} className={`px-4 py-2 rounded ${className || ''}`}>
+    {children}
+  </button>
+);
+
+const Card = ({ children, className }: any) => (
+  <div className={`border rounded-lg ${className || ''}`}>{children}</div>
+);
+
+const CardHeader = ({ children }: any) => (
+  <div className="p-4 border-b">{children}</div>
+);
+
+const CardTitle = ({ children, className }: any) => (
+  <h3 className={`text-lg font-semibold ${className || ''}`}>{children}</h3>
+);
+
+const CardContent = ({ children, className }: any) => (
+  <div className={`p-4 ${className || ''}`}>{children}</div>
+);
 import { useWallet } from '@/contexts/WalletContext';
 import { 
   Dispute, 
@@ -51,7 +74,7 @@ export function DisputePanel({
   budgetErg,
   className = ''
 }: DisputePanelProps) {
-  const { wallet, address: walletAddress } = useWallet();
+  const { wallet, userAddress: walletAddress, signTx, submitTx } = useWallet();
   
   const [disputeState, setDisputeState] = useState<DisputeState>({
     dispute: null,
@@ -159,8 +182,8 @@ export function DisputePanel({
       );
 
       // Sign and submit transaction
-      const signedTx = await wallet.signTx(unsignedTx);
-      const txId = await wallet.submitTx(signedTx);
+      const signedTx = await signTx(unsignedTx);
+      const txId = await submitTx(signedTx);
 
       // TODO: Create database dispute record with txId
       console.log('Dispute transaction submitted:', txId);
@@ -240,8 +263,8 @@ export function DisputePanel({
         walletAddress
       );
 
-      const signedTx = await wallet.signTx(unsignedTx);
-      const txId = await wallet.submitTx(signedTx);
+      const signedTx = await signTx(unsignedTx);
+      const txId = await submitTx(signedTx);
 
       console.log('Dispute resolution transaction submitted:', txId);
       await loadDisputeData();
@@ -344,7 +367,7 @@ export function DisputePanel({
           // Dispute exists
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <StatusBadge status={disputeState.dispute.status} />
+              <StatusBadge status={disputeState.dispute.status} type="task" />
               <div className="flex items-center text-sm text-gray-500">
                 <Clock className="h-4 w-4 mr-1" />
                 {disputeState.timeUntilExpiry}

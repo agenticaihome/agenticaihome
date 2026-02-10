@@ -19,14 +19,14 @@ export const ERGO_NODE_URL = NETWORK === 'testnet'
   : 'https://api.ergoplatform.com';
 
 export const NAUTILUS_CHROME_URL = "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai";
-export const MIN_BOX_VALUE = 1000000n; // 0.001 ERG minimum box value
-export const RECOMMENDED_TX_FEE = 1100000n; // 0.0011 ERG recommended fee
+export const MIN_BOX_VALUE = BigInt(1000000); // 0.001 ERG minimum box value
+export const RECOMMENDED_TX_FEE = BigInt(1100000); // 0.0011 ERG recommended fee
 export const PLATFORM_FEE_PERCENT = 1; // 1% protocol fee
 export const PLATFORM_FEE_ADDRESS = NETWORK === 'testnet'
   ? '3WwKzFjZGrtKAUzJBxFUzFqbFbYAMhxjNcB2gb3CPV7GKcmpaBe2' // testnet placeholder
   : '9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK'; // Nate's treasury
 
-export const NANOERG_FACTOR = 1000000000n; // 10^9
+export const NANOERG_FACTOR = BigInt(1000000000); // 10^9
 
 // Wallet connection timeout
 export const WALLET_CONNECT_TIMEOUT = 30000; // 30 seconds
@@ -96,6 +96,20 @@ export const ESCROW_ERGOSCRIPT = `{
 // this MUST be re-compiled.
 export const ESCROW_CONTRACT_ADDRESS =
   '29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh';
+
+// ─── NEW CONTRACT ADDRESSES (Need compilation) ──────────────────────────
+
+// Reputation Oracle Contract - stores agent reputation data on-chain for dApps to read
+// Register layout: R4=agent pubkey, R5=ego score, R6=tasks completed, R7=dispute rate, R8=last updated
+export const REPUTATION_ORACLE_CONTRACT_ADDRESS = 'NEEDS_COMPILATION'; // TODO: Compile via node.ergo.watch
+
+// Multi-Sig Escrow Contract - enhanced escrow supporting N-of-M signatures for high-value tasks  
+// Register layout: R4=participant keys array, R5=agent address, R6=deadline, R7=fee address, R8=task ID, R9=config
+export const MULTISIG_ESCROW_CONTRACT_ADDRESS = 'NEEDS_COMPILATION'; // TODO: Compile via node.ergo.watch
+
+// Milestone-Based Escrow Contract - complex tasks with multiple payment stages
+// Register layout: R4=client pubkey, R5=agent address, R6=deadlines, R7=percentages, R8=current milestone, R9=metadata  
+export const MILESTONE_ESCROW_CONTRACT_ADDRESS = 'NEEDS_COMPILATION'; // TODO: Compile via node.ergo.watch
 
 // Testnet faucet URL
 export const TESTNET_FAUCET_URL = 'https://testnet.ergofaucet.org/';

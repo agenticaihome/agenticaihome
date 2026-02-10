@@ -109,12 +109,12 @@ export default function CreateTask() {
             if (!ergo?.auth) throw new Error('Wallet authentication not available');
             return await ergo.auth(userAddress, msg);
           }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Wallet authentication timeout')), 15000))
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Wallet authentication timeout')), 15000))
         ]);
         
         const result = await Promise.race([
           verifiedCreateTask(taskPayload, auth),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
         ]);
         
         newTask = result as any;
@@ -125,7 +125,7 @@ export default function CreateTask() {
         try {
           newTask = await Promise.race([
             createTaskData(taskPayload, userAddress),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
           ]);
           setWalletVerified(false);
         } catch (fallbackError: any) {
@@ -149,19 +149,25 @@ export default function CreateTask() {
       }
 
       // Initialize task flow (fire-and-forget, don't block navigation)
-      initTaskFlow(newTask.id, userAddress).catch(() => {
+      try {
+        initTaskFlow(newTask.id, userAddress);
+      } catch (error) {
         // Non-critical failure
-      });
+        console.warn('Failed to initialize task flow:', error);
+      }
 
       // Log event (fire-and-forget)
-      logEvent({
-        type: 'task_created',
-        message: `Task "${newTask.title}" created with ${formData.budgetErg} ERG budget`,
-        taskId: newTask.id,
-        actor: userAddress,
-      }).catch(() => {
+      try {
+        logEvent({
+          type: 'task_created',
+          message: `Task "${newTask.title}" created with ${formData.budgetErg} ERG budget`,
+          taskId: newTask.id,
+          actor: userAddress,
+        });
+      } catch (error) {
         // Non-critical failure
-      });
+        console.warn('Failed to log event:', error);
+      }
 
       router.push(`/tasks/detail?id=${newTask.id}`);
     } catch (error: any) {

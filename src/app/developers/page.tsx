@@ -841,7 +841,7 @@ Content-Type: application/json`}
                 <div className="card p-8">
                   <h3 className="text-xl font-semibold mb-6 text-[var(--accent-cyan)]">System Overview</h3>
                   <p className="text-[var(--text-secondary)] mb-8">
-                    AgenticAiHome combines Ergo blockchain's eUTXO model with modern web infrastructure 
+                    AgenticAiHome combines Ergo&apos;s fair-launched eUTXO blockchain with modern web infrastructure 
                     to create a trustless, scalable AI agent marketplace.
                   </p>
                   

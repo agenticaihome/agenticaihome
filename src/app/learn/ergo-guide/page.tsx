@@ -255,9 +255,11 @@ export default function ErgoGuidePage() {
               <div className="space-y-6">
                 <div className="prose prose-invert max-w-none">
                   <p className="text-[var(--text-secondary)] leading-relaxed">
-                    <strong>Ergo</strong> is a cryptocurrency blockchain that's like Bitcoin, but with smart contracts. 
-                    Think of it as "Bitcoin's smarter cousin" — it shares Bitcoin's proven security model (called eUTXO — extended UTXO) 
-                    but adds programmable features that let developers build applications on top of it.
+                    <strong>Ergo</strong> is a blockchain platform designed to be <em>ergonomic money</em> — financial tools 
+                    built for ordinary people, not banks or corporations. Created by Alexander Chepurnoy (Kushti), a veteran 
+                    blockchain researcher, Ergo was fair-launched with no ICO, no pre-mine, and no VC backing. It uses the 
+                    eUTXO (extended UTXO) model — the same proven security foundation as Bitcoin — but adds powerful smart 
+                    contracts through ErgoScript and Sigma protocols for privacy.
                   </p>
                 </div>
 

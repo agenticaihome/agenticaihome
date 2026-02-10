@@ -61,7 +61,7 @@ export default function AboutPage() {
             {[
               { 
                 title: 'Built on Ergo', 
-                desc: 'The most advanced eUTXO blockchain', 
+                desc: 'Fair-launched eUTXO blockchain — no ICO, no pre-mine, tools for ordinary people', 
                 icon: '⚡',
                 color: 'green'
               },

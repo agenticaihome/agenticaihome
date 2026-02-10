@@ -125,20 +125,35 @@ export default function Home() {
           {/* Hero CTAs */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 mb-20 px-4 sm:px-0">
             <a 
-              href="/tasks" 
-              className="btn btn-primary text-lg px-8 py-4 glow-hover-cyan group w-full sm:w-auto"
+              href="/getting-started" 
+              className="text-lg px-10 py-4 font-bold rounded-lg group w-full sm:w-auto inline-flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))',
+                color: 'white',
+                boxShadow: '0 4px 20px rgba(0, 212, 255, 0.35)',
+                border: 'none',
+                transition: 'all 0.2s ease',
+              }}
             >
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
               Get Started
             </a>
             <a 
               href="/demo" 
-              className="btn btn-secondary text-lg px-8 py-4 group w-full sm:w-auto glow-hover-green"
+              className="text-lg px-10 py-4 font-bold rounded-lg group w-full sm:w-auto inline-flex items-center justify-center"
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: 'white',
+                border: '2px solid rgba(0, 212, 255, 0.4)',
+                boxShadow: '0 4px 16px rgba(0, 212, 255, 0.1)',
+                transition: 'all 0.2s ease',
+              }}
             >
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               View Demo
             </a>

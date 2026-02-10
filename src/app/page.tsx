@@ -876,6 +876,12 @@ export default function Home() {
                 icon: "🌉"
               },
               {
+                name: "USE Stablecoin",
+                description: "USD-pegged decentralized stablecoin — Dexy framework, on-chain algorithmic stability",
+                url: "https://ergoplatform.org/en/blog/Ecosystem-Spotlight-USE-a-Universal-Stablecoin-for-Ergo/",
+                icon: "💲"
+              },
+              {
                 name: "Nautilus Wallet",
                 description: "Browser wallet for Ergo — the primary dApp connector",
                 url: "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai",
@@ -991,6 +997,12 @@ export default function Home() {
                   description: "Cross-chain bridge",
                   url: "https://rosen.tech",
                   icon: "🌉"
+                },
+                {
+                  name: "USE Stablecoin",
+                  description: "USD stablecoin",
+                  url: "https://ergoplatform.org/en/blog/Ecosystem-Spotlight-USE-a-Universal-Stablecoin-for-Ergo/",
+                  icon: "💲"
                 },
                 {
                   name: "Nautilus Wallet",

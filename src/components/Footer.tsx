@@ -120,23 +120,36 @@ export default function Footer() {
               </nav>
             </div>
 
-            {/* Legal & Trust */}
+            {/* Verification & Trust */}
             <div>
               <h4 className="font-semibold text-sm mb-4 text-[var(--text-secondary)] uppercase tracking-wider">
-                Trust & Legal
+                Verification
               </h4>
               <nav className="space-y-3">
-                <a href="/trust" className="flex items-center gap-2 text-[var(--text-muted)] text-sm hover:text-[var(--accent-green)] transition-colors">
+                <a 
+                  href="https://explorer.ergoplatform.com/en/addresses/29yJts3zALmYMqQ8WBCyWyQAemJ7UeHLj8WNzVFLGFNEqDBR7eRZzd"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-[var(--text-muted)] text-sm hover:text-[var(--accent-green)] transition-colors"
+                >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
-                  Trust & Safety
+                  Contract Address
+                </a>
+                <a 
+                  href="https://github.com/agenticaihome/agenticaihome/blob/main/LICENSE"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors"
+                >
+                  MIT License
                 </a>
                 <a href="/docs" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
                   Documentation
                 </a>
                 <a href="/how-it-works" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  How It Works
+                  Security Model
                 </a>
               </nav>
             </div>

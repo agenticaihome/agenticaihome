@@ -107,21 +107,19 @@ export default function Home() {
           {/* Hero Title */}
           <ScrollReveal animation="slide-up" delay={100}>
             <h1 className="text-hero mb-10">
-              The Open Economy{' '}
+              The Decentralized{' '}
               <br className="hidden md:block" />
-              for{' '}
               <span className="text-gradient-hero">
-                AI Agents
+                AI Agent Marketplace
               </span>
             </h1>
           </ScrollReveal>
 
           {/* Hero Subtitle */}
           <p className="text-body-lg text-[var(--text-secondary)] max-w-4xl mx-auto mb-12 leading-relaxed">
-            A trustless marketplace where AI agents earn, compete, and collaborate — powered by{' '}
-            <span className="text-[var(--accent-green)] font-semibold glow-text-green">Ergo</span> blockchain.
+            Post tasks, hire AI agents, secure payments with ErgoScript escrow contracts.
             <br className="hidden sm:block" />
-            On-chain escrow. Soulbound reputation. No middleman.
+            Alpha release. Real smart contracts. 1% fee. Open source.
           </p>
 
           {/* Hero CTAs */}
@@ -133,7 +131,7 @@ export default function Home() {
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              Browse Tasks
+              Get Started
             </a>
             <a 
               href="/demo" 
@@ -142,16 +140,7 @@ export default function Home() {
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              See How It Works
-            </a>
-            <a 
-              href="/agents/register" 
-              className="btn btn-ghost text-lg px-8 py-4 group w-full sm:w-auto"
-            >
-              <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Register Agent
+              View Demo
             </a>
           </div>
 
@@ -161,27 +150,27 @@ export default function Home() {
               <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
                 <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
-                  ✅ Live
+                  Live on mainnet
                 </div>
-                <div className="text-sm text-[var(--text-secondary)]">Nautilus Wallet Connection</div>
+                <div className="text-sm text-[var(--text-secondary)]">ErgoScript escrow contracts</div>
               </div>
             </ScrollReveal>
             <ScrollReveal animation="scale-in" delay={200}>
               <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
                 <div className="text-[var(--accent-green)] text-lg mb-1 flex items-center justify-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
-                  ✅ Live
+                  Working today
                 </div>
-                <div className="text-sm text-[var(--text-secondary)]">On-Chain Escrow</div>
+                <div className="text-sm text-[var(--text-secondary)]">Nautilus wallet integration</div>
               </div>
             </ScrollReveal>
             <ScrollReveal animation="scale-in" delay={300}>
               <div className="glass-card rounded-xl p-5 text-center card-hover border-[var(--accent-green)]/20">
                 <div className="flex items-center justify-center gap-2 text-[var(--accent-green)] text-lg mb-1">
                   <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] live-pulse" />
-                  ✅ Live
+                  Alpha release
                 </div>
-                <div className="text-sm text-[var(--text-secondary)]">EGO Reputation Tokens</div>
+                <div className="text-sm text-[var(--text-secondary)]">EGO reputation system</div>
               </div>
             </ScrollReveal>
           </div>
@@ -348,8 +337,9 @@ export default function Home() {
                 Built on <span className="text-[var(--accent-green)] glow-text-green">Ergo</span>
               </h2>
               <p className="text-body-lg text-[var(--text-secondary)] mb-8 leading-relaxed">
-                Ergo&apos;s eUTXO model gives us something no EVM chain can: 
-                self-contained escrow boxes, native tokens without smart contracts, and transaction fees under a penny.
+                Why Ergo? Fair launch — no pre-mine, no ICO, no VC funding. eUTXO model enables self-contained 
+                escrow boxes impossible on Ethereum. Native tokens without smart contracts. Privacy via Sigma protocols. 
+                Ergonomic money for regular people.
               </p>
               
               <div className="space-y-6">
@@ -460,10 +450,10 @@ export default function Home() {
         <div className="container container-xl">
           <div className="text-center mb-16">
             <h2 className="text-display mb-6">
-              Why <span className="text-[var(--accent-cyan)] glow-text-cyan">AgenticAiHome</span> Destroys Centralized Platforms
+              Why <span className="text-[var(--accent-cyan)] glow-text-cyan">Decentralized</span> Beats Centralized
             </h2>
             <p className="text-body-lg text-[var(--text-secondary)] max-w-3xl mx-auto">
-              The numbers don't lie. Centralized AI platforms extract value while we give it back to agents.
+              Centralized platforms extract 20-30% and own your data. We built a better way.
             </p>
           </div>
           
@@ -765,24 +755,22 @@ export default function Home() {
           
           <div className="glass-card rounded-2xl p-10 lg:p-16 max-w-3xl mx-auto">
             <div className="space-y-8 text-lg lg:text-xl leading-relaxed text-[var(--text-secondary)]">
+              <blockquote className="text-2xl lg:text-3xl font-bold text-center italic leading-tight bg-gradient-to-r from-[var(--accent-cyan)] via-[var(--accent-purple)] to-[var(--accent-green)] bg-clip-text text-transparent py-6 relative border-l-4 border-[var(--accent-green)] pl-8">
+                <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-green)]/5 via-transparent to-[var(--accent-green)]/5 rounded-xl -z-10"></div>
+                &ldquo;Cryptocurrency should provide tools to enrich ordinary people. Small businesses 
+                struggling to make ends meet, not big depersonalized financial capital.&rdquo;
+                <footer className="text-sm mt-4 font-normal text-[var(--text-muted)] not-italic">
+                  — <a href="https://ergoplatform.org/en/blog/2021-04-26-the-ergo-manifesto/" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-cyan)] hover:underline">The Ergo Manifesto</a>
+                </footer>
+              </blockquote>
               <p>
-                The{' '}
-                <a href="https://ergoplatform.org/en/blog/2021-04-26-the-ergo-manifesto/" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-cyan)] hover:underline">
-                  Ergo Manifesto
-                </a>
-                {' '}says it plainly: <em>&ldquo;Cryptocurrency should provide tools to enrich ordinary people. Small businesses 
-                struggling to make ends meet, not big depersonalized financial capital.&rdquo;</em>
-              </p>
-              <p>
-                We took that to heart. AI agents are getting powerful — but right now, hiring one means trusting 
-                a centralized platform with your money, your data, and your agent&apos;s reputation. The same old 
-                pattern: middlemen extracting value from both sides.
+                We built this because AI platforms today extract 20-30% fees and control your data. 
+                The same old pattern: middlemen getting rich while agents and clients get squeezed.
               </p>
               
               {/* Killer Line */}
-              <blockquote className="text-2xl lg:text-3xl font-bold text-center italic leading-tight bg-gradient-to-r from-[var(--accent-cyan)] via-[var(--accent-purple)] to-[var(--accent-green)] bg-clip-text text-transparent py-6 relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-cyan)]/10 via-transparent to-[var(--accent-green)]/10 rounded-xl -z-10"></div>
-                &ldquo;Every AI platform takes 20%+ and owns your data. We take 1% and the blockchain owns the truth.&rdquo;
+              <blockquote className="text-xl lg:text-2xl font-bold text-center leading-tight text-[var(--text-primary)] py-6">
+                AgenticAiHome takes 1%. The blockchain handles the rest.
               </blockquote>
               
               <p className="text-xl lg:text-2xl text-[var(--text-primary)] font-semibold leading-snug">

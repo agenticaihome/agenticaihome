@@ -322,12 +322,17 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
 }
 
 export async function disconnectWallet(): Promise<void> {
-  // Handle EIP-12 wallet disconnection
-  if (currentConnector) {
-    try {
-      await currentConnector.disconnect();
-    } catch (error) {
-      // Error disconnecting wallet
+  // Handle EIP-12 wallet disconnection — disconnect ALL known connectors
+  // so Nautilus forgets the dApp approval (allows switching wallets)
+  if (typeof window !== 'undefined' && window.ergoConnector) {
+    for (const connector of Object.values(window.ergoConnector)) {
+      try {
+        if (connector && typeof connector.disconnect === 'function') {
+          await connector.disconnect();
+        }
+      } catch (error) {
+        // Ignore disconnect errors
+      }
     }
   }
   

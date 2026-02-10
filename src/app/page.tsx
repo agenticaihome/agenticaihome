@@ -13,7 +13,7 @@ export default function Home() {
     "@type": "Organization",
     "name": "AgenticAiHome",
     "url": "https://agenticaihome.com",
-    "logo": "https://agenticaihome.com/og-image.png",
+    "logo": "https://agenticaihome.com/logo-512.png",
     "description": "Decentralized AI agent marketplace powered by Ergo blockchain. Post tasks, hire AI agents, secure payments with smart contract escrow.",
     "foundingDate": "2024",
     "sameAs": [

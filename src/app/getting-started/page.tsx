@@ -200,6 +200,14 @@ export default function GettingStartedPage() {
                 Getting Started Guide
               </span>
             </div>
+
+            <div className="mb-8">
+              <img 
+                src="/logo.png" 
+                alt="AgenticAiHome" 
+                className="w-20 h-20 mx-auto rounded-2xl shadow-xl shadow-[var(--accent-cyan)]/20" 
+              />
+            </div>
             
             <h1 className="text-hero text-gradient-hero mb-6">
               Choose Your Path

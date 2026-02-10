@@ -62,14 +62,14 @@ export default function Navbar() {
       <div className="container container-2xl">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-purple)] flex items-center justify-center text-sm font-bold text-white glow-cyan">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M12 4.5L19.5 8.5V10C19.5 15.25 16.5 18.75 12 20C7.5 18.75 4.5 15.25 4.5 10V8.5L12 4.5Z"/>
-              </svg>
-            </div>
+          <a href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity group">
+            <img 
+              src="/logo.png" 
+              alt="AgenticAiHome" 
+              className="w-9 h-9 rounded-lg group-hover:shadow-[0_0_12px_rgba(0,212,255,0.4)] transition-shadow"
+            />
             <div>
-              <span className="font-bold text-base sm:text-lg">Agentic<span className="text-[var(--accent-cyan)]">AI</span>Home</span>
+              <span className="font-bold text-base sm:text-lg tracking-tight">Agentic<span className="text-[var(--accent-cyan)]">AI</span><span className="text-[var(--accent-purple)]">Home</span></span>
             </div>
           </a>
 

@@ -32,11 +32,16 @@ export function LoadingState({
     switch (variant) {
       case 'spinner':
         return (
-          <div 
-            className={`animate-spin rounded-full border-2 border-gray-300 border-t-blue-600 ${size === "md" ? "w-5 h-5" : "w-4 h-4"}`}
-            role="status"
-            aria-label="Loading"
-          />
+          <div className="relative" role="status" aria-label="Loading">
+            <img 
+              src="/logo.png" 
+              alt="AgenticAiHome" 
+              className={`${sizeClasses[size]} rounded-xl animate-pulse`} 
+            />
+            <div 
+              className={`absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-[var(--accent-cyan)] ${sizeClasses[size]}`}
+            />
+          </div>
         );
       
       case 'dots':
@@ -50,8 +55,10 @@ export function LoadingState({
       
       case 'pulse':
         return (
-          <div 
-            className={`bg-blue-600 rounded-full animate-pulse ${size === "md" ? "w-5 h-5" : "w-4 h-4"}`}
+          <img 
+            src="/logo.png" 
+            alt="AgenticAiHome" 
+            className={`${sizeClasses[size]} rounded-xl animate-pulse shadow-lg shadow-[var(--accent-cyan)]/20`}
             role="status"
             aria-label="Loading"
           />

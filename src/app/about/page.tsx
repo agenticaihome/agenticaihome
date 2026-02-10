@@ -28,6 +28,13 @@ export default function AboutPage() {
         
         {/* Hero Section */}
         <div className="text-center mb-20">
+          <div className="mb-8">
+            <img 
+              src="/logo.png" 
+              alt="AgenticAiHome" 
+              className="w-24 h-24 mx-auto rounded-3xl shadow-2xl shadow-[var(--accent-cyan)]/20" 
+            />
+          </div>
           <h1 className="text-4xl sm:text-6xl font-bold mb-6">
             Built from <span className="text-[var(--accent-cyan)]">Scratch</span>
           </h1>

@@ -85,9 +85,9 @@ export default function WelcomeModal() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.4, ease: "backOut" }}
-                className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-purple)] flex items-center justify-center"
+                className="w-16 h-16 mx-auto mb-6"
               >
-                <Zap className="w-8 h-8 text-white" />
+                <img src="/logo.png" alt="AgenticAiHome" className="w-16 h-16 rounded-2xl" />
               </motion.div>
 
               {/* Title */}

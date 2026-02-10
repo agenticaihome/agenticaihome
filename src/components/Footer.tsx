@@ -8,17 +8,13 @@ export default function Footer() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-purple)] flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-white">
-                    <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M12 4.5L19.5 8.5V10C19.5 15.25 16.5 18.75 12 20C7.5 18.75 4.5 15.25 4.5 10V8.5L12 4.5Z"/>
-                  </svg>
-                </div>
+                <img src="/logo.png" alt="AgenticAiHome" className="w-8 h-8 rounded-xl" />
                 <div className="font-bold text-lg">
                   Agentic<span className="text-[var(--accent-cyan)]">AI</span>Home
                 </div>
               </div>
               <p className="text-[var(--text-muted)] text-sm leading-relaxed mb-4">
-                The first open, trustless agent economy — powered by Ergo blockchain.
+                The Decentralized AI Agent Marketplace
               </p>
               
               {/* Social Links */}
@@ -60,23 +56,17 @@ export default function Footer() {
                 Platform
               </h4>
               <nav className="space-y-3">
-                <a href="/agents" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Browse Agents
-                </a>
                 <a href="/tasks" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Task Board
+                  Tasks
                 </a>
-                <a href="/how-it-works" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  How It Works
+                <a href="/agents" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Agents
                 </a>
-                <a href="/docs" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  API Documentation
+                <a href="/demo" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Demo
                 </a>
-                <a href="/test-wallet" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Wallet Diagnostics
-                </a>
-                <a href="/ego" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  EGO System
+                <a href="/dashboard" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Dashboard
                 </a>
               </nav>
             </div>
@@ -87,17 +77,17 @@ export default function Footer() {
                 Learn
               </h4>
               <nav className="space-y-3">
-                <a href="/learn" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Learning Hub
+                <a href="/docs" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Docs
                 </a>
-                <a href="/learn/home" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  AI Agents at Home
+                <a href="/faq" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  FAQ
                 </a>
-                <a href="/learn/business" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  AI Agents for Business
+                <a href="/getting-started" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Getting Started
                 </a>
-                <a href="/learn/playground" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Agent Playground
+                <a href="/learn/ergo-guide" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Ergo Guide
                 </a>
               </nav>
             </div>
@@ -108,35 +98,24 @@ export default function Footer() {
                 Community
               </h4>
               <nav className="space-y-3">
-                <a href="https://ergoplatform.org" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-green)] transition-colors">
-                  Ergo Platform
-                </a>
                 <a href="https://github.com/agenticaihome" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  GitHub Repository
+                  GitHub
                 </a>
-                <a href="/docs" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Developer Docs
+                <a href="https://ergoplatform.org" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-green)] transition-colors">
+                  Ergo
+                </a>
+                <a href="#" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-purple)] transition-colors">
+                  Discord
                 </a>
               </nav>
             </div>
 
-            {/* Verification & Trust */}
+            {/* Legal Links */}
             <div>
               <h4 className="font-semibold text-sm mb-4 text-[var(--text-secondary)] uppercase tracking-wider">
-                Verification
+                Legal
               </h4>
               <nav className="space-y-3">
-                <a 
-                  href="https://explorer.ergoplatform.com/en/addresses/29yJts3zALmYMqQ8WBCyWyQAemJ7UeHLj8WNzVFLGFNEqDBR7eRZzd"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-[var(--text-muted)] text-sm hover:text-[var(--accent-green)] transition-colors"
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  Contract Address
-                </a>
                 <a 
                   href="https://github.com/agenticaihome/agenticaihome/blob/main/LICENSE"
                   target="_blank"
@@ -145,12 +124,22 @@ export default function Footer() {
                 >
                   MIT License
                 </a>
-                <a href="/docs" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Documentation
+                <a href="#" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Privacy
                 </a>
-                <a href="/how-it-works" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Security Model
-                </a>
+                <div className="pt-2 border-t border-[var(--border-color)]/50 mt-4">
+                  <p className="text-xs text-[var(--text-muted)] font-mono break-all leading-relaxed">
+                    Contract: 
+                    <a 
+                      href="https://explorer.ergoplatform.com/en/addresses/29yJts3zALmYMqQ8WBCyWyQAemJ7UeHLj8WNzVFLGFNEqDBR7eRZzd"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-[var(--accent-green)] transition-colors block mt-1"
+                    >
+                      29yJts3z...FNER7eRZzd
+                    </a>
+                  </p>
+                </div>
               </nav>
             </div>
           </div>
@@ -165,7 +154,7 @@ export default function Footer() {
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <a 
                 href="https://ergoplatform.org" 
                 target="_blank" 
@@ -175,7 +164,7 @@ export default function Footer() {
                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Powered by Ergo
+                Built on Ergo
               </a>
               <a 
                 href="https://github.com/agenticaihome/agenticaihome" 

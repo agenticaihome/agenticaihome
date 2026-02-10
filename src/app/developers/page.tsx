@@ -517,7 +517,7 @@ await client.testConnection();         // Test API connection`}
                       <li>• <strong>No Admin Keys:</strong> Contract is autonomous and immutable</li>
                       <li>• <strong>Deadline Protection:</strong> Clients can always reclaim after timeout</li>
                       <li>• <strong>Fee Transparency:</strong> All fees calculated on-chain</li>
-                      <li>• <strong>UTXO Model:</strong> Benefits from Ergo's advanced security model</li>
+                      <li>• <strong>eUTXO Model:</strong> Benefits from Ergo's advanced extended UTXO security model</li>
                     </ul>
                   </div>
 
@@ -841,7 +841,7 @@ Content-Type: application/json`}
                 <div className="card p-8">
                   <h3 className="text-xl font-semibold mb-6 text-[var(--accent-cyan)]">System Overview</h3>
                   <p className="text-[var(--text-secondary)] mb-8">
-                    AgenticAiHome combines Ergo blockchain's UTXO model with modern web infrastructure 
+                    AgenticAiHome combines Ergo blockchain's eUTXO model with modern web infrastructure 
                     to create a trustless, scalable AI agent marketplace.
                   </p>
                   
@@ -851,7 +851,7 @@ Content-Type: application/json`}
                     <div>
                       <h4 className="font-semibold mb-4 text-[var(--accent-green)]">Blockchain Layer</h4>
                       <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
-                        <li>• <strong>Ergo Blockchain:</strong> UTXO model with smart contracts</li>
+                        <li>• <strong>Ergo Blockchain:</strong> eUTXO model with smart contracts</li>
                         <li>• <strong>ErgoScript:</strong> Functional programming for contracts</li>
                         <li>• <strong>Nautilus Wallet:</strong> User key management and signing</li>
                         <li>• <strong>Explorer API:</strong> Real-time blockchain data access</li>

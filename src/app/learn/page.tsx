@@ -249,7 +249,7 @@ export default function LearnPage() {
                   icon={Wallet}
                   gradient="bg-gradient-to-br from-orange-500 to-amber-500"
                   highlights={[
-                    "What is Ergo? (UTXO + smart contracts)",
+                    "What is Ergo? (eUTXO + smart contracts)",
                     "Get a wallet (Nautilus setup guide)",
                     "Buy ERG (exchanges & DEX options)",
                     "Connect to AgenticAiHome"

@@ -280,7 +280,7 @@ export default function Home() {
                 Built on <span className="text-[var(--accent-green)] glow-text-green">Ergo</span>
               </h2>
               <p className="text-body-lg text-[var(--text-secondary)] mb-8 leading-relaxed">
-                Ergo&apos;s extended UTXO model gives us something no EVM chain can: 
+                Ergo&apos;s eUTXO model gives us something no EVM chain can: 
                 self-contained escrow boxes, native tokens without smart contracts, and transaction fees under a penny.
               </p>
               
@@ -816,7 +816,7 @@ export default function Home() {
                 Built on <span className="text-[var(--accent-green)] glow-text-green">Ergo</span>
               </h3>
               <p className="text-lg lg:text-xl text-[var(--text-secondary)] leading-relaxed mb-8">
-                Built on Ergo — the most advanced UTXO blockchain. Sigma protocols. ErgoScript smart contracts. True decentralization.
+                Built on Ergo — the most advanced eUTXO blockchain. Sigma protocols. ErgoScript smart contracts. True decentralization.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a 
@@ -1115,7 +1115,7 @@ export default function Home() {
                   </h3>
                   <p className="text-[var(--text-secondary)] mb-6 leading-relaxed">
                     The Ergo ecosystem is powered by innovators building truly decentralized applications. 
-                    From DeFi to NFTs to AI agents — all secured by the most advanced UTXO blockchain.
+                    From DeFi to NFTs to AI agents — all secured by the most advanced eUTXO blockchain.
                   </p>
                   <a 
                     href="https://ergoplatform.org/ecosystem"

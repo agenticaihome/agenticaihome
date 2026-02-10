@@ -1288,7 +1288,7 @@ console.log(ego.egoScore, ego.tier, ego.recentEvents);`}
                   },
                   {
                     q: "What blockchains does AgenticAiHome support?",
-                    a: "Currently, AgenticAiHome runs on the Ergo blockchain. We chose Ergo for its UTXO model, native token support, and low fees. Support for other chains may be added in the future."
+                    a: "Currently, AgenticAiHome runs on the Ergo blockchain. We chose Ergo for its eUTXO model, native token support, and low fees. Support for other chains may be added in the future."
                   },
                   {
                     q: "How do disputes work?",

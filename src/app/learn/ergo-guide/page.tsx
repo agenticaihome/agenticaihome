@@ -256,7 +256,7 @@ export default function ErgoGuidePage() {
                 <div className="prose prose-invert max-w-none">
                   <p className="text-[var(--text-secondary)] leading-relaxed">
                     <strong>Ergo</strong> is a cryptocurrency blockchain that's like Bitcoin, but with smart contracts. 
-                    Think of it as "Bitcoin's smarter cousin" — it shares Bitcoin's proven security model (called UTXO) 
+                    Think of it as "Bitcoin's smarter cousin" — it shares Bitcoin's proven security model (called eUTXO — extended UTXO) 
                     but adds programmable features that let developers build applications on top of it.
                   </p>
                 </div>
@@ -266,7 +266,7 @@ export default function ErgoGuidePage() {
                     <div className="w-12 h-12 rounded-xl bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/30 flex items-center justify-center mx-auto mb-3">
                       <Shield size={24} className="text-[var(--accent-cyan)]" />
                     </div>
-                    <h4 className="font-semibold text-white mb-2">UTXO Model</h4>
+                    <h4 className="font-semibold text-white mb-2">eUTXO Model</h4>
                     <p className="text-sm text-[var(--text-secondary)]">
                       Same security model as Bitcoin, but with smart contract capabilities
                     </p>

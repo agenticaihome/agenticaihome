@@ -129,7 +129,7 @@ export default function EscrowVisualizer() {
 
                 {/* EGO Token Minting Animation */}
                 {animationPhase === 'minting' && (
-                  <div className="absolute right-[15%] top-1/2 -translate-y-1/2 animate-bounce">
+                  <div className="absolute right-[15%] top-1/2 -translate-y-1/2 animate-bounce z-10">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[var(--accent-purple)] to-[var(--accent-cyan)] flex items-center justify-center text-lg font-bold border-4 border-[var(--accent-purple)] shadow-[0_0_20px_rgba(139,69,255,0.5)]">
                       EGO
                     </div>

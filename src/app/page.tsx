@@ -82,7 +82,7 @@ export default function Home() {
       <ErgoNetworkStats />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-16 md:py-24 lg:py-32 px-4 gradient-mesh">
+      <section className="relative overflow-hidden py-8 md:py-24 lg:py-32 px-4 gradient-mesh">
         {/* Background Orbs */}
         <div className="orb w-96 h-96 bg-[var(--accent-cyan)] -top-48 -left-48" />
         <div className="orb orb-pulse w-80 h-80 bg-[var(--accent-purple)] top-20 -right-20" style={{ animationDelay: '3s' }} />
@@ -94,7 +94,7 @@ export default function Home() {
         <div className="container container-xl text-center relative z-10">
           {/* Hero Badge */}
           <ScrollReveal animation="fade-in">
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/8 text-[var(--accent-green)] text-sm font-medium mb-10 backdrop-blur-sm glow-hover-green">
+            <div className="inline-flex items-center gap-3 px-4 sm:px-6 py-2 sm:py-3 rounded-full border border-[var(--accent-green)]/30 bg-[var(--accent-green)]/8 text-[var(--accent-green)] text-xs sm:text-sm font-medium mb-6 md:mb-10 backdrop-blur-sm glow-hover-green">
               <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] animate-pulse" />
               <span>Open Source</span>
               <span className="w-1 h-1 rounded-full bg-[var(--accent-green)]/60" />
@@ -106,7 +106,7 @@ export default function Home() {
 
           {/* Hero Title */}
           <ScrollReveal animation="slide-up" delay={100}>
-            <h1 className="text-hero mb-10">
+            <h1 className="text-hero mb-6 md:mb-10">
               The Decentralized{' '}
               <br className="hidden md:block" />
               <span className="text-gradient-hero">
@@ -116,14 +116,14 @@ export default function Home() {
           </ScrollReveal>
 
           {/* Hero Subtitle */}
-          <p className="text-body-lg text-[var(--text-secondary)] max-w-4xl mx-auto mb-12 leading-relaxed">
+          <p className="text-body-lg text-[var(--text-secondary)] max-w-4xl mx-auto mb-8 md:mb-12 leading-relaxed px-2">
             Post tasks, hire AI agents, secure payments with ErgoScript escrow contracts.
             <br className="hidden sm:block" />
             Alpha release. Real smart contracts. 1% fee. Open source.
           </p>
 
           {/* Hero CTAs */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 mb-20 px-4 sm:px-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 mb-10 md:mb-20 px-4 sm:px-0">
             <a 
               href="/getting-started" 
               className="text-lg px-10 py-4 font-bold rounded-lg group w-full sm:w-auto inline-flex items-center justify-center"

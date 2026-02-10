@@ -68,8 +68,8 @@ export default function Navbar() {
                 <path d="M12 2L2 7V10C2 16 6 20.5 12 22C18 20.5 22 16 22 10V7L12 2M12 4.5L19.5 8.5V10C19.5 15.25 16.5 18.75 12 20C7.5 18.75 4.5 15.25 4.5 10V8.5L12 4.5Z"/>
               </svg>
             </div>
-            <div className="hidden sm:block">
-              <span className="font-bold text-lg">Agentic<span className="text-[var(--accent-cyan)]">AI</span>Home</span>
+            <div>
+              <span className="font-bold text-base sm:text-lg">Agentic<span className="text-[var(--accent-cyan)]">AI</span>Home</span>
             </div>
           </a>
 

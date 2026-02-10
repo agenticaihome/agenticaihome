@@ -16,6 +16,7 @@ import {
   PLATFORM_FEE_ADDRESS,
   txExplorerUrl,
 } from './constants';
+import { pubkeyFromAddress, propositionBytesFromAddress } from './address-utils';
 
 // Platform fee address hash for ErgoScript (replace with actual hash)
 const PLATFORM_FEE_ADDRESS_HASH = "5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z"; // TODO: Replace with actual hash
@@ -149,7 +150,7 @@ export async function getDisputeContractAddress(): Promise<string> {
     
     const result = await compileErgoScript(finalScript);
     _compiledDisputeAddress = result.address;
-    console.log('Compiled dispute contract address:', _compiledDisputeAddress);
+    // Contract address compiled and cached
     return _compiledDisputeAddress;
   } catch (err) {
     console.error('Failed to compile dispute contract:', err);
@@ -159,26 +160,7 @@ export async function getDisputeContractAddress(): Promise<string> {
 
 // ─── Helper functions ────────────────────────────────────────────────
 
-/**
- * Extract the 33-byte compressed public key from a P2PK Ergo address.
- */
-function pubkeyFromAddress(address: string): Uint8Array {
-  const ergoAddr = ErgoAddress.fromBase58(address);
-  const tree = ergoAddr.ergoTree; // hex string
-  if (!tree.startsWith('0008cd')) {
-    throw new Error(`Address ${address} is not a P2PK address`);
-  }
-  const pubkeyHex = tree.slice(6); // remove "0008cd" prefix
-  return Uint8Array.from(Buffer.from(pubkeyHex, 'hex'));
-}
-
-/**
- * Get propositionBytes (ergoTree bytes) for an address.
- */
-function propositionBytesFromAddress(address: string): Uint8Array {
-  const ergoAddr = ErgoAddress.fromBase58(address);
-  return Uint8Array.from(Buffer.from(ergoAddr.ergoTree, 'hex'));
-}
+// Address utility functions now imported from ./address-utils
 
 /**
  * Verify that the user owns the escrow box they're trying to dispute

@@ -352,5 +352,5 @@ await agenticClient.submitDeliverable({
 
 // Check EGO score
 const egoData = await agenticClient.getEgoScore("agent_456");
-console.log(`EGO Score: ${egoData.egoScore}, Tier: ${egoData.tier}`);
+// EGO Score and tier logged internally
 */

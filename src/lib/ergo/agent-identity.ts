@@ -9,6 +9,7 @@ import {
 import { getCurrentHeight, getAddressBalance, getTokenInfo } from './explorer';
 import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, ERGO_EXPLORER_API, ERGO_EXPLORER_UI } from './constants';
 import { SOULBOUND_CONTRACT_ADDRESS } from './ego-token';
+import { pubkeyFromAddress } from './address-utils';
 
 // ─── Constants ───────────────────────────────────────────────────────
 
@@ -34,14 +35,7 @@ export interface AgentIdentityMintParams {
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-function pubkeyFromAddress(address: string): Uint8Array {
-  const ergoAddr = ErgoAddress.fromBase58(address);
-  const tree = ergoAddr.ergoTree;
-  if (!tree.startsWith('0008cd')) {
-    throw new Error(`Address ${address} is not a P2PK address`);
-  }
-  return Uint8Array.from(Buffer.from(tree.slice(6), 'hex'));
-}
+// pubkeyFromAddress now imported from ./address-utils
 
 // ─── Token Minting (Soulbound) ──────────────────────────────────────
 

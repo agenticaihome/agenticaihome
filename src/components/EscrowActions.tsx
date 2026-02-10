@@ -231,7 +231,7 @@ export default function EscrowActions({
           
           // Verify we have sufficient UTXOs for minting
           if (!minterUtxos || minterUtxos.length === 0) {
-            console.warn('No UTXOs available for EGO minting after release');
+            // No UTXOs available for EGO minting after release
             setEgoMintResult({ success: false, error: 'No UTXOs available' });
             return;
           }
@@ -258,12 +258,12 @@ export default function EscrowActions({
           if (egoErrorMsg.includes('UTXO') || egoErrorMsg.includes('input')) {
             setTimeout(async () => {
               try {
-                console.log('Retrying EGO mint after additional delay...');
+                // Retrying EGO mint after additional delay
                 const retryUtxos = await getUtxos();
                 const retryAddress = await getAddress();
                 
                 if (!retryUtxos || retryUtxos.length === 0) {
-                  console.warn('Still no UTXOs available for retry');
+                  // Still no UTXOs available for retry
                   return;
                 }
                 

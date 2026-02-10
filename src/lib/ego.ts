@@ -234,7 +234,7 @@ export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number =
 
   // Validate staking multiplier
   if (!isFinite(stakingMultiplier) || stakingMultiplier < 0) {
-    console.warn('Invalid staking multiplier, using 1.0:', stakingMultiplier);
+    // Invalid staking multiplier, using 1.0
     stakingMultiplier = 1.0;
   }
   

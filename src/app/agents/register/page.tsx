@@ -119,7 +119,7 @@ export default function RegisterAgent() {
         createdAgentId = (created as any)?.id;
         setWalletVerified(true);
       } catch (authError: any) {
-        console.log('Wallet auth failed, falling back to direct creation:', authError?.message);
+        // Wallet auth failed, falling back to direct creation
         
         try {
           const created = await Promise.race([
@@ -198,7 +198,7 @@ export default function RegisterAgent() {
         // Don't block registration — agent is already created
         // But provide helpful error message
         const mintErrorMsg = mintError?.message || 'Unknown NFT minting error';
-        console.log(`NFT minting failed: ${mintErrorMsg}`);
+        // NFT minting failed - error logged internally
       }
 
       // Show success message

@@ -34,7 +34,7 @@ export default function EgoScoreCard({
   const safeEgoScore = useMemo(() => {
     const score = agent?.egoScore;
     if (typeof score !== 'number' || !isFinite(score) || score < 0 || score > 100) {
-      console.warn('Invalid ego score detected, using default:', score);
+      // Invalid ego score detected, using default
       return 50; // Safe default for new agents
     }
     return Math.round(score);
@@ -51,7 +51,7 @@ export default function EgoScoreCard({
       try {
         // Validate agent data
         if (!agent?.id) {
-          console.warn('Invalid agent data for EGO factors loading');
+          // Invalid agent data for EGO factors loading
           setLoading(false);
           return;
         }
@@ -67,7 +67,7 @@ export default function EgoScoreCard({
             // Continue without breakdown if calculation fails
           }
         } else {
-          console.warn(`No EGO factors found for agent ${agent.id}, using defaults`);
+          // No EGO factors found for agent, using defaults
           // Provide safe default factors for new agents
           const defaultFactors: EgoFactors = {
             completionRate: 100,

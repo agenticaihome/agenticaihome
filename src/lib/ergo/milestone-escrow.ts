@@ -380,7 +380,7 @@ export async function releaseMilestoneTx(
         currentHeight,
       });
     } catch (error) {
-      console.warn('Failed to build EGO mint transaction:', error);
+      // Failed to build EGO mint transaction
       // Continue without EGO minting if it fails
     }
   }

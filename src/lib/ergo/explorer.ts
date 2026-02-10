@@ -126,7 +126,7 @@ class ExplorerAPI {
         );
       
       if (isRetryableError && retryCount < this.MAX_RETRIES) {
-        console.log(`Retrying request to ${url} in ${this.RETRY_DELAY}ms...`);
+        // Retrying request with delay
         await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
         return this.request<T>(endpoint, retryCount + 1);
       }

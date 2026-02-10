@@ -20,6 +20,7 @@ import {
   txExplorerUrl,
 } from './constants';
 import { compileErgoScript } from './compiler';
+import { pubkeyFromAddress, propositionBytesFromAddress } from './address-utils';
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -81,25 +82,11 @@ function decodeSInt(serializedHex: string): number {
  * Extract the 33-byte compressed public key from a P2PK Ergo address.
  * P2PK ergoTree = "0008cd" + 33-byte-hex-pubkey
  */
-function pubkeyFromAddress(address: string): Uint8Array {
-  const ergoAddr = ErgoAddress.fromBase58(address);
-  const tree = ergoAddr.ergoTree; // hex string
-  // P2PK trees start with 0008cd
-  if (!tree.startsWith('0008cd')) {
-    throw new Error(`Address ${address} is not a P2PK address`);
-  }
-  const pubkeyHex = tree.slice(6); // remove "0008cd" prefix
-  return Uint8Array.from(Buffer.from(pubkeyHex, 'hex'));
-}
 
 /**
  * Get propositionBytes (ergoTree bytes) for an address.
  * This is what the contract compares OUTPUTS.propositionBytes against.
  */
-function propositionBytesFromAddress(address: string): Uint8Array {
-  const ergoAddr = ErgoAddress.fromBase58(address);
-  return Uint8Array.from(Buffer.from(ergoAddr.ergoTree, 'hex'));
-}
 
 // ─── Contract compilation ────────────────────────────────────────────
 

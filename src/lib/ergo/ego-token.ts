@@ -10,6 +10,7 @@ import {
 } from '@fleet-sdk/core';
 import { getCurrentHeight, getAddressBalance, getTokenInfo } from './explorer';
 import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, ERGO_EXPLORER_API } from './constants';
+import { pubkeyFromAddress } from './address-utils';
 
 // ─── Soulbound Contract ──────────────────────────────────────────────
 
@@ -71,18 +72,7 @@ export interface EgoMintParams {
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-/**
- * Extract 33-byte compressed public key from a P2PK address.
- */
-function pubkeyFromAddress(address: string): Uint8Array {
-  const ergoAddr = ErgoAddress.fromBase58(address);
-  const tree = ergoAddr.ergoTree;
-  if (!tree.startsWith('0008cd')) {
-    throw new Error(`Address ${address} is not a P2PK address — cannot extract pubkey for soulbound contract`);
-  }
-  const pubkeyHex = tree.slice(6);
-  return Uint8Array.from(Buffer.from(pubkeyHex, 'hex'));
-}
+// pubkeyFromAddress now imported from ./address-utils
 
 // ─── Token Query Functions ───────────────────────────────────────────
 
@@ -150,7 +140,7 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
       `${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`
     );
     if (!response.ok) {
-      console.warn('Failed to fetch soulbound contract boxes:', response.status, response.statusText);
+      // Failed to fetch soulbound contract boxes
       return [];
     }
     const data = await response.json();
@@ -158,7 +148,7 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
 
     // Validate agent address
     if (!agentAddress || typeof agentAddress !== 'string') {
-      console.warn('Invalid agent address for contract box filtering:', agentAddress);
+      // Invalid agent address for contract box filtering
       return [];
     }
 
@@ -168,7 +158,7 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
       const agentErgoTree = ErgoAddress.fromBase58(agentAddress).ergoTree;
       // For P2PK addresses, the pubkey hex is in the ergoTree after "0008cd"
       if (!agentErgoTree.startsWith('0008cd') || agentErgoTree.length < 72) {
-        console.warn('Agent address is not a valid P2PK address:', agentAddress);
+        // Agent address is not a valid P2PK address
         return [];
       }
       agentPubkeyHex = agentErgoTree.slice(6); // Remove "0008cd" prefix
@@ -194,7 +184,7 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
         
         return pubkeyFound;
       } catch (error) {
-        console.warn('Error processing contract box R4 register:', error);
+        // Error processing contract box R4 register
         return false;
       }
     });

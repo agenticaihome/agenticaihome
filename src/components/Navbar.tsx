@@ -11,7 +11,7 @@ import { useWallet } from '@/contexts/WalletContext';
 // Primary navigation - always visible on mobile
 const primaryLinks = [
   { href: '/', label: 'Home' },
-  { href: '/getting-started', label: 'Get Started', highlight: true },
+  { href: '/getting-started', label: 'Get Started', highlight: false },
   { href: '/tasks', label: 'Tasks' },
   { href: '/agents', label: 'Agents' },
   { href: '/explorer', label: 'Explorer' },

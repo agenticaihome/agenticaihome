@@ -11,6 +11,10 @@ interface StatsData {
   isLoading: boolean;
 }
 
+// Cache network stats for 3 minutes to reduce external API calls
+let networkStatsCache: { data: StatsData | null; timestamp: number } = { data: null, timestamp: 0 };
+const CACHE_DURATION = 3 * 60 * 1000; // 3 minutes
+
 export default function ErgoNetworkStats() {
   const [stats, setStats] = useState<StatsData>({
     price: null,
@@ -21,42 +25,62 @@ export default function ErgoNetworkStats() {
     isLoading: true,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const results = await Promise.allSettled([
-        fetch('https://api.coingecko.com/api/v3/simple/price?ids=ergo&vs_currencies=usd&include_24hr_change=true', { mode: 'cors' })
-          .then(r => r.ok ? r.json() : Promise.reject())
-          .catch(() => 
-            // Fallback: try Spectrum DEX API for ERG price
-            fetch('https://api.spectrum.fi/v1/price-tracking/ergo/tokens')
-              .then(r => r.ok ? r.json() : Promise.reject())
-              .then(tokens => {
-                const sigUsd = tokens?.find((t: { ticker: string }) => t.ticker === 'SigUSD');
-                if (sigUsd?.price) return { ergo: { usd: 1 / sigUsd.price, usd_24h_change: 0 } };
-                return Promise.reject();
-              })
-          ),
-        fetch('https://api.ergoplatform.com/api/v1/blocks?limit=1&sortBy=height&sortDirection=desc')
-          .then(r => r.ok ? r.json() : Promise.reject()),
-      ]);
+  const fetchData = async () => {
+    // Check cache first
+    const now = Date.now();
+    if (networkStatsCache.data && (now - networkStatsCache.timestamp) < CACHE_DURATION) {
+      setStats(networkStatsCache.data);
+      return;
+    }
 
-      const [priceRes, blockRes] = results;
-      const priceData = priceRes.status === 'fulfilled' ? priceRes.value : null;
-      const blockData = blockRes.status === 'fulfilled' ? blockRes.value : null;
-      const block = blockData?.items?.[0];
+    // Simplified fetch - only get essential data to reduce load
+    const results = await Promise.allSettled([
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=ergo&vs_currencies=usd&include_24hr_change=true', { 
+        mode: 'cors',
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      })
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .catch(() => 
+          // Fallback: try Spectrum DEX API for ERG price
+          fetch('https://api.spectrum.fi/v1/price-tracking/ergo/tokens', {
+            signal: AbortSignal.timeout(5000)
+          })
+            .then(r => r.ok ? r.json() : Promise.reject())
+            .then(tokens => {
+              const sigUsd = tokens?.find((t: { ticker: string }) => t.ticker === 'SigUSD');
+              if (sigUsd?.price) return { ergo: { usd: 1 / sigUsd.price, usd_24h_change: 0 } };
+              return Promise.reject();
+            })
+        ),
+      fetch('https://api.ergoplatform.com/api/v1/blocks?limit=1&sortBy=height&sortDirection=desc', {
+        signal: AbortSignal.timeout(5000)
+      })
+        .then(r => r.ok ? r.json() : Promise.reject()),
+    ]);
 
-      setStats({
-        price: priceData?.ergo?.usd ?? null,
-        priceChange24h: priceData?.ergo?.usd_24h_change ?? null,
-        blockHeight: block?.height ?? null,
-        difficulty: block?.difficulty ?? null,
-        lastBlockTime: block?.timestamp ?? null,
-        isLoading: false,
-      });
+    const [priceRes, blockRes] = results;
+    const priceData = priceRes.status === 'fulfilled' ? priceRes.value : null;
+    const blockData = blockRes.status === 'fulfilled' ? blockRes.value : null;
+    const block = blockData?.items?.[0];
+
+    const newStats: StatsData = {
+      price: priceData?.ergo?.usd ?? null,
+      priceChange24h: priceData?.ergo?.usd_24h_change ?? null,
+      blockHeight: block?.height ?? null,
+      difficulty: block?.difficulty ?? null,
+      lastBlockTime: block?.timestamp ?? null,
+      isLoading: false,
     };
 
+    setStats(newStats);
+    networkStatsCache = { data: newStats, timestamp: now };
+  };
+
+  useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 60000);
+    
+    // Reduced polling frequency to 3 minutes
+    const interval = setInterval(fetchData, 180000);
     return () => clearInterval(interval);
   }, []);
 

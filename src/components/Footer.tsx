@@ -8,7 +8,7 @@ export default function Footer() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-3 mb-4">
-                <img src="/logo.png" alt="AgenticAiHome" className="w-8 h-8 rounded-xl" />
+                <img src="/logo.png" alt="AgenticAiHome" className="w-8 h-8 rounded-xl" loading="lazy" />
                 <div className="font-bold text-lg">
                   Agentic<span className="text-[var(--accent-cyan)]">AI</span>Home
                 </div>

@@ -18,6 +18,10 @@ interface AnimatedNumberProps {
   duration?: number;
 }
 
+// Cache stats for 5 minutes to reduce Supabase calls
+let statsCache: { data: StatData[] | null; timestamp: number } = { data: null, timestamp: 0 };
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 const AnimatedNumber: React.FC<AnimatedNumberProps> = ({ 
   finalValue, 
   isPercentage, 
@@ -83,65 +87,73 @@ export default function StatsBar() {
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        // Fetch agent count
-        const { count: agentCount } = await supabase
+  const fetchStats = useCallback(async () => {
+    // Check cache first
+    const now = Date.now();
+    if (statsCache.data && (now - statsCache.timestamp) < CACHE_DURATION) {
+      setStats(statsCache.data);
+      return;
+    }
+
+    try {
+      // Use single query to minimize database load - count without fetching data
+      const [agentsRes, transactionsRes] = await Promise.all([
+        supabase
           .from('agents')
-          .select('*', { count: 'exact', head: true });
-
-        // Fetch transaction count
-        const { count: transactionCount } = await supabase
+          .select('*', { count: 'exact', head: true }),
+        supabase
           .from('transactions')
-          .select('*', { count: 'exact', head: true });
+          .select('amount_erg, type', { count: 'exact' })
+          .eq('type', 'escrow_fund')
+      ]);
 
-        // Fetch total volume — only count escrow_fund (inflows), not releases (which double-count)
-        const { data: transactions } = await supabase
-          .from('transactions')
-          .select('amount_erg')
-          .eq('type', 'escrow_fund');
+      // Calculate total volume from fetched transactions
+      const totalVolume = transactionsRes.data?.reduce((sum, tx) => sum + (tx.amount_erg || 0), 0) || 0;
 
-        const totalVolume = transactions?.reduce((sum, tx) => sum + (tx.amount_erg || 0), 0) || 0;
+      const newStats = [
+        { 
+          number: (agentsRes.count || 0).toString(), 
+          label: 'Agents Registered', 
+          delay: '0s', 
+          finalValue: agentsRes.count || 0, 
+          isPercentage: false 
+        },
+        { 
+          number: (transactionsRes.count || 0).toString(), 
+          label: 'Mainnet Transactions', 
+          delay: '0.2s', 
+          finalValue: transactionsRes.count || 0, 
+          isPercentage: false 
+        },
+        { 
+          number: totalVolume >= 1 ? totalVolume.toFixed(1) : totalVolume.toFixed(3), 
+          label: 'ERG Total Volume', 
+          delay: '0.4s', 
+          finalValue: totalVolume, 
+          isPercentage: false 
+        },
+        { 
+          number: '1%', 
+          label: 'Protocol Fee', 
+          delay: '0.6s', 
+          finalValue: 1, 
+          isPercentage: true 
+        }
+      ];
 
-        setStats([
-          { 
-            number: (agentCount || 0).toString(), 
-            label: 'Agents Registered', 
-            delay: '0s', 
-            finalValue: agentCount || 0, 
-            isPercentage: false 
-          },
-          { 
-            number: (transactionCount || 0).toString(), 
-            label: 'Mainnet Transactions', 
-            delay: '0.2s', 
-            finalValue: transactionCount || 0, 
-            isPercentage: false 
-          },
-          { 
-            number: totalVolume >= 1 ? totalVolume.toFixed(1) : totalVolume.toFixed(3), 
-            label: 'ERG Total Volume', 
-            delay: '0.4s', 
-            finalValue: totalVolume, 
-            isPercentage: false 
-          },
-          { 
-            number: '1%', 
-            label: 'Protocol Fee', 
-            delay: '0.6s', 
-            finalValue: 1, 
-            isPercentage: true 
-          }
-        ]);
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-        // Keep default values on error
-      }
-    };
-
-    fetchStats();
+      setStats(newStats);
+      
+      // Update cache
+      statsCache = { data: newStats, timestamp: now };
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      // Keep default values on error
+    }
   }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   // Intersection Observer setup
   useEffect(() => {

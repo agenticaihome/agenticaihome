@@ -14,6 +14,10 @@ interface ActivityItem {
   actorName?: string;
 }
 
+// Cache for 2 minutes to reduce API calls
+let activityCache: { data: ActivityItem[] | null; timestamp: number } = { data: null, timestamp: 0 };
+const CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+
 export default function ActivityFeed() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,15 +40,21 @@ export default function ActivityFeed() {
 
   const fetchActivities = async () => {
     try {
+      // Check cache first
+      const now = Date.now();
+      if (activityCache.data && (now - activityCache.timestamp) < CACHE_DURATION) {
+        setActivities(activityCache.data);
+        setLoading(false);
+        return;
+      }
+
       setError(null);
       
-      // Fetch recent data from multiple tables
-      const [transactionsRes, agentsRes, tasksRes, bidsRes, completionsRes] = await Promise.all([
-        supabase.from('transactions').select('*').order('date', { ascending: false }).limit(5),
-        supabase.from('agents').select('*').order('created_at', { ascending: false }).limit(3),
-        supabase.from('tasks').select('*').order('created_at', { ascending: false }).limit(4),
-        supabase.from('bids').select('*').order('created_at', { ascending: false }).limit(3),
-        supabase.from('completions').select('*').order('completed_at', { ascending: false }).limit(3),
+      // Simplified query - only get essential recent data to reduce load
+      const [transactionsRes, agentsRes, tasksRes] = await Promise.all([
+        supabase.from('transactions').select('id, type, amount_erg, date, tx_id, task_title').order('date', { ascending: false }).limit(3),
+        supabase.from('agents').select('id, name, created_at').order('created_at', { ascending: false }).limit(2),
+        supabase.from('tasks').select('id, title, budget_erg, created_at').order('created_at', { ascending: false }).limit(2),
       ]);
 
       const activities: ActivityItem[] = [];
@@ -56,7 +66,7 @@ export default function ActivityFeed() {
             id: `tx-${tx.id}`,
             type: 'escrow_funded',
             icon: '🔒',
-            description: `Escrow funded: ${tx.amount_erg} ERG locked for '${tx.task_title}'`,
+            description: `Escrow funded: ${tx.amount_erg} ERG locked for '${tx.task_title || 'task'}'`,
             timestamp: tx.date,
             txId: tx.tx_id,
             amount: tx.amount_erg,
@@ -98,41 +108,16 @@ export default function ActivityFeed() {
         });
       });
 
-      // Process bids
-      bidsRes.data?.forEach(bid => {
-        activities.push({
-          id: `bid-${bid.id}`,
-          type: 'bid_submitted',
-          icon: '🎯',
-          description: `${bid.agent_name} bid on task (${bid.proposed_rate} ERG)`,
-          timestamp: bid.created_at,
-          actorName: bid.agent_name,
-          amount: bid.proposed_rate,
-        });
-      });
-
-      // Process completions
-      completionsRes.data?.forEach(completion => {
-        activities.push({
-          id: `completion-${completion.id}`,
-          type: 'task_completed',
-          icon: '⭐',
-          description: `Task completed: "${completion.task_title}" (${completion.rating}/5 ⭐)`,
-          timestamp: completion.completed_at,
-          amount: completion.erg_paid,
-        });
-      });
-
-      // Sort by timestamp descending and take top 10
+      // Sort by timestamp descending and take top 6
       activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setActivities(activities.slice(0, 10));
+      const finalActivities = activities.slice(0, 6);
 
       // If no activities, show some genesis/demo activities
-      if (activities.length === 0) {
-        setActivities([
+      if (finalActivities.length === 0) {
+        const genesisActivities = [
           {
             id: 'genesis-1',
-            type: 'escrow_funded',
+            type: 'escrow_funded' as const,
             icon: '🔒',
             description: 'Platform Genesis Fund: 1.0 ERG locked in escrow',
             timestamp: new Date(Date.now() - 3600000).toISOString(),
@@ -141,7 +126,7 @@ export default function ActivityFeed() {
           },
           {
             id: 'genesis-2',
-            type: 'payment_released',
+            type: 'payment_released' as const,
             icon: '✅',
             description: 'First trustless payment: 0.099 ERG to ErgoMiner-01',
             timestamp: new Date(Date.now() - 7200000).toISOString(),
@@ -150,21 +135,18 @@ export default function ActivityFeed() {
           },
           {
             id: 'genesis-3',
-            type: 'agent_registered',
+            type: 'agent_registered' as const,
             icon: '🤖',
             description: 'Genesis agent registered: ErgoMiner-01',
             timestamp: new Date(Date.now() - 10800000).toISOString(),
             actorName: 'ErgoMiner-01',
           },
-          {
-            id: 'genesis-4',
-            type: 'task_posted',
-            icon: '📋',
-            description: 'Genesis task posted: "Mine 1 ERG block on mainnet" (0.1 ERG)',
-            timestamp: new Date(Date.now() - 14400000).toISOString(),
-            amount: 0.1,
-          },
-        ]);
+        ];
+        setActivities(genesisActivities);
+        activityCache = { data: genesisActivities, timestamp: now };
+      } else {
+        setActivities(finalActivities);
+        activityCache = { data: finalActivities, timestamp: now };
       }
 
     } catch (err) {
@@ -178,8 +160,8 @@ export default function ActivityFeed() {
   useEffect(() => {
     fetchActivities();
     
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchActivities, 30000);
+    // Reduced polling frequency to 2 minutes
+    const interval = setInterval(fetchActivities, 120000);
     
     return () => clearInterval(interval);
   }, []);
@@ -302,8 +284,8 @@ export default function ActivityFeed() {
       {/* Footer */}
       <div className="px-6 py-3 border-t border-[var(--border-color)] bg-[var(--bg-secondary)]/10">
         <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-          <span>Showing last {Math.min(activities.length, 10)} activities</span>
-          <span>Auto-refreshes every 30s</span>
+          <span>Showing last {Math.min(activities.length, 6)} activities</span>
+          <span>Updates every 2min</span>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 
 interface Particle {
   x: number;
@@ -21,31 +21,43 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
   const animationRef = useRef<number | null>(null);
   const particlesRef = useRef<Particle[]>([]);
   const mouseRef = useRef({ x: 0, y: 0, isInteracting: false });
+  const [isVisible, setIsVisible] = useState(false);
 
-  // Configuration
+  // Configuration - heavily reduced for mobile
   const config = {
     desktop: {
-      particleCount: 45,
-      connectionDistance: 120,
-      mouseInfluence: 80
+      particleCount: 30, // Reduced from 45
+      connectionDistance: 100, // Reduced from 120
+      mouseInfluence: 60, // Reduced from 80
+      frameSkip: 1 // Render every frame
     },
     mobile: {
-      particleCount: 22,
-      connectionDistance: 100,
-      mouseInfluence: 60
+      particleCount: 15, // Reduced from 22
+      connectionDistance: 80, // Reduced from 100
+      mouseInfluence: 40, // Reduced from 60
+      frameSkip: 2 // Render every other frame for performance
     }
   };
 
   const colors = {
     nodes: '#00ff88', // Green for nodes
     connections: '#00ffff', // Cyan for connection lines
-    nodeOpacity: 0.4,
-    connectionOpacity: 0.3
+    nodeOpacity: 0.3, // Reduced from 0.4
+    connectionOpacity: 0.2 // Reduced from 0.3
   };
 
   // Check if mobile device
   const isMobile = useCallback(() => {
     return window.innerWidth < 768;
+  }, []);
+
+  // Check if element is in viewport
+  const checkVisibility = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return false;
+
+    const rect = canvas.getBoundingClientRect();
+    return rect.top < window.innerHeight && rect.bottom > 0;
   }, []);
 
   // Initialize particles
@@ -57,19 +69,21 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
       particlesRef.current.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 3 + 2,
+        vx: (Math.random() - 0.5) * 0.2, // Reduced velocity
+        vy: (Math.random() - 0.5) * 0.2, // Reduced velocity
+        size: Math.random() * 2 + 1.5, // Smaller particles
         pulse: Math.random() * Math.PI * 2,
-        pulseSpeed: Math.random() * 0.02 + 0.01
+        pulseSpeed: Math.random() * 0.015 + 0.008 // Slower pulse
       });
     }
   }, []);
 
+  let frameCounter = 0;
+
   // Animate particles
   const animate = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !isVisible) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -77,6 +91,19 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
     const width = canvas.width;
     const height = canvas.height;
     const currentConfig = isMobile() ? config.mobile : config.desktop;
+
+    // Frame skipping for mobile performance
+    frameCounter++;
+    if (frameCounter % currentConfig.frameSkip !== 0) {
+      animationRef.current = requestAnimationFrame(animate);
+      return;
+    }
+
+    // Check visibility periodically to pause when not visible
+    if (frameCounter % 60 === 0 && !checkVisibility()) {
+      animationRef.current = requestAnimationFrame(animate);
+      return;
+    }
 
     // Clear canvas
     ctx.clearRect(0, 0, width, height);
@@ -89,8 +116,8 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
       // Update pulse
       particle.pulse += particle.pulseSpeed;
 
-      // Mouse interaction
-      if (mouse.isInteracting) {
+      // Simplified mouse interaction (only on desktop)
+      if (!isMobile() && mouse.isInteracting) {
         const dx = mouse.x - particle.x;
         const dy = mouse.y - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -99,16 +126,16 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
           const force = (currentConfig.mouseInfluence - distance) / currentConfig.mouseInfluence;
           const angle = Math.atan2(dy, dx);
           
-          // Gentle attraction/repulsion based on distance
-          const intensity = force * 0.002;
+          // Very gentle interaction
+          const intensity = force * 0.001;
           if (distance < currentConfig.mouseInfluence * 0.3) {
             // Repel when very close
             particle.vx -= Math.cos(angle) * intensity;
             particle.vy -= Math.sin(angle) * intensity;
           } else {
             // Attract when at medium distance
-            particle.vx += Math.cos(angle) * intensity * 0.5;
-            particle.vy += Math.sin(angle) * intensity * 0.5;
+            particle.vx += Math.cos(angle) * intensity * 0.3;
+            particle.vy += Math.sin(angle) * intensity * 0.3;
           }
         }
       }
@@ -120,28 +147,28 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
       // Gentle boundaries (wrap around with dampening)
       if (particle.x < 0) {
         particle.x = width;
-        particle.vx *= 0.8;
+        particle.vx *= 0.9;
       } else if (particle.x > width) {
         particle.x = 0;
-        particle.vx *= 0.8;
+        particle.vx *= 0.9;
       }
 
       if (particle.y < 0) {
         particle.y = height;
-        particle.vy *= 0.8;
+        particle.vy *= 0.9;
       } else if (particle.y > height) {
         particle.y = 0;
-        particle.vy *= 0.8;
+        particle.vy *= 0.9;
       }
 
       // Add slight random drift and damping
-      particle.vx += (Math.random() - 0.5) * 0.001;
-      particle.vy += (Math.random() - 0.5) * 0.001;
-      particle.vx *= 0.999;
-      particle.vy *= 0.999;
+      particle.vx += (Math.random() - 0.5) * 0.0005;
+      particle.vy += (Math.random() - 0.5) * 0.0005;
+      particle.vx *= 0.9995;
+      particle.vy *= 0.9995;
 
-      // Draw connections first (behind nodes)
-      for (let j = i + 1; j < particles.length; j++) {
+      // Draw connections first (behind nodes) - reduced number
+      for (let j = i + 1; j < particles.length; j += 2) { // Skip every other connection for performance
         const other = particles[j];
         const dx = particle.x - other.x;
         const dy = particle.y - other.y;
@@ -159,22 +186,26 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
         }
       }
 
-      // Draw node with pulsing glow
-      const pulseSize = particle.size + Math.sin(particle.pulse) * 0.5;
-      const glowIntensity = (Math.sin(particle.pulse) + 1) * 0.5;
+      // Draw simplified node (no glow effect on mobile)
+      const pulseSize = particle.size + Math.sin(particle.pulse) * 0.3;
       
-      // Outer glow
-      const gradient = ctx.createRadialGradient(
-        particle.x, particle.y, 0,
-        particle.x, particle.y, pulseSize * 3
-      );
-      gradient.addColorStop(0, `${colors.nodes}${Math.floor((colors.nodeOpacity * glowIntensity) * 255).toString(16).padStart(2, '0')}`);
-      gradient.addColorStop(1, `${colors.nodes}00`);
-      
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, pulseSize * 3, 0, Math.PI * 2);
-      ctx.fillStyle = gradient;
-      ctx.fill();
+      if (!isMobile()) {
+        // Desktop: with glow
+        const glowIntensity = (Math.sin(particle.pulse) + 1) * 0.5;
+        
+        // Outer glow
+        const gradient = ctx.createRadialGradient(
+          particle.x, particle.y, 0,
+          particle.x, particle.y, pulseSize * 2
+        );
+        gradient.addColorStop(0, `${colors.nodes}${Math.floor((colors.nodeOpacity * glowIntensity) * 255).toString(16).padStart(2, '0')}`);
+        gradient.addColorStop(1, `${colors.nodes}00`);
+        
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, pulseSize * 2, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+      }
 
       // Core node
       ctx.beginPath();
@@ -182,18 +213,22 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
       ctx.fillStyle = `${colors.nodes}${Math.floor(colors.nodeOpacity * 255).toString(16).padStart(2, '0')}`;
       ctx.fill();
 
-      // Bright center
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, pulseSize * 0.3, 0, Math.PI * 2);
-      ctx.fillStyle = `${colors.nodes}${Math.floor((colors.nodeOpacity + 0.2) * 255).toString(16).padStart(2, '0')}`;
-      ctx.fill();
+      // Bright center (only on desktop)
+      if (!isMobile()) {
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, pulseSize * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = `${colors.nodes}${Math.floor((colors.nodeOpacity + 0.1) * 255).toString(16).padStart(2, '0')}`;
+        ctx.fill();
+      }
     });
 
     animationRef.current = requestAnimationFrame(animate);
-  }, []);
+  }, [checkVisibility, isVisible]);
 
-  // Handle mouse movement
+  // Handle mouse movement (only on desktop)
   const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isMobile()) return;
+    
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -225,6 +260,25 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
     initParticles(canvas.width, canvas.height);
   }, [initParticles]);
 
+  // Intersection Observer to pause when not visible
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(canvas);
+
+    return () => {
+      observer.unobserve(canvas);
+    };
+  }, []);
+
   // Setup and cleanup
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -233,13 +287,17 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
     // Initial setup
     handleResize();
 
-    // Event listeners
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
+    // Event listeners (only mouse on desktop)
+    if (!isMobile()) {
+      canvas.addEventListener('mousemove', handleMouseMove);
+      canvas.addEventListener('mouseleave', handleMouseLeave);
+    }
     window.addEventListener('resize', handleResize);
 
-    // Start animation
-    animate();
+    // Start animation when visible
+    if (isVisible) {
+      animate();
+    }
 
     return () => {
       // Cleanup
@@ -250,7 +308,7 @@ export default function ParticleNetwork({ className = '' }: ParticleNetworkProps
       canvas.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('resize', handleResize);
     };
-  }, [animate, handleMouseMove, handleMouseLeave, handleResize]);
+  }, [animate, handleMouseMove, handleMouseLeave, handleResize, isVisible]);
 
   return (
     <canvas

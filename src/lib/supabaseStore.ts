@@ -802,9 +802,19 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
       .eq('assigned_agent_id', agentId)
       .in('status', ['completed', 'disputed', 'cancelled']);
 
-    // Get average rating from the new ratings table
-    // This is more accurate than the old completions system
-    const avgRating = await getAverageRating(agentData.ergo_address);
+    // ANTI-GAMING PROTECTION 2, 3 & 4: Get value-weighted rating with outlier dampening and minimum task threshold
+    // Use weighted ratings (higher value tasks count more), exclude low-value spam ratings, and dampen outliers
+    const { data: dampenedRating, error: ratingError } = await supabase
+      .rpc('get_dampened_weighted_rating', { p_address: agentData.ergo_address });
+    
+    const avgRating = ratingError ? 3.0 : Number(dampenedRating) || 3.0;
+    
+    // Count ratings from high-value tasks only (>= 0.5 ERG) for EGO score calculation
+    const { count: validRatingsCount } = await supabase
+      .from('ratings')
+      .select('*', { count: 'exact', head: true })
+      .eq('ratee_address', agentData.ergo_address)
+      .gte('task_value_erg', 0.5); // Minimum task value threshold
 
     // Calculate account age in days
     const accountAge = Math.floor((Date.now() - new Date(agentData.created_at).getTime()) / (1000 * 60 * 60 * 24));
@@ -1270,6 +1280,42 @@ export async function submitRating(rating: {
     throw new Error('Invalid Ergo address format');
   }
 
+  // ANTI-GAMING PROTECTION 1: Escrow-Gated Ratings
+  // Before allowing rating, verify task had completed escrow
+  const { data: taskData, error: taskError } = await supabase
+    .from('tasks')
+    .select('status, budget_erg, creator_address, accepted_agent_address, escrow_tx_id')
+    .eq('id', rating.taskId)
+    .single();
+
+  if (taskError || !taskData) {
+    throw new Error('Task not found');
+  }
+
+  if (taskData.status !== 'completed') {
+    throw new Error('Ratings can only be submitted for completed tasks with released escrow');
+  }
+
+  if (!taskData.escrow_tx_id) {
+    throw new Error('Task must have completed escrow before ratings can be submitted');
+  }
+
+  // ANTI-GAMING PROTECTION 7: Self-Rating Prevention
+  if (rating.raterAddress === rating.rateeAddress) {
+    throw new Error('You cannot rate yourself');
+  }
+
+  // Verify rater is actually part of this task
+  const isValidRater = (rating.raterRole === 'creator' && taskData.creator_address === rating.raterAddress) ||
+                      (rating.raterRole === 'agent' && taskData.accepted_agent_address === rating.raterAddress);
+  
+  if (!isValidRater) {
+    throw new Error('You are not authorized to rate this task. Only the task creator and assigned agent can submit ratings.');
+  }
+
+  // Capture task value for weighting
+  const taskValue = Number(taskData.budget_erg) || 0;
+
   const sanitizedRating = {
     ...rating,
     comment: sanitizeText(rating.comment, 1000),
@@ -1294,10 +1340,13 @@ export async function submitRating(rating: {
     throw new Error('You have already rated this task');
   }
 
-  // Insert the rating
+  // Insert the rating with task value
+  const dbRating = ratingToDb(newRating);
+  dbRating.task_value_erg = taskValue; // Add task value for weighting
+
   const { error } = await supabase
     .from('ratings')
-    .insert(ratingToDb(newRating));
+    .insert(dbRating);
 
   if (error) {
     throw new Error(`Failed to submit rating: ${error.message}`);
@@ -1372,6 +1421,92 @@ export async function getAverageRating(address: string): Promise<number> {
   }
 
   return data?.[0]?.average_score || 3.0;
+}
+
+/**
+ * Get value-weighted average rating for an address (ANTI-GAMING PROTECTION 2)
+ */
+export async function getWeightedAverageRating(address: string): Promise<number> {
+  const { data, error } = await supabase
+    .rpc('get_weighted_average_rating', { p_address: address });
+
+  if (error) {
+    console.error('Error getting weighted average rating:', error);
+    return 3.0; // Default neutral rating
+  }
+
+  return Number(data) || 3.0;
+}
+
+/**
+ * Get rater reliability score (ANTI-GAMING PROTECTION 6)
+ * Returns how consistent this person's ratings are vs consensus
+ */
+export async function getRaterReliability(raterAddress: string): Promise<{
+  reliability: number; // 0-1 score
+  averageGivenRating: number;
+  totalRatingsGiven: number;
+  deviationFromConsensus: number;
+}> {
+  try {
+    // Get all ratings given by this rater
+    const { data: raterRatings, error } = await supabase
+      .from('ratings')
+      .select('ratee_address, score, task_value_erg')
+      .eq('rater_address', raterAddress);
+
+    if (error || !raterRatings || raterRatings.length === 0) {
+      return {
+        reliability: 0.5, // Neutral for new raters
+        averageGivenRating: 3.0,
+        totalRatingsGiven: 0,
+        deviationFromConsensus: 0
+      };
+    }
+
+    // Calculate average rating given by this person
+    const averageGivenRating = raterRatings.reduce((sum, r) => sum + r.score, 0) / raterRatings.length;
+
+    // For each person they rated, get that person's overall average from others
+    let totalDeviation = 0;
+    let validComparisons = 0;
+
+    for (const rating of raterRatings) {
+      // Get consensus rating for this ratee (excluding this rater)
+      const { data: consensusData } = await supabase
+        .from('ratings')
+        .select('score, task_value_erg')
+        .eq('ratee_address', rating.ratee_address)
+        .neq('rater_address', raterAddress);
+
+      if (consensusData && consensusData.length > 0) {
+        const consensusAvg = consensusData.reduce((sum, r) => sum + r.score, 0) / consensusData.length;
+        totalDeviation += Math.abs(rating.score - consensusAvg);
+        validComparisons++;
+      }
+    }
+
+    const averageDeviation = validComparisons > 0 ? totalDeviation / validComparisons : 0;
+    
+    // Convert deviation to reliability score (lower deviation = higher reliability)
+    // Max deviation is 4 (5 vs 1), so reliability = 1 - (deviation / 4)
+    const reliability = Math.max(0, 1 - (averageDeviation / 4));
+
+    return {
+      reliability,
+      averageGivenRating,
+      totalRatingsGiven: raterRatings.length,
+      deviationFromConsensus: averageDeviation
+    };
+  } catch (error) {
+    console.error('Error calculating rater reliability:', error);
+    return {
+      reliability: 0.5,
+      averageGivenRating: 3.0,
+      totalRatingsGiven: 0,
+      deviationFromConsensus: 0
+    };
+  }
 }
 
 /**
@@ -1544,5 +1679,87 @@ export async function getPendingRatingsForUser(userAddress: string): Promise<Arr
   } catch (error) {
     console.error('Error getting pending ratings:', error);
     return [];
+  }
+}
+
+/**
+ * ANTI-GAMING PROTECTION: Enhanced rating validation
+ * Checks multiple anti-gaming protections before allowing rating submission
+ */
+export async function validateRatingSubmission(
+  taskId: string,
+  raterAddress: string,
+  rateeAddress: string,
+  raterRole: 'creator' | 'agent'
+): Promise<{
+  valid: boolean;
+  error?: string;
+  warnings?: string[];
+}> {
+  try {
+    const warnings: string[] = [];
+
+    // Check 1: Basic validation
+    if (!validateErgoAddress(raterAddress) || !validateErgoAddress(rateeAddress)) {
+      return { valid: false, error: 'Invalid Ergo address format' };
+    }
+
+    // Check 2: Self-rating prevention
+    if (raterAddress === rateeAddress) {
+      return { valid: false, error: 'Self-rating is not allowed' };
+    }
+
+    // Check 3: Escrow-gated ratings
+    const { data: taskData } = await supabase
+      .from('tasks')
+      .select('status, budget_erg, creator_address, accepted_agent_address, escrow_tx_id')
+      .eq('id', taskId)
+      .single();
+
+    if (!taskData) {
+      return { valid: false, error: 'Task not found' };
+    }
+
+    if (taskData.status !== 'completed') {
+      return { valid: false, error: 'Ratings can only be submitted for completed tasks' };
+    }
+
+    if (!taskData.escrow_tx_id) {
+      return { valid: false, error: 'Task must have completed escrow before ratings can be submitted' };
+    }
+
+    // Check 4: Authorization
+    const isValidRater = (raterRole === 'creator' && taskData.creator_address === raterAddress) ||
+                        (raterRole === 'agent' && taskData.accepted_agent_address === raterAddress);
+    
+    if (!isValidRater) {
+      return { valid: false, error: 'You are not authorized to rate this task' };
+    }
+
+    // Check 5: Duplicate rating
+    const existingRating = await getRatingForTask(taskId, raterAddress);
+    if (existingRating) {
+      return { valid: false, error: 'You have already rated this task' };
+    }
+
+    // Check 6: Low-value task warning
+    const taskValue = Number(taskData.budget_erg) || 0;
+    if (taskValue < 0.5) {
+      warnings.push('This is a low-value task. Ratings may have reduced impact on reputation scores.');
+    }
+
+    // Check 7: Rater reliability check
+    const raterReliability = await getRaterReliability(raterAddress);
+    if (raterReliability.reliability < 0.3 && raterReliability.totalRatingsGiven > 5) {
+      warnings.push('Your rating patterns differ significantly from consensus. This rating may be weighted less heavily.');
+    }
+
+    return {
+      valid: true,
+      warnings: warnings.length > 0 ? warnings : undefined
+    };
+  } catch (error) {
+    console.error('Error validating rating submission:', error);
+    return { valid: false, error: 'Unable to validate rating submission' };
   }
 }

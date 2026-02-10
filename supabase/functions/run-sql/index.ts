@@ -20,5 +20,19 @@ Deno.serve(async (req) => {
     });
   }
 
+  if (body.action === 'sql') {
+    const { query } = body;
+    if (!query) return new Response(JSON.stringify({ error: 'Missing query' }), { status: 400 });
+    const { data: result, error } = await supabase.rpc('exec_sql', { query });
+    // Fallback: use raw postgres if rpc not available
+    if (error?.message?.includes('exec_sql')) {
+      // Use supabase-js to run via REST - not available for DDL
+      return new Response(JSON.stringify({ error: 'exec_sql function not available. Use Supabase SQL Editor.' }), { status: 400 });
+    }
+    return new Response(JSON.stringify({ result, error: error?.message }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400 });
 });

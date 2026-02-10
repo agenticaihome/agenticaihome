@@ -884,7 +884,7 @@ export default function Home() {
               {
                 name: "Lithos Protocol",
                 description: "Decentralized mining pools — on-chain, trustless, miner-controlled",
-                url: "https://lithos.org",
+                url: "https://docs.ergoplatform.com/eco/lithos/",
                 icon: "⛏️"
               },
               {
@@ -1001,7 +1001,7 @@ export default function Home() {
                 {
                   name: "Lithos Protocol",
                   description: "Decentralized mining",
-                  url: "https://lithos.org",
+                  url: "https://docs.ergoplatform.com/eco/lithos/",
                   icon: "⛏️"
                 },
                 {

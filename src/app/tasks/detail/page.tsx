@@ -639,8 +639,8 @@ function TaskDetailInner() {
             </div>
           )}
 
-          {/* Escrow Actions — Fund, Release, or Refund ERG on-chain */}
-          {task && task.assignedAgentId && (isCreator || isAssignedAgent) && escrowStatus !== 'released' && (
+          {/* Escrow Actions — Only task creator can fund/release/refund */}
+          {task && task.assignedAgentId && isCreator && escrowStatus !== 'released' && (
             <div className="mb-6">
               <EscrowActions
                 taskId={task.id}

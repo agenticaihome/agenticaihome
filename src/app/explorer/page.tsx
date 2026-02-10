@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import ErgoNetworkStats from '@/components/ErgoNetworkStats';
 
 interface Transaction {
   id: string;
@@ -98,6 +99,9 @@ export default function ExplorerPage() {
             All AgenticAiHome platform transactions are recorded on the Ergo blockchain for complete transparency.
           </p>
         </div>
+
+        {/* Ergo Network Stats */}
+        <ErgoNetworkStats />
 
         {/* Platform Stats */}
         {stats && (

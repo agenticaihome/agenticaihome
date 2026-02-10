@@ -1,5 +1,7 @@
 import NewsletterForm from '@/components/NewsletterForm';
 import StatsBar from '@/components/StatsBar';
+import ActivityFeed from '@/components/ActivityFeed';
+import ErgoNetworkStats from '@/components/ErgoNetworkStats';
 
 export default function Home() {
   return (
@@ -97,6 +99,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Ergo Network Stats */}
+      <ErgoNetworkStats />
 
       {/* Live Proof Banner */}
       <section className="py-8 px-4 bg-[var(--bg-secondary)]/20 backdrop-blur-sm">

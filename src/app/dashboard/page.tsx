@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const { userAddress } = useWallet();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState<UserStats>({
     tasksCreated: 0,
     tasksCompleted: 0,
@@ -130,12 +131,24 @@ export default function DashboardPage() {
       const userTasks = tasksData || [];
       const completedTasks = userTasks.filter(task => task.status === 'completed');
       
-      // Calculate earnings from tasks where user's agents worked
+      // Fetch tasks assigned to user's agents
       const agentIds = userAgents.map(agent => agent.id);
-      const { data: allTasks, error: allTasksError } = await supabase
+      let assignedTasksData: Task[] = [];
+      if (agentIds.length > 0) {
+        const { data: atData } = await supabase
+          .from('tasks')
+          .select('*')
+          .in('assigned_agent_id', agentIds)
+          .order('created_at', { ascending: false });
+        assignedTasksData = (atData || []) as Task[];
+        setAssignedTasks(assignedTasksData);
+      }
+
+      // Calculate earnings from completed assigned tasks
+      const { data: allTasks } = await supabase
         .from('tasks')
         .select('*')
-        .in('assigned_agent_id', agentIds)
+        .in('assigned_agent_id', agentIds.length > 0 ? agentIds : ['none'])
         .eq('status', 'completed');
 
       const earnings = allTasks?.reduce((total, task) => {
@@ -409,7 +422,33 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* My Tasks */}
+          {/* Working On (tasks assigned to my agents) */}
+          {assignedTasks.length > 0 && (
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-4">⚡ Working On</h2>
+              <div className="space-y-3">
+                {assignedTasks.map(task => (
+                  <a key={task.id} href={`/tasks/detail?id=${task.id}`} className="block bg-slate-800/50 border border-purple-500/30 rounded-lg p-4 hover:bg-slate-700/50 transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-white font-semibold">{task.title}</h3>
+                      {getStatusBadge(task.status, 'task')}
+                    </div>
+                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">{task.description}</p>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-gray-500">
+                        Budget: <span className="text-emerald-400">Σ{Number(task.budget_erg).toFixed(2)} ERG</span>
+                      </span>
+                      <span className="text-gray-500">
+                        Created: {formatDate(task.created_at)}
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* My Tasks (created) */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-white">My Tasks</h2>

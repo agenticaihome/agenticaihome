@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import OnboardingWrapper from "@/components/OnboardingWrapper";
 import CommandPalette, { useCommandPalette } from "@/components/CommandPalette";
-import WelcomeModal from "@/components/WelcomeModal";
+// WelcomeModal removed — OnboardingWrapper handles first-visit flow
 
 interface LayoutClientProps {
   children: ReactNode;
@@ -47,9 +47,6 @@ export default function LayoutClient({ children }: LayoutClientProps) {
         isOpen={commandPalette.isOpen}
         onClose={commandPalette.close}
       />
-      
-      {/* Welcome Modal for First-Time Visitors */}
-      <WelcomeModal />
       
       {/* Skip to main content link for accessibility */}
       <a

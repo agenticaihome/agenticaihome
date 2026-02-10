@@ -155,18 +155,6 @@ export default function Navbar() {
             
             <div className="w-px h-6 bg-[var(--border-color)] mx-1"></div>
             
-            {/* Connect Wallet CTA Button */}
-            {!wallet.connected && (
-              <a
-                href="/dashboard"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-[var(--accent-cyan)]/40 text-[var(--accent-cyan)] text-sm font-semibold hover:border-[var(--accent-cyan)]/60 hover:bg-[var(--accent-cyan)]/5 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)] transition-all duration-300 glow-cyan-subtle"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z" />
-                </svg>
-                Connect Wallet
-              </a>
-            )}
             {wallet.connected && wallet.address ? (
               <div className="relative">
                 <button

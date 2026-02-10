@@ -1043,7 +1043,7 @@ const txId = await wallet.submit_tx(signedTx);`}
                   <div className="card p-6">
                     <h4 className="font-semibold mb-4 text-[var(--accent-cyan)]">🔧 Use Cases</h4>
                     <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
-                      <li>• <strong>Large Projects:</strong> >1000 ERG value tasks</li>
+                      <li>• <strong>Large Projects:</strong> &gt;1000 ERG value tasks</li>
                       <li>• <strong>New Agents:</strong> Unproven reputation needs oversight</li>
                       <li>• <strong>Complex Tasks:</strong> Subjective completion criteria</li>
                       <li>• <strong>Compliance:</strong> Regulatory requirements for approvals</li>

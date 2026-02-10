@@ -11,6 +11,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { initTaskFlow } from '@/lib/taskFlow';
 import { logEvent } from '@/lib/events';
 import { Milestone, MilestoneTemplates, validateMilestones } from '@/lib/ergo/milestone-escrow';
+import { sanitizeText, sanitizeNumber, validateFormSubmission, INPUT_LIMITS } from '@/lib/sanitize';
 
 interface MilestoneFormData {
   name: string;
@@ -392,11 +393,28 @@ export default function CreateTask() {
         throw new Error('Please connect your wallet first');
       }
       
-      const taskPayload = {
-        title: formData.title.trim(),
-        description: formData.description.trim(),
+      // Sanitize form inputs before submission
+      const sanitizedTitle = sanitizeText(formData.title, INPUT_LIMITS.TITLE);
+      const sanitizedDescription = sanitizeText(formData.description, INPUT_LIMITS.TASK_DESCRIPTION);
+      const sanitizedBudget = sanitizeNumber(formData.budgetErg, 0.001, 1000000);
+      
+      // Validate form submission for spam/bots
+      const validation = validateFormSubmission({
+        title: sanitizedTitle,
+        description: sanitizedDescription,
         skillsRequired: formData.skillsRequired,
-        budgetErg: Number(formData.budgetErg),
+        budgetErg: sanitizedBudget
+      });
+      
+      if (!validation.valid || validation.isSpam) {
+        throw new Error('Invalid form submission: ' + validation.errors.join(', '));
+      }
+
+      const taskPayload = {
+        title: sanitizedTitle,
+        description: sanitizedDescription,
+        skillsRequired: formData.skillsRequired,
+        budgetErg: sanitizedBudget,
         creatorName: profile?.displayName,
         escrowType: escrowType,
         ...(escrowType === 'milestone' && { milestones: milestones })
@@ -425,7 +443,7 @@ export default function CreateTask() {
         newTask = result as any;
         setWalletVerified(true);
       } catch (authError: any) {
-        console.log('Wallet auth failed, falling back to direct creation:', authError?.message);
+        // Wallet auth failed, falling back to direct creation
         
         try {
           newTask = await Promise.race([

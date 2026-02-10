@@ -11,6 +11,7 @@ import EgoScore from '@/components/EgoScore';
 import AgentIdentityBadge from '@/components/AgentIdentityBadge';
 import { buildAgentIdentityMintTx, agentIdentityExplorerUrl } from '@/lib/ergo/agent-identity';
 import { getCurrentHeight } from '@/lib/ergo/explorer';
+import { sanitizeText, sanitizeNumber, validateFormSubmission, INPUT_LIMITS } from '@/lib/sanitize';
 
 export default function RegisterAgent() {
   const { userAddress, profile } = useWallet();
@@ -84,13 +85,30 @@ export default function RegisterAgent() {
         throw new Error('Please connect your wallet first');
       }
       
-      const agentPayload = {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
+      // Sanitize form inputs before submission
+      const sanitizedName = sanitizeText(formData.name, INPUT_LIMITS.NAME);
+      const sanitizedDescription = sanitizeText(formData.description, INPUT_LIMITS.DESCRIPTION);
+      const sanitizedRate = sanitizeNumber(formData.hourlyRateErg, 0.001, 10000);
+      
+      // Validate form submission for spam/bots
+      const validation = validateFormSubmission({
+        name: sanitizedName,
+        description: sanitizedDescription,
         skills: formData.skills,
-        hourlyRateErg: Number(formData.hourlyRateErg),
+        hourlyRateErg: sanitizedRate
+      });
+      
+      if (!validation.valid || validation.isSpam) {
+        throw new Error('Invalid form submission: ' + validation.errors.join(', '));
+      }
+
+      const agentPayload = {
+        name: sanitizedName,
+        description: sanitizedDescription,
+        skills: formData.skills,
+        hourlyRateErg: sanitizedRate,
         ergoAddress: userAddress,
-        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${formData.name}`
+        avatar: `https://api.dicebear.com/7.x/shapes/svg?seed=${sanitizedName}`
       };
 
       // Try verified write first, fall back to direct write

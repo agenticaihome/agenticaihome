@@ -208,7 +208,7 @@ export default function AdminDashboard() {
           subscriberCount: count || 0
         }));
       } catch (error) {
-        console.error('Error fetching subscriber count:', error);
+        // Error fetching subscriber count - will show 0
       } finally {
         setLoading(false);
       }
@@ -275,7 +275,7 @@ export default function AdminDashboard() {
             <h1 className="text-4xl font-bold text-[var(--text-primary)]">Admin Dashboard</h1>
           </div>
           <p className="text-[var(--text-secondary)]">
-            Platform analytics and operational insights for AgenticAiHome
+            <strong>Treasury Wallet Required</strong> — Platform analytics and operational insights for AgenticAiHome
           </p>
           <p className="text-[var(--text-muted)] text-sm mt-1">
             Connected as: {wallet.address}

@@ -117,38 +117,62 @@ export default function ErgoNetworkStats() {
     );
   }
 
+  // Show error state if all values are null (failed to fetch)
+  if (stats.price === null && stats.blockHeight === null && stats.difficulty === null) {
+    return (
+      <div className="w-full bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] py-2.5 px-4">
+        <div className="container container-xl flex items-center justify-center gap-8 text-xs text-[var(--text-muted)]">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-red-400" />
+            Network stats unavailable
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] py-2.5 px-4">
       <div className="container container-xl flex flex-wrap items-center justify-center gap-x-8 gap-y-1 text-sm">
-        {stats.price !== null && (
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">ERG</span>
-            <span className="font-semibold text-[var(--text-primary)]">${stats.price.toFixed(4)}</span>
-            {stats.priceChange24h !== null && (
-              <span className={`text-xs font-medium ${changeColor}`}>
-                {changeArrow} {Math.abs(stats.priceChange24h).toFixed(2)}%
-              </span>
-            )}
-          </div>
-        )}
-        {stats.blockHeight !== null && (
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Block</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--text-muted)]">ERG</span>
+          {stats.price !== null ? (
+            <>
+              <span className="font-semibold text-[var(--text-primary)]">${stats.price.toFixed(4)}</span>
+              {stats.priceChange24h !== null && (
+                <span className={`text-xs font-medium ${changeColor}`}>
+                  {changeArrow} {Math.abs(stats.priceChange24h).toFixed(2)}%
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="font-semibold text-[var(--text-secondary)]">—</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--text-muted)]">Block</span>
+          {stats.blockHeight !== null ? (
             <span className="font-semibold text-[var(--accent-cyan)]">#{stats.blockHeight.toLocaleString()}</span>
-          </div>
-        )}
-        {stats.difficulty !== null && (
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Difficulty</span>
+          ) : (
+            <span className="font-semibold text-[var(--text-secondary)]">—</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--text-muted)]">Difficulty</span>
+          {stats.difficulty !== null ? (
             <span className="font-semibold text-[var(--accent-purple)]">{formatDifficulty(stats.difficulty)}</span>
-          </div>
-        )}
-        {stats.lastBlockTime !== null && (
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Last Block</span>
+          ) : (
+            <span className="font-semibold text-[var(--text-secondary)]">—</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[var(--text-muted)]">Last Block</span>
+          {stats.lastBlockTime !== null ? (
             <span className="font-medium text-[var(--accent-green)]">{timeAgo(stats.lastBlockTime)}</span>
-          </div>
-        )}
+          ) : (
+            <span className="font-medium text-[var(--text-secondary)]">—</span>
+          )}
+        </div>
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
           <span className="text-xs text-[var(--text-muted)]">Live</span>

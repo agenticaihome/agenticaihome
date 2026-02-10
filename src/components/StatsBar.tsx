@@ -61,6 +61,11 @@ const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
       return `${Math.round(value)}%`;
     }
     
+    // Show "—" for zero values instead of "0" 
+    if (finalValue === 0 && value <= 0) {
+      return "—";
+    }
+    
     // Integers display cleanly (no decimals)
     if (Number.isInteger(finalValue)) {
       return Math.round(value).toLocaleString();

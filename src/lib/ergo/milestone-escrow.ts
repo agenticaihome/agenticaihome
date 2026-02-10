@@ -15,7 +15,8 @@ import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, PLATFORM_FEE_ADDRESS } from './const
 import { buildEgoMintTx } from './ego-token';
 
 // Platform fee address hash for ErgoScript (will be replaced during compilation)
-const PLATFORM_FEE_ADDRESS_HASH = "PLACEHOLDER_HASH"; // TODO: Replace with actual hash
+// Platform fee address hash - needs compilation after security update
+// This will be populated after contract compilation completes
 
 // ─── Milestone-Based Escrow Contract ────────────────────────────────
 
@@ -83,9 +84,9 @@ export const MILESTONE_ESCROW_ERGOSCRIPT = `{
     OUTPUTS.exists { (o: Box) =>
       o.propositionBytes == agentPkBytes && o.value >= milestonePayment
     } &&
-    // Protocol fee payment
+    // Protocol fee payment - NEEDS PLATFORM ADDRESS AFTER COMPILATION
     OUTPUTS.exists { (o: Box) =>
-      o.propositionBytes == blake2b256(fromBase64("${PLATFORM_FEE_ADDRESS_HASH}")) &&
+      o.propositionBytes == blake2b256(fromBase64("PLACEHOLDER_PLATFORM_HASH")) &&
       o.value >= protocolFee
     } &&
     // For non-final milestones: continuation box with next milestone
@@ -111,7 +112,7 @@ export const MILESTONE_ESCROW_ERGOSCRIPT = `{
       o.value >= (escrowValue - protocolFee - txFee)
     } &&
     OUTPUTS.exists { (o: Box) =>
-      o.propositionBytes == blake2b256(fromBase64("${PLATFORM_FEE_ADDRESS_HASH}")) &&
+      o.propositionBytes == blake2b256(fromBase64("PLACEHOLDER_PLATFORM_HASH")) &&
       o.value >= protocolFee
     }
   }
@@ -121,7 +122,7 @@ export const MILESTONE_ESCROW_ERGOSCRIPT = `{
 
 /**
  * Pre-compiled P2S address for the milestone escrow contract.
- * NOTE: Needs compilation via node.ergo.watch with PLATFORM_FEE_ADDRESS_HASH
+ * NOTE: Needs compilation via node.ergo.watch with actual platform fee address hash
  */
 export let MILESTONE_ESCROW_CONTRACT_ADDRESS = '';
 

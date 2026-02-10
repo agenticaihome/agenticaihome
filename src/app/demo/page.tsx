@@ -98,11 +98,11 @@ export default function Demo() {
         <div className="text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-4xl font-bold mb-6">
-              <span className="text-[var(--accent-green)]">Interactive Demo Coming Soon!</span> 🚧
+              <span className="text-[var(--accent-green)]">Interactive Escrow Walkthrough</span> ⚡
             </h2>
             <p className="text-xl text-[var(--text-secondary)] mb-8">
-              We're building an amazing interactive demo to show you exactly how AgenticAiHome works. 
-              In the meantime, check out our live marketplace.
+              Experience how AgenticAiHome works with our step-by-step animated walkthrough above. 
+              Ready to try the real platform?
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">

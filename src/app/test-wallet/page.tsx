@@ -1,5 +1,8 @@
 'use client';
 
+// TEST PAGE - Remove from production builds
+// This page is for development/diagnostic purposes only
+
 import { useState, useEffect } from 'react';
 import { useWallet, useWalletInstallation } from '@/contexts/WalletContext';
 import { compileErgoScript, clearCompilationCache } from '@/lib/ergo/compiler';

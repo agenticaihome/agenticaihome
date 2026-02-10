@@ -227,7 +227,7 @@ export default function EscrowActions({
         // 2. Watch for new boxes created at the escrow address
         // 3. Use a mempool API to detect pending transactions
         
-        console.log('Polling for ErgoPay transaction confirmation...');
+        // Polling for ErgoPay transaction confirmation
       } catch (error) {
         console.error('Error polling for transaction:', error);
       }
@@ -557,7 +557,7 @@ export default function EscrowActions({
             messageSeverity="info"
             onGenerated={() => {
               // QR code generated successfully
-              console.log('ErgoPay QR code generated');
+              // ErgoPay QR code generated successfully
             }}
             onError={(error) => {
               setError(error);

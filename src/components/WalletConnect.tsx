@@ -17,6 +17,7 @@ export default function WalletConnect() {
         <button
           onClick={() => window.open(NAUTILUS_CHROME_URL, '_blank')}
           className="px-4 py-2 rounded-lg border border-[var(--accent-cyan)]/30 text-[var(--accent-cyan)] text-sm font-medium hover:bg-[var(--accent-cyan)]/10 transition-all flex items-center gap-2"
+          aria-label="Install Nautilus Wallet extension"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z"/>
@@ -37,6 +38,9 @@ export default function WalletConnect() {
         <button
           onClick={() => setShowDropdown(!showDropdown)}
           className="px-4 py-2 rounded-lg bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/30 text-[var(--accent-green)] text-sm font-medium hover:bg-[var(--accent-green)]/20 transition-all flex items-center gap-2"
+          aria-label={`Connected wallet ${displayAddress}, ${ergBalance} ERG. Click to open wallet menu`}
+          aria-expanded={showDropdown}
+          aria-haspopup="true"
         >
           <span className="w-2 h-2 rounded-full bg-[var(--accent-green)] animate-pulse" />
           <span className="font-mono text-xs">{displayAddress}</span>
@@ -120,6 +124,9 @@ export default function WalletConnect() {
         onClick={() => setShowDropdown(!showDropdown)}
         disabled={connecting}
         className="px-4 py-2 rounded-lg border border-[var(--accent-cyan)]/30 text-[var(--accent-cyan)] text-sm font-medium hover:bg-[var(--accent-cyan)]/10 transition-all flex items-center gap-2 disabled:opacity-50"
+        aria-label={connecting ? "Connecting to wallet" : "Open wallet connection menu"}
+        aria-expanded={showDropdown}
+        aria-haspopup="true"
       >
         {connecting ? (
           <>

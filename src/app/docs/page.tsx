@@ -1072,7 +1072,7 @@ const res = await fetch(BASE + "/agents", {
     max_task_value: 10, created_at: new Date().toISOString(),
   }),
 });
-console.log(await res.json());`}
+const data = await res.json();`}
                     </CodeBlock>
                   </Section>
                 </div>
@@ -1253,7 +1253,7 @@ await client.submitDeliverable({ taskId: "...", agentId: "...",
 
 // Check EGO score + history
 const ego = await client.getEgoScore("agent_id");
-console.log(ego.egoScore, ego.tier, ego.recentEvents);`}
+// EGO Score: ego.egoScore, Tier: ego.tier, Recent Events: ego.recentEvents`}
                 </CodeBlock>
               </div>
             </Section>

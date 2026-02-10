@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { createEscrowTx, releaseEscrowTx, refundEscrowTx } from '@/lib/ergo/escrow';
 import { mintEgoAfterRelease } from '@/lib/ergo/ego-token';
 import { notifyPaymentReleased } from '@/lib/notifications';
+import { logEscrowFunded, logEscrowReleased, logEscrowRefunded, logEgoMinted } from '@/lib/taskEvents';
 import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction, getCurrentHeight } from '@/lib/ergo/wallet';
 import { txExplorerUrl } from '@/lib/ergo/constants';
 import { nanoErgToErg, ergToNanoErg } from '@/lib/ergo/explorer';
@@ -106,6 +107,7 @@ export default function EscrowActions({
       }
       if (!boxId) boxId = `${id}:0`; // last resort fallback
       onFunded?.(id, boxId);
+      logEscrowFunded(taskId, changeAddress, id, parseFloat(amountErg)).catch(() => {});
     } catch (err: any) {
       console.error('Fund escrow failed:', err);
       const msg = err?.message || 'Transaction failed';
@@ -147,9 +149,10 @@ export default function EscrowActions({
       setTxState('success');
       onReleased?.(id);
 
-      // Fire-and-forget: notify agent of payment
+      // Fire-and-forget: notify agent + log event
       const ergAmount = parseFloat(amountErg) || 0;
       notifyPaymentReleased(taskId, agentAddress, ergAmount * 0.99).catch(() => {});
+      logEscrowReleased(taskId, changeAddress, id, ergAmount).catch(() => {});
 
       // Auto-mint soulbound EGO tokens for the agent
       try {
@@ -162,7 +165,8 @@ export default function EscrowActions({
           minterUtxos,
         });
         const signedEgo = await signTransaction(egoTx);
-        await submitTransaction(signedEgo);
+        const egoTxId = await submitTransaction(signedEgo);
+        logEgoMinted(taskId, agentAddress, egoTxId, 10).catch(() => {});
       } catch (egoErr: any) {
         // EGO mint failure shouldn't block the release success
         console.error('EGO mint after release failed (non-blocking):', egoErr?.message);
@@ -204,6 +208,7 @@ export default function EscrowActions({
       setTxId(id);
       setTxState('success');
       onRefunded?.(id);
+      logEscrowRefunded(taskId, changeAddress, id).catch(() => {});
     } catch (err: any) {
       console.error('Refund escrow failed:', err);
       const msg = err?.message || 'Transaction failed';

@@ -91,9 +91,25 @@ export const TASK_TRANSITIONS: TaskTransition[] = [
   {
     from: 'review',
     to: 'disputed',
-    description: 'Work disputed',
+    description: 'Work disputed by poster',
     actor: 'poster',
     conditions: ['Dispute reason provided']
+  },
+
+  // From disputed
+  {
+    from: 'disputed',
+    to: 'completed',
+    description: 'Dispute resolved with mutual agreement',
+    actor: 'system',
+    conditions: ['Both parties agreed to split', 'Resolution transaction confirmed']
+  },
+  {
+    from: 'disputed',
+    to: 'refunded',
+    description: 'Dispute mediation period expired, auto-refund to poster',
+    actor: 'system',
+    conditions: ['Mediation deadline passed', 'No resolution agreement']
   }
 ];
 
@@ -170,7 +186,9 @@ function getActionName(transition: TaskTransition): string {
     'in_progress->review': 'Submit Deliverable',
     'review->completed': 'Approve Work',
     'review->in_progress': 'Request Revision',
-    'review->disputed': 'Dispute Work'
+    'review->disputed': 'Dispute Work',
+    'disputed->completed': 'Resolve Dispute',
+    'disputed->refunded': 'Auto-refund'
   };
 
   const key = `${transition.from}->${transition.to}`;

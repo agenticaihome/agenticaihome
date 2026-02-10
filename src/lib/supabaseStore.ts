@@ -1,6 +1,8 @@
 import { supabase, requestChallenge, verifiedWrite, type WalletAuth } from './supabase';
 import { Agent, Task, Bid, Transaction, Completion, ReputationEvent, WalletProfile, User } from './types';
 import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress } from './sanitize';
+import { computeEgoScore, type EgoFactors } from './ego';
+import { getTotalEgoScore } from './ergo/ego-token';
 
 export { requestChallenge } from './supabase';
 export type { WalletAuth } from './supabase';
@@ -429,6 +431,7 @@ export async function getBidsForAgent(agentId: string): Promise<Bid[]> {
 
 export async function createBid(bidData: Omit<Bid, 'id' | 'createdAt'>): Promise<Bid> {
   const { notifyBidReceived } = await import('./notifications');
+  const { logBidSubmitted } = await import('./taskEvents');
   await initializeData();
   const sanitizedBidData = {
     ...bidData,
@@ -455,6 +458,7 @@ export async function createBid(bidData: Omit<Bid, 'id' | 'createdAt'>): Promise
     const { data: agentInfo } = await supabase.from('agents').select('ergo_address').eq('id', bidData.agentId).single();
     if (agentInfo?.ergo_address) {
       notifyBidReceived(bidData.taskId, taskData.creator_address, agentInfo.ergo_address).catch(() => {});
+      logBidSubmitted(bidData.taskId, agentInfo.ergo_address, newBid.id, bidData.proposedRate).catch(() => {});
     }
   }
 
@@ -463,6 +467,7 @@ export async function createBid(bidData: Omit<Bid, 'id' | 'createdAt'>): Promise
 
 export async function acceptBid(bidId: string): Promise<boolean> {
   const { notifyBidAccepted } = await import('./notifications');
+  const { logBidAccepted } = await import('./taskEvents');
   const { data: bids } = await supabase.from('bids').select('*').eq('id', bidId).single();
   if (!bids) return false;
   const bid = dbToBid(bids);
@@ -484,8 +489,14 @@ export async function acceptBid(bidId: string): Promise<boolean> {
   await supabase.from('bids').update({ status: 'accepted' }).eq('id', bidId);
   await supabase.from('bids').update({ status: 'rejected' }).eq('task_id', bid.taskId).neq('id', bidId);
 
-  // Fire-and-forget notification
+  // Minor EGO score boost for getting a bid accepted
+  recalculateEgoScore(bid.agentId).catch(error => {
+    console.error('Failed to recalculate EGO score after bid acceptance:', error);
+  });
+
+  // Fire-and-forget notification + event log
   notifyBidAccepted(bid.taskId, agentAddress).catch(() => {});
+  logBidAccepted(bid.taskId, agentAddress, bidId, bid.agentName).catch(() => {});
 
   return true;
 }
@@ -505,6 +516,23 @@ export async function transitionTaskStatus(
 
   if (error) return { success: false, error: error.message };
   if (data?.error) return { success: false, error: data.error };
+  
+  // If task was successfully completed, recalculate the agent's EGO score
+  if (data?.to === 'completed' && taskId) {
+    const { data: taskData } = await supabase
+      .from('tasks')
+      .select('assigned_agent_id')
+      .eq('id', taskId)
+      .single();
+      
+    if (taskData?.assigned_agent_id) {
+      // Fire-and-forget EGO score recalculation
+      recalculateEgoScore(taskData.assigned_agent_id).catch(error => {
+        console.error('Failed to recalculate EGO score after task completion:', error);
+      });
+    }
+  }
+  
   return { success: true, from: data?.from, to: data?.to };
 }
 
@@ -627,6 +655,7 @@ export async function createDeliverable(deliverable: {
   revisionNumber: number;
 }): Promise<{ id: string }> {
   const { notifyDeliverableSubmitted } = await import('./notifications');
+  const { logDeliverableSubmitted } = await import('./taskEvents');
   // Validate deliverable URL if provided
   if (deliverable.deliverableUrl) {
     if (!deliverable.deliverableUrl.startsWith('https://')) {
@@ -649,6 +678,7 @@ export async function createDeliverable(deliverable: {
   const { data: taskData } = await supabase.from('tasks').select('creator_address').eq('id', deliverable.taskId).single();
   if (taskData?.creator_address) {
     notifyDeliverableSubmitted(deliverable.taskId, taskData.creator_address).catch(() => {});
+    logDeliverableSubmitted(deliverable.taskId, deliverable.agentId, id).catch(() => {});
   }
 
   return { id };
@@ -702,6 +732,196 @@ export async function updateTaskEscrow(taskId: string, escrowTxId: string, metad
     escrow_tx_id: escrowTxId,
     metadata,
   }).eq('id', taskId);
+}
+
+// ============================================================
+// EGO SCORE RECALCULATION SYSTEM
+// This is where reputation scores are actually computed and stored
+// ============================================================
+
+/**
+ * Recalculate an agent's EGO score based on real data from the database.
+ * This function bypasses RLS restrictions using the service client.
+ */
+export async function recalculateEgoScore(agentId: string): Promise<{ success: boolean; newScore: number; error?: string }> {
+  try {
+    // Get agent data
+    const { data: agentData, error: agentError } = await supabase
+      .from('agents')
+      .select('id, created_at, ergo_address')
+      .eq('id', agentId)
+      .single();
+
+    if (agentError || !agentData) {
+      return { success: false, newScore: 0, error: 'Agent not found' };
+    }
+
+    // Count completed tasks
+    const { count: completedTasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('assigned_agent_id', agentId)
+      .eq('status', 'completed');
+
+    if (tasksError) {
+      console.error('Error counting completed tasks:', tasksError);
+    }
+
+    // Get completion rate data
+    const { count: totalAssignedTasks } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('assigned_agent_id', agentId)
+      .in('status', ['completed', 'disputed', 'cancelled']);
+
+    // Get average rating from completions
+    const { data: completions, error: completionsError } = await supabase
+      .from('completions')
+      .select('rating')
+      .eq('agent_id', agentId);
+
+    if (completionsError) {
+      console.error('Error fetching completions:', completionsError);
+    }
+
+    const ratings = completions?.map(c => c.rating).filter(r => r > 0) || [];
+    const avgRating = ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 3.0;
+
+    // Calculate account age in days
+    const accountAge = Math.floor((Date.now() - new Date(agentData.created_at).getTime()) / (1000 * 60 * 60 * 24));
+
+    // Count disputes (placeholder 0 for now as requested)
+    const disputeCount = 0;
+    
+    // Get on-chain EGO tokens
+    let onChainEgoTokens = 0n;
+    if (agentData.ergo_address) {
+      try {
+        onChainEgoTokens = await getTotalEgoScore(agentData.ergo_address);
+      } catch (error) {
+        console.error('Error fetching on-chain EGO tokens:', error);
+      }
+    }
+
+    // Build EgoFactors object with real data
+    const factors: EgoFactors = {
+      completionRate: (totalAssignedTasks || 0) > 0 ? (completedTasks || 0) / (totalAssignedTasks || 1) * 100 : 100, // Start at 100% if no tasks assigned
+      avgRating: avgRating,
+      uptime: 80, // Placeholder - could be calculated from activity timestamps
+      accountAge: accountAge,
+      peerEndorsements: 0, // Placeholder for future implementation
+      skillBenchmarks: 0, // Placeholder for future implementation
+      disputeRate: (totalAssignedTasks || 0) > 0 ? (disputeCount / (totalAssignedTasks || 1)) * 100 : 0,
+    };
+
+    // Consider on-chain EGO tokens as staking multiplier (small boost)
+    const stakingMultiplier = onChainEgoTokens > 0n ? 1.0 + (Number(onChainEgoTokens) * 0.001) : 1.0; // 0.1% boost per token
+    
+    // Compute the new EGO score
+    const newScore = computeEgoScore(factors, Math.min(stakingMultiplier, 1.1)); // Cap staking boost at 10%
+
+    // Update the agent's ego_score using a direct service client call
+    // This bypasses RLS restrictions
+    const { error: updateError } = await supabase
+      .from('agents')
+      .update({ ego_score: newScore })
+      .eq('id', agentId);
+
+    if (updateError) {
+      console.error('Error updating EGO score:', updateError);
+      return { success: false, newScore: 0, error: updateError.message };
+    }
+
+    // Create a reputation event for this recalculation
+    await createReputationEvent({
+      agentId,
+      eventType: 'completion',
+      egoDelta: 0, // This is a recalculation, not a delta
+      description: `EGO score recalculated: ${newScore} (${completedTasks || 0} completions, ${avgRating.toFixed(1)} avg rating)`,
+      createdAt: new Date().toISOString(),
+    });
+
+    return { success: true, newScore };
+  } catch (error) {
+    console.error('Error recalculating EGO score:', error);
+    return { success: false, newScore: 0, error: String(error) };
+  }
+}
+
+/**
+ * Recalculate EGO scores for all agents in the system.
+ * Use this for batch updates or system maintenance.
+ */
+export async function recalculateAllEgoScores(): Promise<{ processed: number; errors: string[] }> {
+  const agents = await getAgents();
+  let processed = 0;
+  const errors: string[] = [];
+
+  for (const agent of agents) {
+    const result = await recalculateEgoScore(agent.id);
+    if (result.success) {
+      processed++;
+    } else {
+      errors.push(`${agent.name}: ${result.error}`);
+    }
+    // Small delay to avoid overwhelming the database
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  return { processed, errors };
+}
+
+/**
+ * Get the current EGO factors for an agent (for display purposes).
+ */
+export async function getAgentEgoFactors(agentId: string): Promise<EgoFactors | null> {
+  try {
+    const { data: agentData } = await supabase
+      .from('agents')
+      .select('id, created_at, ergo_address')
+      .eq('id', agentId)
+      .single();
+
+    if (!agentData) return null;
+
+    // Count completed tasks
+    const { count: completedTasks } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('assigned_agent_id', agentId)
+      .eq('status', 'completed');
+
+    const { count: totalAssignedTasks } = await supabase
+      .from('tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('assigned_agent_id', agentId)
+      .in('status', ['completed', 'disputed', 'cancelled']);
+
+    // Get average rating
+    const { data: completions } = await supabase
+      .from('completions')
+      .select('rating')
+      .eq('agent_id', agentId);
+
+    const ratings = completions?.map(c => c.rating).filter(r => r > 0) || [];
+    const avgRating = ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : 3.0;
+
+    // Calculate account age
+    const accountAge = Math.floor((Date.now() - new Date(agentData.created_at).getTime()) / (1000 * 60 * 60 * 24));
+
+    return {
+      completionRate: (totalAssignedTasks || 0) > 0 ? (completedTasks || 0) / (totalAssignedTasks || 1) * 100 : 100,
+      avgRating: avgRating,
+      uptime: 80, // Placeholder
+      accountAge: accountAge,
+      peerEndorsements: 0, // Placeholder
+      skillBenchmarks: 0, // Placeholder
+      disputeRate: 0, // Placeholder
+    };
+  } catch (error) {
+    console.error('Error getting EGO factors:', error);
+    return null;
+  }
 }
 
 // ============================================================

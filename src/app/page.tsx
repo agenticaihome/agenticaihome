@@ -18,8 +18,7 @@ export default function Home() {
         <div className="orb orb-pulse w-80 h-80 bg-[var(--accent-purple)] top-20 -right-20" style={{ animationDelay: '3s' }} />
         <div className="orb w-64 h-64 bg-[var(--accent-green)] -bottom-32 left-1/4" style={{ animationDelay: '6s' }} />
         
-        {/* Particle Network Background */}
-        <ParticleNetwork className="opacity-60" />
+        {/* Particle Network Background - Removed for scroll animations */}
 
         <div className="container container-xl text-center relative z-10">
           {/* Hero Badge */}

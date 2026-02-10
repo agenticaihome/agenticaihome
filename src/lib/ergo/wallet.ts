@@ -38,6 +38,7 @@ declare global {
 interface ErgoWalletConnector {
   connect(params?: { createErgoObject?: boolean }): Promise<boolean>;
   disconnect(): Promise<boolean>;
+  getContext?(): Promise<any>;
   isConnected(): Promise<boolean>;
 }
 
@@ -243,7 +244,7 @@ export function isSafewAvailable(): boolean {
   return isWalletAvailable() && !!window.ergoConnector?.safew;
 }
 
-export async function connectWallet(preferredWallet?: string): Promise<WalletState> {
+export async function connectWallet(preferredWallet?: string, forceReauth: boolean = true): Promise<WalletState> {
   // Handle ErgoPay connection (doesn't require browser extension)
   if (preferredWallet === 'ergopay') {
     return connectErgoPayWallet();
@@ -268,8 +269,21 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
         continue;
       }
 
-      // Always call connect() to ensure we get the CURRENT wallet
-      // (user may have switched accounts in the extension)
+      // On explicit connect (not auto-reconnect), disconnect first to revoke
+      // any previous authorization — forces Nautilus to re-prompt with current wallet
+      if (forceReauth) {
+        try {
+          await connector.disconnect();
+        } catch (_) {
+          // Ignore — may not have been connected
+        }
+        // Clear stale ergo context
+        if (typeof window !== 'undefined') {
+          (window as any).ergo = undefined;
+        }
+      }
+
+      // Now connect fresh — Nautilus will prompt user to approve
       const connected = await Promise.race([
         connector.connect({ createErgoObject: true }),
         new Promise<never>((_, reject) => 
@@ -278,10 +292,17 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
       ]);
 
       if (connected) {
-        // Wait for window.ergo (Context API) to be injected with longer timeout
-        const contextReady = await waitForErgoContext(5000);
-        if (!contextReady) {
-          throw new WalletConnectionError(`${walletName} wallet is locked or unavailable. Please unlock your wallet and refresh the page.`);
+        // Use getContext() for a FRESH context (not cached window.ergo)
+        let context: any = null;
+        if (typeof connector.getContext === 'function') {
+          context = await connector.getContext();
+          (window as any).ergo = context;
+        } else {
+          // Fallback: wait for window.ergo injection
+          const contextReady = await waitForErgoContext(5000);
+          if (!contextReady) {
+            throw new WalletConnectionError(`${walletName} wallet is locked or unavailable. Please unlock your wallet and refresh the page.`);
+          }
         }
 
         currentConnector = connector;
@@ -549,7 +570,7 @@ export async function autoReconnectWallet(): Promise<WalletState | null> {
   }
 
   try {
-    return await connectWallet(lastConnectedWallet);
+    return await connectWallet(lastConnectedWallet, false);
   } catch (error) {
     localStorage.removeItem('ergo_wallet_connected');
     return null;

@@ -112,10 +112,15 @@ export async function getAllEgoTokens(agentAddress: string): Promise<EgoToken[]>
     for (const box of contractBoxes) {
       for (const token of (box.assets || [])) {
         const name = token.name || '';
-        if (name.startsWith(EGO_TOKEN_PREFIX)) {
+        const isEgoByName = name.startsWith(EGO_TOKEN_PREFIX);
+        const isIdentityNft = name.startsWith('AIH-AGENT-');
+        // Include tokens that match EGO prefix OR are unnamed tokens with amount > 1
+        // (Explorer may not index names immediately after minting; EGO = 10, identity = 1)
+        const isLikelyEgo = !name && Number(token.amount) > 1;
+        if (isEgoByName || isLikelyEgo) {
           egoTokens.push({
             tokenId: token.tokenId,
-            name,
+            name: name || `EGO-Token`,
             amount: BigInt(token.amount),
             description: `Soulbound EGO token (contract-locked)`,
           });

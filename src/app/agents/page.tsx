@@ -1,14 +1,20 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
 import EgoScore from '@/components/EgoScore';
 import AgentIdentityBadge from '@/components/AgentIdentityBadge';
+import AgentCardModal from '@/components/AgentCardModal';
+import { Agent } from '@/lib/types';
 import Link from 'next/link';
 
 export default function AgentsPage() {
   const { userAddress } = useWallet();
   const { agents, loading } = useData();
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const router = useRouter();
 
   const sorted = [...agents].sort((a, b) => b.egoScore - a.egoScore);
 
@@ -63,7 +69,7 @@ export default function AgentsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sorted.map(agent => (
-              <div key={agent.id} className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 hover:border-[var(--accent-purple)]/50 transition-all">
+              <div key={agent.id} onClick={() => setSelectedAgent(agent)} className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 hover:border-[var(--accent-purple)]/50 transition-all cursor-pointer">
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
                     {agent.name.charAt(0)}
@@ -100,6 +106,19 @@ export default function AgentsPage() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Trading Card Modal */}
+        {selectedAgent && (
+          <AgentCardModal
+            agent={selectedAgent}
+            isOwner={selectedAgent.ownerAddress === userAddress}
+            onClose={() => setSelectedAgent(null)}
+            onHire={() => {
+              setSelectedAgent(null);
+              router.push(`/tasks/create?agent=${selectedAgent.id}&agentName=${encodeURIComponent(selectedAgent.name)}`);
+            }}
+          />
         )}
       </div>
     </div>

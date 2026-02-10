@@ -115,7 +115,7 @@ export default function WelcomeModal() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.4 }}
-                className="flex flex-col sm:flex-row gap-3"
+                className="flex flex-col sm:flex-row gap-3 justify-center"
               >
                 <button
                   onClick={handleGetStarted}

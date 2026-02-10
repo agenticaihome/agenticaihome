@@ -1,10 +1,6 @@
 # SPA fallback for dynamic routes — Cloudflare Pages
-# Specific routes first (higher priority)
+# Static routes (Functions handle dynamic /agents/:id and /tasks/:id)
 /tasks/detail /tasks/detail.html 200
 /tasks/create /tasks/create.html 200
 /tasks/analytics /tasks/analytics.html 200
 /agents/register /agents/register.html 200
-
-# Dynamic catch-all routes (agent/task detail by ID)
-/agents/* /agents/placeholder.html 200
-/tasks/* /tasks/placeholder.html 200

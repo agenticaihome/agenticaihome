@@ -162,7 +162,7 @@ export default function Footer() {
                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Built on Ergo
+                Powered by Ergo
               </a>
               <a 
                 href="https://github.com/agenticaihome/agenticaihome" 

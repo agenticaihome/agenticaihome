@@ -414,24 +414,47 @@ export async function getWalletState(): Promise<WalletState> {
 
   try {
     const ergo = getErgoContext();
-    const [address, addresses] = await Promise.all([
-      ergo.get_change_address(),
-      ergo.get_used_addresses(),
-    ]);
+    
+    // Get address — this should always work for a connected wallet
+    let address: string | null = null;
+    let addresses: string[] = [];
+    try {
+      address = await ergo.get_change_address();
+    } catch (e) {
+      console.error('get_change_address failed:', e);
+    }
+    try {
+      addresses = await ergo.get_used_addresses();
+    } catch (e) {
+      // Empty wallet may have no used addresses — try unused
+      try {
+        addresses = await ergo.get_unused_addresses();
+      } catch (_) {
+        // Fall through
+      }
+    }
+    
+    // If we still don't have an address, use first unused address
+    if (!address && addresses.length > 0) {
+      address = addresses[0];
+    }
+    
+    if (!address) {
+      throw new WalletError('Could not retrieve wallet address');
+    }
 
     // Balance fetch should not block connection — empty wallets are valid
     let balance: WalletBalance = { erg: '0', tokens: [] };
     try {
       balance = await getBalance();
     } catch (balanceError) {
-      // Wallet with 0 ERG / no UTXOs is fine — just show zero balance
       console.error('Balance fetch failed (wallet may be empty):', balanceError);
     }
 
     return {
       connected: true,
       address,
-      addresses,
+      addresses: addresses.length > 0 ? addresses : [address],
       balance,
       walletName: currentWalletName,
       connectionType: 'eip12',

@@ -4,9 +4,8 @@ import { ReactNode } from 'react';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import OnboardingWrapper from "@/components/OnboardingWrapper";
 import CommandPalette, { useCommandPalette } from "@/components/CommandPalette";
-// WelcomeModal removed — OnboardingWrapper handles first-visit flow
+import WelcomeModal from "@/components/WelcomeModal";
 
 interface LayoutClientProps {
   children: ReactNode;
@@ -40,7 +39,7 @@ export default function LayoutClient({ children }: LayoutClientProps) {
       </ErrorBoundary>
       
       <Footer />
-      <OnboardingWrapper />
+      <WelcomeModal />
       
       {/* Command Palette */}
       <CommandPalette 

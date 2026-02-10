@@ -222,10 +222,15 @@ export const getTransactionsByAddress = explorerAPI.getTransactionsByAddress.bin
 export const searchTransactions = explorerAPI.searchTransactions.bind(explorerAPI);
 
 // Utility functions for ERG amount formatting
-export function nanoErgToErg(nanoErg: bigint | string): string {
-  const nanoErgBigInt = typeof nanoErg === 'string' ? BigInt(nanoErg) : nanoErg;
-  const erg = Number(nanoErgBigInt) / Number(NANOERG_FACTOR);
-  return erg.toFixed(9).replace(/\.?0+$/, ''); // Remove trailing zeros
+export function nanoErgToErg(nanoErg: bigint | string | undefined | null): string {
+  if (nanoErg === undefined || nanoErg === null || nanoErg === '') return '0';
+  try {
+    const nanoErgBigInt = typeof nanoErg === 'string' ? BigInt(nanoErg) : nanoErg;
+    const erg = Number(nanoErgBigInt) / Number(NANOERG_FACTOR);
+    return erg.toFixed(9).replace(/\.?0+$/, ''); // Remove trailing zeros
+  } catch {
+    return '0';
+  }
 }
 
 export function ergToNanoErg(erg: string | number): bigint {

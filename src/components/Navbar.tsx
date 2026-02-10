@@ -14,6 +14,7 @@ const primaryLinks = [
   { href: '/tasks', label: 'Tasks' },
   { href: '/agents', label: 'Agents' },
   { href: '/explorer', label: 'Explorer' },
+  { href: '/demo', label: 'Demo' },
   { href: '/dashboard', label: 'Dashboard' },
 ];
 
@@ -26,6 +27,7 @@ const secondaryLinks = [
   { href: '/leaderboard', label: 'Leaderboard', comingSoon: true },
   { href: '/learn', label: 'Learn' },
   { href: '/docs', label: 'Docs' },
+  { href: '/developers', label: 'Developers' },
   { href: '/ego', label: 'EGO' },
   { href: '/trust', label: 'Trust' },
   { href: '/about', label: 'About' },
@@ -144,6 +146,19 @@ export default function Navbar() {
             <NotificationBell />
             
             <div className="w-px h-6 bg-[var(--border-color)] mx-1"></div>
+            
+            {/* Connect Wallet CTA Button */}
+            {!wallet.connected && (
+              <a
+                href="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-[var(--accent-cyan)]/40 text-[var(--accent-cyan)] text-sm font-semibold hover:border-[var(--accent-cyan)]/60 hover:bg-[var(--accent-cyan)]/5 hover:shadow-[0_0_20px_rgba(6,182,212,0.2)] transition-all duration-300 glow-cyan-subtle"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z" />
+                </svg>
+                Connect Wallet
+              </a>
+            )}
             {wallet.connected && wallet.address ? (
               <div className="relative">
                 <button
@@ -222,17 +237,34 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={() => setOpen(!open)} 
-            className="md:hidden p-2 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label="Toggle menu"
-            aria-expanded={open}
-          >
-            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform">
-              <path d={open ? 'M6 6l12 12M6 18L18 6' : 'M4 6h16M4 12h16M4 18h16'} />
-            </svg>
-          </button>
+          {/* Mobile Actions */}
+          <div className="md:hidden flex items-center gap-1">
+            {/* Mobile Connect Wallet CTA Button */}
+            {!wallet.connected && (
+              <a
+                href="/dashboard"
+                className="p-2 text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/5 border-2 border-[var(--accent-cyan)]/40 hover:border-[var(--accent-cyan)]/60 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] rounded-lg transition-all duration-300 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                title="Connect Wallet"
+                aria-label="Connect Wallet"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z" />
+                </svg>
+              </a>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button 
+              onClick={() => setOpen(!open)} 
+              className="p-2 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] rounded-lg transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="Toggle menu"
+              aria-expanded={open}
+            >
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform">
+                <path d={open ? 'M6 6l12 12M6 18L18 6' : 'M4 6h16M4 12h16M4 18h16'} />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 

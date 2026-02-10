@@ -70,6 +70,13 @@ export default function AboutPage() {
               </p>
               
               <p className="text-[var(--text-secondary)]">
+                What truly sets us apart is our 6-layer anti-gaming reputation system. While others struggle with fake reviews 
+                and reputation manipulation, our system requires real ERG escrow for ratings, weights them by task value, 
+                and uses sophisticated graph analysis to detect circular rating schemes. This creates authentic, 
+                manipulation-resistant reputation that agents can truly trust.
+              </p>
+              
+              <p className="text-[var(--text-secondary)]">
                 We're a small team building in public on Ergo blockchain. This is alpha software. 
                 It works — we have real mainnet transactions and live smart contracts to prove it — but there's a lot more to build.
               </p>

@@ -8,6 +8,7 @@ export interface WalletState {
   addresses: string[];           // All addresses
   balance: WalletBalance;
   walletName: string | null;
+  connectionType?: 'eip12' | 'ergopay'; // New: track connection type
 }
 
 export interface WalletBalance {
@@ -85,6 +86,10 @@ export class WalletRejectedError extends WalletError {
 let currentConnector: ErgoWalletConnector | null = null;
 let currentWalletName: string | null = null;
 
+// ErgoPay wallet state
+let ergoPayAddress: string | null = null;
+let ergoPayConnectionType: 'eip12' | 'ergopay' | null = null;
+
 // Get the context API (window.ergo) — throws if not available
 function getErgoContext(): ErgoContextApi {
   if (!window.ergo) {
@@ -119,6 +124,117 @@ async function waitForErgoContext(timeoutMs = 3000): Promise<boolean> {
   return false;
 }
 
+/**
+ * Connect to ErgoPay wallet by prompting user to enter their address
+ * This is used for mobile wallets that don't inject browser objects
+ */
+async function connectErgoPayWallet(): Promise<WalletState> {
+  return new Promise((resolve, reject) => {
+    // Check if we already have a stored ErgoPay address
+    const storedAddress = localStorage.getItem('ergopay_address');
+    if (storedAddress && isValidErgoAddress(storedAddress)) {
+      ergoPayAddress = storedAddress;
+      ergoPayConnectionType = 'ergopay';
+      currentWalletName = 'ergopay';
+      
+      resolve({
+        connected: true,
+        address: storedAddress,
+        addresses: [storedAddress],
+        balance: { erg: '0', tokens: [] }, // We can't get balance without blockchain query
+        walletName: 'ergopay',
+        connectionType: 'ergopay',
+      });
+      return;
+    }
+
+    // Prompt user to enter their address
+    const addressPrompt = `Please enter your Ergo wallet address for ErgoPay transactions:
+
+This address will be used to:
+• Build transactions for your mobile wallet
+• Check your balance
+• Store your connection preference
+
+You can find your address in your mobile wallet (Terminus, SAFEW, etc.)`;
+
+    const userAddress = prompt(addressPrompt);
+    
+    if (!userAddress) {
+      reject(new WalletRejectedError());
+      return;
+    }
+
+    const trimmedAddress = userAddress.trim();
+    
+    if (!isValidErgoAddress(trimmedAddress)) {
+      reject(new WalletError('Invalid Ergo address. Please enter a valid address starting with 9 or 3.'));
+      return;
+    }
+
+    // Store the address for future use
+    localStorage.setItem('ergopay_address', trimmedAddress);
+    
+    ergoPayAddress = trimmedAddress;
+    ergoPayConnectionType = 'ergopay';
+    currentWalletName = 'ergopay';
+    
+    resolve({
+      connected: true,
+      address: trimmedAddress,
+      addresses: [trimmedAddress],
+      balance: { erg: '0', tokens: [] }, // We'll need to query balance separately
+      walletName: 'ergopay',
+      connectionType: 'ergopay',
+    });
+  });
+}
+
+/**
+ * Basic Ergo address validation
+ */
+function isValidErgoAddress(address: string): boolean {
+  if (!address || typeof address !== 'string') return false;
+  
+  // Ergo addresses start with '9' (P2PK) or '3' (P2S/P2SH)
+  // and are typically 51-52 characters long (base58)
+  const ergoAddressRegex = /^[39][1-9A-HJ-NP-Za-km-z]{50,51}$/;
+  return ergoAddressRegex.test(address);
+}
+
+/**
+ * Get balance for ErgoPay address by querying the explorer
+ */
+async function getErgoPayBalance(address: string): Promise<WalletBalance> {
+  try {
+    // Import explorer functions dynamically to avoid circular dependencies
+    const { getAddressBalance } = await import('./explorer');
+    
+    const addressInfo = await getAddressBalance(address);
+    
+    // Convert the explorer response to our balance format
+    const erg = nanoErgToErg(addressInfo.confirmed?.nanoErgs || '0');
+    
+    const tokens: TokenBalance[] = [];
+    if (addressInfo.confirmed?.tokens) {
+      for (const token of addressInfo.confirmed.tokens) {
+        tokens.push({
+          tokenId: token.tokenId,
+          amount: token.amount.toString(),
+          name: token.name,
+          decimals: token.decimals,
+        });
+      }
+    }
+    
+    return { erg, tokens };
+  } catch (error) {
+    console.error('Error getting ErgoPay balance:', error);
+    // Return zero balance if query fails
+    return { erg: '0', tokens: [] };
+  }
+}
+
 export function isNautilusAvailable(): boolean {
   return isWalletAvailable() && !!window.ergoConnector?.nautilus;
 }
@@ -128,6 +244,11 @@ export function isSafewAvailable(): boolean {
 }
 
 export async function connectWallet(preferredWallet?: string): Promise<WalletState> {
+  // Handle ErgoPay connection (doesn't require browser extension)
+  if (preferredWallet === 'ergopay') {
+    return connectErgoPayWallet();
+  }
+
   const available = await waitForWallet(5000); // Increased to 5 seconds
   if (!available) {
     throw new WalletNotFoundError('Nautilus Wallet not found. Please install Nautilus Wallet from the Chrome Web Store, then refresh this page.');
@@ -208,6 +329,7 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
 }
 
 export async function disconnectWallet(): Promise<void> {
+  // Handle EIP-12 wallet disconnection
   if (currentConnector) {
     try {
       await currentConnector.disconnect();
@@ -216,15 +338,48 @@ export async function disconnectWallet(): Promise<void> {
     }
   }
   
+  // Clear all wallet state
   currentConnector = null;
   currentWalletName = null;
+  ergoPayAddress = null;
+  ergoPayConnectionType = null;
   
   if (typeof window !== 'undefined') {
     localStorage.removeItem('ergo_wallet_connected');
+    localStorage.removeItem('ergopay_address');
   }
 }
 
 export async function getWalletState(): Promise<WalletState> {
+  // Handle ErgoPay connections
+  if (ergoPayConnectionType === 'ergopay' && ergoPayAddress) {
+    try {
+      // For ErgoPay, we need to query balance from explorer
+      const balance = await getErgoPayBalance(ergoPayAddress);
+      
+      return {
+        connected: true,
+        address: ergoPayAddress,
+        addresses: [ergoPayAddress],
+        balance,
+        walletName: 'ergopay',
+        connectionType: 'ergopay',
+      };
+    } catch (error) {
+      console.error('Error getting ErgoPay wallet state:', error);
+      // Return basic state even if balance query fails
+      return {
+        connected: true,
+        address: ergoPayAddress,
+        addresses: [ergoPayAddress],
+        balance: { erg: '0', tokens: [] },
+        walletName: 'ergopay',
+        connectionType: 'ergopay',
+      };
+    }
+  }
+
+  // Handle EIP-12 connections (Nautilus, SAFEW, etc.)
   if (!currentConnector || !currentWalletName || !window.ergo) {
     return {
       connected: false,
@@ -232,6 +387,7 @@ export async function getWalletState(): Promise<WalletState> {
       addresses: [],
       balance: { erg: '0', tokens: [] },
       walletName: null,
+      connectionType: undefined,
     };
   }
 
@@ -249,6 +405,7 @@ export async function getWalletState(): Promise<WalletState> {
       addresses,
       balance,
       walletName: currentWalletName,
+      connectionType: 'eip12',
     };
   } catch (error) {
     console.error('Error getting wallet state:', error);
@@ -375,6 +532,17 @@ export async function autoReconnectWallet(): Promise<WalletState | null> {
     return null;
   }
 
+  // Check for ErgoPay address first
+  const ergoPayAddr = localStorage.getItem('ergopay_address');
+  if (ergoPayAddr && isValidErgoAddress(ergoPayAddr)) {
+    try {
+      return await connectWallet('ergopay');
+    } catch (error) {
+      localStorage.removeItem('ergopay_address');
+    }
+  }
+
+  // Then check for EIP-12 wallet connection
   const lastConnectedWallet = localStorage.getItem('ergo_wallet_connected');
   if (!lastConnectedWallet) {
     return null;
@@ -401,9 +569,10 @@ function getWalletConnector(walletName: string): ErgoWalletConnector | null {
   }
 }
 
-export function getCurrentWalletInfo(): { name: string | null; connected: boolean } {
+export function getCurrentWalletInfo(): { name: string | null; connected: boolean; connectionType?: 'eip12' | 'ergopay' } {
   return {
     name: currentWalletName,
-    connected: !!currentConnector,
+    connected: !!currentConnector || !!ergoPayAddress,
+    connectionType: ergoPayConnectionType || (currentConnector ? 'eip12' : undefined),
   };
 }

@@ -47,6 +47,7 @@ export const EXPLORER_ENDPOINTS = {
 export const SUPPORTED_WALLETS = {
   NAUTILUS: "nautilus",
   SAFEW: "safew",
+  ERGOPAY: "ergopay",
 } as const;
 
 // Escrow contract ErgoScript source (v3 — with 1% platform fee)

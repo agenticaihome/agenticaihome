@@ -1,15 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createEscrowTx, releaseEscrowTx, refundEscrowTx } from '@/lib/ergo/escrow';
 import { mintEgoAfterRelease } from '@/lib/ergo/ego-token';
 import { notifyPaymentReleased } from '@/lib/notifications';
 import { logEscrowFunded, logEscrowReleased, logEscrowRefunded, logEgoMinted } from '@/lib/taskEvents';
-import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction, getCurrentHeight } from '@/lib/ergo/wallet';
+import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction, getCurrentHeight, getCurrentWalletInfo, WalletState } from '@/lib/ergo/wallet';
 import { txExplorerUrl } from '@/lib/ergo/constants';
 import { nanoErgToErg, ergToNanoErg } from '@/lib/ergo/explorer';
+import { WalletSelector, type WalletType } from '@/components/WalletSelector';
+import ErgoPayQR from '@/components/ErgoPayQR';
+import { isTransactionSuitableForErgoPay } from '@/lib/ergo/ergopay';
 
-type TxState = 'idle' | 'connecting' | 'building' | 'signing' | 'submitting' | 'success' | 'error';
+type TxState = 'idle' | 'connecting' | 'building' | 'signing' | 'submitting' | 'success' | 'error' | 'ergopay_qr' | 'ergopay_waiting';
 
 interface EscrowActionsProps {
   taskId: string;
@@ -55,20 +58,38 @@ export default function EscrowActions({
   const [txId, setTxId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [egoMintResult, setEgoMintResult] = useState<EgoMintResult | null>(null);
+  
+  // Wallet selection state
+  const [showWalletSelector, setShowWalletSelector] = useState(false);
+  const [selectedWalletType, setSelectedWalletType] = useState<WalletType | null>(null);
+  const [unsignedTxForErgoPay, setUnsignedTxForErgoPay] = useState<any>(null);
+  const [currentUserAddress, setCurrentUserAddress] = useState<string | null>(null);
+  
+  // Polling for ErgoPay transactions
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
-  const handleFund = useCallback(async () => {
+  const handleFund = useCallback(async (walletType?: WalletType) => {
     setError(null);
     setEgoMintResult(null);
+    
+    // If no wallet type specified, show wallet selector
+    if (!walletType) {
+      setShowWalletSelector(true);
+      return;
+    }
+    
+    setSelectedWalletType(walletType);
     setTxState('connecting');
 
     try {
       // Enhanced wallet connection with timeout
-      const connectPromise = connectWallet('nautilus');
+      const connectPromise = connectWallet(walletType);
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Connection timeout after 30 seconds')), 30000)
       );
       
-      await Promise.race([connectPromise, timeoutPromise]);
+      const walletState = await Promise.race([connectPromise, timeoutPromise]) as WalletState;
+      setCurrentUserAddress(walletState.address);
       setTxState('building');
 
       // Validate wallet has sufficient funds first
@@ -107,6 +128,22 @@ export default function EscrowActions({
         changeAddress,
       );
 
+      // Handle ErgoPay flow
+      if (walletType === 'ergopay') {
+        // Check if transaction is suitable for ErgoPay (not too large)
+        if (!isTransactionSuitableForErgoPay(unsignedTx)) {
+          throw new Error('Transaction is too large for ErgoPay QR code. Please use a desktop wallet.');
+        }
+        
+        setUnsignedTxForErgoPay(unsignedTx);
+        setTxState('ergopay_qr');
+        
+        // Start polling for transaction confirmation
+        startErgoPayPolling(unsignedTx);
+        return;
+      }
+
+      // Handle traditional EIP-12 flow
       setTxState('signing');
       const signedTx = await signTransaction(unsignedTx);
 
@@ -154,11 +191,14 @@ export default function EscrowActions({
       if (msg.includes('rejected') || msg.includes('denied') || msg.includes('cancelled')) {
         setError('Transaction cancelled in wallet. No funds were transferred. You can try again.');
       } else if (msg.includes('not found') || msg.includes('Not Found') || msg.includes('wallet not available')) {
-        setError('Nautilus Wallet not found. Please install Nautilus Wallet from the Chrome Web Store, unlock it, and refresh this page.');
+        const walletName = walletType === 'ergopay' ? 'mobile wallet' : 'Nautilus Wallet';
+        setError(`${walletName} not found. Please ${walletType === 'ergopay' ? 'check your mobile wallet is installed' : 'install Nautilus Wallet from the Chrome Web Store, unlock it, and refresh this page'}.`);
       } else if (msg.includes('UTXO') || msg.includes('utxo') || msg.includes('No UTXOs') || msg.includes('Insufficient funds')) {
-        setError(msg.includes('Need ') ? msg : 'Insufficient ERG in wallet. Please add more ERG to your Nautilus wallet and try again.');
+        setError(msg.includes('Need ') ? msg : `Insufficient ERG in wallet. Please add more ERG to your ${walletType === 'ergopay' ? 'mobile wallet' : 'Nautilus wallet'} and try again.`);
       } else if (msg.includes('timeout') || msg.includes('Timeout')) {
         setError('Network timeout after 30-60 seconds. Your funds are safe - no transaction was completed. Check your internet connection and try again.');
+      } else if (msg.includes('too large for ErgoPay')) {
+        setError(msg);
       } else if (msg.includes('network') || msg.includes('Network')) {
         setError('Network error. Please check your connection and try again.');
       } else {
@@ -167,6 +207,48 @@ export default function EscrowActions({
       setTxState('error');
     }
   }, [taskId, agentAddress, amountErg, deadlineHeight, onFunded]);
+  
+  // Start polling for ErgoPay transaction confirmation
+  const startErgoPayPolling = useCallback((unsignedTx: any) => {
+    setTxState('ergopay_waiting');
+    
+    // Extract expected outputs to detect when transaction is submitted
+    let expectedTxId: string | null = null;
+    
+    const pollForConfirmation = async () => {
+      try {
+        // In a real implementation, you'd poll the explorer for the expected transaction
+        // For now, we'll implement a basic polling mechanism
+        // This would need to be enhanced to actually detect the transaction
+        
+        // TODO: Implement proper transaction detection
+        // You could:
+        // 1. Watch for UTXOs being spent from the user's address
+        // 2. Watch for new boxes created at the escrow address
+        // 3. Use a mempool API to detect pending transactions
+        
+        console.log('Polling for ErgoPay transaction confirmation...');
+      } catch (error) {
+        console.error('Error polling for transaction:', error);
+      }
+    };
+    
+    // Poll every 10 seconds
+    const interval = setInterval(pollForConfirmation, 10000);
+    setPollingInterval(interval);
+    
+    // Stop polling after 10 minutes
+    setTimeout(() => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+        if (txState === 'ergopay_waiting') {
+          setTxState('error');
+          setError('Transaction not detected within 10 minutes. Please check your mobile wallet and try again if needed.');
+        }
+      }
+    }, 600000);
+  }, [txState, pollingInterval]);
 
   const handleRelease = useCallback(async () => {
     if (!escrowBoxId) return;
@@ -392,18 +474,93 @@ export default function EscrowActions({
     idle: '',
     connecting: 'Connecting wallet…',
     building: 'Building transaction…',
-    signing: 'Sign in Nautilus…',
+    signing: 'Sign in wallet…',
     submitting: 'Broadcasting…',
     success: 'Transaction confirmed!',
     error: 'Transaction failed',
+    ergopay_qr: 'Scan QR code with mobile wallet',
+    ergopay_waiting: 'Waiting for mobile wallet confirmation…',
   };
+
+  // Wallet selector callbacks
+  const handleWalletSelect = useCallback((walletType: WalletType) => {
+    setShowWalletSelector(false);
+    
+    // Determine which action to perform based on escrow status
+    if (escrowStatus === 'unfunded') {
+      handleFund(walletType);
+    } else if (escrowStatus === 'funded') {
+      // For release/refund, we'll handle this separately
+      // For now, default to release
+      handleRelease();
+    }
+  }, [escrowStatus]);
+
+  const handleWalletSelectorClose = useCallback(() => {
+    setShowWalletSelector(false);
+  }, []);
+  
+  // Stop polling when component unmounts or transaction completes
+  const stopPolling = useCallback(() => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+  }, [pollingInterval]);
+  
+  // Effect to cleanup polling
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, [stopPolling]);
 
   const isProcessing = ['connecting', 'building', 'signing', 'submitting'].includes(txState);
 
   return (
     <div className="space-y-3">
+      {/* Wallet Selector Modal */}
+      <WalletSelector
+        isOpen={showWalletSelector}
+        onClose={handleWalletSelectorClose}
+        onSelect={handleWalletSelect}
+        title="Choose Wallet"
+      />
+
+      {/* ErgoPay QR Code Display */}
+      {txState === 'ergopay_qr' && unsignedTxForErgoPay && (
+        <div className="p-4 bg-[var(--card-bg)] border border-[var(--border-primary)] rounded-lg">
+          <ErgoPayQR
+            unsignedTx={unsignedTxForErgoPay}
+            userAddress={currentUserAddress || undefined}
+            message={`Fund escrow for task ${taskId} with ${amountErg} ERG`}
+            messageSeverity="info"
+            onGenerated={() => {
+              // QR code generated successfully
+              console.log('ErgoPay QR code generated');
+            }}
+            onError={(error) => {
+              setError(error);
+              setTxState('error');
+            }}
+          />
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => {
+                setTxState('idle');
+                setUnsignedTxForErgoPay(null);
+                stopPolling();
+              }}
+              className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline"
+            >
+              Cancel & try different wallet
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Status message */}
-      {txState !== 'idle' && (
+      {txState !== 'idle' && txState !== 'ergopay_qr' && (
         <div className={`text-sm px-3 py-2 rounded-lg ${
           txState === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
           txState === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
@@ -414,7 +571,13 @@ export default function EscrowActions({
           {error && <div className="mt-1 text-xs opacity-80">{error}</div>}
           {txState === 'error' && (
             <button
-              onClick={() => { setTxState('idle'); setError(null); setEgoMintResult(null); }}
+              onClick={() => { 
+                setTxState('idle'); 
+                setError(null); 
+                setEgoMintResult(null); 
+                setUnsignedTxForErgoPay(null);
+                stopPolling();
+              }}
               className="mt-1 text-xs underline opacity-70 hover:opacity-100"
             >
               Dismiss & try again
@@ -467,9 +630,9 @@ export default function EscrowActions({
 
       {/* Action buttons */}
       <div className="flex gap-2">
-        {escrowStatus === 'unfunded' && (
+        {escrowStatus === 'unfunded' && txState !== 'ergopay_qr' && (
           <button
-            onClick={handleFund}
+            onClick={() => handleFund()}
             disabled={isProcessing}
             className="flex-1 py-2.5 bg-[var(--accent-cyan)] text-black font-semibold rounded-lg hover:opacity-90 transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -498,9 +661,12 @@ export default function EscrowActions({
       </div>
 
       {/* Info */}
-      {escrowStatus === 'unfunded' && (
+      {escrowStatus === 'unfunded' && txState !== 'ergopay_qr' && (
         <p className="text-xs text-[var(--text-secondary)]">
-          Nautilus wallet will open to sign. 1% protocol fee on release. Full refund after deadline.
+          {getCurrentWalletInfo().connectionType === 'ergopay' 
+            ? 'Mobile wallet will show transaction for signing. 1% protocol fee on release. Full refund after deadline.'
+            : 'Wallet will open to sign transaction. 1% protocol fee on release. Full refund after deadline.'
+          }
         </p>
       )}
     </div>

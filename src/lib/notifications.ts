@@ -208,6 +208,55 @@ export async function notifyPaymentReleased(taskId: string, agentAddress: string
   });
 }
 
+export async function notifyWorkApproved(taskId: string, agentAddress: string) {
+  await createNotification({
+    recipientAddress: agentAddress,
+    type: 'work_approved',
+    title: 'Work Approved! ✅',
+    message: `Your work for task #${taskId} has been approved. Payment will be released shortly.`,
+    link: `/tasks/${taskId}`,
+  });
+}
+
+export async function notifyRevisionRequested(taskId: string, agentAddress: string) {
+  await createNotification({
+    recipientAddress: agentAddress,
+    type: 'deliverable_submitted', // Reuse existing type for now
+    title: 'Revision Requested 🔄',
+    message: `The task creator has requested revisions for task #${taskId}. Please review their feedback and resubmit.`,
+    link: `/tasks/${taskId}`,
+  });
+}
+
+export async function notifyDisputeOpened(taskId: string, posterAddress: string, agentAddress: string) {
+  await Promise.all([
+    createNotification({
+      recipientAddress: posterAddress,
+      type: 'dispute_opened',
+      title: 'Dispute Opened ⚠️',
+      message: `A dispute has been opened for task #${taskId}. Please provide evidence to support your case.`,
+      link: `/tasks/${taskId}`,
+    }),
+    createNotification({
+      recipientAddress: agentAddress,
+      type: 'dispute_opened',
+      title: 'Dispute Opened ⚠️',
+      message: `A dispute has been opened for task #${taskId}. Please provide evidence to support your case.`,
+      link: `/tasks/${taskId}`,
+    })
+  ]);
+}
+
+export async function notifyRatingReceived(ratedAddress: string, raterAddress: string, taskId: string, score: number) {
+  await createNotification({
+    recipientAddress: ratedAddress,
+    type: 'task_completed', // Reuse existing type for now
+    title: `You Received a ${score}-Star Rating! ⭐`,
+    message: `${raterAddress.slice(0, 8)}...${raterAddress.slice(-4)} rated you ${score} stars for task #${taskId}.`,
+    link: `/tasks/${taskId}`,
+  });
+}
+
 // React hook for notifications
 export function useNotifications(recipientAddress?: string) {
   const [notifications, setNotifications] = useState<Notification[]>([]);

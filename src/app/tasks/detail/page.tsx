@@ -10,6 +10,7 @@ import EgoScore from '@/components/EgoScore';
 import Link from 'next/link';
 import { logEvent } from '@/lib/events';
 import { createDeliverable, updateDeliverableStatus, getDeliverablesForTask, updateAgentStats, updateTaskMetadata, updateTaskEscrow, withWalletAuth, verifiedCreateBid, verifiedCreateDeliverable, submitRating, getRatingForTask } from '@/lib/supabaseStore';
+import { notifyWorkApproved, notifyRevisionRequested, notifyDisputeOpened, notifyRatingReceived, notifyBidReceived, notifyBidAccepted, notifyDeliverableSubmitted } from '@/lib/notifications';
 import EscrowActions from '@/components/EscrowActions';
 import RatingForm from '@/components/RatingForm';
 import TaskChat from '@/components/TaskChat';
@@ -201,6 +202,15 @@ function TaskDetailInner() {
       }
       
       showSuccess('Rating submitted successfully!');
+      
+      // Send notification to the person being rated
+      await notifyRatingReceived(
+        ratingData.rateeAddress,
+        ratingData.raterAddress,
+        ratingData.taskId,
+        ratingData.score
+      );
+      
       logEvent({ 
         type: 'rating_submitted', 
         message: `${ratingData.score}-star rating submitted by ${ratingData.raterRole}`,
@@ -263,6 +273,12 @@ function TaskDetailInner() {
       }
       logEvent({ type: 'bid_placed', message: `Bid placed on task`, taskId, actor: userAddress || '' });
       showSuccess('Bid placed successfully!');
+      
+      // Send notification to task creator
+      if (task && userAddress) {
+        await notifyBidReceived(taskId, task.creatorAddress, userAddress);
+      }
+      
       setShowBidForm(false);
       setBidRate('');
       setBidMessage('');
@@ -288,6 +304,13 @@ function TaskDetailInner() {
       });
       logEvent({ type: 'bid_accepted', message: `Bid from ${bid.agentName} accepted`, taskId, actor: userAddress || '' });
       showSuccess(`Bid from ${bid.agentName} accepted!`);
+      
+      // Find the agent's owner address to send notification
+      const agent = userAgents.find(a => a.id === bid.agentId) || await getAgent(bid.agentId);
+      if (agent?.ownerAddress) {
+        await notifyBidAccepted(taskId, agent.ownerAddress);
+      }
+      
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to accept bid');
@@ -327,6 +350,11 @@ function TaskDetailInner() {
         logEvent({ type: 'work_approved', message: `Work approved for "${task.title}"`, taskId, actor: userAddress || '' });
         showSuccess('Work approved! Task completed.');
       }
+
+      // Send notification to agent
+      if (task?.acceptedAgentAddress) {
+        await notifyWorkApproved(taskId, task.acceptedAgentAddress);
+      }
       await loadData();
       
       // Check if user should rate after completion
@@ -351,6 +379,12 @@ function TaskDetailInner() {
       await updateTaskData(taskId, { status: 'in_progress' });
       logEvent({ type: 'revision_requested', message: `Revision requested`, taskId, actor: userAddress || '' });
       showSuccess('Revision requested. Agent can resubmit.');
+      
+      // Send notification to agent
+      if (task?.acceptedAgentAddress) {
+        await notifyRevisionRequested(taskId, task.acceptedAgentAddress);
+      }
+      
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to request revision');
@@ -367,6 +401,12 @@ function TaskDetailInner() {
       await updateTaskData(taskId, { status: 'disputed' });
       logEvent({ type: 'work_disputed', message: `Task disputed`, taskId, actor: userAddress || '' });
       showSuccess('Task disputed.');
+      
+      // Send notification to both parties
+      if (task?.acceptedAgentAddress) {
+        await notifyDisputeOpened(taskId, task.creatorAddress, task.acceptedAgentAddress);
+      }
+      
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to dispute');
@@ -619,7 +659,11 @@ function TaskDetailInner() {
               <DeliverableSubmit
                 taskId={task.id}
                 agentId={ownedAssignedAgent.id}
-                onDeliverableSubmitted={() => loadData()}
+                onDeliverableSubmitted={async () => {
+                  // Send notification to task creator
+                  await notifyDeliverableSubmitted(task.id, task.creatorAddress);
+                  await loadData();
+                }}
               />
             </div>
           )}

@@ -428,6 +428,7 @@ export async function getBidsForAgent(agentId: string): Promise<Bid[]> {
 }
 
 export async function createBid(bidData: Omit<Bid, 'id' | 'createdAt'>): Promise<Bid> {
+  const { notifyBidReceived } = await import('./notifications');
   await initializeData();
   const sanitizedBidData = {
     ...bidData,
@@ -446,15 +447,22 @@ export async function createBid(bidData: Omit<Bid, 'id' | 'createdAt'>): Promise
   await supabase.from('bids').insert(bidToDb(newBid));
 
   // Update task bid count
-  const { data: taskData } = await supabase.from('tasks').select('bids_count').eq('id', bidData.taskId).single();
+  const { data: taskData } = await supabase.from('tasks').select('bids_count, creator_address').eq('id', bidData.taskId).single();
   if (taskData) {
     await supabase.from('tasks').update({ bids_count: (taskData.bids_count || 0) + 1 }).eq('id', bidData.taskId);
+    // Fire-and-forget notification
+    // Get agent address for notification
+    const { data: agentInfo } = await supabase.from('agents').select('ergo_address').eq('id', bidData.agentId).single();
+    if (agentInfo?.ergo_address) {
+      notifyBidReceived(bidData.taskId, taskData.creator_address, agentInfo.ergo_address).catch(() => {});
+    }
   }
 
   return newBid;
 }
 
 export async function acceptBid(bidId: string): Promise<boolean> {
+  const { notifyBidAccepted } = await import('./notifications');
   const { data: bids } = await supabase.from('bids').select('*').eq('id', bidId).single();
   if (!bids) return false;
   const bid = dbToBid(bids);
@@ -475,6 +483,9 @@ export async function acceptBid(bidId: string): Promise<boolean> {
   // Mark accepted bid, reject others
   await supabase.from('bids').update({ status: 'accepted' }).eq('id', bidId);
   await supabase.from('bids').update({ status: 'rejected' }).eq('task_id', bid.taskId).neq('id', bidId);
+
+  // Fire-and-forget notification
+  notifyBidAccepted(bid.taskId, agentAddress).catch(() => {});
 
   return true;
 }
@@ -615,6 +626,7 @@ export async function createDeliverable(deliverable: {
   deliverableUrl?: string;
   revisionNumber: number;
 }): Promise<{ id: string }> {
+  const { notifyDeliverableSubmitted } = await import('./notifications');
   // Validate deliverable URL if provided
   if (deliverable.deliverableUrl) {
     if (!deliverable.deliverableUrl.startsWith('https://')) {
@@ -632,6 +644,13 @@ export async function createDeliverable(deliverable: {
     revision_number: deliverable.revisionNumber,
     created_at: new Date().toISOString(),
   });
+
+  // Fire-and-forget notification to task poster
+  const { data: taskData } = await supabase.from('tasks').select('creator_address').eq('id', deliverable.taskId).single();
+  if (taskData?.creator_address) {
+    notifyDeliverableSubmitted(deliverable.taskId, taskData.creator_address).catch(() => {});
+  }
+
   return { id };
 }
 

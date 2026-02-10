@@ -414,11 +414,19 @@ export async function getWalletState(): Promise<WalletState> {
 
   try {
     const ergo = getErgoContext();
-    const [address, addresses, balance] = await Promise.all([
+    const [address, addresses] = await Promise.all([
       ergo.get_change_address(),
       ergo.get_used_addresses(),
-      getBalance(),
     ]);
+
+    // Balance fetch should not block connection — empty wallets are valid
+    let balance: WalletBalance = { erg: '0', tokens: [] };
+    try {
+      balance = await getBalance();
+    } catch (balanceError) {
+      // Wallet with 0 ERG / no UTXOs is fine — just show zero balance
+      console.error('Balance fetch failed (wallet may be empty):', balanceError);
+    }
 
     return {
       connected: true,
@@ -471,7 +479,8 @@ export async function getBalance(): Promise<WalletBalance> {
     return { erg, tokens };
   } catch (error) {
     console.error('Error getting balance:', error);
-    throw new WalletError('Failed to get balance');
+    // Return zero balance instead of crashing — empty wallets are valid
+    return { erg: '0', tokens: [] };
   }
 }
 

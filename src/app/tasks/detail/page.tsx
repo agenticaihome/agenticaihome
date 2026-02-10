@@ -12,6 +12,8 @@ import { logEvent } from '@/lib/events';
 import { createDeliverable, updateDeliverableStatus, getDeliverablesForTask, updateAgentStats, updateTaskMetadata, updateTaskEscrow, withWalletAuth, verifiedCreateBid, verifiedCreateDeliverable, submitRating, getRatingForTask } from '@/lib/supabaseStore';
 import EscrowActions from '@/components/EscrowActions';
 import RatingForm from '@/components/RatingForm';
+import TaskChat from '@/components/TaskChat';
+import DeliverableSubmit from '@/components/DeliverableSubmit';
 import type { Task, Bid, Agent } from '@/lib/types';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';
 
@@ -57,11 +59,7 @@ function TaskDetailInner() {
   const [bidAgentId, setBidAgentId] = useState('');
   const [submittingBid, setSubmittingBid] = useState(false);
 
-  // Deliverable form
-  const [showDeliverableForm, setShowDeliverableForm] = useState(false);
-  const [deliverableContent, setDeliverableContent] = useState('');
-  const [deliverableUrl, setDeliverableUrl] = useState('');
-  const [submittingDeliverable, setSubmittingDeliverable] = useState(false);
+  // Deliverable form - now handled by DeliverableSubmit component
 
   // Action states
   const [accepting, setAccepting] = useState<string | null>(null);
@@ -295,48 +293,7 @@ function TaskDetailInner() {
     }
   };
 
-  const handleSubmitWork = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!taskId || !assignedAgent) return;
-    setSubmittingDeliverable(true);
-    setError('');
-    try {
-      // Validate deliverable URL
-      if (deliverableUrl && !deliverableUrl.startsWith('https://')) {
-        throw new Error('Deliverable URL must start with https://');
-      }
-      const delPayload = {
-        taskId,
-        agentId: assignedAgent.id,
-        content: deliverableContent,
-        deliverableUrl: deliverableUrl || undefined,
-        revisionNumber: deliverables.length + 1,
-      };
-      try {
-        const auth = await withWalletAuth(userAddress!, async (msg) => {
-          const ergo = (window as any).ergo;
-          if (!ergo?.auth) throw new Error('No wallet auth');
-          return await ergo.auth(userAddress, msg);
-        });
-        await verifiedCreateDeliverable(delPayload, auth);
-        setWalletVerified(true);
-      } catch {
-        await createDeliverable(delPayload);
-        setWalletVerified(false);
-      }
-      await updateTaskData(taskId, { status: 'review' });
-      logEvent({ type: 'work_submitted', message: `Work submitted for review`, taskId, actor: userAddress || '' });
-      showSuccess('Work submitted for review!');
-      setShowDeliverableForm(false);
-      setDeliverableContent('');
-      setDeliverableUrl('');
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit work');
-    } finally {
-      setSubmittingDeliverable(false);
-    }
-  };
+  // handleSubmitWork function removed - now handled by DeliverableSubmit component
 
   const handleApprove = async () => {
     if (!taskId || !task) return;
@@ -497,7 +454,16 @@ function TaskDetailInner() {
             </div>
           </div>
 
-          {/* Removed duplicate EscrowActions - kept the one at the bottom of the page */}
+          {/* Task Chat - Show when task has an assigned agent */}
+          {task && task.assignedAgentId && ['in_progress', 'review', 'funded', 'completed'].includes(task.status) && (
+            <div className="mb-6">
+              <TaskChat
+                taskId={task.id}
+                taskCreatorAddress={task.creatorAddress}
+                taskAgentAddress={task.acceptedAgentAddress}
+              />
+            </div>
+          )}
 
           {/* Place Bid Section */}
           {canBid && (
@@ -606,58 +572,14 @@ function TaskDetailInner() {
             </div>
           )}
 
-          {/* Submit Work Section */}
-          {canSubmitWork && (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
-              {!showDeliverableForm ? (
-                <button
-                  onClick={() => setShowDeliverableForm(true)}
-                  className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white rounded-lg font-semibold transition-all"
-                >
-                  Submit Work
-                </button>
-              ) : (
-                <form onSubmit={handleSubmitWork} className="space-y-4">
-                  <h3 className="text-lg font-semibold text-white">Submit Your Work</h3>
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-1">Deliverable Description *</label>
-                    <textarea
-                      required
-                      rows={4}
-                      value={deliverableContent}
-                      onChange={e => setDeliverableContent(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white resize-none"
-                      placeholder="Describe what you've completed..."
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-1">URL (optional)</label>
-                    <input
-                      type="url"
-                      value={deliverableUrl}
-                      onChange={e => setDeliverableUrl(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white"
-                      placeholder="https://github.com/..."
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      type="submit"
-                      disabled={submittingDeliverable}
-                      className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white rounded-lg font-medium"
-                    >
-                      {submittingDeliverable ? 'Submitting...' : 'Submit'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowDeliverableForm(false)}
-                      className="px-6 py-2 border border-slate-600 text-gray-300 rounded-lg hover:bg-slate-700"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
+          {/* Submit Work Section - Using DeliverableSubmit Component */}
+          {canSubmitWork && ownedAssignedAgent && (
+            <div className="mb-6">
+              <DeliverableSubmit
+                taskId={task.id}
+                agentId={ownedAssignedAgent.id}
+                onDeliverableSubmitted={() => loadData()}
+              />
             </div>
           )}
 

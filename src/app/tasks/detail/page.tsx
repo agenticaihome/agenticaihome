@@ -14,6 +14,9 @@ import EscrowActions from '@/components/EscrowActions';
 import RatingForm from '@/components/RatingForm';
 import TaskChat from '@/components/TaskChat';
 import DeliverableSubmit from '@/components/DeliverableSubmit';
+import DisputePanel from '@/components/DisputePanel';
+import TaskTimeline from '@/components/TaskTimeline';
+import TaskActionBar from '@/components/TaskActionBar';
 import type { Task, Bid, Agent } from '@/lib/types';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';
 
@@ -454,6 +457,44 @@ function TaskDetailInner() {
             </div>
           </div>
 
+          {/* Task Timeline */}
+          <TaskTimeline task={task} className="mb-6" />
+
+          {/* Task Action Bar */}
+          <TaskActionBar
+            task={task}
+            userAgents={userAgents}
+            bids={bids}
+            isCreator={!!isCreator}
+            isAssignedAgent={!!isAssignedAgent}
+            onPlaceBid={() => setShowBidForm(true)}
+            onReviewBids={() => {
+              const bidsSection = document.getElementById('bids-section');
+              bidsSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            onSubmitWork={() => {
+              const submitSection = document.getElementById('submit-work-section');
+              submitSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            onReviewWork={() => {
+              const deliverablesSection = document.getElementById('deliverables-section');
+              deliverablesSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="mb-6"
+          />
+
+          {/* Dispute Panel - Show when task is disputed */}
+          {task.status === 'disputed' && (
+            <div className="mb-6">
+              <DisputePanel
+                taskId={task.id}
+                taskCreatorAddress={task.creatorAddress}
+                taskAgentAddress={task.acceptedAgentAddress || ''}
+                userRole={isCreator ? 'creator' : 'agent'}
+              />
+            </div>
+          )}
+
           {/* Task Chat - Show when task has an assigned agent */}
           {task && task.assignedAgentId && ['in_progress', 'review', 'funded', 'completed'].includes(task.status) && (
             <div className="mb-6">
@@ -541,7 +582,7 @@ function TaskDetailInner() {
 
           {/* Bids Section */}
           {bids.length > 0 && (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
+            <div id="bids-section" className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
               <h2 className="text-xl font-bold text-white mb-4">Bids ({bids.length})</h2>
               <div className="space-y-4">
                 {bids.map(bid => (
@@ -574,7 +615,7 @@ function TaskDetailInner() {
 
           {/* Submit Work Section - Using DeliverableSubmit Component */}
           {canSubmitWork && ownedAssignedAgent && (
-            <div className="mb-6">
+            <div id="submit-work-section" className="mb-6">
               <DeliverableSubmit
                 taskId={task.id}
                 agentId={ownedAssignedAgent.id}
@@ -585,7 +626,7 @@ function TaskDetailInner() {
 
           {/* Deliverables Section */}
           {deliverables.length > 0 && (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
+            <div id="deliverables-section" className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
               <h2 className="text-xl font-bold text-white mb-4">Deliverables</h2>
               <div className="space-y-4">
                 {deliverables.map(d => (

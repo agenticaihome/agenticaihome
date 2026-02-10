@@ -2,161 +2,327 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import type { Task } from '@/lib/types';
 
-interface TaskEvent {
-  id: string;
-  taskId: string;
-  eventType: string;
-  actorAddress: string;
-  metadata: Record<string, any>;
-  createdAt: string;
+interface TimelineStep {
+  key: string;
+  label: string;
+  description: string;
+  icon: string;
+  status: 'completed' | 'current' | 'future';
+  timestamp?: string;
+  txId?: string;
 }
 
-const EVENT_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
-  'status_transition': { icon: '🔄', color: 'text-blue-400', label: 'Status Changed' },
-  'escrow_funded': { icon: '💰', color: 'text-green-400', label: 'Escrow Funded' },
-  'escrow_released': { icon: '✅', color: 'text-emerald-400', label: 'Payment Released' },
-  'escrow_refunded': { icon: '↩️', color: 'text-yellow-400', label: 'Escrow Refunded' },
-  'bid_submitted': { icon: '🎯', color: 'text-purple-400', label: 'Bid Submitted' },
-  'bid_accepted': { icon: '🤝', color: 'text-cyan-400', label: 'Bid Accepted' },
-  'deliverable_submitted': { icon: '📦', color: 'text-indigo-400', label: 'Work Submitted' },
-  'work_approved': { icon: '⭐', color: 'text-amber-400', label: 'Work Approved' },
-  'work_rejected': { icon: '🔄', color: 'text-orange-400', label: 'Revision Requested' },
-  'ego_minted': { icon: '💎', color: 'text-purple-400', label: 'EGO Tokens Minted' },
-  'dispute_opened': { icon: '⚖️', color: 'text-red-400', label: 'Dispute Opened' },
-  'dispute_resolved': { icon: '🕊️', color: 'text-green-400', label: 'Dispute Resolved' },
-};
-
-function getEventConfig(eventType: string) {
-  return EVENT_CONFIG[eventType] || { icon: '📋', color: 'text-gray-400', label: eventType };
+interface TaskTimelineProps {
+  task: Task;
+  className?: string;
 }
 
-function formatAddress(addr: string): string {
-  if (!addr || addr.length < 12) return addr || 'System';
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-}
+export default function TaskTimeline({ task, className = '' }: TaskTimelineProps) {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-function formatTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHr = Math.floor(diffMs / 3600000);
-  const diffDay = Math.floor(diffMs / 86400000);
+  // Load task events if the table exists
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('task_events')
+        .select('*')
+        .eq('task_id', task.id)
+        .order('created_at', { ascending: true });
 
-  if (diffMin < 1) return 'Just now';
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHr < 24) return `${diffHr}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
-  return date.toLocaleDateString();
-}
-
-function getTransitionDescription(metadata: Record<string, any>): string {
-  if (metadata.from && metadata.to) {
-    return `${metadata.from} → ${metadata.to}`;
-  }
-  return '';
-}
-
-export default function TaskTimeline({ taskId }: { taskId: string }) {
-  const [events, setEvents] = useState<TaskEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading task events:', error);
+      } else if (data) {
+        setEvents(data);
+      }
+    } catch (error) {
+      console.error('Error loading task events:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchEvents() {
-      try {
-        const { data, error } = await supabase
-          .from('task_events')
-          .select('*')
-          .eq('task_id', taskId)
-          .order('created_at', { ascending: false })
-          .limit(50);
+    loadEvents();
+  }, [task.id]);
 
-        if (error) {
-          // Table might not exist yet
-          if (error.code === '42P01' || error.message?.includes('does not exist')) {
-            setEvents([]);
-            return;
-          }
-          throw error;
-        }
+  // Generate timeline steps based on task data and events
+  const generateTimelineSteps = (): TimelineStep[] => {
+    const steps: TimelineStep[] = [];
+    const taskStatus = task.status;
+    const metadata = task.metadata || {};
+    
+    // Step 1: Task Created
+    steps.push({
+      key: 'created',
+      label: 'Task Created',
+      description: 'Task posted to marketplace',
+      icon: '📝',
+      status: 'completed',
+      timestamp: task.createdAt,
+    });
 
-        setEvents((data || []).map((row: any) => ({
-          id: row.id,
-          taskId: row.task_id,
-          eventType: row.event_type,
-          actorAddress: row.actor_address || '',
-          metadata: row.metadata || {},
-          createdAt: row.created_at,
-        })));
-      } catch (err) {
-        console.error('Failed to load task events:', err);
-        setEvents([]);
-      } finally {
-        setLoading(false);
-      }
+    // Step 2: Bid Accepted (if there's an assigned agent)
+    if (task.assignedAgentId) {
+      steps.push({
+        key: 'bid_accepted',
+        label: 'Bid Accepted',
+        description: `${task.assignedAgentName || 'Agent'} was selected`,
+        icon: '🤝',
+        status: 'completed',
+        // Find timestamp from events or fallback to created date
+        timestamp: events.find(e => e.event_type === 'bid_accepted')?.created_at || task.createdAt,
+      });
+    } else {
+      steps.push({
+        key: 'bid_accepted',
+        label: 'Awaiting Bid Selection',
+        description: 'Waiting for task creator to accept a bid',
+        icon: '🤝',
+        status: taskStatus === 'open' ? 'current' : 'future',
+      });
     }
 
-    fetchEvents();
-  }, [taskId]);
+    // Step 3: Escrow Funded
+    if (metadata.escrow_box_id || task.escrowTxId) {
+      steps.push({
+        key: 'escrow_funded',
+        label: 'Escrow Funded',
+        description: 'Payment secured in escrow',
+        icon: '🔒',
+        status: 'completed',
+        timestamp: events.find(e => e.event_type === 'escrow_funded')?.created_at,
+        txId: task.escrowTxId || metadata.escrow_tx_id,
+      });
+    } else if (task.assignedAgentId) {
+      steps.push({
+        key: 'escrow_funded',
+        label: 'Fund Escrow',
+        description: 'Waiting for task creator to fund escrow',
+        icon: '🔒',
+        status: 'current',
+      });
+    } else {
+      steps.push({
+        key: 'escrow_funded',
+        label: 'Escrow Funding',
+        description: 'Escrow will be funded after bid acceptance',
+        icon: '🔒',
+        status: 'future',
+      });
+    }
 
-  if (loading) {
-    return (
-      <div className="animate-pulse space-y-3">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-12 bg-[var(--bg-secondary)]/50 rounded-lg" />
-        ))}
-      </div>
-    );
-  }
+    // Step 4: Work Submitted
+    if (['review', 'completed', 'disputed'].includes(taskStatus)) {
+      steps.push({
+        key: 'work_submitted',
+        label: 'Work Submitted',
+        description: 'Agent submitted deliverable for review',
+        icon: '📦',
+        status: 'completed',
+        timestamp: events.find(e => e.event_type === 'work_submitted')?.created_at,
+      });
+    } else if (taskStatus === 'in_progress') {
+      steps.push({
+        key: 'work_submitted',
+        label: 'Work in Progress',
+        description: 'Agent is working on the task',
+        icon: '📦',
+        status: 'current',
+      });
+    } else {
+      steps.push({
+        key: 'work_submitted',
+        label: 'Work Submission',
+        description: 'Agent will submit work when ready',
+        icon: '📦',
+        status: 'future',
+      });
+    }
 
-  if (events.length === 0) {
-    return (
-      <div className="text-center text-sm text-[var(--text-secondary)] py-4">
-        No activity recorded yet
-      </div>
-    );
-  }
+    // Step 5: Under Review
+    if (taskStatus === 'review') {
+      steps.push({
+        key: 'under_review',
+        label: 'Under Review',
+        description: 'Task creator is reviewing the work',
+        icon: '👀',
+        status: 'current',
+      });
+    } else if (['completed'].includes(taskStatus)) {
+      steps.push({
+        key: 'under_review',
+        label: 'Reviewed',
+        description: 'Work has been reviewed and approved',
+        icon: '✅',
+        status: 'completed',
+        timestamp: events.find(e => e.event_type === 'work_approved')?.created_at,
+      });
+    } else if (taskStatus === 'disputed') {
+      steps.push({
+        key: 'under_review',
+        label: 'Disputed',
+        description: 'Work is under dispute resolution',
+        icon: '⚠️',
+        status: 'current',
+      });
+    } else {
+      steps.push({
+        key: 'under_review',
+        label: 'Review Pending',
+        description: 'Awaiting work submission',
+        icon: '👀',
+        status: 'future',
+      });
+    }
+
+    // Step 6: Payment Released
+    if (taskStatus === 'completed' && (metadata.escrow_status === 'released' || metadata.release_tx_id)) {
+      steps.push({
+        key: 'payment_released',
+        label: 'Payment Released',
+        description: 'Funds transferred to agent',
+        icon: '💰',
+        status: 'completed',
+        timestamp: events.find(e => e.event_type === 'payment_released')?.created_at,
+        txId: metadata.release_tx_id,
+      });
+    } else if (taskStatus === 'completed' && metadata.escrow_status === 'approved_pending_release') {
+      steps.push({
+        key: 'payment_released',
+        label: 'Release Payment',
+        description: 'Work approved, ready to release payment',
+        icon: '💰',
+        status: 'current',
+      });
+    } else if (taskStatus === 'completed') {
+      steps.push({
+        key: 'payment_released',
+        label: 'Payment Complete',
+        description: 'Task completed and paid',
+        icon: '💰',
+        status: 'completed',
+        timestamp: task.completedAt,
+      });
+    } else {
+      steps.push({
+        key: 'payment_released',
+        label: 'Payment Release',
+        description: 'Payment will be released upon approval',
+        icon: '💰',
+        status: 'future',
+      });
+    }
+
+    // Step 7: Task Rated (optional final step)
+    if (taskStatus === 'completed') {
+      // This could be expanded to check for actual ratings
+      steps.push({
+        key: 'rated',
+        label: 'Task Complete',
+        description: 'Ready for ratings and feedback',
+        icon: '⭐',
+        status: 'current',
+      });
+    } else {
+      steps.push({
+        key: 'rated',
+        label: 'Rating & Feedback',
+        description: 'Final ratings will be collected',
+        icon: '⭐',
+        status: 'future',
+      });
+    }
+
+    return steps;
+  };
+
+  const timelineSteps = generateTimelineSteps();
+
+  const formatTimestamp = (timestamp?: string) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleString();
+  };
+
+  const getStepStyles = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return {
+          dot: 'bg-green-500 border-green-400',
+          line: 'bg-green-500',
+          text: 'text-green-400',
+          bg: 'bg-green-500/10 border-green-500/30',
+        };
+      case 'current':
+        return {
+          dot: 'bg-cyan-500 border-cyan-400 animate-pulse',
+          line: 'bg-gray-600',
+          text: 'text-cyan-400',
+          bg: 'bg-cyan-500/10 border-cyan-500/30',
+        };
+      default: // future
+        return {
+          dot: 'bg-gray-600 border-gray-500',
+          line: 'bg-gray-600',
+          text: 'text-gray-400',
+          bg: 'bg-gray-500/5 border-gray-600',
+        };
+    }
+  };
 
   return (
-    <div className="space-y-1">
-      <h4 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-3">
-        Activity Log
-      </h4>
-      <div className="relative">
-        {/* Timeline line */}
-        <div className="absolute left-4 top-2 bottom-2 w-px bg-[var(--border-color)]" />
+    <div className={`border border-gray-800 rounded-lg bg-gray-900 p-6 ${className}`}>
+      <div className="flex items-center gap-3 mb-6">
+        <span className="text-2xl">🗓️</span>
+        <h3 className="text-xl font-semibold text-white">Task Progress</h3>
+      </div>
 
-        {events.map((event, index) => {
-          const config = getEventConfig(event.eventType);
-          const transitionDesc = getTransitionDescription(event.metadata);
+      <div className="relative">
+        {timelineSteps.map((step, index) => {
+          const styles = getStepStyles(step.status);
+          const isLast = index === timelineSteps.length - 1;
 
           return (
-            <div key={event.id} className="relative flex items-start gap-3 py-2 pl-1">
+            <div key={step.key} className="relative flex items-start pb-8">
+              {/* Timeline line */}
+              {!isLast && (
+                <div className={`absolute left-4 top-8 w-0.5 h-full ${styles.line}`} />
+              )}
+
               {/* Timeline dot */}
-              <div className="relative z-10 flex items-center justify-center w-7 h-7 rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] text-sm flex-shrink-0">
-                {config.icon}
+              <div className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 ${styles.dot} flex-shrink-0`}>
+                <span className="text-sm">{step.icon}</span>
               </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`text-sm font-medium ${config.color}`}>
-                    {config.label}
-                  </span>
-                  {transitionDesc && (
-                    <span className="text-xs text-[var(--text-secondary)] bg-[var(--bg-secondary)]/50 px-2 py-0.5 rounded">
-                      {transitionDesc}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] mt-0.5">
-                  <span>{formatTime(event.createdAt)}</span>
-                  {event.actorAddress && (
-                    <>
-                      <span>•</span>
-                      <span className="font-mono">{formatAddress(event.actorAddress)}</span>
-                    </>
+              {/* Timeline content */}
+              <div className="ml-6 flex-1">
+                <div className={`rounded-lg p-4 border ${styles.bg}`}>
+                  <div className="flex items-start justify-between mb-1">
+                    <h4 className={`font-semibold ${styles.text}`}>
+                      {step.label}
+                    </h4>
+                    {step.timestamp && (
+                      <span className="text-gray-500 text-xs">
+                        {formatTimestamp(step.timestamp)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-300 text-sm mb-2">{step.description}</p>
+                  
+                  {step.txId && (
+                    <a
+                      href={`https://explorer.ergoplatform.com/en/transactions/${step.txId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-purple-400 hover:text-purple-300 text-xs"
+                    >
+                      <span>🔗</span>
+                      View Transaction
+                    </a>
                   )}
                 </div>
               </div>
@@ -164,6 +330,15 @@ export default function TaskTimeline({ taskId }: { taskId: string }) {
           );
         })}
       </div>
+
+      {loading && (
+        <div className="text-center text-gray-400 text-sm mt-4">
+          <div className="inline-flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
+            Loading timeline events...
+          </div>
+        </div>
+      )}
     </div>
   );
 }

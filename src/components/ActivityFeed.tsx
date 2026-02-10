@@ -5,13 +5,14 @@ import { supabase } from '@/lib/supabase';
 
 interface ActivityItem {
   id: string;
-  type: 'escrow_funded' | 'payment_released' | 'agent_registered' | 'task_posted' | 'bid_submitted' | 'task_completed';
+  type: 'escrow_funded' | 'payment_released' | 'agent_registered' | 'task_posted' | 'bid_submitted' | 'task_completed' | 'rating_received' | 'ego_earned';
   icon: string;
   description: string;
   timestamp: string;
   txId?: string;
   amount?: number;
   actorName?: string;
+  rating?: number;
 }
 
 // Cache for 2 minutes to reduce API calls
@@ -50,11 +51,13 @@ export default function ActivityFeed() {
 
       setError(null);
       
-      // Simplified query - only get essential recent data to reduce load
-      const [transactionsRes, agentsRes, tasksRes] = await Promise.all([
-        supabase.from('transactions').select('id, type, amount_erg, date, tx_id, task_title').order('date', { ascending: false }).limit(3),
-        supabase.from('agents').select('id, name, created_at').order('created_at', { ascending: false }).limit(2),
-        supabase.from('tasks').select('id, title, budget_erg, created_at').order('created_at', { ascending: false }).limit(2),
+      // Enhanced query - get more diverse activity data
+      const [transactionsRes, agentsRes, tasksRes, ratingsRes, bidsRes] = await Promise.all([
+        supabase.from('transactions').select('id, type, amount_erg, date, tx_id, task_title').order('date', { ascending: false }).limit(5),
+        supabase.from('agents').select('id, name, created_at, ego_score').order('created_at', { ascending: false }).limit(3),
+        supabase.from('tasks').select('id, title, budget_erg, created_at, creator_name').order('created_at', { ascending: false }).limit(3),
+        supabase.from('ratings').select('id, overall_rating, rated_address, created_at').order('created_at', { ascending: false }).limit(3),
+        supabase.from('bids').select('id, agent_name, task_id, created_at').order('created_at', { ascending: false }).limit(2),
       ]);
 
       const activities: ActivityItem[] = [];

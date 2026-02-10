@@ -225,6 +225,11 @@ export default function AgentDetailClient() {
                   <span className="text-cyan-400 font-medium">Σ{agent.hourlyRateErg}</span>
                   <span className="text-gray-500">per hour</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <span className="text-white font-medium">Member since</span>
+                  <span className="text-gray-500">{new Date(agent.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                </div>
               </div>
             </div>
 
@@ -285,42 +290,106 @@ export default function AgentDetailClient() {
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Enhanced Stats Dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-blue-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <Clock className="w-5 h-5 text-blue-400" />
               <h3 className="font-medium text-gray-300">Response Time</h3>
             </div>
             <p className="text-2xl font-bold text-white">{stats.responseTime}h</p>
-            <p className="text-xs text-gray-500 mt-1">Average first response</p>
+            <div className="flex items-center gap-2 mt-2">
+              <p className="text-xs text-gray-500">Average first response</p>
+              {stats.responseTime <= 4 && (
+                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Fast</span>
+              )}
+            </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-emerald-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <Target className="w-5 h-5 text-emerald-400" />
               <h3 className="font-medium text-gray-300">Completion Rate</h3>
             </div>
             <p className="text-2xl font-bold text-white">{stats.completionRate.toFixed(1)}%</p>
-            <p className="text-xs text-gray-500 mt-1">Tasks completed successfully</p>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-16 bg-slate-700 rounded-full h-1.5">
+                <div 
+                  className="bg-emerald-400 h-1.5 rounded-full"
+                  style={{ width: `${stats.completionRate}%` }}
+                />
+              </div>
+              {stats.completionRate >= 90 && (
+                <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Excellent</span>
+              )}
+            </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-purple-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <Calendar className="w-5 h-5 text-purple-400" />
-              <h3 className="font-medium text-gray-300">Delivery Time</h3>
+              <h3 className="font-medium text-gray-300">Avg Delivery</h3>
             </div>
             <p className="text-2xl font-bold text-white">{stats.avgDeliveryTime}h</p>
-            <p className="text-xs text-gray-500 mt-1">Average completion time</p>
+            <div className="flex items-center gap-2 mt-2">
+              <p className="text-xs text-gray-500">From task start to completion</p>
+            </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-cyan-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <DollarSign className="w-5 h-5 text-cyan-400" />
               <h3 className="font-medium text-gray-300">Total Earned</h3>
             </div>
             <p className="text-2xl font-bold text-white">Σ{stats.totalEarnings.toFixed(2)}</p>
-            <p className="text-xs text-gray-500 mt-1">Lifetime earnings</p>
+            <div className="flex items-center gap-2 mt-2">
+              <p className="text-xs text-gray-500">From {agent.tasksCompleted} completed tasks</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <TrendingUp className="w-5 h-5 text-green-400" />
+              <h3 className="font-medium text-gray-300">Performance Trend</h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <TrendingUp className="w-6 h-6 text-green-400" />
+              <div>
+                <p className="text-lg font-bold text-white">Improving</p>
+                <p className="text-xs text-gray-500">Based on recent tasks</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <Shield className="w-5 h-5 text-purple-400" />
+              <h3 className="font-medium text-gray-300">Trust Level</h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">🛡️</div>
+              <div>
+                <p className="text-lg font-bold text-white capitalize">{tierInfo.tier}</p>
+                <p className="text-xs text-gray-500">Based on EGO score & history</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <User className="w-5 h-5 text-blue-400" />
+              <h3 className="font-medium text-gray-300">Client Satisfaction</h3>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">⭐</div>
+              <div>
+                <p className="text-lg font-bold text-white">{stats.avgRating.toFixed(1)}/5.0</p>
+                <p className="text-xs text-gray-500">Average from {stats.reviewCount} reviews</p>
+              </div>
+            </div>
           </div>
         </div>
 

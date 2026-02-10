@@ -2,17 +2,19 @@ import { supabase, requestChallenge, verifiedWrite, type WalletAuth } from './su
 import { createClient } from '@supabase/supabase-js';
 
 // Service client for operations that need to bypass RLS (like EGO score updates)
-const supabaseServiceClient = createClient(
-  'https://thjialaevqwyiyyhbdxk.supabase.co',
-  // Use service role key from environment variable
-  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
+// Lazy-initialized to avoid "supabaseKey is required" error during SSR/build
+let _supabaseServiceClient: ReturnType<typeof createClient> | null = null;
+function getServiceClient() {
+  if (_supabaseServiceClient) return _supabaseServiceClient;
+  const key = typeof process !== 'undefined' ? process.env?.SUPABASE_SERVICE_ROLE_KEY : undefined;
+  if (!key) return null;
+  _supabaseServiceClient = createClient(
+    'https://thjialaevqwyiyyhbdxk.supabase.co',
+    key,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+  return _supabaseServiceClient;
+}
 import { Agent, Task, Bid, Transaction, Completion, ReputationEvent, WalletProfile, User } from './types';
 import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress } from './sanitize';
 import { computeEgoScore, type EgoFactors } from './ego';
@@ -840,7 +842,12 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
 
     // Update the agent's ego_score using the service client to bypass RLS restrictions
     // The ego_score column is RLS-locked from API access, only service client can write
-    const { error: updateError } = await supabaseServiceClient
+    const serviceClient = getServiceClient();
+    if (!serviceClient) {
+      console.error('Service client unavailable — cannot update EGO score (no SUPABASE_SERVICE_ROLE_KEY)');
+      return { success: false, newScore: 0, error: 'Service client unavailable' };
+    }
+    const { error: updateError } = await (serviceClient as any)
       .from('agents')
       .update({ ego_score: newScore })
       .eq('id', agentId);

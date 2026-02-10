@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { createEscrowTx, releaseEscrowTx, refundEscrowTx } from '@/lib/ergo/escrow';
+import { mintEgoAfterRelease } from '@/lib/ergo/ego-token';
+import { notifyPaymentReleased } from '@/lib/notifications';
 import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction, getCurrentHeight } from '@/lib/ergo/wallet';
 import { txExplorerUrl } from '@/lib/ergo/constants';
 import { nanoErgToErg, ergToNanoErg } from '@/lib/ergo/explorer';
@@ -12,6 +14,8 @@ interface EscrowActionsProps {
   taskId: string;
   /** Agent's Ergo address */
   agentAddress: string;
+  /** Agent's display name (for EGO token naming) */
+  agentName?: string;
   /** Amount in ERG (e.g. "1.5") */
   amountErg: string;
   /** Deadline as block height. If not set, defaults to currentHeight + 720 (~1 day) */
@@ -31,6 +35,7 @@ interface EscrowActionsProps {
 export default function EscrowActions({
   taskId,
   agentAddress,
+  agentName = 'Agent',
   amountErg,
   deadlineHeight,
   escrowBoxId,
@@ -141,6 +146,27 @@ export default function EscrowActions({
       setTxId(id);
       setTxState('success');
       onReleased?.(id);
+
+      // Fire-and-forget: notify agent of payment
+      const ergAmount = parseFloat(amountErg) || 0;
+      notifyPaymentReleased(taskId, agentAddress, ergAmount * 0.99).catch(() => {});
+
+      // Auto-mint soulbound EGO tokens for the agent
+      try {
+        const minterUtxos = await getUtxos();
+        const minterAddress = await getAddress();
+        const egoTx = await mintEgoAfterRelease({
+          agentAddress,
+          agentName,
+          minterAddress,
+          minterUtxos,
+        });
+        const signedEgo = await signTransaction(egoTx);
+        await submitTransaction(signedEgo);
+      } catch (egoErr: any) {
+        // EGO mint failure shouldn't block the release success
+        console.error('EGO mint after release failed (non-blocking):', egoErr?.message);
+      }
     } catch (err: any) {
       console.error('Release escrow failed:', err);
       const msg = err?.message || 'Transaction failed';

@@ -1,9 +1,14 @@
 import {
   TransactionBuilder,
   OutputBuilder,
+  ErgoAddress,
+  SConstant,
+  SSigmaProp,
+  SGroupElement,
 } from '@fleet-sdk/core';
 import { getCurrentHeight, getAddressBalance, getTokenInfo } from './explorer';
 import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, ERGO_EXPLORER_API, ERGO_EXPLORER_UI } from './constants';
+import { SOULBOUND_CONTRACT_ADDRESS } from './ego-token';
 
 // ─── Constants ───────────────────────────────────────────────────────
 
@@ -15,6 +20,7 @@ export interface AgentIdentityToken {
   tokenId: string;
   name: string;
   description: string;
+  soulbound: boolean;
 }
 
 export interface AgentIdentityMintParams {
@@ -26,11 +32,30 @@ export interface AgentIdentityMintParams {
   currentHeight: number;
 }
 
-// ─── Token Minting ──────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────
+
+function pubkeyFromAddress(address: string): Uint8Array {
+  const ergoAddr = ErgoAddress.fromBase58(address);
+  const tree = ergoAddr.ergoTree;
+  if (!tree.startsWith('0008cd')) {
+    throw new Error(`Address ${address} is not a P2PK address`);
+  }
+  return Uint8Array.from(Buffer.from(tree.slice(6), 'hex'));
+}
+
+// ─── Token Minting (Soulbound) ──────────────────────────────────────
 
 /**
- * Build a mint transaction for an Agent Identity NFT.
- * Creates a unique token (amount: 1) that proves on-chain agent identity.
+ * Build a SOULBOUND Agent Identity NFT mint transaction.
+ *
+ * Creates a unique token (amount: 1) locked in the soulbound contract.
+ * The agent's SigmaProp is stored in R4 — the NFT can never be
+ * transferred to a different address.
+ *
+ * Uses the same soulbound contract as EGO tokens:
+ * - Agent must sign (R4 SigmaProp)
+ * - Token must stay in same contract
+ * - Token must stay with same agent
  */
 export async function buildAgentIdentityMintTx(params: AgentIdentityMintParams): Promise<any> {
   const { agentName, agentAddress, skills, description, utxos, currentHeight } = params;
@@ -47,14 +72,20 @@ export async function buildAgentIdentityMintTx(params: AgentIdentityMintParams):
 
   const tokenName = `${AGENT_TOKEN_PREFIX}${agentName.trim()}`;
   const skillsList = skills.length > 0 ? skills.join(', ') : 'General';
-  const tokenDescription = `AgenticAiHome Verified Agent Identity. Registered by ${agentAddress}. Skills: ${skillsList}.`;
+  const tokenDescription = `AgenticAiHome Verified Agent Identity. Soulbound to ${agentAddress.slice(0, 8)}...${agentAddress.slice(-4)}. Skills: ${skillsList}.`;
 
-  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, agentAddress)
+  const agentPubkey = pubkeyFromAddress(agentAddress);
+
+  // Mint to soulbound contract with agent's key in R4
+  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_CONTRACT_ADDRESS)
     .mintToken({
       amount: '1',
       name: tokenName,
       decimals: 0,
       description: tokenDescription,
+    })
+    .setAdditionalRegisters({
+      R4: SConstant(SSigmaProp(SGroupElement(agentPubkey))),
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)
@@ -72,10 +103,11 @@ export async function buildAgentIdentityMintTx(params: AgentIdentityMintParams):
 
 /**
  * Check if an address has an agent identity token.
- * Returns the first AIH-AGENT- token found, or null.
+ * Checks both: direct address (legacy) and soulbound contract boxes.
  */
 export async function getAgentIdentityToken(address: string): Promise<AgentIdentityToken | null> {
   try {
+    // Check direct address (legacy mints)
     const balance = await getAddressBalance(address);
     const tokens = balance.confirmed.tokens || [];
 
@@ -86,12 +118,15 @@ export async function getAgentIdentityToken(address: string): Promise<AgentIdent
         try {
           const info = await getTokenInfo(token.tokenId);
           description = info?.description || '';
-        } catch {
-          // ignore
-        }
-        return { tokenId: token.tokenId, name, description };
+        } catch { /* ignore */ }
+        return { tokenId: token.tokenId, name, description, soulbound: false };
       }
     }
+
+    // Check soulbound contract boxes
+    const contractToken = await getContractIdentityToken(address);
+    if (contractToken) return contractToken;
+
     return null;
   } catch (error) {
     console.error('Failed to fetch agent identity token:', error);
@@ -100,9 +135,46 @@ export async function getAgentIdentityToken(address: string): Promise<AgentIdent
 }
 
 /**
+ * Check soulbound contract for identity NFTs belonging to this agent.
+ */
+async function getContractIdentityToken(agentAddress: string): Promise<AgentIdentityToken | null> {
+  try {
+    const response = await fetch(
+      `${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`
+    );
+    if (!response.ok) return null;
+    const data = await response.json();
+    const boxes = data.items || data || [];
+
+    const agentErgoTree = ErgoAddress.fromBase58(agentAddress).ergoTree;
+    const pubkeyHex = agentErgoTree.startsWith('0008cd') ? agentErgoTree.slice(6) : '';
+
+    for (const box of boxes) {
+      // Check R4 matches agent
+      const r4 = box.additionalRegisters?.R4;
+      if (!r4) continue;
+      if (!r4.renderedValue?.includes(pubkeyHex) && !r4.serializedValue?.includes(pubkeyHex)) continue;
+
+      // Check for identity token
+      for (const asset of (box.assets || [])) {
+        if (asset.name?.startsWith(AGENT_TOKEN_PREFIX)) {
+          return {
+            tokenId: asset.tokenId,
+            name: asset.name,
+            description: `Soulbound Agent Identity NFT (contract-locked)`,
+            soulbound: true,
+          };
+        }
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Search for all agent identity tokens via Explorer API.
- * Note: Ergo Explorer doesn't have a token search by prefix,
- * so this uses a search endpoint with best-effort matching.
  */
 export async function searchAgentIdentityTokens(): Promise<Array<{
   tokenId: string;
@@ -122,7 +194,7 @@ export async function searchAgentIdentityTokens(): Promise<Array<{
         tokenId: t.id,
         name: t.name,
         description: t.description || '',
-        ownerAddress: '', // Explorer token search doesn't return current holder
+        ownerAddress: '',
       }));
   } catch {
     return [];

@@ -680,6 +680,7 @@ export default function TaskDetailClient() {
                 <EscrowActions
                   taskId={taskId}
                   agentAddress={assignedAgent.ergoAddress || ''}
+                  agentName={assignedAgent.name || 'Agent'}
                   amountErg={String(task.budgetErg || 0)}
                   escrowBoxId={escrowBoxId}
                   escrowStatus={escrowStatus}

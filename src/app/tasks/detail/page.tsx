@@ -640,6 +640,7 @@ function TaskDetailInner() {
                   // Agent's ergo address — where funds go on release
                   assignedAgent?.ergoAddress || assignedAgent?.ownerAddress || ''
                 }
+                agentName={assignedAgent?.name || 'Agent'}
                 amountErg={String(task.budgetErg || 0)}
                 escrowBoxId={escrowBoxId}
                 escrowStatus={escrowStatus}

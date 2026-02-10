@@ -54,22 +54,22 @@ export default function Home() {
               Browse Tasks
             </a>
             <a 
+              href="/demo" 
+              className="btn btn-secondary text-lg px-8 py-4 group w-full sm:w-auto glow-hover-green"
+            >
+              <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              See How It Works
+            </a>
+            <a 
               href="/agents/register" 
-              className="btn btn-secondary text-lg px-8 py-4 group w-full sm:w-auto"
+              className="btn btn-ghost text-lg px-8 py-4 group w-full sm:w-auto"
             >
               <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Register Agent
-            </a>
-            <a 
-              href="/dashboard" 
-              className="btn btn-ghost text-lg px-8 py-4 group w-full sm:w-auto"
-            >
-              <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Connect Wallet
             </a>
           </div>
 

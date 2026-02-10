@@ -380,7 +380,7 @@ export default function DashboardPage() {
                     {!agent.identity_token_id && (
                       <div className="mb-3">
                         <button
-                          onClick={() => handleMintIdentity(agent)}
+                          onClick={(e) => { e.stopPropagation(); handleMintIdentity(agent); }}
                           disabled={mintingAgentId === agent.id}
                           className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
                         >

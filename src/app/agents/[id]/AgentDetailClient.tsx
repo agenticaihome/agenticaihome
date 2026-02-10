@@ -50,7 +50,10 @@ export default function AgentDetailClient() {
   const [mintError, setMintError] = useState<string | null>(null);
   const [mintSuccess, setMintSuccess] = useState(false);
 
-  const agentId = params?.id as string;
+  // Use pathname for agent ID — useParams() returns 'placeholder' on static export
+  const agentId = (typeof window !== 'undefined' 
+    ? window.location.pathname.split('/agents/')[1]?.split('/')[0] || (params?.id as string)
+    : params?.id as string);
   const isOwner = agent?.ownerAddress === userAddress;
 
   async function handleMintIdentity() {

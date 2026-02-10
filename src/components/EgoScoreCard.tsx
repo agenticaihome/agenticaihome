@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Agent } from '@/lib/types';
 import { 
   getEgoTier, 
@@ -28,23 +28,78 @@ export default function EgoScoreCard({
   const [factors, setFactors] = useState<EgoFactors | null>(null);
   const [breakdown, setBreakdown] = useState<EgoBreakdownType | null>(null);
   const [loading, setLoading] = useState(true);
-  const [displayScore, setDisplayScore] = useState(agent.egoScore);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Safely handle invalid ego scores
+  const safeEgoScore = useMemo(() => {
+    const score = agent?.egoScore;
+    if (typeof score !== 'number' || !isFinite(score) || score < 0 || score > 100) {
+      console.warn('Invalid ego score detected, using default:', score);
+      return 50; // Safe default for new agents
+    }
+    return Math.round(score);
+  }, [agent?.egoScore]);
+  
+  const [displayScore, setDisplayScore] = useState(safeEgoScore);
 
-  const tier = getEgoTier(agent.egoScore);
-  const { nextTier, pointsNeeded } = getScoreToNextTier(agent.egoScore);
+  const tier = getEgoTier(safeEgoScore);
+  const { nextTier, pointsNeeded } = getScoreToNextTier(safeEgoScore);
 
   // Load agent's current EGO factors
   useEffect(() => {
     const loadFactors = async () => {
       try {
+        // Validate agent data
+        if (!agent?.id) {
+          console.warn('Invalid agent data for EGO factors loading');
+          setLoading(false);
+          return;
+        }
+
         const agentFactors = await getAgentEgoFactors(agent.id);
         if (agentFactors) {
           setFactors(agentFactors);
-          const egoBreakdown = getEgoBreakdown(agent.id, agentFactors);
-          setBreakdown(egoBreakdown);
+          try {
+            const egoBreakdown = getEgoBreakdown(agent.id, agentFactors);
+            setBreakdown(egoBreakdown);
+          } catch (breakdownError) {
+            console.error('Failed to calculate EGO breakdown:', breakdownError);
+            // Continue without breakdown if calculation fails
+          }
+        } else {
+          console.warn(`No EGO factors found for agent ${agent.id}, using defaults`);
+          // Provide safe default factors for new agents
+          const defaultFactors: EgoFactors = {
+            completionRate: 100,
+            avgRating: 3.0,
+            uptime: 80,
+            accountAge: 0,
+            peerEndorsements: 0,
+            skillBenchmarks: 0,
+            disputeRate: 0,
+          };
+          setFactors(defaultFactors);
+          try {
+            const defaultBreakdown = getEgoBreakdown(agent.id, defaultFactors);
+            setBreakdown(defaultBreakdown);
+          } catch (error) {
+            console.error('Failed to create default breakdown:', error);
+          }
         }
       } catch (error) {
         console.error('Failed to load EGO factors:', error);
+        setError(error instanceof Error ? error.message : 'Unknown error loading EGO factors');
+        // Provide fallback factors to prevent component crash
+        const fallbackFactors: EgoFactors = {
+          completionRate: 100,
+          avgRating: 3.0,
+          uptime: 80,
+          accountAge: 0,
+          peerEndorsements: 0,
+          skillBenchmarks: 0,
+          disputeRate: 0,
+        };
+        setFactors(fallbackFactors);
       } finally {
         setLoading(false);
       }
@@ -59,7 +114,7 @@ export default function EgoScoreCard({
 
     let startTime: number;
     const startScore = displayScore;
-    const endScore = agent.egoScore;
+    const endScore = safeEgoScore;
     const duration = 1500; // 1.5 seconds
 
     if (startScore === endScore) return;
@@ -70,7 +125,10 @@ export default function EgoScoreCard({
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
       
       const currentScore = startScore + (endScore - startScore) * easeOutQuart;
-      setDisplayScore(Math.round(currentScore));
+      const roundedScore = Math.round(currentScore);
+      
+      // Ensure the score stays within valid bounds
+      setDisplayScore(Math.min(100, Math.max(0, roundedScore)));
 
       if (progress < 1) {
         requestAnimationFrame(animate);
@@ -78,7 +136,7 @@ export default function EgoScoreCard({
     };
 
     requestAnimationFrame(animate);
-  }, [agent.egoScore, animated]);
+  }, [safeEgoScore, animated, displayScore]);
 
   const progressPct = Math.min(displayScore, 100);
   const circumference = 2 * Math.PI * 45;
@@ -271,7 +329,7 @@ export default function EgoScoreCard({
         </div>
 
         {/* Factor Breakdown */}
-        {showFullBreakdown && factors && (
+        {showFullBreakdown && (
           <div className="flex-1">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <span className="text-xl">📊</span>
@@ -287,13 +345,23 @@ export default function EgoScoreCard({
                   </div>
                 ))}
               </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <div className="text-red-400 mb-2">⚠️ Failed to load score breakdown</div>
+                <div className="text-xs text-[var(--text-muted)]">{error}</div>
+              </div>
+            ) : !factors ? (
+              <div className="text-center py-8 text-[var(--text-muted)]">
+                <div className="mb-2">📊 No detailed breakdown available</div>
+                <div className="text-xs">Score based on basic metrics</div>
+              </div>
             ) : (
               <div className="space-y-4">
                 {Object.entries(factors).map(([factorKey, value]) => {
                   const factor = factorKey as keyof EgoFactors;
                   const status = getFactorStatus(value, factor);
                   const color = getFactorColor(status);
-                  const weight = breakdown?.factors[factor]?.weight || 0;
+                  const weight = breakdown?.factors[factor]?.weight || 0.15; // Safe default weight
                   const contribution = breakdown?.factors[factor]?.contribution || 0;
                   
                   let normalizedValue = value;

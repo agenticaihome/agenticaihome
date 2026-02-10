@@ -26,6 +26,7 @@ export default function CreateTask() {
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
+  const [networkError, setNetworkError] = useState<string | null>(null);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -79,11 +80,13 @@ export default function CreateTask() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setErrors({});
+    setNetworkError(null);
 
     try {
       // Validation: Must have connected wallet
       if (!userAddress) {
-        throw new Error('Wallet not connected');
+        throw new Error('Please connect your wallet first');
       }
       
       const taskPayload = {
@@ -95,35 +98,88 @@ export default function CreateTask() {
       };
 
       let newTask;
+      let authAttempted = false;
+      
       try {
-        const auth = await withWalletAuth(userAddress, async (msg) => {
-          const ergo = (window as any).ergo;
-          if (!ergo?.auth) throw new Error('No wallet auth');
-          return await ergo.auth(userAddress, msg);
-        });
-        const result = await verifiedCreateTask(taskPayload, auth);
+        // Try authenticated creation first
+        authAttempted = true;
+        const auth = await Promise.race([
+          withWalletAuth(userAddress, async (msg) => {
+            const ergo = (window as any).ergo;
+            if (!ergo?.auth) throw new Error('Wallet authentication not available');
+            return await ergo.auth(userAddress, msg);
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Wallet authentication timeout')), 15000))
+        ]);
+        
+        const result = await Promise.race([
+          verifiedCreateTask(taskPayload, auth),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
+        ]);
+        
         newTask = result as any;
         setWalletVerified(true);
-      } catch {
-        newTask = await createTaskData(taskPayload, userAddress);
-        setWalletVerified(false);
+      } catch (authError: any) {
+        console.log('Wallet auth failed, falling back to direct creation:', authError?.message);
+        
+        try {
+          newTask = await Promise.race([
+            createTaskData(taskPayload, userAddress),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
+          ]);
+          setWalletVerified(false);
+        } catch (fallbackError: any) {
+          console.error('Fallback creation also failed:', fallbackError);
+          
+          // Provide specific error messages based on the error type
+          if (fallbackError?.message?.includes('timeout')) {
+            throw new Error('Request timed out. Please check your connection and try again.');
+          } else if (fallbackError?.message?.includes('network') || fallbackError?.message?.includes('fetch')) {
+            throw new Error('Network error. Please check your internet connection.');
+          } else if (fallbackError?.message?.includes('database') || fallbackError?.code?.includes('PGRST')) {
+            throw new Error('Database temporarily unavailable. Please try again in a moment.');
+          } else {
+            throw new Error(fallbackError?.message || 'Failed to create task. Please try again.');
+          }
+        }
       }
 
-      // Initialize task flow
-      initTaskFlow(newTask.id, userAddress);
+      if (!newTask?.id) {
+        throw new Error('Task was created but no ID was returned. Please refresh the page.');
+      }
 
-      // Log event
+      // Initialize task flow (fire-and-forget, don't block navigation)
+      initTaskFlow(newTask.id, userAddress).catch(() => {
+        // Non-critical failure
+      });
+
+      // Log event (fire-and-forget)
       logEvent({
         type: 'task_created',
         message: `Task "${newTask.title}" created with ${formData.budgetErg} ERG budget`,
         taskId: newTask.id,
         actor: userAddress,
+      }).catch(() => {
+        // Non-critical failure
       });
 
       router.push(`/tasks/detail?id=${newTask.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating task:', error);
-      setErrors({ submit: 'Failed to create task. Please try again.' });
+      
+      const errorMessage = error?.message || 'Unknown error occurred';
+      
+      if (errorMessage.includes('Wallet not connected') || errorMessage.includes('connect your wallet')) {
+        setErrors({ submit: 'Please connect your wallet and try again.' });
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+        setNetworkError('Request timed out. Please check your connection and try again.');
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('NetworkError')) {
+        setNetworkError('Network error. Please check your internet connection and try again.');
+      } else if (errorMessage.includes('database') || errorMessage.includes('PGRST') || errorMessage.includes('Supabase')) {
+        setNetworkError('Database temporarily unavailable. Please try again in a moment.');
+      } else {
+        setErrors({ submit: errorMessage });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -285,10 +341,35 @@ export default function CreateTask() {
                   </div>
                 </div>
 
+                {/* Network Error */}
+                {networkError && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 text-sm">
+                    <div className="flex items-start gap-2">
+                      <span className="text-amber-400">⚠️</span>
+                      <div>
+                        <div className="font-medium">Connection Issue</div>
+                        <div className="mt-1">{networkError}</div>
+                        <button
+                          onClick={() => setNetworkError(null)}
+                          className="mt-2 text-xs underline opacity-80 hover:opacity-100"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Submit Error */}
                 {errors.submit && (
                   <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
                     {errors.submit}
+                    <button
+                      onClick={() => setErrors({})}
+                      className="mt-1 ml-2 text-xs underline opacity-70 hover:opacity-100"
+                    >
+                      Dismiss
+                    </button>
                   </div>
                 )}
 

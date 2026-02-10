@@ -224,15 +224,35 @@ const EGO_TIERS: EgoTier[] = [
  * Each factor is normalized to 0-100 before weighting
  */
 export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number = 1.0): number {
-  // Normalize each factor to 0-100 range
+  // Validate input factors to prevent NaN propagation
+  const validation = validateEgoFactors(factors);
+  if (!validation.isValid) {
+    console.error('Invalid EGO factors:', validation.errors);
+    // Return safe default score for new agents
+    return 50;
+  }
+
+  // Validate staking multiplier
+  if (!isFinite(stakingMultiplier) || stakingMultiplier < 0) {
+    console.warn('Invalid staking multiplier, using 1.0:', stakingMultiplier);
+    stakingMultiplier = 1.0;
+  }
+  
+  // Helper to safely normalize values and prevent NaN
+  const safeNormalize = (value: number, min: number = 0, max: number = 100): number => {
+    if (!isFinite(value)) return 0;
+    return Math.min(max, Math.max(min, value));
+  };
+
+  // Normalize each factor to 0-100 range with NaN protection
   const normalizedFactors = {
-    completionRate: Math.min(100, Math.max(0, factors.completionRate)),
-    avgRating: Math.min(100, Math.max(0, ((factors.avgRating - 1) / 4) * 100)), // 1-5 → 0-100
-    uptime: Math.min(100, Math.max(0, factors.uptime)),
-    accountAge: Math.min(100, Math.max(0, (factors.accountAge / 365) * 100)), // Days → %
-    peerEndorsements: Math.min(100, Math.max(0, Math.min(factors.peerEndorsements * 10, 100))), // Cap at 10 endorsements = 100%
-    skillBenchmarks: Math.min(100, Math.max(0, Math.min(factors.skillBenchmarks * 20, 100))), // Cap at 5 benchmarks = 100%
-    disputeRate: Math.min(100, Math.max(0, 100 - factors.disputeRate)), // Invert: lower dispute rate = higher score
+    completionRate: safeNormalize(factors.completionRate),
+    avgRating: safeNormalize(((factors.avgRating - 1) / 4) * 100), // 1-5 → 0-100
+    uptime: safeNormalize(factors.uptime),
+    accountAge: safeNormalize((factors.accountAge / 365) * 100), // Days → %
+    peerEndorsements: safeNormalize(Math.min(factors.peerEndorsements * 10, 100)), // Cap at 10 endorsements = 100%
+    skillBenchmarks: safeNormalize(Math.min(factors.skillBenchmarks * 20, 100)), // Cap at 5 benchmarks = 100%
+    disputeRate: safeNormalize(100 - factors.disputeRate), // Invert: lower dispute rate = higher score
   };
   
   // Calculate weighted sum
@@ -241,12 +261,19 @@ export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number =
   
   for (const [factor, value] of Object.entries(normalizedFactors)) {
     const weight = EGO_WEIGHTS[factor as keyof EgoFactors];
-    weightedSum += value * weight;
-    totalWeight += weight;
+    if (isFinite(weight) && isFinite(value)) {
+      weightedSum += value * weight;
+      totalWeight += weight;
+    }
   }
   
-  // Ensure weights sum to 1.0 (defensive programming)
-  const rawScore = totalWeight > 0 ? weightedSum / totalWeight : 0;
+  // Ensure we have valid weights (defensive programming)
+  if (totalWeight <= 0 || !isFinite(weightedSum)) {
+    console.error('Invalid weight calculation, using safe default');
+    return 50; // Safe default for new agents
+  }
+  
+  const rawScore = weightedSum / totalWeight;
   
   // Apply penalties for insufficient data
   let finalScore = rawScore;
@@ -261,10 +288,19 @@ export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number =
     finalScore *= Math.max(0.1, 1 - (factors.disputeRate - 10) / 100);
   }
 
-  // Apply staking multiplier boost
-  finalScore *= stakingMultiplier;
+  // Apply staking multiplier boost (cap at 50% boost)
+  const cappedMultiplier = Math.min(stakingMultiplier, 1.5);
+  finalScore *= cappedMultiplier;
   
-  return Math.round(Math.min(100, Math.max(0, finalScore)));
+  // Final safety check and return
+  const result = Math.round(Math.min(100, Math.max(0, finalScore)));
+  
+  if (!isFinite(result)) {
+    console.error('EGO calculation resulted in non-finite value, using safe default');
+    return 50;
+  }
+  
+  return result;
 }
 
 /**

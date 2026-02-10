@@ -118,42 +118,43 @@ export async function createDispute(
     throw new Error('Dispute reason is required');
   }
 
+  // Validate task exists and is in correct status
+  const { data: task, error: taskError } = await supabase
+    .from('tasks')
+    .select('status, poster_address, accepted_agent_address, budget_erg')
+    .eq('id', taskId)
+    .single();
+  
+  if (taskError) {
+    throw new Error(`Failed to get task details: ${taskError.message}`);
+  }
+
+  if (!task) {
+    throw new Error('Task not found');
+  }
+
+  // Verify task is in review status
+  if (task.status !== 'review') {
+    throw new Error(`Cannot dispute task with status '${task.status}'. Task must be in 'review' status.`);
+  }
+
+  // Verify poster ownership
+  if (task.poster_address !== sanitizedPosterAddress) {
+    throw new Error('Only the task poster can create a dispute');
+  }
+
+  // Verify agent is assigned
+  if (!task.accepted_agent_address) {
+    throw new Error('Cannot dispute task without an assigned agent');
+  }
+
   const currentHeight = await getCurrentHeight();
   const mediationDeadline = currentHeight + 720; // 720 blocks (~1 day)
 
   const now = new Date().toISOString();
   
-  // Get agent address from task if not provided
-  let finalAgentAddress = sanitizedAgentAddress;
-  if (!finalAgentAddress) {
-    const { data: task, error: taskError } = await supabase
-      .from('tasks')
-      .select('accepted_agent_address')
-      .eq('id', taskId)
-      .single();
-    
-    if (taskError) {
-      throw new Error(`Failed to get task details: ${taskError.message}`);
-    }
-    
-    finalAgentAddress = task?.accepted_agent_address || '';
-  }
-
-  // Get original amount from task if not provided
-  let finalOriginalAmount = originalAmount || 0;
-  if (!finalOriginalAmount) {
-    const { data: task, error: taskError } = await supabase
-      .from('tasks')
-      .select('budget_erg')
-      .eq('id', taskId)
-      .single();
-    
-    if (taskError) {
-      throw new Error(`Failed to get task budget: ${taskError.message}`);
-    }
-    
-    finalOriginalAmount = (task?.budget_erg || 0) * 1e9; // Convert ERG to nanoERG
-  }
+  const finalAgentAddress = sanitizedAgentAddress || task.accepted_agent_address;
+  const finalOriginalAmount = originalAmount || (task.budget_erg * 1e9); // Convert ERG to nanoERG
 
   const dispute: Partial<Dispute> = {
     taskId,
@@ -281,15 +282,20 @@ export async function proposeResolution(
   agentPercent: number,
   proposedBy: string
 ): Promise<DisputeResolution> {
-  // Validate percentages
-  if (posterPercent < 0 || posterPercent > 100) {
-    throw new Error('Poster percentage must be between 0 and 100');
+  // Validate percentages with strict checks
+  if (!Number.isInteger(posterPercent) || posterPercent < 0 || posterPercent > 100) {
+    throw new Error('Poster percentage must be an integer between 0 and 100');
   }
-  if (agentPercent < 0 || agentPercent > 100) {
-    throw new Error('Agent percentage must be between 0 and 100');
+  if (!Number.isInteger(agentPercent) || agentPercent < 0 || agentPercent > 100) {
+    throw new Error('Agent percentage must be an integer between 0 and 100');
   }
   if (posterPercent + agentPercent !== 100) {
-    throw new Error('Percentages must sum to 100');
+    throw new Error('Percentages must sum to exactly 100');
+  }
+  
+  // Prevent edge cases
+  if (posterPercent === 0 && agentPercent === 0) {
+    throw new Error('At least one party must receive some amount');
   }
 
   const sanitizedProposedBy = sanitizeErgoAddress(proposedBy);

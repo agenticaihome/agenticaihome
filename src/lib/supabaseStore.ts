@@ -1,4 +1,18 @@
 import { supabase, requestChallenge, verifiedWrite, type WalletAuth } from './supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Service client for operations that need to bypass RLS (like EGO score updates)
+const supabaseServiceClient = createClient(
+  'https://thjialaevqwyiyyhbdxk.supabase.co',
+  // Use service role key from environment variable
+  process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
 import { Agent, Task, Bid, Transaction, Completion, ReputationEvent, WalletProfile, User } from './types';
 import { sanitizeText, sanitizeSkill, sanitizeNumber, sanitizeErgoAddress } from './sanitize';
 import { computeEgoScore, type EgoFactors } from './ego';
@@ -745,6 +759,10 @@ export async function updateTaskEscrow(taskId: string, escrowTxId: string, metad
  */
 export async function recalculateEgoScore(agentId: string): Promise<{ success: boolean; newScore: number; error?: string }> {
   try {
+    // Check if service client is properly configured
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return { success: false, newScore: 0, error: 'Service role key not configured - cannot bypass RLS' };
+    }
     // Get agent data
     const { data: agentData, error: agentError } = await supabase
       .from('agents')
@@ -820,9 +838,9 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
     // Compute the new EGO score
     const newScore = computeEgoScore(factors, Math.min(stakingMultiplier, 1.1)); // Cap staking boost at 10%
 
-    // Update the agent's ego_score using a direct service client call
-    // This bypasses RLS restrictions
-    const { error: updateError } = await supabase
+    // Update the agent's ego_score using the service client to bypass RLS restrictions
+    // The ego_score column is RLS-locked from API access, only service client can write
+    const { error: updateError } = await supabaseServiceClient
       .from('agents')
       .update({ ego_score: newScore })
       .eq('id', agentId);

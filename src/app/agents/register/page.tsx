@@ -26,6 +26,7 @@ export default function RegisterAgent() {
     hourlyRateErg: ''
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [networkError, setNetworkError] = useState<string | null>(null);
   const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
   const [mintStatus, setMintStatus] = useState<'idle' | 'minting' | 'success' | 'failed'>('idle');
   const [mintedTokenId, setMintedTokenId] = useState<string | null>(null);
@@ -74,11 +75,13 @@ export default function RegisterAgent() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setErrors({});
+    setNetworkError(null);
 
     try {
       // Validation: Must have connected wallet
       if (!userAddress) {
-        throw new Error('Wallet not connected');
+        throw new Error('Please connect your wallet first');
       }
       
       const agentPayload = {
@@ -93,25 +96,55 @@ export default function RegisterAgent() {
       // Try verified write first, fall back to direct write
       let createdAgentId: string | undefined;
       try {
-        const auth = await withWalletAuth(userAddress, async (msg) => {
-          const ergo = (window as any).ergo;
-          if (!ergo?.auth) throw new Error('No wallet auth');
-          return await ergo.auth(userAddress, msg);
-        });
-        const created = await verifiedCreateAgent({
-          name: agentPayload.name,
-          description: agentPayload.description,
-          skills: agentPayload.skills,
-          hourlyRateErg: agentPayload.hourlyRateErg,
-          ergoAddress: agentPayload.ergoAddress,
-        }, auth);
+        const auth = await Promise.race([
+          withWalletAuth(userAddress, async (msg) => {
+            const ergo = (window as any).ergo;
+            if (!ergo?.auth) throw new Error('Wallet authentication not available');
+            return await ergo.auth(userAddress, msg);
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Wallet authentication timeout')), 15000))
+        ]);
+        
+        const created = await Promise.race([
+          verifiedCreateAgent({
+            name: agentPayload.name,
+            description: agentPayload.description,
+            skills: agentPayload.skills,
+            hourlyRateErg: agentPayload.hourlyRateErg,
+            ergoAddress: agentPayload.ergoAddress,
+          }, auth),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
+        ]);
+        
         createdAgentId = (created as any)?.id;
         setWalletVerified(true);
-      } catch {
-        // Fall back to direct write
-        const created = await createAgentData(agentPayload, userAddress);
-        createdAgentId = (created as any)?.id;
-        setWalletVerified(false);
+      } catch (authError: any) {
+        console.log('Wallet auth failed, falling back to direct creation:', authError?.message);
+        
+        try {
+          const created = await Promise.race([
+            createAgentData(agentPayload, userAddress),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Database operation timeout')), 15000))
+          ]);
+          createdAgentId = (created as any)?.id;
+          setWalletVerified(false);
+        } catch (fallbackError: any) {
+          console.error('Fallback creation also failed:', fallbackError);
+          
+          if (fallbackError?.message?.includes('timeout')) {
+            throw new Error('Request timed out. Please check your connection and try again.');
+          } else if (fallbackError?.message?.includes('network') || fallbackError?.message?.includes('fetch')) {
+            throw new Error('Network error. Please check your internet connection.');
+          } else if (fallbackError?.message?.includes('database') || fallbackError?.code?.includes('PGRST')) {
+            throw new Error('Database temporarily unavailable. Please try again in a moment.');
+          } else {
+            throw new Error(fallbackError?.message || 'Failed to register agent. Please try again.');
+          }
+        }
+      }
+
+      if (!createdAgentId) {
+        throw new Error('Agent was registered but no ID was returned. Please refresh the page.');
       }
 
       // Mint Agent Identity NFT on Ergo

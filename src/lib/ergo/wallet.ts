@@ -128,9 +128,9 @@ export function isSafewAvailable(): boolean {
 }
 
 export async function connectWallet(preferredWallet?: string): Promise<WalletState> {
-  const available = await waitForWallet(3000);
+  const available = await waitForWallet(5000); // Increased to 5 seconds
   if (!available) {
-    throw new WalletNotFoundError('No Ergo wallet extensions found. Install Nautilus Wallet.');
+    throw new WalletNotFoundError('No Ergo wallet extensions found. Please install Nautilus Wallet from the Chrome Web Store.');
   }
 
   const walletsToTry = preferredWallet 
@@ -142,21 +142,32 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
   for (const walletName of walletsToTry) {
     try {
       const connector = getWalletConnector(walletName);
-      if (!connector) continue;
+      if (!connector) {
+        lastError = new WalletNotFoundError(walletName);
+        continue;
+      }
 
-      // Connect via Connection API
-      const connected = await Promise.race([
+      // Check if already connected first
+      const isAlreadyConnected = await Promise.race([
+        connector.isConnected(),
+        new Promise<boolean>((_, reject) => 
+          setTimeout(() => reject(new Error('Connection check timeout')), 5000)
+        )
+      ]).catch(() => false);
+
+      // Connect via Connection API with enhanced timeout
+      const connected = isAlreadyConnected || await Promise.race([
         connector.connect({ createErgoObject: true }),
         new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Connection timeout')), WALLET_CONNECT_TIMEOUT)
+          setTimeout(() => reject(new Error(`${walletName} wallet connection timeout after ${WALLET_CONNECT_TIMEOUT / 1000} seconds. Please unlock your wallet and try again.`)), WALLET_CONNECT_TIMEOUT)
         )
       ]);
 
       if (connected) {
-        // Wait for window.ergo (Context API) to be injected
-        const contextReady = await waitForErgoContext(3000);
+        // Wait for window.ergo (Context API) to be injected with longer timeout
+        const contextReady = await waitForErgoContext(5000);
         if (!contextReady) {
-          throw new WalletConnectionError('Wallet connected but context API not available');
+          throw new WalletConnectionError(`${walletName} wallet connected but context API not available. Please refresh the page and try again.`);
         }
 
         currentConnector = connector;
@@ -171,11 +182,29 @@ export async function connectWallet(preferredWallet?: string): Promise<WalletSta
         return state;
       }
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error('Unknown error');
+      const err = error instanceof Error ? error : new Error('Unknown error');
+      
+      // Provide more specific error messages
+      if (err.message.includes('timeout')) {
+        lastError = new WalletConnectionError(`${walletName} wallet took too long to respond. Please make sure it's unlocked and try again.`);
+      } else if (err.message.includes('rejected') || err.message.includes('denied')) {
+        lastError = new WalletRejectedError();
+      } else if (err.message.includes('not found')) {
+        lastError = new WalletNotFoundError(`${walletName} wallet not found or not installed.`);
+      } else {
+        lastError = new WalletConnectionError(`Failed to connect to ${walletName}: ${err.message}`);
+      }
     }
   }
 
-  throw lastError || new WalletConnectionError('Failed to connect to any wallet');
+  // Provide helpful final error message
+  if (lastError instanceof WalletNotFoundError) {
+    throw new WalletNotFoundError('No compatible Ergo wallets found. Please install Nautilus Wallet from the Chrome Web Store.');
+  } else if (lastError instanceof WalletRejectedError) {
+    throw new WalletRejectedError();
+  } else {
+    throw new WalletConnectionError(`Failed to connect to any wallet. Please make sure your wallet is installed, unlocked, and try again. ${lastError?.message || ''}`);
+  }
 }
 
 export async function disconnectWallet(): Promise<void> {
@@ -297,13 +326,34 @@ export async function signTransaction(unsignedTx: any): Promise<any> {
   }
 }
 
-export async function submitTransaction(signedTx: any): Promise<string> {
+export async function submitTransaction(signedTx: any, timeoutMs: number = 60000): Promise<string> {
   const ergo = getErgoContext();
 
   try {
-    return await ergo.submit_tx(signedTx);
+    // Add timeout to transaction submission
+    const submitPromise = ergo.submit_tx(signedTx);
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error(`Transaction submission timeout after ${timeoutMs / 1000} seconds`)), timeoutMs)
+    );
+    
+    return await Promise.race([submitPromise, timeoutPromise]);
   } catch (error) {
     console.error('Error submitting transaction:', error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes('timeout')) {
+        throw new WalletError('Transaction submission timed out. The network may be slow. Please check the explorer or try again.');
+      } else if (error.message.includes('rejected') || error.message.includes('denied')) {
+        throw new WalletError('Transaction was rejected by the network. Please try again.');
+      } else if (error.message.includes('insufficient') || error.message.includes('funds')) {
+        throw new WalletError('Insufficient funds for this transaction.');
+      } else if (error.message.includes('double spending') || error.message.includes('already spent')) {
+        throw new WalletError('Transaction failed: One or more boxes have already been spent. Please refresh and try again.');
+      } else {
+        throw new WalletError(`Transaction failed: ${error.message}`);
+      }
+    }
+    
     throw new WalletError('Failed to submit transaction');
   }
 }

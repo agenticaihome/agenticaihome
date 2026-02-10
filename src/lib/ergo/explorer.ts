@@ -79,16 +79,31 @@ export interface Block {
 
 class ExplorerAPI {
   private baseUrl: string;
+  private readonly REQUEST_TIMEOUT = 15000; // 15 seconds
+  private readonly MAX_RETRIES = 3;
+  private readonly RETRY_DELAY = 1000; // 1 second
 
   constructor() {
     this.baseUrl = ERGO_EXPLORER_API;
   }
 
-  private async request<T>(endpoint: string): Promise<T> {
+  private async request<T>(endpoint: string, retryCount = 0): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     
     try {
-      const response = await fetch(url);
+      // Add timeout to fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.REQUEST_TIMEOUT);
+      
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'AgenticAiHome/1.0',
+        }
+      });
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`Explorer API error: ${response.status} ${response.statusText}`);
@@ -96,7 +111,38 @@ class ExplorerAPI {
       
       return await response.json();
     } catch (error) {
-      console.error(`Failed to fetch from ${url}:`, error);
+      console.error(`Failed to fetch from ${url} (attempt ${retryCount + 1}):`, error);
+      
+      // Retry logic for network errors, timeouts, and 5xx errors
+      const isRetryableError = 
+        error instanceof Error && (
+          error.name === 'AbortError' ||
+          error.name === 'TimeoutError' ||
+          error.message.includes('fetch') ||
+          error.message.includes('network') ||
+          error.message.includes('timeout') ||
+          (error.message.includes('500') || error.message.includes('502') || 
+           error.message.includes('503') || error.message.includes('504'))
+        );
+      
+      if (isRetryableError && retryCount < this.MAX_RETRIES) {
+        console.log(`Retrying request to ${url} in ${this.RETRY_DELAY}ms...`);
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (retryCount + 1)));
+        return this.request<T>(endpoint, retryCount + 1);
+      }
+      
+      // Transform error to be more user-friendly
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Explorer request timed out. The network may be slow. Please try again.');
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('network')) {
+          throw new Error('Network error connecting to Ergo Explorer. Please check your connection.');
+        } else if (error.message.includes('500') || error.message.includes('502') || 
+                   error.message.includes('503') || error.message.includes('504')) {
+          throw new Error('Ergo Explorer is temporarily unavailable. Please try again in a moment.');
+        }
+      }
+      
       throw error;
     }
   }

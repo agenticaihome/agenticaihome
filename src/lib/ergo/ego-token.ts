@@ -149,27 +149,59 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
     const response = await fetch(
       `${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`
     );
-    if (!response.ok) return [];
+    if (!response.ok) {
+      console.warn('Failed to fetch soulbound contract boxes:', response.status, response.statusText);
+      return [];
+    }
     const data = await response.json();
     const boxes = data.items || data || [];
 
-    // Get agent's ergoTree to match against R4
-    const agentErgoTree = ErgoAddress.fromBase58(agentAddress).ergoTree;
+    // Validate agent address
+    if (!agentAddress || typeof agentAddress !== 'string') {
+      console.warn('Invalid agent address for contract box filtering:', agentAddress);
+      return [];
+    }
+
+    // Get agent's public key from address
+    let agentPubkeyHex: string;
+    try {
+      const agentErgoTree = ErgoAddress.fromBase58(agentAddress).ergoTree;
+      // For P2PK addresses, the pubkey hex is in the ergoTree after "0008cd"
+      if (!agentErgoTree.startsWith('0008cd') || agentErgoTree.length < 72) {
+        console.warn('Agent address is not a valid P2PK address:', agentAddress);
+        return [];
+      }
+      agentPubkeyHex = agentErgoTree.slice(6); // Remove "0008cd" prefix
+    } catch (error) {
+      console.error('Failed to parse agent address:', error);
+      return [];
+    }
 
     // Filter boxes where R4 contains this agent's SigmaProp
-    return boxes.filter((box: any) => {
+    const agentBoxes = boxes.filter((box: any) => {
       try {
         const r4 = box.additionalRegisters?.R4;
         if (!r4) return false;
-        // R4 contains serialized SigmaProp — the rendered value should contain the pubkey
-        // For P2PK addresses, the pubkey hex is in the ergoTree after "0008cd"
-        const pubkeyHex = agentErgoTree.startsWith('0008cd') ? agentErgoTree.slice(6) : '';
-        return r4.renderedValue?.includes(pubkeyHex) || r4.serializedValue?.includes(pubkeyHex);
-      } catch {
+        
+        // R4 contains serialized SigmaProp with the agent's public key
+        // Check both serializedValue and renderedValue for the pubkey
+        const serializedValue = r4.serializedValue || '';
+        const renderedValue = r4.renderedValue || '';
+        
+        // More robust matching: check if the pubkey appears in either value
+        const pubkeyFound = serializedValue.toLowerCase().includes(agentPubkeyHex.toLowerCase()) ||
+                           renderedValue.toLowerCase().includes(agentPubkeyHex.toLowerCase());
+        
+        return pubkeyFound;
+      } catch (error) {
+        console.warn('Error processing contract box R4 register:', error);
         return false;
       }
     });
-  } catch {
+
+    return agentBoxes;
+  } catch (error) {
+    console.error('Error fetching contract boxes for agent:', error);
     return [];
   }
 }

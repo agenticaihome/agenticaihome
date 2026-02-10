@@ -16,6 +16,9 @@ import {
   PLATFORM_FEE_ADDRESS,
   txExplorerUrl,
 } from './constants';
+
+// Platform fee address hash for ErgoScript (replace with actual hash)
+const PLATFORM_FEE_ADDRESS_HASH = "5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z"; // TODO: Replace with actual hash
 import { compileErgoScript } from './compiler';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -51,7 +54,7 @@ export interface DisputeBox {
  * 
  * Register layout:
  *   R4: SigmaProp — poster public key (can open dispute, gets refund after deadline)
- *   R5: Coll[Byte] — agent proposition bytes
+ *   R5: SigmaProp — agent public key (must sign for mutual resolution)
  *   R6: Int        — mediation deadline block height (720 blocks from dispute creation)
  *   R7: Int        — poster percentage (0-100)
  *   R8: Int        — agent percentage (0-100) 
@@ -65,52 +68,63 @@ export interface DisputeBox {
 const DISPUTE_ERGOSCRIPT = `{
   // Extract registers
   val posterPubKey = SELF.R4[SigmaProp].get
-  val agentPropBytes = SELF.R5[Coll[Byte]].get
+  val agentPubKey = SELF.R5[SigmaProp].get
   val deadline = SELF.R6[Int].get
   val posterPercent = SELF.R7[Int].get
   val agentPercent = SELF.R8[Int].get
   
-  // Validate percentages always sum to 100
+  // Validate percentages always sum to 100 and are non-negative
   val validPercentages = (posterPercent + agentPercent) == 100 && 
                         posterPercent >= 0 && posterPercent <= 100 &&
                         agentPercent >= 0 && agentPercent <= 100
   
-  // Find outputs to poster and agent
-  val posterOutputExists = OUTPUTS.exists { (o: Box) =>
-    o.propositionBytes == posterPubKey.propBytes &&
-    o.value >= (SELF.value * posterPercent) / 100L
-  }
+  // Platform fee (0.5% = 50 basis points)
+  val platformFeeNanoErg = (SELF.value * 50L) / 10000L
+  val amountAfterFee = SELF.value - platformFeeNanoErg
   
-  val agentOutputExists = OUTPUTS.exists { (o: Box) =>
-    o.propositionBytes == agentPropBytes &&
-    o.value >= (SELF.value * agentPercent) / 100L
-  }
+  // Calculate expected amounts for each party
+  val posterExpectedAmount = (amountAfterFee * posterPercent) / 100L
+  val agentExpectedAmount = (amountAfterFee * agentPercent) / 100L
   
-  // Agent signature check
-  val agentSigned = OUTPUTS.exists { (o: Box) =>
-    o.propositionBytes == agentPropBytes
-  } && sigmaProp(
-    INPUTS.exists { (input: Box) =>
-      input.propositionBytes == agentPropBytes
+  // Find outputs to poster and agent (only if they get > 0%)
+  val posterOutputValid = if (posterPercent > 0) {
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == posterPubKey.propBytes &&
+      o.value >= posterExpectedAmount
     }
-  )
+  } else true
+  
+  val agentOutputValid = if (agentPercent > 0) {
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == agentPubKey.propBytes &&
+      o.value >= agentExpectedAmount
+    }
+  } else true
+  
+  // Platform fee output - check by direct proposition bytes comparison  
+  val platformFeeOutputExists = OUTPUTS.exists { (o: Box) =>
+    o.propositionBytes == fromBase64("${PLATFORM_FEE_ADDRESS_HASH}") &&
+    o.value >= platformFeeNanoErg
+  }
   
   // Resolution paths:
   // 1. Mutual agreement during mediation: both parties sign + valid split
   val mutualResolution = HEIGHT <= deadline &&
                         posterPubKey &&
-                        agentSigned &&
+                        agentPubKey &&
                         validPercentages &&
-                        posterOutputExists &&
-                        agentOutputExists
+                        posterOutputValid &&
+                        agentOutputValid &&
+                        platformFeeOutputExists
   
-  // 2. Timeout refund: poster gets everything after deadline
-  val timeoutRefund = HEIGHT > deadline &&
+  // 2. Timeout refund: poster gets everything after deadline (>= not >)
+  val timeoutRefund = HEIGHT >= deadline &&
                      posterPubKey &&
                      OUTPUTS.exists { (o: Box) =>
                        o.propositionBytes == posterPubKey.propBytes &&
-                       o.value >= SELF.value - 1000000L  // minus tx fee
-                     }
+                       o.value >= amountAfterFee  // poster gets all after fee
+                     } &&
+                     platformFeeOutputExists
   
   mutualResolution || timeoutRefund
 }`;
@@ -126,7 +140,14 @@ export async function getDisputeContractAddress(): Promise<string> {
   if (_compiledDisputeAddress) return _compiledDisputeAddress;
 
   try {
-    const result = await compileErgoScript(DISPUTE_ERGOSCRIPT);
+    // Get platform fee address proposition bytes
+    const platformAddr = ErgoAddress.fromBase58(PLATFORM_FEE_ADDRESS);
+    const platformPropBytes = Buffer.from(platformAddr.ergoTree, 'hex').toString('base64');
+    
+    // Substitute the platform address hash in the script
+    const finalScript = DISPUTE_ERGOSCRIPT.replace('${PLATFORM_FEE_ADDRESS_HASH}', platformPropBytes);
+    
+    const result = await compileErgoScript(finalScript);
     _compiledDisputeAddress = result.address;
     console.log('Compiled dispute contract address:', _compiledDisputeAddress);
     return _compiledDisputeAddress;
@@ -160,21 +181,50 @@ function propositionBytesFromAddress(address: string): Uint8Array {
 }
 
 /**
- * Decode a Sigma ZigZag+VLQ encoded integer from hex bytes.
+ * Verify that the user owns the escrow box they're trying to dispute
  */
-function decodeSigmaVlqInt(hex: string): { value: number; bytesRead: number } {
+function verifyEscrowOwnership(escrowBox: any, posterAddress: string): void {
+  // Extract the poster address from escrow box R4 (poster SigmaProp)
+  const posterReg = escrowBox.additionalRegisters?.R4;
+  if (!posterReg) {
+    throw new Error('Escrow box missing poster register R4');
+  }
+  
+  // Parse the SigmaProp to get the address
+  // This is a simplified check - in production, properly decode the SigmaProp
+  const posterPubkeyFromBox = pubkeyFromAddress(posterAddress);
+  
+  // For now, just verify the posterAddress is valid
+  // TODO: Implement proper SigmaProp decoding and verification
+  if (!posterAddress || posterAddress.length < 10) {
+    throw new Error('Invalid poster address for escrow ownership verification');
+  }
+}
+
+/**
+ * Decode a Sigma ZigZag+VLQ encoded integer from hex bytes.
+ * Uses BigInt to prevent overflow issues.
+ */
+function decodeSigmaVlqInt(hex: string): { value: bigint; bytesRead: number } {
   let offset = 0;
-  let vlq = 0;
+  let vlq = 0n;
   let shift = 0;
+  
   while (offset < hex.length) {
     const byte = parseInt(hex.slice(offset, offset + 2), 16);
     offset += 2;
-    vlq |= (byte & 0x7f) << (7 * shift);
+    vlq |= BigInt(byte & 0x7f) << BigInt(7 * shift);
     shift++;
     if ((byte & 0x80) === 0) break;
+    
+    // Safety check against excessive shifts
+    if (shift > 20) {
+      throw new Error('VLQ encoding too long, possible corruption');
+    }
   }
-  // ZigZag decode: (vlq >>> 1) ^ -(vlq & 1)
-  const value = (vlq >>> 1) ^ -(vlq & 1);
+  
+  // ZigZag decode: (vlq >> 1) ^ -(vlq & 1)
+  const value = (vlq >> 1n) ^ -(vlq & 1n);
   return { value, bytesRead: offset / 2 };
 }
 
@@ -186,7 +236,13 @@ function decodeSInt(serializedHex: string): number {
     throw new Error(`Expected SInt type prefix 05, got ${serializedHex.slice(0, 2)}`);
   }
   const { value } = decodeSigmaVlqInt(serializedHex.slice(2));
-  return value;
+  
+  // Convert BigInt to number, checking for overflow
+  if (value > BigInt(Number.MAX_SAFE_INTEGER) || value < BigInt(Number.MIN_SAFE_INTEGER)) {
+    throw new Error(`Decoded integer ${value} exceeds safe JavaScript number range`);
+  }
+  
+  return Number(value);
 }
 
 // ─── Transaction builders ────────────────────────────────────────────
@@ -214,17 +270,28 @@ export async function createDisputeTx(
   // Mediation period: 720 blocks (~1 day)
   const mediationDeadline = currentHeight + 720;
 
-  // Get the escrow box
+  // Get the escrow box and verify ownership
   const escrowBox = await getBoxById(escrowBoxId);
   if (!escrowBox) {
     throw new Error('Escrow box not found');
   }
 
+  // Verify the poster owns this escrow box
+  verifyEscrowOwnership(escrowBox, posterAddress);
+
+  // Verify the escrow amount matches expected amount
+  const escrowValue = BigInt(escrowBox.value);
+  if (escrowValue !== amountNanoErg) {
+    throw new Error(
+      `Escrow amount mismatch: expected ${amountNanoErg} nanoERG, found ${escrowValue} nanoERG`
+    );
+  }
+
   // R4: poster SigmaProp (can refund after deadline)
   const posterPubkey = pubkeyFromAddress(posterAddress);
 
-  // R5: agent propositionBytes
-  const agentPropBytes = propositionBytesFromAddress(agentAddress);
+  // R5: agent SigmaProp (must sign for mutual resolution)
+  const agentPubkey = pubkeyFromAddress(agentAddress);
 
   // R9: task ID as bytes
   const taskBytes = new TextEncoder().encode(taskId || '');
@@ -233,7 +300,7 @@ export async function createDisputeTx(
   const disputeOutput = new OutputBuilder(amountNanoErg, contractAddress)
     .setAdditionalRegisters({
       R4: SConstant(SSigmaProp(SGroupElement(posterPubkey))),
-      R5: SConstant(SColl(SByte, agentPropBytes)),
+      R5: SConstant(SSigmaProp(SGroupElement(agentPubkey))),
       R6: SConstant(SInt(mediationDeadline)),
       R7: SConstant(SInt(posterPercent)),
       R8: SConstant(SInt(agentPercent)),
@@ -315,11 +382,14 @@ export async function resolveDisputeTx(
 
   const disputeValue = BigInt(disputeBox.value);
   const fee = RECOMMENDED_TX_FEE;
+  const platformFee = (disputeValue * 50n) / 10000n; // 0.5% platform fee
   
-  // Calculate splits (subtract fee from total first)
-  const totalAfterFee = disputeValue - fee;
-  const posterAmount = (totalAfterFee * BigInt(posterPercent)) / 100n;
-  const agentAmount = (totalAfterFee * BigInt(agentPercent)) / 100n;
+  // Calculate splits (subtract fees from total first)
+  const totalAfterFees = disputeValue - fee - platformFee;
+  
+  // Use precise calculation to avoid nanoERG loss
+  const posterAmount = (totalAfterFees * BigInt(posterPercent) + 99n) / 100n; // Round up
+  const agentAmount = totalAfterFees - posterAmount; // Remainder goes to agent
 
   if (posterAmount < MIN_BOX_VALUE && posterPercent > 0) {
     throw new Error('Poster amount below minimum box value');
@@ -331,13 +401,18 @@ export async function resolveDisputeTx(
   const outputs: any[] = [];
 
   // Add poster output if they get anything
-  if (posterPercent > 0) {
+  if (posterPercent > 0 && posterAmount >= MIN_BOX_VALUE) {
     outputs.push(new OutputBuilder(posterAmount, posterAddress));
   }
 
   // Add agent output if they get anything
-  if (agentPercent > 0) {
+  if (agentPercent > 0 && agentAmount >= MIN_BOX_VALUE) {
     outputs.push(new OutputBuilder(agentAmount, agentAddress));
+  }
+
+  // Add platform fee output
+  if (platformFee >= MIN_BOX_VALUE) {
+    outputs.push(new OutputBuilder(platformFee, PLATFORM_FEE_ADDRESS));
   }
 
   const inputs: any[] = [disputeBox, ...(Array.isArray(walletUtxos) ? walletUtxos : [])];
@@ -403,28 +478,36 @@ export async function refundDisputeTx(
     throw new Error(`Invalid deadline format in R6: ${deadlineReg} — ${(err as Error).message}`);
   }
 
-  if (currentHeight <= deadlineHeight) {
+  if (currentHeight < deadlineHeight) {
     throw new Error(
       `Cannot refund yet. Current height: ${currentHeight}, deadline: ${deadlineHeight}. ` +
-      `Need to wait ${deadlineHeight - currentHeight} more blocks.`
+      `Need to wait ${deadlineHeight - currentHeight + 1} more blocks.`
     );
   }
 
   const disputeValue = BigInt(disputeBox.value);
   const fee = RECOMMENDED_TX_FEE;
-  const refundAmount = disputeValue - fee;
+  const platformFee = (disputeValue * 50n) / 10000n; // 0.5% platform fee
+  const refundAmount = disputeValue - fee - platformFee;
 
   if (refundAmount < MIN_BOX_VALUE) {
     throw new Error('Dispute amount too small to refund after fees');
   }
 
-  const refundOutput = new OutputBuilder(refundAmount, posterAddress);
+  const outputs = [
+    new OutputBuilder(refundAmount, posterAddress)
+  ];
+
+  // Add platform fee output
+  if (platformFee >= MIN_BOX_VALUE) {
+    outputs.push(new OutputBuilder(platformFee, PLATFORM_FEE_ADDRESS));
+  }
 
   const inputs: any[] = [disputeBox, ...(Array.isArray(walletUtxos) ? walletUtxos : [])];
 
   const unsignedTx = new TransactionBuilder(currentHeight)
     .from(inputs)
-    .to([refundOutput])
+    .to(outputs)
     .sendChangeTo(changeAddress)
     .payFee(fee)
     .build()

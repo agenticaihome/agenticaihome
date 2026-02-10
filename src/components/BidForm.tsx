@@ -20,6 +20,8 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
     message: ''
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [networkError, setNetworkError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -48,34 +50,66 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setErrors({});
+    setNetworkError(null);
+    setSuccess(false);
 
     try {
-      // Get user's agents to bid with
-      const userAgents = await getAgentsByOwner(userAddress);
+      // Get user's agents to bid with (with timeout)
+      const userAgents = await Promise.race([
+        getAgentsByOwner(userAddress),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout')), 10000))
+      ]);
       
-      if (userAgents.length === 0) {
-        throw new Error('You need to register an agent first to place bids');
+      if (!userAgents || userAgents.length === 0) {
+        throw new Error('You need to register an agent first to place bids. Go to the Agents page to register.');
       }
       
       // Use the first available agent (in a real app, user would select which agent)
       const agent = userAgents.find(a => a.status === 'available') || userAgents[0];
       
-      await createBidData({
-        taskId,
-        agentId: agent.id,
-        agentName: agent.name,
-        agentEgoScore: agent.egoScore,
-        proposedRate: Number(formData.proposedRate),
-        message: formData.message.trim(),
-        status: 'pending',
-      });
+      if (!agent) {
+        throw new Error('No valid agent found. Please register an agent first.');
+      }
+      
+      await Promise.race([
+        createBidData({
+          taskId,
+          agentId: agent.id,
+          agentName: agent.name,
+          agentEgoScore: agent.egoScore || 50,
+          proposedRate: Number(formData.proposedRate),
+          message: formData.message.trim(),
+          status: 'pending',
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Submit timeout')), 15000))
+      ]);
 
-      // Reset form
+      // Show success message and reset form
+      setSuccess(true);
       setFormData({ proposedRate: '', message: '' });
-      onBidSubmitted?.();
-    } catch (error) {
+      
+      // Call callback after short delay to show success message
+      setTimeout(() => {
+        onBidSubmitted?.();
+      }, 1500);
+      
+    } catch (error: any) {
       console.error('Error submitting bid:', error);
-      setErrors({ submit: error instanceof Error ? error.message : 'Failed to submit bid. Please try again.' });
+      
+      const errorMessage = error?.message || 'Unknown error';
+      
+      if (errorMessage.includes('register an agent') || errorMessage.includes('No valid agent')) {
+        setErrors({ submit: errorMessage });
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+        setNetworkError('Request timed out. Please check your connection and try again.');
+      } else if (errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('NetworkError')) {
+        setNetworkError('Network error. Please check your internet connection.');
+      } else if (errorMessage.includes('database') || errorMessage.includes('PGRST') || errorMessage.includes('Supabase')) {
+        setNetworkError('Database temporarily unavailable. Please try again in a moment.');
+      } else {
+        setErrors({ submit: errorMessage });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -148,10 +182,52 @@ export default function BidForm({ taskId, onBidSubmitted, className = '' }: BidF
           </p>
         </div>
 
+        {/* Success Message */}
+        {success && (
+          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm">
+            ✅ Bid submitted successfully! The task creator will review your proposal.
+          </div>
+        )}
+
+        {/* Network Error */}
+        {networkError && (
+          <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 text-sm">
+            <div className="flex items-start gap-2">
+              <span>⚠️</span>
+              <div>
+                <div className="font-medium">Connection Issue</div>
+                <div className="mt-1">{networkError}</div>
+                <button
+                  onClick={() => setNetworkError(null)}
+                  className="mt-2 text-xs underline opacity-80 hover:opacity-100"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Submit Error */}
         {errors.submit && (
           <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
             {errors.submit}
+            {errors.submit.includes('register an agent') && (
+              <div className="mt-2">
+                <a 
+                  href="/agents/register" 
+                  className="text-cyan-400 hover:underline text-xs"
+                >
+                  Register an agent now →
+                </a>
+              </div>
+            )}
+            <button
+              onClick={() => setErrors({})}
+              className="mt-1 ml-2 text-xs underline opacity-70 hover:opacity-100"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 

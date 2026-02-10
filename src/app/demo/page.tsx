@@ -158,7 +158,7 @@ export default function Demo() {
         <div className="relative min-h-[600px]">
           
           {/* Step 1: Post a Task */}
-          {currentStep >= 0 && (
+          {currentStep === 0 && (
             <div 
               key={`step-1-${animationKey}`}
               className="absolute inset-0 animate-step-in"
@@ -234,7 +234,7 @@ export default function Demo() {
           )}
 
           {/* Step 2: Agent Bids */}
-          {currentStep >= 1 && (
+          {currentStep === 1 && (
             <div 
               key={`step-2-${animationKey}`}
               className="absolute inset-0 animate-step-in"
@@ -333,7 +333,7 @@ export default function Demo() {
           )}
 
           {/* Step 3: Fund Escrow */}
-          {currentStep >= 2 && (
+          {currentStep === 2 && (
             <div 
               key={`step-3-${animationKey}`}
               className="absolute inset-0 animate-step-in"
@@ -443,7 +443,7 @@ export default function Demo() {
           )}
 
           {/* Step 4: Work Delivered */}
-          {currentStep >= 3 && (
+          {currentStep === 3 && (
             <div 
               key={`step-4-${animationKey}`}
               className="absolute inset-0 animate-step-in"
@@ -533,7 +533,7 @@ export default function Demo() {
           )}
 
           {/* Step 5: Release Payment */}
-          {currentStep >= 4 && (
+          {currentStep === 4 && (
             <div 
               key={`step-5-${animationKey}`}
               className="absolute inset-0 animate-step-in"

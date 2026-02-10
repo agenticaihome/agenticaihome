@@ -950,6 +950,162 @@ export async function getAgentEgoFactors(agentId: string): Promise<EgoFactors | 
 }
 
 // ============================================================
+// TASK MESSAGING AND FILE DELIVERY SYSTEM
+// ============================================================
+
+export interface TaskMessage {
+  id: string;
+  taskId: string;
+  senderAddress: string;
+  message: string;
+  messageType: 'text' | 'file' | 'delivery' | 'system';
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  createdAt: string;
+}
+
+function dbToTaskMessage(row: Record<string, unknown>): TaskMessage {
+  return {
+    id: row.id as string,
+    taskId: row.task_id as string,
+    senderAddress: row.sender_address as string,
+    message: row.message as string,
+    messageType: (row.message_type as TaskMessage['messageType']) || 'text',
+    fileUrl: row.file_url as string | undefined,
+    fileName: row.file_name as string | undefined,
+    fileSize: row.file_size as number | undefined,
+    createdAt: row.created_at as string,
+  };
+}
+
+/**
+ * Fetch all messages for a task
+ */
+export async function getTaskMessages(taskId: string): Promise<TaskMessage[]> {
+  const { data, error } = await supabase
+    .from('task_messages')
+    .select('*')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: true });
+  
+  if (error) {
+    console.error('Error fetching task messages:', error);
+    return [];
+  }
+  
+  return (data || []).map(dbToTaskMessage);
+}
+
+/**
+ * Send a message to a task chat
+ */
+export async function sendTaskMessage(
+  taskId: string,
+  senderAddress: string,
+  message: string,
+  type: TaskMessage['messageType'] = 'text',
+  fileUrl?: string,
+  fileName?: string,
+  fileSize?: number
+): Promise<TaskMessage | null> {
+  const messageData = {
+    task_id: taskId,
+    sender_address: senderAddress,
+    message: sanitizeText(message, 5000),
+    message_type: type,
+    file_url: fileUrl,
+    file_name: fileName ? sanitizeText(fileName, 255) : undefined,
+    file_size: fileSize,
+  };
+
+  const { data, error } = await supabase
+    .from('task_messages')
+    .insert(messageData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error sending task message:', error);
+    return null;
+  }
+
+  return data ? dbToTaskMessage(data) : null;
+}
+
+/**
+ * Upload a file to Supabase Storage for task messaging
+ */
+export async function uploadTaskFile(
+  taskId: string,
+  file: File
+): Promise<{ url: string; fileName: string; fileSize: number } | null> {
+  try {
+    // Validate file size (50MB max)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      throw new Error('File size exceeds 50MB limit');
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf', 'application/zip', 'application/x-zip-compressed',
+      'text/plain', 'text/csv', 'application/json',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/msword', 'application/vnd.ms-excel', 'application/vnd.ms-powerpoint'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error('File type not allowed');
+    }
+
+    // Generate unique filename
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${taskId}/${Date.now()}-${crypto.randomUUID()}.${fileExt}`;
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('task-files')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('task-files')
+      .getPublicUrl(data.path);
+
+    return {
+      url: urlData.publicUrl,
+      fileName: file.name,
+      fileSize: file.size
+    };
+  } catch (error) {
+    console.error('Error in uploadTaskFile:', error);
+    return null;
+  }
+}
+
+/**
+ * Send a system message to a task chat (for status updates, etc.)
+ */
+export async function sendSystemMessage(
+  taskId: string,
+  message: string
+): Promise<TaskMessage | null> {
+  return sendTaskMessage(taskId, 'system', message, 'system');
+}
+
+// ============================================================
 // Verified Write Operations (via Edge Functions)
 // These require wallet signature verification before writing.
 // Use these instead of direct writes for security.

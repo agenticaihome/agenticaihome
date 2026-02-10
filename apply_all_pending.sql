@@ -173,6 +173,83 @@ CREATE INDEX IF NOT EXISTS idx_reputation_events_agent ON reputation_events(agen
 CREATE INDEX IF NOT EXISTS idx_challenges_address ON challenges(wallet_address);
 
 -- ============================================================
+-- PART 5: Task Messages and File Delivery System
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS task_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES tasks(id),
+  sender_address TEXT NOT NULL,
+  message TEXT NOT NULL,
+  message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'file', 'delivery', 'system')),
+  file_url TEXT,
+  file_name TEXT,
+  file_size BIGINT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_task_messages_task_id ON task_messages(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_messages_created_at ON task_messages(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_task_messages_sender ON task_messages(sender_address);
+
+-- RLS: Only poster and agent on the task can read/write messages
+ALTER TABLE task_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Task participants can view messages" ON task_messages
+  FOR SELECT USING (
+    sender_address = current_setting('request.jwt.claims', true)::json->>'sub'
+    OR task_id IN (
+      SELECT id FROM tasks 
+      WHERE creator_address = current_setting('request.jwt.claims', true)::json->>'sub'
+         OR accepted_agent_address = current_setting('request.jwt.claims', true)::json->>'sub'
+    )
+  );
+
+-- For now, allow authenticated inserts (we validate in application code)
+CREATE POLICY "Authenticated users can send messages" ON task_messages
+  FOR INSERT WITH CHECK (true);
+
+-- Helper function to get task participants for a message
+CREATE OR REPLACE FUNCTION get_task_participants(task_id_param TEXT)
+RETURNS TABLE(creator_address TEXT, agent_address TEXT) AS $$
+BEGIN
+  RETURN QUERY 
+  SELECT t.creator_address, t.accepted_agent_address 
+  FROM tasks t 
+  WHERE t.id = task_id_param;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION get_task_participants TO postgres, anon, authenticated;
+
+-- ============================================================
+-- PART 6: File Storage Setup
+-- ============================================================
+
+-- Create storage bucket for task files (run this in Supabase dashboard or use client)
+-- INSERT INTO storage.buckets (id, name, public)
+-- VALUES ('task-files', 'task-files', true);
+
+-- Storage policies for task files
+-- Note: These policies need to be created in the Supabase dashboard Storage section
+-- or via the storage API, as they reference storage schema objects
+
+-- Policy 1: Allow authenticated users to upload files
+-- CREATE POLICY "Authenticated users can upload task files" 
+-- ON storage.objects FOR INSERT 
+-- WITH CHECK (bucket_id = 'task-files' AND auth.role() = 'authenticated');
+
+-- Policy 2: Allow public read access to task files
+-- CREATE POLICY "Public read access to task files"
+-- ON storage.objects FOR SELECT
+-- USING (bucket_id = 'task-files');
+
+-- Policy 3: Allow users to delete their own uploaded files
+-- CREATE POLICY "Users can delete own task files"
+-- ON storage.objects FOR DELETE
+-- USING (bucket_id = 'task-files' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- ============================================================
 -- DONE
 -- ============================================================
 SELECT 'All migrations applied successfully' as result;

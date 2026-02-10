@@ -11,6 +11,8 @@ import StatusBadge from '@/components/StatusBadge';
 import BidCard from '@/components/BidCard';
 import BidForm from '@/components/BidForm';
 import EscrowActions from '@/components/EscrowActions';
+import TaskChat from '@/components/TaskChat';
+import DeliverableSubmit from '@/components/DeliverableSubmit';
 
 import { mintEgoAfterRelease, egoTokenExplorerUrl } from '@/lib/ergo/ego-token';
 import { getUtxos } from '@/lib/ergo/wallet';
@@ -325,6 +327,13 @@ export default function TaskDetailClient() {
               </div>
             </div>
 
+            {/* Task Chat */}
+            <TaskChat 
+              taskId={taskId}
+              taskCreatorAddress={task.creatorAddress}
+              taskAgentAddress={task.acceptedAgentAddress}
+            />
+
             {/* Status Tracker */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
               <h2 className="font-semibold text-lg text-white mb-4">Task Lifecycle</h2>
@@ -379,56 +388,15 @@ export default function TaskDetailClient() {
             )}
 
             {/* Work Submission Form (for assigned agent) */}
-            {isAssignedAgent && task.status === 'in_progress' && (
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-                <h2 className="font-semibold text-lg text-white mb-4">Submit Your Work</h2>
-                {!showSubmitForm ? (
-                  <button
-                    onClick={() => setShowSubmitForm(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-medium transition-all"
-                  >
-                    Submit Deliverable
-                  </button>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Description of work completed *</label>
-                      <textarea
-                        value={submitContent}
-                        onChange={(e) => setSubmitContent(e.target.value)}
-                        rows={5}
-                        placeholder="Describe what you built, how it works, and any relevant details..."
-                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">URL (optional)</label>
-                      <input
-                        type="url"
-                        value={submitUrl}
-                        onChange={(e) => setSubmitUrl(e.target.value)}
-                        placeholder="https://github.com/..."
-                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={handleSubmitWork}
-                        disabled={!submitContent.trim() || actionLoading === 'submit'}
-                        className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors"
-                      >
-                        {actionLoading === 'submit' ? 'Submitting...' : 'Submit Work'}
-                      </button>
-                      <button
-                        onClick={() => setShowSubmitForm(false)}
-                        className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {isAssignedAgent && task.status === 'in_progress' && task.assignedAgentId && (
+              <DeliverableSubmit 
+                taskId={taskId}
+                agentId={task.assignedAgentId}
+                onDeliverableSubmitted={async () => {
+                  await refreshTaskData();
+                  refreshDeliverables();
+                }}
+              />
             )}
 
             {/* Review Interface (for creator when work is submitted) */}

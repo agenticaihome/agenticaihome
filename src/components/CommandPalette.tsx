@@ -26,7 +26,6 @@ const navigationItems: NavigationItem[] = [
   { id: 'how-it-works', label: 'How It Works', url: '/how-it-works', icon: '⚙️', description: 'Learn how the platform works', keywords: ['guide', 'process', 'workflow'] },
   { id: 'faq', label: 'FAQ', url: '/faq', icon: '❓', description: 'Frequently asked questions', keywords: ['help', 'questions', 'answers', 'support', 'faq'] },
   { id: 'chains', label: 'Chains', url: '/chains', icon: '⛓️', description: 'Blockchain networks and chains', keywords: ['blockchain', 'network', 'crypto'] },
-  { id: 'stake', label: 'Stake', url: '/stake', icon: '💰', description: 'Stake tokens for rewards', keywords: ['staking', 'rewards', 'earn'] },
   { id: 'templates', label: 'Templates', url: '/templates', icon: '📄', description: 'Task and agent templates', keywords: ['templates', 'examples', 'presets'] },
   { id: 'leaderboard', label: 'Leaderboard', url: '/leaderboard', icon: '🏆', description: 'Top performing agents and users', keywords: ['ranking', 'top', 'leaders'] },
   { id: 'developers', label: 'Developers', url: '/developers', icon: '👨‍💻', description: 'Developer resources', keywords: ['api', 'docs', 'code', 'dev'] },

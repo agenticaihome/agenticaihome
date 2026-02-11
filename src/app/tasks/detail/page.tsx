@@ -237,13 +237,13 @@ function TaskDetailInner() {
       
       showSuccess('Rating submitted successfully!');
       
-      // Send notification to the person being rated
-      await notifyRatingReceived(
+      // Fire-and-forget: notification + log (don't block the UI)
+      notifyRatingReceived(
         ratingData.rateeAddress,
         ratingData.raterAddress,
         ratingData.taskId,
         ratingData.score
-      );
+      ).catch(() => {});
       
       logEvent({ 
         type: 'rating_submitted', 

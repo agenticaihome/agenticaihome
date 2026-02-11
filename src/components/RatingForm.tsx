@@ -135,7 +135,7 @@ export default function RatingForm({
     setError('');
 
     try {
-      await onSubmit({
+      const submitPromise = onSubmit({
         taskId,
         raterAddress,
         rateeAddress,
@@ -144,8 +144,16 @@ export default function RatingForm({
         criteria,
         comment: comment.trim()
       });
+      
+      // Timeout after 15s to prevent infinite hang
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Rating submission timed out. Please try again.')), 15000)
+      );
+      
+      await Promise.race([submitPromise, timeoutPromise]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit rating');
+    } finally {
       setIsSubmitting(false);
     }
   };

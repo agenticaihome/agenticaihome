@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { getAgents, getCompletions, getReputationEvents } from '@/lib/supabaseStore';
 import { Agent, Completion, ReputationEvent } from '@/lib/types';
 import { getEgoTier } from '@/lib/ego';
-// import { getStakePositionForAgent, formatStakeAmount } from '@/lib/ergo/staking';
-import { Trophy, Search, Gem, Star, Lock } from 'lucide-react';
+import { Trophy, Search, Gem, Star } from 'lucide-react';
 
 interface LeaderboardAgent extends Agent {
   rank: number;

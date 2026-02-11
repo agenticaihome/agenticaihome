@@ -18,6 +18,7 @@ import RatingForm from '@/components/RatingForm';
 import TaskChat from '@/components/TaskChat';
 import DeliverableSubmit from '@/components/DeliverableSubmit';
 import DisputePanel from '@/components/DisputePanel';
+import CelautStatus from '@/components/CelautStatus';
 import TaskTimeline from '@/components/TaskTimeline';
 import TaskActionBar from '@/components/TaskActionBar';
 import type { Task, Bid, Agent } from '@/lib/types';
@@ -987,6 +988,17 @@ function TaskDetailInner() {
                   }}
                 />
               )}
+            </div>
+          )}
+
+          {/* Celaut Execution Status */}
+          {task && task.metadata?.executionMode === 'celaut' && (
+            <div className="mb-6">
+              <CelautStatus
+                enabled
+                showNodeSelector={false}
+                runningServices={task.metadata?.celautServices ?? []}
+              />
             </div>
           )}
 

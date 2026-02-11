@@ -10,6 +10,8 @@ import SkillSelector from '@/components/SkillSelector';
 import { initTaskFlow } from '@/lib/taskFlow';
 import { logEvent } from '@/lib/events';
 import { sanitizeText, sanitizeNumber, validateFormSubmission, INPUT_LIMITS } from '@/lib/sanitize';
+import CelautStatus from '@/components/CelautStatus';
+import type { ExecutionMode } from '@/lib/celaut/types';
 
 export default function CreateTask() {
   const { userAddress, profile } = useWallet();
@@ -25,6 +27,7 @@ export default function CreateTask() {
   const [deadline, setDeadline] = useState('');
   const [escrowType, setEscrowType] = useState<'simple' | 'milestone'>('simple');
   const [milestoneSplit, setMilestoneSplit] = useState<2 | 3 | 4>(2);
+  const [executionMode, setExecutionMode] = useState<ExecutionMode>('standard');
 
   const getMinDate = () => {
     const tomorrow = new Date();
@@ -296,6 +299,46 @@ export default function CreateTask() {
                     {(Number(budget) / milestoneSplit).toFixed(2)} ERG each
                   </span>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Execution Mode */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">
+              Execution Mode
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setExecutionMode('standard')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  executionMode === 'standard'
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-[var(--border-color)] hover:border-[var(--text-muted)]'
+                }`}
+              >
+                <div className="font-medium text-white text-sm">Standard</div>
+                <div className="text-xs text-[var(--text-secondary)] mt-0.5">Cloud-based execution</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setExecutionMode('celaut')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  executionMode === 'celaut'
+                    ? 'border-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
+                    : 'border-[var(--border-color)] hover:border-[var(--text-muted)]'
+                }`}
+              >
+                <div className="font-medium text-white text-sm flex items-center gap-2">
+                  Celaut <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--accent-purple)]/20 text-[var(--accent-purple)]">Testnet</span>
+                </div>
+                <div className="text-xs text-[var(--text-secondary)] mt-0.5">Decentralized P2P execution</div>
+              </button>
+            </div>
+            {executionMode === 'celaut' && (
+              <div className="mt-3">
+                <CelautStatus compact enabled onToggle={() => setExecutionMode('standard')} />
               </div>
             )}
           </div>

@@ -128,6 +128,15 @@ export default function GlobalSearch({ isOpen, onClose }: SearchProps) {
         });
       });
 
+    // Celaut pages
+    const celautPages = [
+      { id: 'celaut-main', title: 'Celaut Integration', description: 'Decentralized P2P agent execution on Celaut network', url: '/celaut' },
+      { id: 'celaut-nodes', title: 'Celaut Nodes', description: 'Available Celaut nodes and connection status', url: '/celaut' },
+    ];
+    celautPages
+      .filter(p => p.title.toLowerCase().includes(searchTerm) || p.description.toLowerCase().includes(searchTerm))
+      .forEach(p => results.push({ ...p, type: 'chain' }));
+
     return results;
   }, [query, tasks, agents]);
 

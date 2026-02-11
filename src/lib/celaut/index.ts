@@ -16,6 +16,7 @@ export {
   buildPayableMessage,
   calculatePaymentAmounts,
   prepareCelautDepositTx,
-  bridgeEscrowToGas,
+  calculateEscrowSplit,
+  calculateGasDeposit,
 } from './ergo-bridge';
 export type { CelautErgoPaymentParams, CelautErgoTxParams } from './ergo-bridge';

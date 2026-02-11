@@ -16,9 +16,9 @@ interface RecentTransaction {
   id: string;
   type: 'escrow_fund' | 'escrow_release';
   amount_erg: number;
-  tx_hash: string;
-  created_at: string;
-  task_title?: string;
+  tx_id: string;
+  date: string;
+  task_title: string;
   task_id?: string;
 }
 
@@ -77,28 +77,15 @@ export default function Demo() {
     try {
       const { data, error } = await supabase
         .from('transactions')
-        .select(`
-          id,
-          type,
-          amount_erg,
-          tx_hash,
-          created_at,
-          task:tasks(title)
-        `)
+        .select('*')
         .in('type', ['escrow_fund', 'escrow_release'])
-        .not('tx_hash', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(4);
+        .not('tx_id', 'is', null)
+        .order('date', { ascending: false })
+        .limit(6);
 
       if (error) throw error;
 
-      const formattedTransactions = data?.map(tx => ({
-        ...tx,
-        task_title: (tx.task as any)?.title || 'Unknown Task',
-        task_id: (tx.task as any)?.id
-      })) || [];
-
-      setRecentTransactions(formattedTransactions);
+      setRecentTransactions(data || []);
     } catch (error) {
       console.error('Error fetching recent transactions:', error);
     } finally {
@@ -146,6 +133,114 @@ export default function Demo() {
             Watch a complete escrow transaction from task posting to payment release — this is real data from the Ergo blockchain.
           </p>
         </div>
+
+        {/* Interactive Step Visualization */}
+        <div className="mb-20">
+          <div className="max-w-6xl mx-auto">
+            {/* Step Navigation */}
+            <div className="flex justify-center mb-12 overflow-x-auto pb-4">
+              <div className="flex space-x-4 min-w-max">
+                {steps.map((step, index) => (
+                  <button
+                    key={step.id}
+                    onClick={() => goToStep(index)}
+                    className={`flex flex-col items-center p-4 rounded-2xl transition-all duration-300 min-w-[140px] ${
+                      currentStep >= index
+                        ? 'bg-[var(--accent-cyan)]/20 border-2 border-[var(--accent-cyan)]/50'
+                        : 'bg-white/5 border-2 border-transparent hover:border-white/20'
+                    }`}
+                  >
+                    <div 
+                      className={`text-3xl mb-2 transition-transform duration-300 ${
+                        currentStep === index ? 'scale-110' : ''
+                      }`}
+                    >
+                      {step.icon}
+                    </div>
+                    <div className="text-sm font-medium text-center">
+                      {step.title}
+                    </div>
+                    {currentStep >= index && (
+                      <div className="w-2 h-2 rounded-full bg-[var(--accent-cyan)] mt-2"></div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Current Step Details */}
+            <div 
+              key={`${currentStep}-${animationKey}`} 
+              className="glass-card rounded-3xl p-8 mb-8 animate-fade-in"
+            >
+              <div className="text-center">
+                <div className="text-6xl mb-4">{steps[currentStep]?.icon}</div>
+                <h3 className="text-2xl font-bold mb-4" style={{ color: steps[currentStep]?.color }}>
+                  {steps[currentStep]?.title}
+                </h3>
+                <p className="text-lg text-[var(--text-secondary)] mb-6 max-w-2xl mx-auto">
+                  {steps[currentStep]?.description}
+                </p>
+                
+                {/* Step-specific details */}
+                {currentStep === 0 && (
+                  <div className="bg-[var(--accent-green)]/10 rounded-xl p-4 max-w-md mx-auto">
+                    <div className="text-sm text-[var(--accent-green)] font-medium">
+                      💡 Example: "Build a smart contract for escrow payments"
+                    </div>
+                  </div>
+                )}
+                {currentStep === 1 && (
+                  <div className="bg-[var(--accent-cyan)]/10 rounded-xl p-4 max-w-md mx-auto">
+                    <div className="text-sm text-[var(--accent-cyan)] font-medium">
+                      🎯 Agents submit proposals with their EGO reputation scores
+                    </div>
+                  </div>
+                )}
+                {currentStep === 2 && (
+                  <div className="bg-[var(--accent-purple)]/10 rounded-xl p-4 max-w-md mx-auto">
+                    <div className="text-sm text-[var(--accent-purple)] font-medium">
+                      🔐 Smart contract ensures trustless escrow on Ergo blockchain
+                    </div>
+                  </div>
+                )}
+                {currentStep === 3 && (
+                  <div className="bg-[var(--accent-amber)]/10 rounded-xl p-4 max-w-md mx-auto">
+                    <div className="text-sm text-[var(--accent-amber)] font-medium">
+                      ⚡ Agent completes task and provides proof of work
+                    </div>
+                  </div>
+                )}
+                {currentStep === 4 && (
+                  <div className="bg-[var(--accent-green)]/10 rounded-xl p-4 max-w-md mx-auto">
+                    <div className="text-sm text-[var(--accent-green)] font-medium">
+                      💰 ERG released + EGO reputation tokens minted automatically
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Demo Controls */}
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={restartDemo}
+                className="btn btn-secondary"
+              >
+                <span className="mr-2">🔄</span>
+                Restart Demo
+              </button>
+              <button
+                onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+                className={`btn ${isAutoPlaying ? 'btn-ghost' : 'btn-primary'}`}
+              >
+                <span className="mr-2">{isAutoPlaying ? '⏸️' : '▶️'}</span>
+                {isAutoPlaying ? 'Pause' : 'Play'}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-4xl font-bold mb-6">
@@ -242,24 +337,24 @@ export default function Demo() {
                     <div className="flex items-center justify-between">
                       <span className="text-[var(--text-muted)]">Transaction:</span>
                       <a 
-                        href={`https://explorer.ergoplatform.com/en/transactions/${tx.tx_hash}`}
+                        href={`https://explorer.ergoplatform.com/en/transactions/${tx.tx_id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[var(--accent-cyan)] hover:underline font-mono text-xs"
                       >
-                        {tx.tx_hash.substring(0, 8)}...{tx.tx_hash.substring(tx.tx_hash.length - 8)}
+                        {tx.tx_id.substring(0, 8)}...{tx.tx_id.substring(tx.tx_id.length - 8)}
                       </a>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-[var(--text-muted)]">Date:</span>
                       <span className="text-[var(--text-secondary)]">
-                        {new Date(tx.created_at).toLocaleDateString()}
+                        {tx.date}
                       </span>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-[var(--border-color)]">
                     <a 
-                      href={`https://explorer.ergoplatform.com/en/transactions/${tx.tx_hash}`}
+                      href={`https://explorer.ergoplatform.com/en/transactions/${tx.tx_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)]/80 transition-colors text-sm flex items-center gap-1"

@@ -1,10 +1,4 @@
-# SPA fallback for dynamic routes — Cloudflare Pages
-# Static known routes first
-/tasks/detail /tasks/detail.html 200
-/tasks/create /tasks/create.html 200
-/tasks/analytics /tasks/analytics.html 200
-/agents/register /agents/register.html 200
-
-# Dynamic agent/task routes — serve the placeholder shell (client reads ID from URL)
-/agents/* /agents/placeholder.html 200
-/tasks/* /tasks/placeholder.html 200
+# Cloudflare Pages SPA routing
+# Real pages (detail, create, analytics) are auto-served by CF from .html files
+# Only dynamic agent routes need placeholder shells
+/agents/:id /agents/placeholder.html 200

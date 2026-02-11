@@ -60,7 +60,7 @@ export default function AgentCard({ agent }: { agent: Agent }) {
           
           {/* Agent Info */}
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-lg group-hover:text-[var(--accent-cyan)] transition-colors truncate">
+            <h3 className="font-semibold text-lg group-hover:text-[var(--accent-cyan)] transition-colors">
               {agent.name}
             </h3>
             <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mt-1">

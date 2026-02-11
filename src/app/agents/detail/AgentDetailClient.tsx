@@ -27,6 +27,7 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
   const [completions, setCompletions] = useState<Completion[]>([]);
   const [agentTasks, setAgentTasks] = useState<Task[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
+  const [agentRatings, setAgentRatings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -118,7 +119,7 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
 
         setAgent(agentData);
         
-        // Fetch agent's completed tasks and reviews
+        // Fetch completions (legacy), completed tasks, and ratings
         const [completionsData] = await Promise.all([
           getAgentCompletions(agentId)
         ]);
@@ -138,6 +139,21 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
         } catch (err) {
           console.error('Error fetching completed tasks:', err);
         }
+
+        // Fetch actual ratings from ratings table (source of truth for reviews)
+        try {
+          const agentAddress = agentData.ergoAddress || agentData.ownerAddress || '';
+          if (agentAddress) {
+            const { data: ratingsData } = await supabase
+              .from('ratings')
+              .select('*')
+              .eq('ratee_address', agentAddress)
+              .order('created_at', { ascending: false });
+            setAgentRatings(ratingsData || []);
+          }
+        } catch (err) {
+          console.error('Error fetching ratings:', err);
+        }
       } catch (err) {
         setError('Failed to load agent profile');
         console.error('Error fetching agent:', err);
@@ -151,9 +167,14 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
 
   // Calculate agent statistics — ONLY real data, no fakes
   const tasksCompleted = agent?.tasksCompleted || 0;
-  const totalEarnings = completions.reduce((sum, c) => sum + (c.ergPaid || 0), 0);
-  const avgRating = completions.length > 0 ? completions.reduce((sum, c) => sum + c.rating, 0) / completions.length : agent?.rating || 0;
-  const reviewCount = completions.length;
+  // Total earnings from completed tasks (source of truth: tasks table budget_erg)
+  // completedTasks may have either budgetErg (typed) or budget_erg (raw DB)
+  const totalEarnings = completedTasks.reduce((sum, t: any) => sum + (parseFloat(t.budgetErg?.toString() || t.budget_erg?.toString() || '0') || 0), 0);
+  // Reviews from ratings table (source of truth), fallback to agent.rating from DB
+  const reviewCount = agentRatings.length;
+  const avgRating = reviewCount > 0 
+    ? agentRatings.reduce((sum, r) => sum + (r.score || 0), 0) / reviewCount 
+    : (agent?.rating || 0);
   const completionRate = agent?.completionRate || (tasksCompleted > 0 ? 100 : 0);
 
   const stats = {
@@ -163,13 +184,14 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
     reviewCount,
   };
 
-  // EGO score breakdown — based on real on-chain formula
-  // Reviews score scales with both rating quality AND review count (min 5 reviews for full weight)
-  const reviewWeight = Math.min(reviewCount / 5, 1); // 0-1 scale, full weight at 5+ reviews
+  // EGO score breakdown — reflects the actual 0-100 EGO scoring system
+  // EGO is earned through task completions with quality bonuses
+  // Base score starts at 50, increases/decreases based on completion ratings
+  const egoScore = agent?.egoScore || 0;
   const egoBreakdown = [
-    { category: 'Task Completions', score: Math.min(Math.floor(tasksCompleted * 2.5), 500), max: 500 },
-    { category: 'Client Reviews', score: Math.min(Math.floor(avgRating * 60 * reviewWeight), 300), max: 300, detail: `${reviewCount} review${reviewCount !== 1 ? 's' : ''}` },
-    { category: 'Completion Rate', score: Math.min(Math.floor(completionRate * 2), 200), max: 200 },
+    { category: 'Base Score', score: Math.min(50, egoScore), max: 50, detail: 'Starting reputation' },
+    { category: 'Completion Bonus', score: Math.max(0, Math.min(egoScore - 50, 30)), max: 30, detail: `${tasksCompleted} task${tasksCompleted !== 1 ? 's' : ''} completed` },
+    { category: 'Rating Bonus', score: Math.max(0, Math.min(egoScore - 80, 20)), max: 20, detail: `${reviewCount} review${reviewCount !== 1 ? 's' : ''}, ${avgRating.toFixed(1)} avg` },
   ];
 
   const getTierInfo = (egoScore: number) => {
@@ -507,7 +529,7 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <div className="flex items-center gap-4">
-                            <span className="text-emerald-400 font-medium">Σ{task.budgetErg} ERG</span>
+                            <span className="text-emerald-400 font-medium">Σ{(task as any).budget_erg || task.budgetErg || 0} ERG</span>
                             {taskCompletion && (
                               <div className="flex items-center gap-1">
                                 <Star className="w-3 h-3 text-yellow-400" />

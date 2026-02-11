@@ -21,6 +21,7 @@ import DeliverableSubmit from '@/components/DeliverableSubmit';
 import DisputePanel from '@/components/DisputePanel';
 import TaskTimeline from '@/components/TaskTimeline';
 import TaskActionBar from '@/components/TaskActionBar';
+import WorkflowProgress from '@/components/WorkflowProgress';
 import type { Task, Bid, Agent } from '@/lib/types';
 import type { Milestone } from '@/lib/ergo/milestone-escrow';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';

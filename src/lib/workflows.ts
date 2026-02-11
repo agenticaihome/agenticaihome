@@ -64,7 +64,7 @@ export async function createWorkflowTasks(
       
       if (step.dependsOn !== undefined && step.dependsOn < i) {
         // This task depends on a previous step
-        taskStatus = 'open';
+        taskStatus = 'pending';
         dependsOnTaskId = createdTasks[step.dependsOn].id;
       }
       

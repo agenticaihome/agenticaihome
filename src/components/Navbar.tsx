@@ -266,17 +266,52 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {open && (
-        <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-primary)]/95 backdrop-blur-xl animate-in slide-in-from-top duration-200">
+        <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-primary)]/95 backdrop-blur-xl animate-in slide-in-from-top duration-200 max-h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="container p-4 space-y-1">
-            {/* Primary Navigation Links */}
+            {/* WALLET FIRST — most important action on mobile */}
+            {wallet.connected && wallet.address ? (
+              <div className="pb-3 mb-2 border-b border-[var(--border-color)]">
+                <div className="flex items-center justify-between bg-[var(--accent-green)]/5 border border-[var(--accent-green)]/20 rounded-xl px-4 py-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="w-3 h-3 rounded-full bg-[var(--accent-green)] animate-pulse" />
+                    <div>
+                      <span className="text-sm font-medium text-[var(--accent-green)] block">
+                        Σ {parseFloat(wallet.balance.erg).toFixed(4)} ERG
+                      </span>
+                      <span className="text-xs text-[var(--text-tertiary)] font-mono">
+                        {wallet.address.slice(0, 10)}...{wallet.address.slice(-4)}
+                      </span>
+                    </div>
+                  </div>
+                  <button onClick={() => { disconnect(); setOpen(false); }} className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-md hover:bg-red-500/10 transition-colors">
+                    Disconnect
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <a href="/dashboard" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium bg-[var(--accent-cyan)]/10 text-[var(--accent-cyan)] border border-[var(--accent-cyan)]/20 hover:bg-[var(--accent-cyan)]/20 transition-all" onClick={() => setOpen(false)}>
+                    Dashboard
+                  </a>
+                  <a href="/agents/register" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] transition-all" onClick={() => setOpen(false)}>
+                    + Agent
+                  </a>
+                  <a href="/tasks/create" className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] border border-[var(--border-color)] transition-all" onClick={() => setOpen(false)}>
+                    + Task
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="pb-3 mb-2 border-b border-[var(--border-color)]">
+                <WalletConnect inline onConnect={() => setOpen(false)} />
+              </div>
+            )}
+
+            {/* Navigation Links — compact */}
             {primaryLinks.map(link => (
               <a 
                 key={link.href} 
                 href={link.href} 
-                className={`flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
-                  link.highlight && !isActive(link.href)
-                    ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
-                    : isActive(link.href)
+                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  isActive(link.href)
                     ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
                     : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]'
                 }`}
@@ -291,7 +326,7 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setMobileMoreOpen(!mobileMoreOpen)}
-                className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] w-full text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]"
+                className="flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]"
                 aria-expanded={mobileMoreOpen}
                 aria-haspopup="true"
               >
@@ -301,36 +336,20 @@ export default function Navbar() {
                 </svg>
               </button>
               
-              {/* Secondary Navigation Links */}
               {mobileMoreOpen && (
-                <div className="mt-1 ml-4 space-y-1 border-l-2 border-[var(--border-color)] pl-4">
+                <div className="mt-1 ml-4 space-y-0.5 border-l-2 border-[var(--border-color)] pl-4">
                   {secondaryLinks.map(link => (
                     <a 
                       key={link.href} 
                       href={link.href} 
-                      className={`flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
-                        link.href === '/trust'
-                          ? isActive(link.href)
-                            ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/10'
-                            : 'text-[var(--text-secondary)] hover:text-[var(--accent-green)] hover:bg-[var(--bg-card)]'
-                          : isActive(link.href)
-                            ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
-                            : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]'
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        isActive(link.href)
+                          ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)]'
                       }`}
-                      onClick={() => {
-                        setOpen(false);
-                        setMobileMoreOpen(false);
-                      }}
-                      aria-current={isActive(link.href) ? 'page' : undefined}
+                      onClick={() => { setOpen(false); setMobileMoreOpen(false); }}
                     >
-                      <div className="flex items-center gap-3">
-                        {link.href === '/trust' && (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                          </svg>
-                        )}
-                        {link.label}
-                      </div>
+                      {link.label}
                       {link.comingSoon && (
                         <span className="text-[10px] font-medium text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 px-1.5 py-0.5 rounded-md">
                           Soon
@@ -341,46 +360,6 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-            
-            {wallet.connected && wallet.address ? (
-              <div className="pt-3 mt-3 border-t border-[var(--border-color)] space-y-1">
-                <div className="flex items-center gap-3 px-3 py-2 mb-2">
-                  <span className="w-3 h-3 rounded-full bg-[var(--accent-green)] animate-pulse" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-[var(--accent-green)]">
-                      Connected — Σ {parseFloat(wallet.balance.erg).toFixed(4)} ERG
-                    </span>
-                    <span className="text-xs text-[var(--text-tertiary)] font-mono">
-                      {wallet.address.slice(0, 12)}...{wallet.address.slice(-4)}
-                    </span>
-                  </div>
-                </div>
-                
-                <a href="/agents/register" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  Register Agent
-                </a>
-                <a href="/tasks/create" className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] transition-all min-h-[44px]" onClick={() => setOpen(false)}>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                  </svg>
-                  Post Task
-                </a>
-                <button onClick={() => { disconnect(); setOpen(false); }} className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-[var(--text-secondary)] hover:text-red-400 hover:bg-red-500/10 transition-all min-h-[44px] w-full text-left">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Disconnect
-                </button>
-              </div>
-            ) : (
-              <div className="pt-4 mt-3 border-t border-[var(--border-color)]">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 px-1">Connect Wallet</h3>
-                <WalletConnect inline onConnect={() => setOpen(false)} />
-              </div>
-            )}
           </div>
         </div>
       )}

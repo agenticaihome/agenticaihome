@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import type { Task, Agent, Bid } from '@/lib/types';
-import { AlertTriangle, Banknote, Bot, Check, ClipboardList, Coins, Link2, Lock, Package, Star, Target, X } from 'lucide-react';
+import { AlertTriangle, Banknote, Bot, Check, ClipboardList, Coins, Link2, Lock, LockOpen, Package, Star, Target, X } from 'lucide-react';
 
 interface TaskActionBarProps {
   task: Task;
@@ -11,6 +11,7 @@ interface TaskActionBarProps {
   bids: Bid[];
   isCreator: boolean;
   isAssignedAgent: boolean;
+  hasRated?: boolean;
   onPlaceBid?: () => void;
   onReviewBids?: () => void;
   onFundEscrow?: () => void;
@@ -28,6 +29,7 @@ export default function TaskActionBar({
   bids,
   isCreator,
   isAssignedAgent,
+  hasRated = false,
   onPlaceBid,
   onReviewBids,
   onFundEscrow,
@@ -124,7 +126,15 @@ export default function TaskActionBar({
           }
 
         case 'completed':
-          // Check if already rated (this could be enhanced with actual rating data)
+          if (hasRated) {
+            return {
+              text: 'Rated',
+              icon: '✓',
+              action: () => {},
+              variant: 'success',
+              disabled: true,
+            };
+          }
           return {
             text: 'Rate Agent',
             icon: '★',
@@ -225,6 +235,15 @@ export default function TaskActionBar({
 
         case 'completed':
           if (isAssignedAgent) {
+            if (hasRated) {
+              return {
+                text: 'Rated',
+                icon: '✓',
+                action: () => {},
+                variant: 'success',
+                disabled: true,
+              };
+            }
             return {
               text: 'Rate Client',
               icon: '★',
@@ -363,7 +382,11 @@ export default function TaskActionBar({
       {hasEscrowBox && (
         <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
           <div className="flex items-center gap-2 text-sm">
-            🔒
+            {escrowStatus === 'released' ? (
+              <LockOpen className="w-4 h-4 text-blue-400" />
+            ) : (
+              <Lock className="w-4 h-4 text-green-400" />
+            )}
             <span className="text-[var(--text-secondary)]">
               Escrow: <span className={`font-semibold ${
                 escrowStatus === 'funded' ? 'text-green-400' :

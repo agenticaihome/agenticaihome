@@ -816,6 +816,7 @@ function TaskDetailInner() {
             bids={bids}
             isCreator={!!isCreator}
             isAssignedAgent={!!isAssignedAgent}
+            hasRated={isCreator ? creatorRatingExists : agentRatingExists}
             onPlaceBid={() => setShowBidForm(true)}
             onReviewBids={() => {
               const bidsSection = document.getElementById('bids-section');

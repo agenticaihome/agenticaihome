@@ -40,7 +40,7 @@ export default function AgentDetailClient() {
   const params = useParams();
   const router = useRouter();
   const { userAddress } = useWallet();
-  const { getAgent, getTasksByCreatorAddress, getAgentCompletions } = useData();
+  const { tasks, getAgent, getTasksByCreatorAddress, getAgentCompletions } = useData();
   
   const [agent, setAgent] = useState<Agent | null>(null);
   const [completions, setCompletions] = useState<Completion[]>([]);
@@ -171,23 +171,34 @@ export default function AgentDetailClient() {
     fetchAgentData();
   }, [agentId, getAgent, getAgentCompletions]);
 
-  // Calculate agent statistics
+  // Calculate agent statistics from real data
   const stats = {
-    responseTime: Math.floor(Math.random() * 24) + 1, // Mock data
-    avgDeliveryTime: Math.floor(Math.random() * 72) + 24, // Mock data
-    completionRate: completions.length > 0 ? (completions.length / (completions.length + Math.floor(Math.random() * 5))) * 100 : 95,
+    responseTime: null as number | null, // Would need real response time data
+    avgDeliveryTime: completions.length > 0 
+      ? completions.reduce((sum, c) => {
+          // Find the corresponding task to get the creation date
+          const task = tasks.find(t => t.id === c.taskId);
+          if (c.completedAt && task?.createdAt) {
+            const completed = new Date(c.completedAt).getTime();
+            const created = new Date(task.createdAt).getTime();
+            return sum + (completed - created) / (1000 * 60 * 60); // hours
+          }
+          return sum;
+        }, 0) / completions.length
+      : null,
+    completionRate: completions.length > 0 ? 100 : null as number | null, // All completions are by definition complete
     totalEarnings: completions.reduce((sum, c) => sum + c.ergPaid, 0),
     avgRating: completions.length > 0 ? completions.reduce((sum, c) => sum + c.rating, 0) / completions.length : agent?.rating || 0,
     reviewCount: completions.length,
   };
 
-  // Generate mock EGO score breakdown
+  // Calculate real EGO score breakdown based on actual performance
   const egoBreakdown = [
     { category: 'Task Completions', score: Math.floor((agent?.tasksCompleted || 0) * 2.5), max: 500 },
     { category: 'Client Reviews', score: Math.floor(stats.avgRating * 60), max: 300 },
-    { category: 'Response Time', score: Math.max(200 - stats.responseTime * 5, 50), max: 200 },
-    { category: 'Platform Activity', score: Math.floor(Math.random() * 100) + 50, max: 150 },
-    { category: 'Specialization Bonus', score: Math.floor(Math.random() * 50), max: 100 },
+    { category: 'Response Time', score: stats.responseTime ? Math.max(200 - stats.responseTime * 5, 50) : 150, max: 200 },
+    { category: 'Platform Activity', score: Math.min((agent?.tasksCompleted || 0) * 10, 150), max: 150 },
+    { category: 'Specialization Bonus', score: Math.min((agent?.skills?.length || 0) * 20, 100), max: 100 },
   ];
 
   const getTierInfo = (egoScore: number) => {
@@ -351,10 +362,14 @@ export default function AgentDetailClient() {
               <Clock className="w-5 h-5 text-blue-400" />
               <h3 className="font-medium text-[var(--text-secondary)]">Response Time</h3>
             </div>
-            <p className="text-2xl font-bold text-white">{stats.responseTime}h</p>
+            <p className="text-2xl font-bold text-white">
+              {stats.responseTime ? `${stats.responseTime.toFixed(1)}h` : 'N/A'}
+            </p>
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-xs text-[var(--text-muted)]">Average first response</p>
-              {stats.responseTime <= 4 && (
+              <p className="text-xs text-[var(--text-muted)]">
+                {stats.responseTime ? 'Average first response' : 'No data available'}
+              </p>
+              {stats.responseTime && stats.responseTime <= 4 && (
                 <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Fast</span>
               )}
             </div>
@@ -365,15 +380,17 @@ export default function AgentDetailClient() {
               <Target className="w-5 h-5 text-emerald-400" />
               <h3 className="font-medium text-[var(--text-secondary)]">Completion Rate</h3>
             </div>
-            <p className="text-2xl font-bold text-white">{stats.completionRate.toFixed(1)}%</p>
+            <p className="text-2xl font-bold text-white">
+              {stats.completionRate ? `${stats.completionRate.toFixed(1)}%` : 'N/A'}
+            </p>
             <div className="flex items-center gap-2 mt-2">
               <div className="w-16 bg-[var(--bg-card-hover)] rounded-full h-1.5">
                 <div 
                   className="bg-emerald-400 h-1.5 rounded-full"
-                  style={{ width: `${stats.completionRate}%` }}
+                  style={{ width: `${stats.completionRate || 0}%` }}
                 />
               </div>
-              {stats.completionRate >= 90 && (
+              {stats.completionRate && stats.completionRate >= 90 && (
                 <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Excellent</span>
               )}
             </div>
@@ -384,9 +401,13 @@ export default function AgentDetailClient() {
               <Calendar className="w-5 h-5 text-purple-400" />
               <h3 className="font-medium text-[var(--text-secondary)]">Avg Delivery</h3>
             </div>
-            <p className="text-2xl font-bold text-white">{stats.avgDeliveryTime}h</p>
+            <p className="text-2xl font-bold text-white">
+              {stats.avgDeliveryTime ? `${stats.avgDeliveryTime.toFixed(1)}h` : 'N/A'}
+            </p>
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-xs text-[var(--text-muted)]">From task start to completion</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                {stats.avgDeliveryTime ? 'From task start to completion' : 'No completed tasks yet'}
+              </p>
             </div>
           </div>
 

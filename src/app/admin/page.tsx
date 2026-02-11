@@ -185,8 +185,20 @@ export default function AdminDashboard() {
       ? allTaskValues.reduce((sum, val) => sum + val, 0) / allTaskValues.length 
       : 0;
     
-    // Mock average completion time (in hours) - would need real data in production
-    const averageCompletionTime = 48;
+    // Calculate average completion time from real data
+    const completedTasksWithTime = tasks.filter(t => 
+      t.status === 'completed' && 
+      t.createdAt && 
+      t.completedAt
+    );
+    
+    const averageCompletionTime = completedTasksWithTime.length > 0 
+      ? completedTasksWithTime.reduce((sum, task) => {
+          const created = new Date(task.createdAt!).getTime();
+          const completed = new Date(task.completedAt!).getTime();
+          return sum + (completed - created) / (1000 * 60 * 60); // hours
+        }, 0) / completedTasksWithTime.length
+      : null; // No data yet
     
     return {
       averageTaskSize,
@@ -497,9 +509,11 @@ export default function AdminDashboard() {
             <div className="text-center p-4 rounded-lg bg-[var(--bg-secondary)]/50">
               <Clock className="w-8 h-8 text-[var(--accent-purple)] mx-auto mb-3" />
               <h4 className="text-2xl font-bold text-[var(--text-primary)]">
-                {financialSummary.averageCompletionTime}h
+                {financialSummary.averageCompletionTime ? `${financialSummary.averageCompletionTime.toFixed(1)}h` : 'N/A'}
               </h4>
-              <p className="text-[var(--text-secondary)] text-sm">Avg Completion Time</p>
+              <p className="text-[var(--text-secondary)] text-sm">
+                {financialSummary.averageCompletionTime ? 'Avg Completion Time' : 'No completed tasks yet'}
+              </p>
               <div className="mt-2 text-xs text-[var(--accent-purple)]">
                 Estimated average
               </div>

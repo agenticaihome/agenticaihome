@@ -85,36 +85,34 @@ function CommentWithTransparency({ comment }: {
   } 
 }) {
   const [raterInfo, setRaterInfo] = useState<{
-    averageGivenRating: number;
-    reliability: number;
+    averageGivenRating: number | null;
+    reliability: number | null;
     totalRatingsGiven: number;
   } | null>(null);
 
   // For demo purposes, simulate rater stats
   // In production, you'd fetch this using getRaterReliability()
   useEffect(() => {
-    // Simulated rater patterns for demonstration
-    const avgGiven = 1 + Math.random() * 4; // 1-5 range
-    const reliability = Math.random();
-    
+    // In production, this would fetch real rater data from the database
+    // For now, show that rater info is not available
     setRaterInfo({
-      averageGivenRating: avgGiven,
-      reliability: reliability,
-      totalRatingsGiven: Math.floor(Math.random() * 20) + 1
+      averageGivenRating: null,
+      reliability: null,
+      totalRatingsGiven: 0
     });
   }, []);
 
   const getRaterBadge = () => {
     if (!raterInfo) return null;
 
-    if (raterInfo.reliability > 0.8 && raterInfo.totalRatingsGiven >= 5) {
+    if (raterInfo.reliability && raterInfo.reliability > 0.8 && raterInfo.totalRatingsGiven >= 5) {
       return (
         <div className="flex items-center gap-1 text-xs text-emerald-400">
           <Shield className="w-3 h-3" />
           <span>Verified Rater</span>
         </div>
       );
-    } else if (raterInfo.reliability < 0.3 || Math.abs(raterInfo.averageGivenRating - 3.0) > 1.5) {
+    } else if ((raterInfo.reliability && raterInfo.reliability < 0.3) || (raterInfo.averageGivenRating && Math.abs(raterInfo.averageGivenRating - 3.0) > 1.5)) {
       return (
         <div className="flex items-center gap-1 text-xs text-amber-400">
           <AlertTriangle className="w-3 h-3" />
@@ -128,6 +126,7 @@ function CommentWithTransparency({ comment }: {
 
   const getRaterTooltip = () => {
     if (!raterInfo) return '';
+    if (!raterInfo.averageGivenRating) return 'Rater information not available';
     return `This rater gives an average of ${raterInfo.averageGivenRating.toFixed(1)} stars across ${raterInfo.totalRatingsGiven} reviews`;
   };
 
@@ -142,7 +141,7 @@ function CommentWithTransparency({ comment }: {
           {comment.raterRole === 'creator' ? 'Task Creator' : 'Agent'} • {new Date(comment.createdAt).toLocaleDateString()}
           {raterInfo && (
             <span className="ml-1 opacity-70">
-              (avg: {raterInfo.averageGivenRating.toFixed(1)}⭐)
+              {raterInfo.averageGivenRating ? `(avg: ${raterInfo.averageGivenRating.toFixed(1)}⭐)` : '(no data)'}
             </span>
           )}
         </div>

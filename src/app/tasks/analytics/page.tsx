@@ -49,8 +49,20 @@ export default function TaskAnalytics() {
     
     const successRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
     
-    // Calculate average completion time (mock data)
-    const avgCompletionTime = 48; // hours
+    // Calculate average completion time from real data
+    const completedTasksWithTime = tasks.filter(t => 
+      t.status === 'completed' && 
+      t.createdAt && 
+      t.completedAt
+    );
+    
+    const avgCompletionTime = completedTasksWithTime.length > 0 
+      ? completedTasksWithTime.reduce((sum, task) => {
+          const created = new Date(task.createdAt!).getTime();
+          const completed = new Date(task.completedAt!).getTime();
+          return sum + (completed - created) / (1000 * 60 * 60); // hours
+        }, 0) / completedTasksWithTime.length
+      : null; // No data yet
     
     return {
       totalTasks,
@@ -117,25 +129,35 @@ export default function TaskAnalytics() {
     }));
   }, [tasks]);
 
-  // Generate time series data for task creation
+  // Generate time series data for task creation from real data
   const taskCreationData = useMemo(() => {
     const now = new Date();
     const days = selectedTimeRange === '7d' ? 7 : selectedTimeRange === '30d' ? 30 : 90;
     
     return Array.from({ length: days }, (_, i) => {
       const date = new Date(now.getTime() - (days - 1 - i) * 24 * 60 * 60 * 1000);
-      const tasksCreated = Math.floor(Math.random() * 10) + 2; // Mock data
-      const tasksCompleted = Math.floor(Math.random() * 8) + 1; // Mock data
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Count actual tasks created and completed on this date
+      const tasksCreated = tasks.filter(task => 
+        task.createdAt && task.createdAt.split('T')[0] === dateStr
+      ).length;
+      
+      const tasksCompleted = tasks.filter(task => 
+        task.completedAt && task.completedAt.split('T')[0] === dateStr
+      ).length;
       
       return {
-        date: date.toISOString().split('T')[0],
+        date: dateStr,
         dateDisplay: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         created: tasksCreated,
         completed: tasksCompleted,
-        cumulative: tasksCreated + i * 3
+        cumulative: tasks.filter(task => 
+          task.createdAt && task.createdAt.split('T')[0] <= dateStr
+        ).length
       };
     });
-  }, [selectedTimeRange]);
+  }, [selectedTimeRange, tasks]);
 
   // Budget range distribution
   const budgetRanges = useMemo(() => {
@@ -182,7 +204,26 @@ export default function TaskAnalytics() {
             <h3 className="text-2xl font-bold text-white">{platformStats.totalTasks.toLocaleString()}</h3>
             <p className="text-[var(--text-secondary)] text-sm">Total Tasks Posted</p>
             <div className="mt-2 text-xs text-emerald-400">
-              +{Math.floor(Math.random() * 20) + 5}% this week
+              {(() => {
+                const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+                const thisWeekTasks = tasks.filter(task => 
+                  task.createdAt && new Date(task.createdAt) >= oneWeekAgo
+                ).length;
+                const previousWeekTasks = tasks.filter(task => {
+                  const taskDate = task.createdAt ? new Date(task.createdAt) : null;
+                  if (!taskDate) return false;
+                  const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+                  return taskDate >= twoWeeksAgo && taskDate < oneWeekAgo;
+                }).length;
+                
+                if (previousWeekTasks === 0) {
+                  return thisWeekTasks > 0 ? 'New activity this week' : 'No data yet';
+                }
+                
+                const change = ((thisWeekTasks - previousWeekTasks) / previousWeekTasks) * 100;
+                const sign = change > 0 ? '+' : '';
+                return `${sign}${change.toFixed(1)}% vs last week`;
+              })()}
             </div>
           </div>
 
@@ -418,7 +459,9 @@ export default function TaskAnalytics() {
                       <Clock className="w-4 h-4 text-yellow-400" />
                       <span className="text-[var(--text-secondary)] text-sm">Avg Completion</span>
                     </div>
-                    <span className="text-yellow-400 font-medium">{platformStats.avgCompletionTime}h</span>
+                    <span className="text-yellow-400 font-medium">
+                      {platformStats.avgCompletionTime ? `${platformStats.avgCompletionTime.toFixed(1)}h` : 'No data yet'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -463,10 +506,12 @@ export default function TaskAnalytics() {
 
           <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 text-center">
             <Calendar className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
-            <h3 className="text-2xl font-bold text-white">{platformStats.avgCompletionTime}h</h3>
+            <h3 className="text-2xl font-bold text-white">
+              {platformStats.avgCompletionTime ? `${platformStats.avgCompletionTime.toFixed(1)}h` : 'N/A'}
+            </h3>
             <p className="text-[var(--text-secondary)]">Average Completion Time</p>
             <div className="mt-2 text-xs text-emerald-400">
-              23% faster than last month
+              {platformStats.avgCompletionTime ? 'Based on completed tasks' : 'Waiting for completions'}
             </div>
           </div>
 

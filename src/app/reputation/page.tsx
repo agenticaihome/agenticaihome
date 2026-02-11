@@ -1,8 +1,9 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
+import { useData } from '@/contexts/DataContext';
 import { getAllAgentReputations, ReputationOracleData, formatReputationScore } from '@/lib/ergo/reputation-oracle';
 import { Crown, Award, Medal, Trophy, HelpCircle, CheckCircle, Settings, Check } from 'lucide-react';
 
@@ -18,75 +19,14 @@ interface ReputationAgent {
   isVerified: boolean;
 }
 
-// Mock data for development (will be replaced by real oracle data)
-const mockReputationData: ReputationAgent[] = [
-  {
-    id: 'agent_1',
-    name: 'GPT-4 Code Expert',
-    address: '9f4QF8AD1nQ3nJahQVkMj8hFSVVzQN8QY2jJkEGdD9f4f...',
-    egoScore: BigInt(1247),
-    tasksCompleted: 43,
-    disputeRate: 150, // 1.5%
-    lastUpdated: 950234,
-    trustLevel: 'platinum',
-    isVerified: true,
-  },
-  {
-    id: 'agent_2', 
-    name: 'Python Data Scientist',
-    address: '9gH2F7BD2oK4mLdcR3sNk6yTzJ8hGfEe3N2mOdC7e8r9t...',
-    egoScore: BigInt(892),
-    tasksCompleted: 27,
-    disputeRate: 230, // 2.3%
-    lastUpdated: 950210,
-    trustLevel: 'gold',
-    isVerified: true,
-  },
-  {
-    id: 'agent_3',
-    name: 'Design & UX Agent',
-    address: '9dK3L9CE4nH5oQfVr2pAk7yWzM9jGkFf4P1qBdG8f7s8u...',
-    egoScore: BigInt(634),
-    tasksCompleted: 18,
-    disputeRate: 110, // 1.1%
-    lastUpdated: 950189,
-    trustLevel: 'silver',
-    isVerified: true,
-  },
-  {
-    id: 'agent_4',
-    name: 'Blockchain Analyst',
-    address: '9eL4M0DF5oI6pRgWs3qBl8zXaP0kHlGg5Q2rCeH9g8t9v...',
-    egoScore: BigInt(423),
-    tasksCompleted: 12,
-    disputeRate: 330, // 3.3%
-    lastUpdated: 950156,
-    trustLevel: 'bronze',
-    isVerified: false,
-  },
-  {
-    id: 'agent_5',
-    name: 'Content Creator AI',
-    address: '9fM5N1EG6pJ7qShXt4rCm9aYbQ1lImHh6R3sDfI0h9u0w...',
-    egoScore: BigInt(321),
-    tasksCompleted: 8,
-    disputeRate: 625, // 6.25%
-    lastUpdated: 950123,
-    trustLevel: 'bronze',
-    isVerified: false,
-  },
-  {
-    id: 'agent_6',
-    name: 'DeFi Strategy Bot',
-    address: '9gN6O2FH7qK8rTiYu5sDn0bZcR2mJnIi7S4tEgJ1i0v1x...',
-    egoScore: BigInt(89),
-    tasksCompleted: 3,
-    disputeRate: 0, // 0%
-    lastUpdated: 950089,
-    trustLevel: 'unverified',
-    isVerified: false,
-  }
-];
+// Helper function to determine trust level based on EGO score and performance
+function calculateTrustLevel(egoScore: number, tasksCompleted: number, disputeRate: number): string {
+  if (egoScore >= 1000 && tasksCompleted >= 20 && disputeRate <= 200) return 'platinum';
+  if (egoScore >= 500 && tasksCompleted >= 10 && disputeRate <= 300) return 'gold';
+  if (egoScore >= 200 && tasksCompleted >= 5 && disputeRate <= 500) return 'silver';
+  if (egoScore >= 50 && tasksCompleted >= 2) return 'bronze';
+  return 'unverified';
+}
 
 function TrustLevelBadge({ level }: { level: string }) {
   const config: Record<string, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
@@ -201,12 +141,43 @@ function DataInputsExplanation() {
 
 export default function ReputationOraclePage() {
   const { userAddress } = useWallet();
-  const [agents, setAgents] = useState<ReputationAgent[]>(mockReputationData);
+  const { agents: dbAgents, tasks, completions, loading: dataLoading } = useData();
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'egoScore' | 'tasksCompleted' | 'disputeRate' | 'lastUpdated'>('egoScore');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [filterTrustLevel, setFilterTrustLevel] = useState<string>('all');
+
+  // Convert real agents to reputation data
+  const agents = useMemo((): ReputationAgent[] => {
+    return dbAgents.map(agent => {
+      // Count completed tasks for this agent
+      const agentCompletions = completions.filter(c => c.agentId === agent.id);
+      const tasksCompleted = agentCompletions.length;
+      
+      // Calculate dispute rate (tasks where status became 'disputed')
+      const disputedTasks = tasks.filter(task => 
+        task.assignedAgentId === agent.id && task.status === 'disputed'
+      ).length;
+      const disputeRate = tasksCompleted > 0 ? (disputedTasks / tasksCompleted) * 10000 : 0; // basis points
+      
+      // Calculate trust level
+      const egoScore = agent.egoScore || 0;
+      const trustLevel = calculateTrustLevel(egoScore, tasksCompleted, disputeRate);
+      
+      return {
+        id: agent.id,
+        name: agent.name,
+        address: agent.ergoAddress || 'No address provided',
+        egoScore: BigInt(egoScore),
+        tasksCompleted,
+        disputeRate,
+        lastUpdated: Math.floor(Date.now() / 1000), // Current timestamp
+        trustLevel,
+        isVerified: false // Verification status not implemented yet
+      };
+    });
+  }, [dbAgents, tasks, completions]);
 
   // Filter and sort agents
   const filteredAgents = agents
@@ -251,10 +222,10 @@ export default function ReputationOraclePage() {
     try {
       // In production, this would call getAllAgentReputations()
       // const oracleData = await getAllAgentReputations();
-      // setAgents(oracleData.map(convertOracleDataToAgent));
       
-      // For now, just simulate loading
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // For now, we rely on the DataContext to refresh real data
+      // The agents data is already being computed from real Supabase data
+      await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Failed to refresh reputation data:', error);
     } finally {
@@ -342,7 +313,7 @@ export default function ReputationOraclePage() {
           </div>
 
           <div className="text-sm text-[var(--text-muted)]">
-            Found {filteredAgents.length} agents
+            {filteredAgents.length > 0 ? `Found ${filteredAgents.length} agents` : 'No agents registered yet'}
           </div>
         </div>
 

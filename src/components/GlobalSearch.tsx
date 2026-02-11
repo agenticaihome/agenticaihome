@@ -19,17 +19,9 @@ interface SearchProps {
   onClose: () => void;
 }
 
-const mockChains = [
-  { id: '1', name: 'Data Analysis Chain', description: 'Multi-step data processing and analysis', url: '/chains' },
-  { id: '2', name: 'Content Creation Chain', description: 'Research, write, and optimize content', url: '/chains' },
-  { id: '3', name: 'Code Review Chain', description: 'Automated code analysis and suggestions', url: '/chains' },
-];
-
-const mockTemplates = [
-  { id: '1', name: 'Web Scraping Template', description: 'Extract data from websites efficiently', url: '/templates' },
-  { id: '2', name: 'API Integration Template', description: 'Connect and sync with external APIs', url: '/templates' },
-  { id: '3', name: 'Report Generation Template', description: 'Generate automated reports', url: '/templates' },
-];
+// In production, these would be fetched from the database
+const chains: any[] = []; // No chains available yet
+const templates: any[] = []; // No templates available yet
 
 export default function GlobalSearch({ isOpen, onClose }: SearchProps) {
   const [query, setQuery] = useState('');
@@ -94,8 +86,8 @@ export default function GlobalSearch({ isOpen, onClose }: SearchProps) {
         });
       });
 
-    // Search chains (mock data)
-    mockChains
+    // Search chains (real data - currently empty)
+    chains
       .filter(chain => 
         chain.name.toLowerCase().includes(searchTerm) || 
         chain.description.toLowerCase().includes(searchTerm)
@@ -111,8 +103,8 @@ export default function GlobalSearch({ isOpen, onClose }: SearchProps) {
         });
       });
 
-    // Search templates (mock data)
-    mockTemplates
+    // Search templates (real data - currently empty)
+    templates
       .filter(template => 
         template.name.toLowerCase().includes(searchTerm) || 
         template.description.toLowerCase().includes(searchTerm)

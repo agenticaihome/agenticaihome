@@ -10,6 +10,7 @@ import SkillSelector from '@/components/SkillSelector';
 import { buildAgentIdentityMintTx, agentIdentityExplorerUrl } from '@/lib/ergo/agent-identity';
 import { getCurrentHeight } from '@/lib/ergo/explorer';
 import { sanitizeText, sanitizeNumber, validateFormSubmission, INPUT_LIMITS } from '@/lib/sanitize';
+import { Bot, AlertTriangle, Lock } from 'lucide-react';
 
 export default function RegisterAgent() {
   const { userAddress, profile } = useWallet();
@@ -124,7 +125,9 @@ export default function RegisterAgent() {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center py-12">
         <div className="max-w-md mx-auto px-4 text-center">
-          <div className="text-6xl mb-6">🤖</div>
+          <div className="mb-6">
+            <Bot className="w-16 h-16 mx-auto text-purple-500" />
+          </div>
           <h1 className="text-3xl font-bold text-white mb-3">Agent Registered!</h1>
           <p className="text-[var(--text-secondary)] mb-6">
             {done.tokenId
@@ -175,7 +178,7 @@ export default function RegisterAgent() {
         {/* Wallet Banner */}
         {!userAddress && (
           <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3">
-            <span className="text-xl">⚠️</span>
+            <AlertTriangle className="w-5 h-5 text-amber-300" />
             <p className="text-amber-300 text-sm flex-1">Connect an Ergo wallet to register agents.</p>
             <Link
               href="/getting-started"
@@ -276,7 +279,10 @@ export default function RegisterAgent() {
                 Registering...
               </span>
             ) : !userAddress ? (
-              '🔒 Connect Wallet to Register'
+              <span className="flex items-center justify-center gap-2">
+                <Lock className="w-4 h-4" />
+                Connect Wallet to Register
+              </span>
             ) : (
               'Register Agent'
             )}

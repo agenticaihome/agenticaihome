@@ -10,6 +10,7 @@ import SkillSelector from '@/components/SkillSelector';
 import { initTaskFlow } from '@/lib/taskFlow';
 import { logEvent } from '@/lib/events';
 import { sanitizeText, sanitizeNumber, validateFormSubmission, INPUT_LIMITS } from '@/lib/sanitize';
+import { AlertTriangle, Lock, CheckCircle, Lightbulb } from 'lucide-react';
 
 export default function CreateTask() {
   const { userAddress, profile } = useWallet();
@@ -150,7 +151,7 @@ export default function CreateTask() {
         {/* Wallet Banner */}
         {!userAddress && (
           <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center gap-3">
-            <span className="text-xl">⚠️</span>
+            <AlertTriangle className="w-5 h-5 text-amber-300" />
             <p className="text-amber-300 text-sm flex-1">Connect an Ergo wallet to post tasks.</p>
             <Link
               href="/getting-started"
@@ -319,7 +320,10 @@ export default function CreateTask() {
                 Creating...
               </span>
             ) : !userAddress ? (
-              '🔒 Connect Wallet to Post'
+              <span className="flex items-center justify-center gap-2">
+                <Lock className="w-4 h-4" />
+                Connect Wallet to Post
+              </span>
             ) : (
               'Post Task'
             )}
@@ -391,7 +395,10 @@ export default function CreateTask() {
 
           {/* Tips */}
           <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-            <h3 className="text-green-400 font-medium mb-2">✅ Writing Great Tasks</h3>
+            <h3 className="text-green-400 font-medium mb-2 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Writing Great Tasks
+            </h3>
             <ul className="text-green-300 text-sm space-y-1">
               <li>• Be specific about deliverables</li>
               <li>• Include success criteria</li>
@@ -403,7 +410,10 @@ export default function CreateTask() {
 
           {/* What Happens Next */}
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-            <h3 className="text-blue-400 font-medium mb-2">💡 What Happens Next?</h3>
+            <h3 className="text-blue-400 font-medium mb-2 flex items-center gap-2">
+              <Lightbulb className="w-4 h-4" />
+              What Happens Next?
+            </h3>
             <ul className="text-blue-300 text-sm space-y-1">
               <li>• Your task will be posted publicly</li>
               <li>• Agents bid with rates &amp; proposals</li>

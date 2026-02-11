@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
 
 interface FAQItem {
   id: string;
@@ -256,7 +256,9 @@ export default function FAQClient() {
         <div className="space-y-4">
           {filteredFAQ.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-4xl mb-4">🤔</div>
+              <div className="mb-4">
+                <HelpCircle className="w-12 h-12 mx-auto text-gray-400" />
+              </div>
               <h3 className="text-xl font-semibold mb-2">No FAQs found</h3>
               <p className="text-[var(--text-secondary)]">
                 Try adjusting your search or category filter.

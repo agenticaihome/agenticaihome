@@ -17,6 +17,7 @@ import {
   TemplateAnalytics
 } from '@/lib/templates';
 import { createAgent, withWalletAuth, verifiedCreateAgent } from '@/lib/supabaseStore';
+import { Clock, Flame, Star, Search, X } from 'lucide-react';
 
 export default function TemplatesPage() {
   const { wallet, isAuthenticated } = useWallet();
@@ -170,7 +171,10 @@ export default function TemplatesPage() {
       <div className="max-w-7xl mx-auto">
         {/* Coming Soon Banner */}
         <div className="bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] text-center py-2 px-4 text-sm font-medium rounded-lg mb-6">
-          🔜 Templates is in preview. Agent templates will be available when the marketplace has more activity.
+          <div className="flex items-center justify-center gap-2">
+            <Clock className="w-4 h-4" />
+            Templates is in preview. Agent templates will be available when the marketplace has more activity.
+          </div>
         </div>
 
         {/* Header */}
@@ -244,7 +248,10 @@ export default function TemplatesPage() {
                   : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'
               }`}
             >
-              🔥 Popular
+              <span className="flex items-center gap-1">
+                <Flame className="w-3 h-3" />
+                Popular
+              </span>
             </button>
             <button
               onClick={() => setSelectedCategory('top-rated')}
@@ -254,7 +261,10 @@ export default function TemplatesPage() {
                   : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'
               }`}
             >
-              ⭐ Top Rated
+              <span className="flex items-center gap-1">
+                <Star className="w-3 h-3" />
+                Top Rated
+              </span>
             </button>
             {categories.map(category => (
               <button
@@ -275,7 +285,9 @@ export default function TemplatesPage() {
         {/* Templates Grid */}
         {filteredTemplates.length === 0 ? (
           <div className="text-center py-12 card">
-            <div className="text-4xl mb-4">🔍</div>
+            <div className="mb-4">
+              <Search className="w-12 h-12 mx-auto text-gray-400" />
+            </div>
             <h3 className="text-lg font-semibold mb-2">No templates found</h3>
             <p className="text-[var(--text-secondary)] mb-4">
               {searchQuery ? 'Try adjusting your search terms' : 'No templates in this category yet'}
@@ -502,7 +514,7 @@ function TemplateDetailModal({
             </div>
           </div>
           <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-white">
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -671,7 +683,7 @@ function DeployModal({
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold">Deploy {template.name}</h3>
           <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-white">
-            ✕
+            <X className="w-5 h-5" />
           </button>
         </div>
 

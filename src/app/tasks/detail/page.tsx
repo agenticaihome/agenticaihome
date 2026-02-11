@@ -23,6 +23,7 @@ import TaskActionBar from '@/components/TaskActionBar';
 import type { Task, Bid, Agent } from '@/lib/types';
 import type { Milestone } from '@/lib/ergo/milestone-escrow';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';
+import { CheckCircle, X, Lock, AlertTriangle, ExternalLink, RotateCcw, PartyPopper, DollarSign } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -507,12 +508,18 @@ function TaskDetailInner() {
           {/* Success/Error Messages */}
           {successMsg && (
             <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 text-sm">
-              ✅ {successMsg}
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                {successMsg}
+              </div>
             </div>
           )}
           {error && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-              ❌ {error}
+              <div className="flex items-center gap-2">
+                <X className="w-4 h-4" />
+                {error}
+              </div>
             </div>
           )}
 
@@ -709,8 +716,18 @@ function TaskDetailInner() {
                     >
                       Cancel
                     </button>
-                    {walletVerified === true && <span className="text-xs text-emerald-400">🔒 Verified</span>}
-                    {walletVerified === false && <span className="text-xs text-yellow-400">⚠️ Unverified</span>}
+                    {walletVerified === true && (
+                      <span className="text-xs text-emerald-400 flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        Verified
+                      </span>
+                    )}
+                    {walletVerified === false && (
+                      <span className="text-xs text-yellow-400 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        Unverified
+                      </span>
+                    )}
                   </div>
                 </form>
               )}
@@ -784,8 +801,9 @@ function TaskDetailInner() {
                     </div>
                     <p className="text-[var(--text-secondary)] mb-2 whitespace-pre-wrap break-words">{d.content}</p>
                     {d.deliverableUrl && (
-                      <a href={d.deliverableUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm">
-                        🔗 {d.deliverableUrl}
+                      <a href={d.deliverableUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1">
+                        <ExternalLink className="w-3 h-3" />
+                        {d.deliverableUrl}
                       </a>
                     )}
                     {d.reviewNotes && d.status === 'revision_requested' && (
@@ -809,14 +827,22 @@ function TaskDetailInner() {
                         disabled={reviewing}
                         className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-[var(--bg-card)] text-white rounded-xl font-medium transition-colors"
                       >
-                        {reviewing ? 'Processing...' : '✅ Looks Good — Approve'}
+                        {reviewing ? 'Processing...' : (
+                          <span className="flex items-center justify-center gap-2">
+                            <CheckCircle className="w-4 h-4" />
+                            Looks Good — Approve
+                          </span>
+                        )}
                       </button>
                       <button
                         onClick={() => setShowRevisionInput(true)}
                         disabled={reviewing}
                         className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-[var(--bg-card)] text-white rounded-xl font-medium transition-colors"
                       >
-                        🔄 Needs Changes
+                        <span className="flex items-center justify-center gap-2">
+                          <RotateCcw className="w-4 h-4" />
+                          Needs Changes
+                        </span>
                       </button>
                     </div>
                   ) : (
@@ -918,7 +944,7 @@ function TaskDetailInner() {
                         await updateAgentStats(task.assignedAgentId, egoDelta, `Milestone task completed: ${task.title} (${task.budgetErg} ERG)`);
                       }
                       
-                      showSuccess(`🎉 Final milestone completed! Task finished. TX: ${txId.slice(0, 12)}...`);
+                      showSuccess(`Final milestone completed! Task finished. TX: ${txId.slice(0, 12)}...`);
                     } else {
                       // Just move to next milestone
                       setCurrentMilestone(milestoneIndex + 1);
@@ -938,7 +964,7 @@ function TaskDetailInner() {
                         completedMilestones: JSON.stringify(newCompleted)
                       });
                       
-                      showSuccess(`✓ Milestone ${milestoneIndex + 1} completed! TX: ${txId.slice(0, 12)}...`);
+                      showSuccess(`Milestone ${milestoneIndex + 1} completed! TX: ${txId.slice(0, 12)}...`);
                     }
                     
                     logEvent({ type: 'escrow_released', message: `Milestone ${milestoneIndex + 1} released: ${txId}`, taskId: task.id, actor: userAddress || '' });
@@ -997,7 +1023,7 @@ function TaskDetailInner() {
                     }
                     
                     logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId: task.id, actor: userAddress || '' });
-                    showSuccess(`💰 Payment released! 99% to agent, 1% to treasury. TX: ${txId.slice(0, 12)}...`);
+                    showSuccess(`Payment released! 99% to agent, 1% to treasury. TX: ${txId.slice(0, 12)}...`);
                     await loadData();
 
                     // Check if user should rate after completion

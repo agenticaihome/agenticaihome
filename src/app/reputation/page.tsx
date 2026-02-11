@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { getAllAgentReputations, ReputationOracleData, formatReputationScore } from '@/lib/ergo/reputation-oracle';
+import { Crown, Award, Medal, Trophy, HelpCircle, CheckCircle, Settings, Check } from 'lucide-react';
 
 interface ReputationAgent {
   id: string;
@@ -88,19 +89,19 @@ const mockReputationData: ReputationAgent[] = [
 ];
 
 function TrustLevelBadge({ level }: { level: string }) {
-  const config: Record<string, { label: string; bg: string; text: string; icon: string }> = {
-    platinum: { label: 'Platinum', bg: 'bg-purple-500/20', text: 'text-purple-400', icon: '👑' },
-    gold: { label: 'Gold', bg: 'bg-yellow-500/20', text: 'text-yellow-400', icon: '🥇' },
-    silver: { label: 'Silver', bg: 'bg-gray-400/20', text: 'text-gray-400', icon: '🥈' },
-    bronze: { label: 'Bronze', bg: 'bg-orange-500/20', text: 'text-orange-400', icon: '🥉' },
-    unverified: { label: 'Unverified', bg: 'bg-gray-600/20', text: 'text-gray-500', icon: '❓' },
+  const config: Record<string, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
+    platinum: { label: 'Platinum', bg: 'bg-purple-500/20', text: 'text-purple-400', icon: <Crown className="w-3 h-3" /> },
+    gold: { label: 'Gold', bg: 'bg-yellow-500/20', text: 'text-yellow-400', icon: <Trophy className="w-3 h-3" /> },
+    silver: { label: 'Silver', bg: 'bg-gray-400/20', text: 'text-gray-400', icon: <Award className="w-3 h-3" /> },
+    bronze: { label: 'Bronze', bg: 'bg-orange-500/20', text: 'text-orange-400', icon: <Medal className="w-3 h-3" /> },
+    unverified: { label: 'Unverified', bg: 'bg-gray-600/20', text: 'text-gray-500', icon: <HelpCircle className="w-3 h-3" /> },
   };
 
   const c = config[level] || config.unverified;
   
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-medium ${c.bg} ${c.text} flex items-center gap-1`}>
-      <span>{c.icon}</span>
+      {c.icon}
       {c.label}
     </span>
   );
@@ -158,7 +159,10 @@ function DataInputsExplanation() {
         
         <div className="grid md:grid-cols-2 gap-4 mt-6">
           <div className="bg-[var(--bg-secondary)] p-4 rounded-lg">
-            <h3 className="font-semibold text-[var(--accent-green)] mb-2">✅ What This Enables</h3>
+            <h3 className="font-semibold text-[var(--accent-green)] mb-2 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              What This Enables
+            </h3>
             <ul className="text-sm space-y-1">
               <li>• Other dApps can query agent scores</li>
               <li>• Automated reputation-based decisions</li>
@@ -168,7 +172,10 @@ function DataInputsExplanation() {
           </div>
           
           <div className="bg-[var(--bg-secondary)] p-4 rounded-lg">
-            <h3 className="font-semibold text-[var(--accent-cyan)] mb-2">🔧 How It Works</h3>
+            <h3 className="font-semibold text-[var(--accent-cyan)] mb-2 flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              How It Works
+            </h3>
             <ul className="text-sm space-y-1">
               <li>• AgenticAiHome treasury updates oracle boxes</li>
               <li>• Each box contains: EGO score, tasks, disputes</li>
@@ -179,9 +186,12 @@ function DataInputsExplanation() {
         </div>
 
         <div className="mt-4 p-3 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/20 rounded-lg">
-          <p className="text-sm text-[var(--accent-amber)]">
-            <strong>🔧 Oracle deployment pending:</strong> Reputation scores are currently computed off-chain. 
-            On-chain oracle boxes will be deployed soon for true decentralized access.
+          <p className="text-sm text-[var(--accent-amber)] flex items-start gap-2">
+            <Settings className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <span>
+              <strong>Oracle deployment pending:</strong> Reputation scores are currently computed off-chain. 
+              On-chain oracle boxes will be deployed soon for true decentralized access.
+            </span>
           </p>
         </div>
       </div>
@@ -268,7 +278,7 @@ export default function ReputationOraclePage() {
         {/* Oracle Status Badge */}
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/20 rounded-lg">
-            <span className="text-[var(--accent-amber)]">🔧</span>
+            <Settings className="w-4 h-4 text-[var(--accent-amber)]" />
             <span className="text-[var(--accent-amber)] font-medium">
               Oracle deployment pending — scores computed off-chain for now
             </span>
@@ -403,10 +413,10 @@ export default function ReputationOraclePage() {
                   <tr key={agent.id} className="hover:bg-[var(--bg-card-hover)] transition-colors">
                     <td className="px-6 py-4">
                       <div>
-                        <div className="font-medium text-[var(--text-primary)] mb-1">
+                        <div className="font-medium text-[var(--text-primary)] mb-1 flex items-center gap-2">
                           {agent.name}
                           {agent.isVerified && (
-                            <span className="ml-2 text-[var(--accent-green)]" title="Verified Agent">✓</span>
+                            <span title="Verified Agent"><Check className="w-4 h-4 text-[var(--accent-green)]" /></span>
                           )}
                         </div>
                         <ExplorerLink address={agent.address} />

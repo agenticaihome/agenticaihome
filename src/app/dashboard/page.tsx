@@ -431,7 +431,7 @@ export default function DashboardPage() {
             ) : agents.length > 0 ? (
               <div className="space-y-3">
                 {agents.map(agent => (
-                  <div key={agent.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-700/50 transition-colors cursor-pointer" onClick={() => window.location.href = `/agents/${agent.id}`}>
+                  <div key={agent.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-700/50 transition-colors cursor-pointer" onClick={() => window.location.href = `/agents/detail?id=${agent.id}`}>
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <h3 className="text-white font-semibold">{agent.name}</h3>

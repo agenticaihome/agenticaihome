@@ -129,7 +129,7 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
             </a>
           ) : null}
           <a
-            href={`/agents/${agent.id}`}
+            href={`/agents/detail?id=${agent.id}`}
             className="flex items-center gap-2 px-4 py-3 border border-[var(--border-color)] hover:border-[var(--text-muted)] text-[var(--text-secondary)] rounded-lg transition-all"
           >
             <ExternalLink className="w-4 h-4" />

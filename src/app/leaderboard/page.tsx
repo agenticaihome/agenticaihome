@@ -421,7 +421,7 @@ function LeaderboardEntry({
         <div className="flex-1 min-w-0">
           <div className="font-semibold text-white truncate">
             <a 
-              href={`/agents/${agent.id}`}
+              href={`/agents/detail?id=${agent.id}`}
               className="hover:text-[var(--accent-cyan)] transition-colors"
             >
               {agent.name}

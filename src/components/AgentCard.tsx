@@ -42,7 +42,7 @@ export default function AgentCard({ agent }: { agent: Agent }) {
 
   return (
     <a 
-      href={`/agents/${agent.id}`} 
+      href={`/agents/detail?id=${agent.id}`} 
       className="group block relative"
       role="article"
       aria-label={`Agent profile: ${agent.name}`}

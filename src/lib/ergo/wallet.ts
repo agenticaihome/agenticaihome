@@ -465,18 +465,63 @@ export async function getBalance(): Promise<WalletBalance> {
 }
 
 export async function getAddress(): Promise<string> {
-  const ergo = getErgoContext();
-  try {
-    return await ergo.get_change_address();
-  } catch (error) {
-    console.error('Error getting address:', error);
-    throw new WalletError('Failed to get address');
+  // Try wallet context first (Nautilus/SAFEW)
+  if (window.ergo) {
+    try {
+      const ergo = getErgoContext();
+      return await ergo.get_change_address();
+    } catch {
+      // Fall through to ErgoPay address
+    }
   }
+
+  // Fallback: ErgoPay stored address
+  if (ergoPayAddress) {
+    return ergoPayAddress;
+  }
+
+  throw new WalletError('No wallet connected. Cannot get address.');
 }
 
-export async function getUtxos(): Promise<any[]> {
-  const ergo = getErgoContext();
-  return await ergo.get_utxos();
+export async function getUtxos(address?: string): Promise<any[]> {
+  // Try wallet context first (Nautilus/SAFEW)
+  if (window.ergo) {
+    try {
+      const ergo = getErgoContext();
+      return await ergo.get_utxos();
+    } catch {
+      // Fall through to explorer
+    }
+  }
+
+  // Fallback: fetch UTXOs from explorer (for ErgoPay connections)
+  const addr = address || ergoPayAddress;
+  if (!addr) {
+    throw new WalletError('No wallet connected. Cannot fetch UTXOs.');
+  }
+
+  const { ERGO_EXPLORER_API } = await import('./constants');
+  const response = await fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${addr}?limit=50`);
+  if (!response.ok) {
+    throw new WalletError('Failed to fetch UTXOs from explorer');
+  }
+  const data = await response.json();
+  const boxes = data.items || data || [];
+
+  // Convert explorer format to EIP-12 format that Fleet SDK expects
+  return boxes.map((box: any) => ({
+    boxId: box.boxId,
+    transactionId: box.transactionId,
+    index: box.index,
+    ergoTree: box.ergoTree,
+    creationHeight: box.creationHeight,
+    value: box.value?.toString() || box.value,
+    assets: (box.assets || []).map((a: any) => ({
+      tokenId: a.tokenId,
+      amount: a.amount?.toString() || a.amount,
+    })),
+    additionalRegisters: box.additionalRegisters || {},
+  }));
 }
 
 export async function signTransaction(unsignedTx: any): Promise<any> {

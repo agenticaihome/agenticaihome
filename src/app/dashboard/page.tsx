@@ -97,7 +97,7 @@ export default function DashboardPage() {
     setMintingAgentId(agent.id);
     setMintResult(null);
     try {
-      const [utxos, height] = await Promise.all([getUtxos(), getCurrentHeight()]);
+      const [utxos, height] = await Promise.all([getUtxos(userAddress), getCurrentHeight()]);
       const unsignedTx = await buildAgentIdentityMintTx({
         agentName: agent.name,
         agentAddress: userAddress,

@@ -78,7 +78,7 @@ export default function AgentDetailClient() {
     setMintError(null);
     try {
       const [utxos, height] = await Promise.all([
-        getUtxos(),
+        getUtxos(userAddress),
         getCurrentHeight(),
       ]);
       const unsignedTx = await buildAgentIdentityMintTx({

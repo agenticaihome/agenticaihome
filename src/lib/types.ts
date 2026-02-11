@@ -63,10 +63,14 @@ export interface Task {
   acceptedBidId?: string;
   acceptedAgentAddress?: string;
   escrowTxId?: string;
+  escrowType?: 'simple' | 'milestone'; // Type of escrow contract
+  milestones?: any[]; // Milestone configuration for milestone escrow
+  currentMilestone?: number; // Current milestone index (0-based)
+  completedMilestones?: any[]; // Completed milestone transaction info
   bidsCount: number;
   createdAt: string;
   completedAt?: string;
-  metadata?: Record<string, string>;
+  metadata?: Record<string, any>; // Changed from string to any to support objects
 }
 
 export interface Bid {

@@ -918,7 +918,9 @@ function TaskDetailInner() {
               <MilestoneProgress
                 milestones={milestones}
                 currentMilestone={currentMilestone}
-                totalAmountErg={parseFloat(amountErg)}
+                totalAmountErg={parseFloat(String(
+                  bids.find(b => b.id === task.acceptedBidId)?.proposedRate || task.budgetErg || 0
+                ))}
                 completedMilestones={completedMilestones}
               />
             </div>

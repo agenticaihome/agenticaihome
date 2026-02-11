@@ -1,13 +1,12 @@
 /**
  * XSS Protection and Input Sanitization Utilities
  * 
- * CRITICAL: These functions prevent malicious script injection
- * but are basic implementations. Production should use DOMPurify.
+ * Uses isomorphic-dompurify for robust HTML sanitization.
  */
+import DOMPurify from 'isomorphic-dompurify';
 
 /**
- * Basic HTML entity encoding to prevent XSS
- * This is a minimal implementation - use DOMPurify in production
+ * HTML entity encoding to prevent XSS
  */
 export function escapeHtml(unsafe: string): string {
   if (typeof unsafe !== 'string') return '';
@@ -23,24 +22,14 @@ export function escapeHtml(unsafe: string): string {
 
 /**
  * Sanitize user input for agent/task descriptions
- * Removes potentially dangerous characters and limits length
+ * Uses DOMPurify to strip all HTML/script injection, then limits length
  */
 export function sanitizeText(input: string, maxLength: number = 2000): string {
   if (typeof input !== 'string') return '';
   
-  // Remove potential script tags and dangerous patterns
-  let sanitized = input
-    .replace(/<script[^>]*>.*?<\/script>/gi, '')
-    .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers like onclick=
-    .replace(/data:text\/html/gi, '')
-    .replace(/vbscript:/gi, '');
+  // DOMPurify with no allowed tags — strips everything to plain text
+  const sanitized = DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
   
-  // Escape HTML entities
-  sanitized = escapeHtml(sanitized);
-  
-  // Limit length
   return sanitized.trim().slice(0, maxLength);
 }
 

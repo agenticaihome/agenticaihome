@@ -33,7 +33,7 @@ interface WalletContextType {
   loading: boolean;
   
   // Connection methods
-  connect: (preferredWallet?: string) => Promise<void>;
+  connect: (preferredWallet?: string, ergoPayAddress?: string) => Promise<void>;
   disconnect: () => Promise<void>;
   
   // Transaction methods
@@ -152,14 +152,14 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
   }, []);
 
   // Connect wallet
-  const connect = useCallback(async (preferredWallet?: string) => {
+  const connect = useCallback(async (preferredWallet?: string, ergoPayAddress?: string) => {
     if (connecting) return;
     
     setConnecting(true);
     setError(null);
     
     try {
-      const walletState = await connectErgoWallet(preferredWallet);
+      const walletState = await connectErgoWallet(preferredWallet, ergoPayAddress);
       setWallet(walletState);
       
       if (walletState.address) {

@@ -126,75 +126,42 @@ async function waitForErgoContext(timeoutMs = 3000): Promise<boolean> {
 }
 
 /**
- * Connect to ErgoPay wallet by prompting user to enter their address
- * This is used for mobile wallets that don't inject browser objects
+ * Connect to ErgoPay wallet with a provided address.
+ * If no address is provided, checks localStorage for a stored one.
+ * The UI is responsible for collecting the address (no more prompt()).
  */
-async function connectErgoPayWallet(): Promise<WalletState> {
-  return new Promise((resolve, reject) => {
-    // Check if we already have a stored ErgoPay address
-    const storedAddress = localStorage.getItem('ergopay_address');
-    if (storedAddress && isValidErgoAddress(storedAddress)) {
-      ergoPayAddress = storedAddress;
-      ergoPayConnectionType = 'ergopay';
-      currentWalletName = 'ergopay';
-      
-      resolve({
-        connected: true,
-        address: storedAddress,
-        addresses: [storedAddress],
-        balance: { erg: '0', tokens: [] }, // We can't get balance without blockchain query
-        walletName: 'ergopay',
-        connectionType: 'ergopay',
-      });
-      return;
+async function connectErgoPayWallet(providedAddress?: string): Promise<WalletState> {
+  // Use provided address, or fall back to stored one
+  const address = providedAddress?.trim() || localStorage.getItem('ergopay_address') || '';
+  
+  if (!address || !isValidErgoAddress(address)) {
+    if (!address) {
+      throw new WalletRejectedError();
     }
+    throw new WalletError('Invalid Ergo address. Please enter a valid address starting with 9 or 3.');
+  }
 
-    // Prompt user to enter their address
-    const addressPrompt = `Please enter your Ergo wallet address for ErgoPay transactions:
-
-This address will be used to:
-• Build transactions for your mobile wallet
-• Check your balance
-• Store your connection preference
-
-You can find your address in your mobile wallet (Terminus, SAFEW, etc.)`;
-
-    const userAddress = prompt(addressPrompt);
-    
-    if (!userAddress) {
-      reject(new WalletRejectedError());
-      return;
-    }
-
-    const trimmedAddress = userAddress.trim();
-    
-    if (!isValidErgoAddress(trimmedAddress)) {
-      reject(new WalletError('Invalid Ergo address. Please enter a valid address starting with 9 or 3.'));
-      return;
-    }
-
-    // Store the address for future use
-    localStorage.setItem('ergopay_address', trimmedAddress);
-    
-    ergoPayAddress = trimmedAddress;
-    ergoPayConnectionType = 'ergopay';
-    currentWalletName = 'ergopay';
-    
-    resolve({
-      connected: true,
-      address: trimmedAddress,
-      addresses: [trimmedAddress],
-      balance: { erg: '0', tokens: [] }, // We'll need to query balance separately
-      walletName: 'ergopay',
-      connectionType: 'ergopay',
-    });
-  });
+  // Store the address for future use
+  localStorage.setItem('ergopay_address', address);
+  
+  ergoPayAddress = address;
+  ergoPayConnectionType = 'ergopay';
+  currentWalletName = 'ergopay';
+  
+  return {
+    connected: true,
+    address,
+    addresses: [address],
+    balance: { erg: '0', tokens: [] },
+    walletName: 'ergopay',
+    connectionType: 'ergopay',
+  };
 }
 
 /**
  * Basic Ergo address validation
  */
-function isValidErgoAddress(address: string): boolean {
+export function isValidErgoAddress(address: string): boolean {
   if (!address || typeof address !== 'string') return false;
   
   // Ergo addresses start with '9' (P2PK) or '3' (P2S/P2SH)
@@ -244,10 +211,10 @@ export function isSafewAvailable(): boolean {
   return isWalletAvailable() && !!window.ergoConnector?.safew;
 }
 
-export async function connectWallet(preferredWallet?: string): Promise<WalletState> {
+export async function connectWallet(preferredWallet?: string, ergoPayAddress?: string): Promise<WalletState> {
   // Handle ErgoPay connection (doesn't require browser extension)
   if (preferredWallet === 'ergopay') {
-    return connectErgoPayWallet();
+    return connectErgoPayWallet(ergoPayAddress);
   }
 
   const available = await waitForWallet(5000); // Increased to 5 seconds

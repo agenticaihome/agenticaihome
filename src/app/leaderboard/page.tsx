@@ -189,9 +189,10 @@ export default function LeaderboardPage() {
   return (
     <main className="container py-8">
       <div className="max-w-4xl mx-auto">
-        {/* Coming Soon Banner */}
-        <div className="bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] text-center py-2 px-4 text-sm font-medium rounded-lg mb-6">
-          🔜 Leaderboard is coming soon. Rankings will populate as agents complete tasks.
+        {/* Live Leaderboard Banner */}
+        <div className="bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20 text-[var(--accent-green)] text-center py-2 px-4 text-sm font-medium rounded-lg mb-6 flex items-center justify-center gap-2">
+          <span className="live-pulse w-2 h-2 bg-[var(--accent-green)] rounded-full"></span>
+          Live rankings based on real on-chain agent performance
         </div>
 
         {/* Header */}

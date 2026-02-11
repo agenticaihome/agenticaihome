@@ -71,6 +71,8 @@ function TaskDetailInner() {
   // Action states
   const [accepting, setAccepting] = useState<string | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [showRevisionInput, setShowRevisionInput] = useState(false);
+  const [revisionNotes, setRevisionNotes] = useState('');
   const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
 
   // Rating states
@@ -394,17 +396,22 @@ function TaskDetailInner() {
 
   const handleRequestRevision = async () => {
     if (!taskId) return;
+    if (!revisionNotes.trim()) {
+      setError('Tell the agent what needs to change');
+      return;
+    }
     setReviewing(true);
     setError('');
     try {
       if (deliverables.length > 0) {
-        await updateDeliverableStatus(deliverables[0].id, 'revision_requested');
+        await updateDeliverableStatus(deliverables[0].id, 'revision_requested', revisionNotes.trim());
       }
       await updateTaskData(taskId, { status: 'in_progress' });
-      logEvent({ type: 'revision_requested', message: `Revision requested`, taskId, actor: userAddress || '' });
-      showSuccess('Revision requested. Agent can resubmit.');
+      logEvent({ type: 'revision_requested', message: `Revision requested: ${revisionNotes.trim()}`, taskId, actor: userAddress || '' });
+      showSuccess('Revision sent to agent.');
+      setRevisionNotes('');
+      setShowRevisionInput(false);
       
-      // Send notification to agent
       if (task?.acceptedAgentAddress) {
         await notifyRevisionRequested(taskId, task.acceptedAgentAddress);
       }
@@ -753,6 +760,12 @@ function TaskDetailInner() {
                         🔗 {d.deliverableUrl}
                       </a>
                     )}
+                    {d.reviewNotes && d.status === 'revision_requested' && (
+                      <div className="mt-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                        <p className="text-xs text-orange-400 font-medium mb-1">Revision feedback:</p>
+                        <p className="text-sm text-orange-300 whitespace-pre-wrap">{d.reviewNotes}</p>
+                      </div>
+                    )}
                     <p className="text-gray-500 text-xs mt-2">{formatDateTime(d.createdAt)}</p>
                   </div>
                 ))}
@@ -760,27 +773,62 @@ function TaskDetailInner() {
 
               {/* Review Actions */}
               {canReview && (
-                <div className="flex gap-3 mt-6 pt-4 border-t border-slate-700">
-                  <button
-                    onClick={handleApprove}
-                    disabled={reviewing}
-                    className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-lg font-medium"
-                  >
-                    {reviewing ? 'Processing...' : '✅ Approve'}
-                  </button>
-                  <button
-                    onClick={handleRequestRevision}
-                    disabled={reviewing}
-                    className="px-6 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white rounded-lg font-medium"
-                  >
-                    🔄 Request Revision
-                  </button>
+                <div className="mt-6 pt-4 border-t border-slate-700 space-y-3">
+                  {!showRevisionInput ? (
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleApprove}
+                        disabled={reviewing}
+                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors"
+                      >
+                        {reviewing ? 'Processing...' : '✅ Looks Good — Approve'}
+                      </button>
+                      <button
+                        onClick={() => setShowRevisionInput(true)}
+                        disabled={reviewing}
+                        className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors"
+                      >
+                        🔄 Needs Changes
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-300">
+                        What needs to change?
+                      </label>
+                      <textarea
+                        value={revisionNotes}
+                        onChange={e => setRevisionNotes(e.target.value)}
+                        placeholder="Be specific — what should the agent fix or improve?"
+                        rows={3}
+                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors resize-none"
+                        autoFocus
+                      />
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleRequestRevision}
+                          disabled={reviewing || !revisionNotes.trim()}
+                          className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
+                        >
+                          {reviewing ? 'Sending...' : 'Send Revision Request'}
+                        </button>
+                        <button
+                          onClick={() => { setShowRevisionInput(false); setRevisionNotes(''); }}
+                          className="px-4 py-3 border border-slate-600 text-gray-400 hover:text-white rounded-xl transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Dispute — separate, less prominent */}
                   <button
                     onClick={handleDispute}
                     disabled={reviewing}
-                    className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white rounded-lg font-medium"
+                    className="w-full py-2 text-sm text-red-400 hover:text-red-300 transition-colors"
                   >
-                    ⚠️ Dispute
+                    Something wrong? Open a dispute →
                   </button>
                 </div>
               )}

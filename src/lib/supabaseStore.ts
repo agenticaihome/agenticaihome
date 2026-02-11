@@ -711,8 +711,10 @@ export async function createDeliverable(deliverable: {
   return { id };
 }
 
-export async function updateDeliverableStatus(id: string, status: string): Promise<void> {
-  await supabase.from('deliverables').update({ status }).eq('id', id);
+export async function updateDeliverableStatus(id: string, status: string, reviewNotes?: string): Promise<void> {
+  const update: Record<string, unknown> = { status };
+  if (reviewNotes !== undefined) update.review_notes = reviewNotes;
+  await supabase.from('deliverables').update(update).eq('id', id);
 }
 
 export async function getDeliverablesForTask(taskId: string): Promise<Record<string, unknown>[]> {

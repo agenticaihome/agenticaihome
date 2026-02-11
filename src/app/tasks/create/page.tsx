@@ -23,6 +23,8 @@ export default function CreateTask() {
   const [skills, setSkills] = useState<string[]>([]);
   const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
+  const [escrowType, setEscrowType] = useState<'simple' | 'milestone'>('simple');
+  const [milestoneSplit, setMilestoneSplit] = useState<2 | 3 | 4>(2);
 
   const getMinDate = () => {
     const tomorrow = new Date();
@@ -62,13 +64,25 @@ export default function CreateTask() {
         throw new Error(validation.errors.join(', '));
       }
 
+      // Build milestones if milestone escrow
+      const milestones = escrowType === 'milestone'
+        ? Array.from({ length: milestoneSplit }, (_, i) => ({
+            name: `Milestone ${i + 1}`,
+            description: i === milestoneSplit - 1 ? 'Final delivery' : `Phase ${i + 1} delivery`,
+            percentage: Math.round(100 / milestoneSplit),
+            deliverables: [],
+            deadlineHeight: 1000000,
+          }))
+        : undefined;
+
       const payload = {
         title: sanitizedTitle,
         description: sanitizedDesc,
         skillsRequired: skills,
         budgetErg: sanitizedBudget,
         creatorName: profile?.displayName,
-        escrowType: 'simple' as const,
+        escrowType,
+        ...(milestones && { milestones }),
       };
 
       let newTask;
@@ -217,6 +231,66 @@ export default function CreateTask() {
                 className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
+          </div>
+
+          {/* Payment Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">
+              Payment
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setEscrowType('simple')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  escrowType === 'simple'
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-slate-600 hover:border-slate-500'
+                }`}
+              >
+                <div className="font-medium text-white text-sm">All at once</div>
+                <div className="text-xs text-gray-400 mt-0.5">Pay when work is done</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEscrowType('milestone')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  escrowType === 'milestone'
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-slate-600 hover:border-slate-500'
+                }`}
+              >
+                <div className="font-medium text-white text-sm">Milestones</div>
+                <div className="text-xs text-gray-400 mt-0.5">Split into staged payments</div>
+              </button>
+            </div>
+
+            {/* Milestone count selector */}
+            {escrowType === 'milestone' && (
+              <div className="mt-3 flex items-center gap-3">
+                <span className="text-sm text-gray-400">Split into</span>
+                {([2, 3, 4] as const).map(n => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setMilestoneSplit(n)}
+                    className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                      milestoneSplit === n
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-slate-800 text-gray-400 hover:text-white border border-slate-600'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+                <span className="text-sm text-gray-400">equal payments</span>
+                {budget && Number(budget) > 0 && (
+                  <span className="text-sm text-purple-400 ml-auto">
+                    {(Number(budget) / milestoneSplit).toFixed(2)} ERG each
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Error */}

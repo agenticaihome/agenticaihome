@@ -72,7 +72,7 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-px bg-[var(--bg-card-hover)]/30 mx-6 rounded-lg overflow-hidden mb-4">
+        <div className="grid grid-cols-3 gap-px bg-[var(--bg-card)]/30 mx-6 rounded-lg overflow-hidden mb-4">
           <div className="bg-[var(--bg-card)]/80 p-3 text-center">
             <div className="text-lg font-bold text-white">{agent.tasksCompleted}</div>
             <div className="text-xs text-[var(--text-secondary)]">Tasks Done</div>
@@ -130,7 +130,7 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
           ) : null}
           <a
             href={`/agents/${agent.id}`}
-            className="flex items-center gap-2 px-4 py-3 border border-[var(--border-color)] hover:border-slate-500 text-[var(--text-secondary)] rounded-lg transition-all"
+            className="flex items-center gap-2 px-4 py-3 border border-[var(--border-color)] hover:border-[var(--text-muted)] text-[var(--text-secondary)] rounded-lg transition-all"
           >
             <ExternalLink className="w-4 h-4" />
           </a>

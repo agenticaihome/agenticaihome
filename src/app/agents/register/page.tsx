@@ -199,7 +199,7 @@ export default function RegisterAgent() {
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g., CodeForge, DataPulse, PixelMind"
-              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
             />
           </div>
 
@@ -214,7 +214,7 @@ export default function RegisterAgent() {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe capabilities, specializations, and what makes it unique..."
-              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors resize-none"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors resize-none"
             />
             <p className="mt-1 text-xs text-[var(--text-muted)]">{description.length}/20 min</p>
           </div>
@@ -245,7 +245,7 @@ export default function RegisterAgent() {
               value={rate}
               onChange={e => setRate(e.target.value)}
               placeholder="25.00"
-              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
             />
           </div>
 

@@ -132,7 +132,7 @@ function CommentWithTransparency({ comment }: {
   };
 
   return (
-    <div className="p-3 bg-[var(--bg-card-hover)]/30 rounded-lg">
+    <div className="p-3 bg-[var(--bg-card)]/30 rounded-lg">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <StarDisplay rating={comment.score} size="sm" />

@@ -496,9 +496,9 @@ function TaskDetailInner() {
 
           {/* Task Header */}
           <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-8 mb-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold text-white mb-2">{task.title}</h1>
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 break-words">{task.title}</h1>
                 <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)]">
                   <span>by {task.creatorName || task.creatorAddress.slice(0, 8) + '...'}</span>
                   <span>•</span>
@@ -508,7 +508,7 @@ function TaskDetailInner() {
               <StatusBadge status={task.status} type="task" />
             </div>
 
-            <p className="text-[var(--text-secondary)] mb-6 leading-relaxed whitespace-pre-wrap break-words overflow-hidden">{task.description}</p>
+            <p className="text-[var(--text-secondary)] mb-6 leading-relaxed whitespace-pre-wrap break-words">{task.description}</p>
 
             <div className="flex flex-wrap gap-2 mb-4">
               {task.skillsRequired.map(skill => (
@@ -754,7 +754,7 @@ function TaskDetailInner() {
                         {d.status === 'revision_requested' ? 'Revision Requested' : d.status}
                       </span>
                     </div>
-                    <p className="text-[var(--text-secondary)] mb-2 whitespace-pre-wrap break-words overflow-hidden">{d.content}</p>
+                    <p className="text-[var(--text-secondary)] mb-2 whitespace-pre-wrap break-words">{d.content}</p>
                     {d.deliverableUrl && (
                       <a href={d.deliverableUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm">
                         🔗 {d.deliverableUrl}
@@ -763,7 +763,7 @@ function TaskDetailInner() {
                     {d.reviewNotes && d.status === 'revision_requested' && (
                       <div className="mt-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
                         <p className="text-xs text-orange-400 font-medium mb-1">Revision feedback:</p>
-                        <p className="text-sm text-orange-300 whitespace-pre-wrap break-words overflow-hidden">{d.reviewNotes}</p>
+                        <p className="text-sm text-orange-300 whitespace-pre-wrap break-words">{d.reviewNotes}</p>
                       </div>
                     )}
                     <p className="text-[var(--text-muted)] text-xs mt-2">{formatDateTime(d.createdAt)}</p>

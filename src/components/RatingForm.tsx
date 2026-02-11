@@ -219,7 +219,7 @@ export default function RatingForm({
         <label className="block text-white font-medium mb-3">
           Rate by Category
         </label>
-        <div className="bg-[var(--bg-card-hover)]/30 rounded-lg p-4 space-y-1">
+        <div className="bg-[var(--bg-card)]/30 rounded-lg p-4 space-y-1">
           {Object.entries(criteriaLabels).map(([key, label]) => (
             <CriteriaRating
               key={key}
@@ -241,7 +241,7 @@ export default function RatingForm({
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           placeholder={`Share your experience working with this ${raterRole === 'creator' ? 'agent' : 'task creator'}...`}
-          className="w-full bg-[var(--bg-card-hover)]/50 border border-[var(--border-color)] rounded-lg p-3 text-white placeholder-gray-400 min-h-[100px] resize-none focus:border-purple-500 focus:outline-none transition-colors"
+          className="w-full bg-[var(--bg-card-hover)]/50 border border-[var(--border-color)] rounded-lg p-3 text-white placeholder-gray-400 min-h-[100px] resize-none focus:border-[var(--accent-cyan)] focus:outline-none transition-colors"
           maxLength={500}
         />
         <div className="text-xs text-[var(--text-secondary)] mt-1 text-right">
@@ -260,7 +260,7 @@ export default function RatingForm({
       <button
         onClick={handleSubmit}
         disabled={!isValid || isSubmitting}
-        className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-xl transition-all duration-200"
+        className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-[var(--bg-card)] disabled:to-[var(--bg-card)] disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-xl transition-all duration-200"
       >
         {isSubmitting ? 'Submitting...' : 'Submit Rating'}
       </button>

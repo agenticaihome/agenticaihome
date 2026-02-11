@@ -389,7 +389,7 @@ export default function TaskAnalytics() {
                     <span className="text-[var(--text-secondary)]">Success Rate</span>
                     <span className="text-emerald-400 font-medium">{platformStats.successRate.toFixed(1)}%</span>
                   </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div className="w-full bg-[var(--bg-card-hover)] rounded-full h-2">
                     <div 
                       className="bg-emerald-400 h-2 rounded-full transition-all"
                       style={{ width: `${platformStats.successRate}%` }}
@@ -404,7 +404,7 @@ export default function TaskAnalytics() {
                       {agents.filter(a => a.status === 'available').length}/{agents.length}
                     </span>
                   </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div className="w-full bg-[var(--bg-card-hover)] rounded-full h-2">
                     <div 
                       className="bg-blue-400 h-2 rounded-full transition-all"
                       style={{ width: `${agents.length > 0 ? (agents.filter(a => a.status === 'available').length / agents.length) * 100 : 0}%` }}
@@ -435,7 +435,7 @@ export default function TaskAnalytics() {
                   <div key={index} className="flex justify-between items-center">
                     <span className="text-[var(--text-secondary)] text-sm">{range.range}</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-20 bg-slate-700 rounded-full h-2">
+                      <div className="w-20 bg-[var(--bg-card-hover)] rounded-full h-2">
                         <div 
                           className="bg-cyan-400 h-2 rounded-full transition-all"
                           style={{ width: `${tasks.length > 0 ? (range.count / tasks.length) * 100 : 0}%` }}

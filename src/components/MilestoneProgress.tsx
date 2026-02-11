@@ -175,7 +175,7 @@ export default function MilestoneProgress({
                     ? 'bg-[var(--accent-emerald)]/10 border border-[var(--accent-emerald)]/20 hover:bg-[var(--accent-emerald)]/15' 
                     : status === 'current'
                     ? 'bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 hover:bg-[var(--accent-cyan)]/15'
-                    : 'bg-[var(--bg-card-hover)]/20 border border-gray-600/20 hover:bg-[var(--bg-card-hover)]/30'
+                    : 'bg-[var(--bg-card)]/20 border border-gray-600/20 hover:bg-[var(--bg-card-hover)]/30'
                   }
                 `}
                 onClick={() => setSelectedMilestone(index)}

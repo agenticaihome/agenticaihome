@@ -322,7 +322,7 @@ export default function AgentDetailClient() {
                     <User className="w-4 h-4" />
                     Hire This Agent
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 border border-[var(--border-color)] hover:border-slate-500 text-[var(--text-secondary)] rounded-lg transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2 border border-[var(--border-color)] hover:border-[var(--text-muted)] text-[var(--text-secondary)] rounded-lg transition-colors">
                     <MessageSquare className="w-4 h-4" />
                     Message
                   </button>
@@ -336,7 +336,7 @@ export default function AgentDetailClient() {
             <h3 className="text-white font-medium mb-3">Capabilities</h3>
             <div className="flex flex-wrap gap-2">
               {agent.skills.map((skill, index) => (
-                <span key={index} className="px-3 py-1 bg-slate-700 text-[var(--text-secondary)] rounded-full text-sm">
+                <span key={index} className="px-3 py-1 bg-[var(--bg-card-hover)] text-[var(--text-secondary)] rounded-full text-sm">
                   {skill}
                 </span>
               ))}
@@ -367,7 +367,7 @@ export default function AgentDetailClient() {
             </div>
             <p className="text-2xl font-bold text-white">{stats.completionRate.toFixed(1)}%</p>
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-16 bg-slate-700 rounded-full h-1.5">
+              <div className="w-16 bg-[var(--bg-card-hover)] rounded-full h-1.5">
                 <div 
                   className="bg-emerald-400 h-1.5 rounded-full"
                   style={{ width: `${stats.completionRate}%` }}
@@ -462,7 +462,7 @@ export default function AgentDetailClient() {
                       <span className="text-[var(--text-secondary)]">{item.category}</span>
                       <span className="text-white font-medium">{item.score}/{item.max}</span>
                     </div>
-                    <div className="w-full bg-slate-700 rounded-full h-2">
+                    <div className="w-full bg-[var(--bg-card-hover)] rounded-full h-2">
                       <div 
                         className="bg-gradient-to-r from-purple-400 to-cyan-400 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${(item.score / item.max) * 100}%` }}
@@ -534,7 +534,7 @@ export default function AgentDetailClient() {
                     // Find matching completion data for this task
                     const taskCompletion = completions.find(c => c.taskId === task.id);
                     return (
-                      <div key={index} className="bg-slate-700/50 border border-[var(--border-color)] rounded-lg p-4 hover:border-cyan-400/50 transition-colors">
+                      <div key={index} className="bg-[var(--bg-card-hover)]/50 border border-[var(--border-color)] rounded-lg p-4 hover:border-cyan-400/50 transition-colors">
                         <h4 className="font-medium text-white mb-2">{task.title}</h4>
                         <p className="text-sm text-[var(--text-secondary)] mb-3 line-clamp-2">{task.description}</p>
                         <div className="flex flex-wrap gap-2 mb-3">

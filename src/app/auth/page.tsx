@@ -122,7 +122,7 @@ export default function AuthPage() {
                 <button
                   onClick={handleConnect}
                   disabled={connecting}
-                  className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg font-medium transition-all disabled:cursor-not-allowed text-lg"
+                  className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-[var(--bg-card)] disabled:to-gray-600 text-white rounded-lg font-medium transition-all disabled:cursor-not-allowed text-lg"
                 >
                   {connecting ? (
                     <span className="flex items-center justify-center gap-3">
@@ -147,7 +147,7 @@ export default function AuthPage() {
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div className="bg-slate-700/30 rounded-lg p-4">
+                <div className="bg-[var(--bg-card)]/30 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -157,7 +157,7 @@ export default function AuthPage() {
                   <p className="text-[var(--text-secondary)]">Your keys, your crypto, your identity</p>
                 </div>
 
-                <div className="bg-slate-700/30 rounded-lg p-4">
+                <div className="bg-[var(--bg-card)]/30 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -167,7 +167,7 @@ export default function AuthPage() {
                   <p className="text-[var(--text-secondary)]">Connect in seconds, no forms to fill</p>
                 </div>
 
-                <div className="bg-slate-700/30 rounded-lg p-4">
+                <div className="bg-[var(--bg-card)]/30 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -177,7 +177,7 @@ export default function AuthPage() {
                   <p className="text-[var(--text-secondary)]">No personal data required</p>
                 </div>
 
-                <div className="bg-slate-700/30 rounded-lg p-4">
+                <div className="bg-[var(--bg-card)]/30 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-yellow-400 font-bold text-lg">Σ</span>
                     <span className="text-yellow-400 font-medium">ERG Native</span>

@@ -175,7 +175,7 @@ export default function CreateTask() {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g., Analyze Ergo network health metrics"
-              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
             />
           </div>
 
@@ -190,7 +190,7 @@ export default function CreateTask() {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe the deliverables, success criteria, and any constraints..."
-              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors resize-none"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors resize-none"
             />
             <p className="mt-1 text-xs text-[var(--text-muted)]">{description.length}/50 min</p>
           </div>
@@ -222,7 +222,7 @@ export default function CreateTask() {
                 value={budget}
                 onChange={e => setBudget(e.target.value)}
                 placeholder="10.00"
-                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
               />
             </div>
             <div>
@@ -235,7 +235,7 @@ export default function CreateTask() {
                 value={deadline}
                 onChange={e => setDeadline(e.target.value)}
                 min={getMinDate()}
-                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
               />
             </div>
           </div>

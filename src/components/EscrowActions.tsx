@@ -74,7 +74,7 @@ export default function EscrowActions({
   const [useMultiSig, setUseMultiSig] = useState(false);
   const [ergUsdPrice, setErgUsdPrice] = useState<number | null>(null);
   const amountErgNum = parseFloat(amountErg);
-  const MULTISIG_USD_THRESHOLD = 50; // Suggest multi-sig for tasks >= $50 USD
+  const MULTISIG_USD_THRESHOLD = 100; // Suggest multi-sig for tasks >= $100 USD
   const amountUsd = ergUsdPrice ? amountErgNum * ergUsdPrice : null;
   const isHighValue = amountUsd !== null ? amountUsd >= MULTISIG_USD_THRESHOLD : amountErgNum >= 100;
 

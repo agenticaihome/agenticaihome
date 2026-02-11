@@ -524,7 +524,7 @@ export default function MilestoneEscrowActions({
           unsignedTx={unsignedTxForErgoPay}
           userAddress={currentUserAddress || undefined}
           message={`${escrowStatus === 'unfunded' ? 'Fund' : 'Release'} Milestone Escrow`}
-          onGenerated={(data) => console.log('ErgoPay QR generated:', data.url)}
+          onGenerated={() => {}}
           onError={(err) => { setError(err); setTxState('error'); }}
         />
       )}

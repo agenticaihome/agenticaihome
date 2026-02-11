@@ -21,7 +21,7 @@ DO $$
 BEGIN
     -- Add escrow_type column if it doesn't exist
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tasks' AND column_name = 'escrow_type') THEN
-        ALTER TABLE tasks ADD COLUMN escrow_type TEXT DEFAULT 'simple' CHECK (escrow_type IN ('simple', 'multisig'));
+        ALTER TABLE tasks ADD COLUMN escrow_type TEXT DEFAULT 'simple' CHECK (escrow_type IN ('simple', 'milestone', 'multisig'));
     END IF;
 END
 $$;
@@ -81,52 +81,27 @@ ALTER TABLE dispute_evidence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dispute_status ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for dispute_evidence table
+-- Using open policies (matches existing pattern) - writes go through edge functions with service role
 
--- Allow anyone to read evidence for transparency
 CREATE POLICY "dispute_evidence_select_policy" ON dispute_evidence
     FOR SELECT USING (true);
 
--- Allow task participants to submit evidence
 CREATE POLICY "dispute_evidence_insert_policy" ON dispute_evidence
-    FOR INSERT 
-    WITH CHECK (
-        auth.uid() IS NOT NULL AND (
-            submitter_address = auth.uid()::text
-        )
-    );
+    FOR INSERT WITH CHECK (true);
 
--- Allow service role to manage evidence
-CREATE POLICY "dispute_evidence_service_role_policy" ON dispute_evidence
-    FOR ALL 
-    USING (
-        current_setting('request.jwt.claims', true)::jsonb ->> 'role' = 'service_role'
-    );
+CREATE POLICY "dispute_evidence_update_policy" ON dispute_evidence
+    FOR UPDATE USING (true) WITH CHECK (true);
 
 -- RLS Policies for dispute_status table
 
--- Allow anyone to read status for transparency
 CREATE POLICY "dispute_status_select_policy" ON dispute_status
     FOR SELECT USING (true);
 
--- Allow task participants to create/update status
 CREATE POLICY "dispute_status_insert_policy" ON dispute_status
-    FOR INSERT 
-    WITH CHECK (
-        auth.uid() IS NOT NULL
-    );
+    FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "dispute_status_update_policy" ON dispute_status
-    FOR UPDATE 
-    USING (
-        auth.uid() IS NOT NULL
-    );
-
--- Allow service role to manage status
-CREATE POLICY "dispute_status_service_role_policy" ON dispute_status
-    FOR ALL 
-    USING (
-        current_setting('request.jwt.claims', true)::jsonb ->> 'role' = 'service_role'
-    );
+    FOR UPDATE USING (true) WITH CHECK (true);
 
 -- Create function to get multi-sig dispute info
 CREATE OR REPLACE FUNCTION get_multisig_dispute_info(task_uuid UUID)

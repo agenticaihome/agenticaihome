@@ -63,7 +63,7 @@ export interface Task {
   acceptedBidId?: string;
   acceptedAgentAddress?: string;
   escrowTxId?: string;
-  escrowType?: 'simple' | 'milestone'; // Type of escrow contract
+  escrowType?: 'simple' | 'milestone' | 'multisig'; // Type of escrow contract
   milestones?: any[]; // Milestone configuration for milestone escrow
   currentMilestone?: number; // Current milestone index (0-based)
   completedMilestones?: any[]; // Completed milestone transaction info

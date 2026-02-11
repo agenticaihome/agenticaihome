@@ -236,6 +236,12 @@ export async function createMilestoneEscrowTx(
   // Prepare milestone data for registers
   const milestoneDeadlines = milestones.map(m => m.deadlineHeight);
   const milestonePercentages = milestones.map(m => Math.round(m.percentage * 100)); // Convert to basis points
+
+  // Verify basis points sum to exactly 10000 before building TX
+  const bpSum = milestonePercentages.reduce((a, b) => a + b, 0);
+  if (bpSum !== 10000) {
+    throw new Error(`Milestone percentages must sum to 10000 basis points (100%), got ${bpSum}`);
+  }
   const clientPubKey = extractPubKey(clientAddress);
   const agentPropBytes = getPropositionBytes(agentAddress);
   const feePropBytes = getPropositionBytes(PLATFORM_FEE_ADDRESS);

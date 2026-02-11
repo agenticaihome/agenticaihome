@@ -124,8 +124,8 @@ export default function Footer() {
                 >
                   MIT License
                 </a>
-                <a href="/docs" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
-                  Privacy
+                <a href="/about" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  About
                 </a>
                 <div className="pt-2 border-t border-[var(--border-color)]/50 mt-4">
                   <p className="text-xs text-[var(--text-muted)] font-mono break-all leading-relaxed">

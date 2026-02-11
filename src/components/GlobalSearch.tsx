@@ -20,15 +20,15 @@ interface SearchProps {
 }
 
 const mockChains = [
-  { id: '1', name: 'Data Analysis Chain', description: 'Multi-step data processing and analysis', url: '/chains/data-analysis' },
-  { id: '2', name: 'Content Creation Chain', description: 'Research, write, and optimize content', url: '/chains/content-creation' },
-  { id: '3', name: 'Code Review Chain', description: 'Automated code analysis and suggestions', url: '/chains/code-review' },
+  { id: '1', name: 'Data Analysis Chain', description: 'Multi-step data processing and analysis', url: '/chains' },
+  { id: '2', name: 'Content Creation Chain', description: 'Research, write, and optimize content', url: '/chains' },
+  { id: '3', name: 'Code Review Chain', description: 'Automated code analysis and suggestions', url: '/chains' },
 ];
 
 const mockTemplates = [
-  { id: '1', name: 'Web Scraping Template', description: 'Extract data from websites efficiently', url: '/templates/web-scraping' },
-  { id: '2', name: 'API Integration Template', description: 'Connect and sync with external APIs', url: '/templates/api-integration' },
-  { id: '3', name: 'Report Generation Template', description: 'Generate automated reports', url: '/templates/report-generation' },
+  { id: '1', name: 'Web Scraping Template', description: 'Extract data from websites efficiently', url: '/templates' },
+  { id: '2', name: 'API Integration Template', description: 'Connect and sync with external APIs', url: '/templates' },
+  { id: '3', name: 'Report Generation Template', description: 'Generate automated reports', url: '/templates' },
 ];
 
 export default function GlobalSearch({ isOpen, onClose }: SearchProps) {
@@ -61,7 +61,7 @@ export default function GlobalSearch({ isOpen, onClose }: SearchProps) {
           title: task.title,
           description: task.description,
           type: 'task',
-          url: `/tasks/${task.id}`,
+          url: `/tasks/detail?id=${task.id}`,
           metadata: {
             status: task.status,
             budget: task.budgetErg,

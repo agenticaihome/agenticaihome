@@ -1,6 +1,3 @@
 # Cloudflare Pages SPA routing
-# Real pages (detail, create, analytics) are auto-served by CF from .html files
-# Explicit sub-routes BEFORE the wildcard so they serve their own .html
-/agents/register /agents/register.html 200
-# Only dynamic agent routes need placeholder shells
-/agents/:id /agents/placeholder.html 200
+# Cloudflare auto-serves .html files for matching paths
+# Do NOT use /agents/:id wildcard — it catches /agents/register and causes redirect loops

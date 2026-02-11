@@ -75,8 +75,15 @@ export const TASK_TRANSITIONS: TaskTransition[] = [
   {
     from: 'in_progress',
     to: 'disputed',
-    description: 'Work disputed by agent or poster',
+    description: 'Work disputed by agent',
     actor: 'agent',
+    conditions: ['Dispute reason provided']
+  },
+  {
+    from: 'in_progress',
+    to: 'disputed',
+    description: 'Work disputed by poster',
+    actor: 'poster',
     conditions: ['Dispute reason provided']
   },
   {
@@ -198,6 +205,7 @@ function getActionName(transition: TaskTransition): string {
     'open->in_progress': 'Accept Bid',
     'funded->in_progress': 'Accept Bid',
     'in_progress->review': 'Submit Deliverable',
+    'in_progress->disputed': 'Dispute Work',
     'review->completed': 'Approve Work',
     'review->in_progress': 'Request Revision',
     'review->disputed': 'Dispute Work',

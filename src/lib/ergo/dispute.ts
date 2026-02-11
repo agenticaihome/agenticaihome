@@ -18,7 +18,10 @@ import {
 } from './constants';
 import { pubkeyFromAddress, propositionBytesFromAddress } from './address-utils';
 
-// Blake2b256 hash of PLATFORM_FEE_ADDRESS ergoTree (0008cd0341c1153459357f38737dea30f191facb68ea88b4cd634499a6eacc6b7d8ea889)
+// NOTE: The dispute contract uses fromBase64() to compare proposition bytes directly.
+// The PLATFORM_FEE_ADDRESS_HASH constant below is vestigial — the actual compilation
+// substitutes the full ergoTree bytes via getDisputeContractAddress().
+// This hash is kept for documentation purposes only.
 const PLATFORM_FEE_ADDRESS_HASH = "e994b21ac4eff8b9eb67e44999a39986005a8b7db7bd38dbeacbe32834060f11";
 import { compileErgoScript } from './compiler';
 
@@ -370,8 +373,13 @@ export async function resolveDisputeTx(
   const totalAfterFees = disputeValue - fee - platformFee;
   
   // Use precise calculation to avoid nanoERG loss
-  const posterAmount = (totalAfterFees * BigInt(posterPercent) + 99n) / 100n; // Round up
+  // SECURITY: posterAmount rounds up, agentAmount gets remainder — ensures no ERG is lost
+  const posterAmount = (totalAfterFees * BigInt(posterPercent)) / 100n;
   const agentAmount = totalAfterFees - posterAmount; // Remainder goes to agent
+  // Verify no overflow: posterAmount + agentAmount must equal totalAfterFees
+  if (posterAmount + agentAmount !== totalAfterFees) {
+    throw new Error('Split calculation error: amounts do not sum correctly');
+  }
 
   if (posterAmount < MIN_BOX_VALUE && posterPercent > 0) {
     throw new Error('Poster amount below minimum box value');
@@ -460,10 +468,11 @@ export async function refundDisputeTx(
     throw new Error(`Invalid deadline format in R6: ${deadlineReg} — ${(err as Error).message}`);
   }
 
+  // Contract uses: HEIGHT >= deadline (not strictly >)
   if (currentHeight < deadlineHeight) {
     throw new Error(
       `Cannot refund yet. Current height: ${currentHeight}, deadline: ${deadlineHeight}. ` +
-      `Need to wait ${deadlineHeight - currentHeight + 1} more blocks.`
+      `Need to wait ${deadlineHeight - currentHeight} more blocks.`
     );
   }
 

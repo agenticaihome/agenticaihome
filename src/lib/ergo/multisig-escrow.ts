@@ -357,9 +357,13 @@ export async function refundMultiSigEscrowTx(
   }
 
   // Calculate refund amount
+  // NOTE: Contract refund path does NOT enforce fee output — this is a voluntary protocol fee
   const escrowValue = BigInt(escrowBox.value);
   const protocolFee = escrowValue / BigInt(100); // 1%
   const txFee = RECOMMENDED_TX_FEE;
+  if (escrowValue < protocolFee + txFee + MIN_BOX_VALUE) {
+    throw new Error('Escrow value too small to refund after fees');
+  }
   const refundAmount = escrowValue - protocolFee - txFee;
 
   // Refund goes to the designated timeout participant
@@ -389,29 +393,27 @@ export function parseMultiSigEscrowBox(box: any): MultiSigEscrowBox | null {
   try {
     const registers = box.additionalRegisters || {};
     
+    // 2-of-3 contract uses R4-R9 with SigmaProps and SColl[SByte]
     if (!registers.R4 || !registers.R5 || !registers.R6 || 
         !registers.R7 || !registers.R8 || !registers.R9) {
       return null;
     }
 
-    // Parse configuration
-    const configData = JSON.parse(registers.R9); // [requiredSigs, totalParticipants, timeoutRefundIndex]
-    const requiredSignatures = configData[0];
-    const timeoutRefundIndex = configData[2];
-
-    // Parse participant data (simplified - would need proper deserialization)
-    const participants: MultiSigParticipant[] = []; // Would parse from R4
+    // R4=clientPk, R5=agentPk, R6=mediatorPk (SigmaProps — can't easily parse client-side)
+    // R7=deadline (SInt), R8=agent address (SColl[SByte]), R9=fee address (SColl[SByte])
+    // For now, return partial data — full deserialization requires sigma-serialization lib
+    const participants: MultiSigParticipant[] = [];
     
     return {
       boxId: box.boxId,
       transactionId: box.transactionId,
       participants,
-      requiredSignatures,
-      agentAddress: '', // Would extract from R5
+      requiredSignatures: 2, // Hardcoded for 2-of-3 contract
+      agentAddress: '', // Would need to deserialize R8 SColl[SByte] → ergoTree → address
       amount: BigInt(box.value),
-      deadlineHeight: parseInt(registers.R6),
-      taskId: '', // Would extract from R8
-      timeoutRefundIndex,
+      deadlineHeight: 0, // Would need SInt deserialization of R7
+      taskId: '',
+      timeoutRefundIndex: 0, // Client is always index 0 in 2-of-3
       status: box.spentTransactionId ? 'released' : 'active',
       creationHeight: box.creationHeight || 0,
     };

@@ -59,6 +59,10 @@ export interface Task {
   status: 'open' | 'funded' | 'assigned' | 'in_progress' | 'review' | 'completed' | 'disputed' | 'cancelled' | 'refunded';
   creatorAddress: string; // Wallet address of task creator
   creatorName?: string; // Optional display name
+  creatorType?: 'client' | 'agent'; // Type of creator: client or agent
+  creatorAgentId?: string; // Agent ID if created by an agent
+  parentTaskId?: string; // Parent task ID for task chaining
+  nextTaskId?: string; // Next task ID for task chaining
   assignedAgentId?: string;
   assignedAgentName?: string;
   acceptedBidId?: string;

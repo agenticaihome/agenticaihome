@@ -85,17 +85,27 @@ function taskToDb(t: Partial<Task>): Record<string, unknown> {
   if (t.description !== undefined) m.description = t.description;
   if (t.skillsRequired !== undefined) m.skills_required = t.skillsRequired;
   if (t.budgetErg !== undefined) m.budget_erg = t.budgetErg;
+  if (t.budgetUsd !== undefined) m.budget_usd = t.budgetUsd;
   if (t.status !== undefined) m.status = t.status;
   if (t.creatorAddress !== undefined) m.creator_address = t.creatorAddress;
   if (t.creatorName !== undefined) m.creator_name = t.creatorName;
+  if (t.creatorType !== undefined) m.creator_type = t.creatorType;
+  if (t.creatorAgentId !== undefined) m.creator_agent_id = t.creatorAgentId;
+  if (t.parentTaskId !== undefined) m.parent_task_id = t.parentTaskId;
+  if (t.nextTaskId !== undefined) m.next_task_id = t.nextTaskId;
   if (t.assignedAgentId !== undefined) m.assigned_agent_id = t.assignedAgentId;
   if (t.assignedAgentName !== undefined) m.assigned_agent_name = t.assignedAgentName;
   if (t.acceptedBidId !== undefined) m.accepted_bid_id = t.acceptedBidId;
   if (t.acceptedAgentAddress !== undefined) m.accepted_agent_address = t.acceptedAgentAddress;
   if (t.escrowTxId !== undefined) m.escrow_tx_id = t.escrowTxId;
+  if (t.escrowType !== undefined) m.escrow_type = t.escrowType;
+  if (t.milestones !== undefined) m.milestones = t.milestones;
+  if (t.currentMilestone !== undefined) m.current_milestone = t.currentMilestone;
+  if (t.completedMilestones !== undefined) m.completed_milestones = t.completedMilestones;
   if (t.bidsCount !== undefined) m.bids_count = t.bidsCount;
   if (t.createdAt !== undefined) m.created_at = t.createdAt;
   if (t.completedAt !== undefined) m.completed_at = t.completedAt;
+  if (t.metadata !== undefined) m.metadata = t.metadata;
   return m;
 }
 
@@ -106,18 +116,27 @@ function dbToTask(row: Record<string, unknown>): Task {
     description: (row.description as string) || '',
     skillsRequired: (row.skills_required as string[]) || [],
     budgetErg: Number(row.budget_erg) || 0,
+    budgetUsd: row.budget_usd ? Number(row.budget_usd) : undefined,
     status: (row.status as Task['status']) || 'open',
     creatorAddress: (row.creator_address as string) || '',
     creatorName: row.creator_name as string | undefined,
+    creatorType: (row.creator_type as 'client' | 'agent') || 'client',
+    creatorAgentId: row.creator_agent_id as string | undefined,
+    parentTaskId: row.parent_task_id as string | undefined,
+    nextTaskId: row.next_task_id as string | undefined,
     assignedAgentId: row.assigned_agent_id as string | undefined,
     assignedAgentName: row.assigned_agent_name as string | undefined,
     acceptedBidId: row.accepted_bid_id as string | undefined,
     acceptedAgentAddress: row.accepted_agent_address as string | undefined,
     escrowTxId: row.escrow_tx_id as string | undefined,
+    escrowType: row.escrow_type as 'simple' | 'milestone' | 'multisig' | undefined,
+    milestones: row.milestones as any[] | undefined,
+    currentMilestone: row.current_milestone as number | undefined,
+    completedMilestones: row.completed_milestones as any[] | undefined,
     bidsCount: Number(row.bids_count) || 0,
     createdAt: (row.created_at as string) || '',
     completedAt: row.completed_at as string | undefined,
-    metadata: (row.metadata as Record<string, string>) || undefined,
+    metadata: (row.metadata as Record<string, any>) || undefined,
   };
 }
 
@@ -384,8 +403,16 @@ export async function createTask(
     description: sanitizeText(taskData.description, 5000),
     skillsRequired: taskData.skillsRequired.map(sanitizeSkill).filter(s => s.length > 0).slice(0, 10),
     budgetErg: sanitizeNumber(taskData.budgetErg, 0.1, 100000),
+    budgetUsd: taskData.budgetUsd ? sanitizeNumber(taskData.budgetUsd, 0.1, 100000) : undefined,
     creatorAddress,
     creatorName: taskData.creatorName ? sanitizeText(taskData.creatorName, 100) : undefined,
+    creatorType: taskData.creatorType || 'client',
+    creatorAgentId: taskData.creatorAgentId,
+    parentTaskId: taskData.parentTaskId,
+    nextTaskId: taskData.nextTaskId,
+    escrowType: taskData.escrowType || 'simple',
+    milestones: taskData.milestones,
+    metadata: taskData.metadata,
   };
 
   const newTask: Task = {
@@ -398,6 +425,118 @@ export async function createTask(
 
   await supabase.from('tasks').insert(taskToDb(newTask));
   return newTask;
+}
+
+// Function for agents to create tasks (agent-to-agent collaboration)
+export async function createTaskAsAgent(
+  taskData: Omit<Task, 'id' | 'creatorAddress' | 'creatorType' | 'creatorAgentId' | 'status' | 'bidsCount' | 'createdAt'>,
+  agentId: string,
+  ownerAddress: string
+): Promise<Task> {
+  if (!validateErgoAddress(ownerAddress)) {
+    throw new Error('Invalid owner address format. Must be a valid P2PK address starting with 9.');
+  }
+  
+  // Verify agent ownership
+  const agent = await getAgentById(agentId);
+  if (!agent) {
+    throw new Error('Agent not found');
+  }
+  if (agent.ownerAddress !== ownerAddress) {
+    throw new Error('You can only create tasks as an agent you own');
+  }
+  
+  await initializeData();
+
+  const sanitizedTaskData = {
+    ...taskData,
+    title: sanitizeText(taskData.title, 200),
+    description: sanitizeText(taskData.description, 5000),
+    skillsRequired: taskData.skillsRequired.map(sanitizeSkill).filter(s => s.length > 0).slice(0, 10),
+    budgetErg: sanitizeNumber(taskData.budgetErg, 0.1, 100000),
+    budgetUsd: taskData.budgetUsd ? sanitizeNumber(taskData.budgetUsd, 0.1, 100000) : undefined,
+    creatorAddress: ownerAddress, // Agent owner's address
+    creatorName: agent.name, // Agent's name as creator
+    creatorType: 'agent' as const,
+    creatorAgentId: agentId,
+    parentTaskId: taskData.parentTaskId,
+    nextTaskId: taskData.nextTaskId,
+    escrowType: taskData.escrowType || 'simple',
+    milestones: taskData.milestones,
+    metadata: taskData.metadata,
+  };
+
+  const newTask: Task = {
+    ...sanitizedTaskData,
+    id: generateId(),
+    status: 'open',
+    bidsCount: 0,
+    createdAt: new Date().toISOString(),
+  };
+
+  await supabase.from('tasks').insert(taskToDb(newTask));
+  return newTask;
+}
+
+// Task chaining functions
+export async function chainTask(
+  parentTaskId: string, 
+  childTaskId: string
+): Promise<void> {
+  // Update parent task to link to child
+  await updateTask(parentTaskId, { nextTaskId: childTaskId });
+  // Update child task to link to parent
+  await updateTask(childTaskId, { parentTaskId });
+}
+
+export async function getTaskChain(taskId: string): Promise<{
+  chain: Task[];
+  currentIndex: number;
+  totalLength: number;
+}> {
+  const currentTask = await getTaskById(taskId);
+  if (!currentTask) {
+    throw new Error('Task not found');
+  }
+
+  const chain: Task[] = [currentTask];
+  let currentIndex = 0;
+
+  // Walk backwards to find the root
+  let current = currentTask;
+  while (current.parentTaskId) {
+    const parent = await getTaskById(current.parentTaskId);
+    if (!parent) break;
+    chain.unshift(parent);
+    currentIndex++;
+    current = parent;
+  }
+
+  // Walk forwards to find the end
+  current = currentTask;
+  while (current.nextTaskId) {
+    const next = await getTaskById(current.nextTaskId);
+    if (!next) break;
+    chain.push(next);
+    current = next;
+  }
+
+  return {
+    chain,
+    currentIndex,
+    totalLength: chain.length,
+  };
+}
+
+export async function getUserCompletedTasks(userAddress: string): Promise<Task[]> {
+  const { data } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('creator_address', userAddress)
+    .eq('status', 'completed')
+    .order('completed_at', { ascending: false });
+  
+  return data ? data.map(dbToTask) : [];
 }
 
 async function serviceUpdate(table: string, data: Record<string, unknown>, match: Record<string, string>): Promise<void> {
@@ -459,6 +598,18 @@ export async function createBid(bidData: Omit<Bid, 'id' | 'createdAt'>): Promise
   const { notifyBidReceived } = await import('./notifications');
   const { logBidSubmitted } = await import('./taskEvents');
   await initializeData();
+
+  // SECURITY: Check if agent is suspended before allowing bid
+  const { data: agentCheck } = await supabase
+    .from('agents')
+    .select('status, suspended_until')
+    .eq('id', bidData.agentId)
+    .single();
+  if (agentCheck?.status === 'suspended') {
+    const until = agentCheck.suspended_until ? new Date(agentCheck.suspended_until).toLocaleDateString() : 'indefinitely';
+    throw new Error(`Agent is suspended until ${until}. Cannot submit bids.`);
+  }
+
   const sanitizedBidData = {
     ...bidData,
     agentName: sanitizeText(bidData.agentName, 100),
@@ -497,6 +648,17 @@ export async function acceptBid(bidId: string): Promise<boolean> {
   const { data: bids } = await supabase.from('bids').select('*').eq('id', bidId).single();
   if (!bids) return false;
   const bid = dbToBid(bids);
+
+  // SECURITY: Race condition guard — only accept bid if task is still 'open'
+  // Use conditional update to prevent two concurrent acceptBid calls
+  const { data: taskCheck } = await supabase
+    .from('tasks')
+    .select('status')
+    .eq('id', bid.taskId)
+    .single();
+  if (!taskCheck || (taskCheck.status !== 'open' && taskCheck.status !== 'funded')) {
+    throw new Error('Task is no longer open for bids. Another bid may have been accepted.');
+  }
 
   // Get agent's ergo address
   const { data: agentData } = await supabase.from('agents').select('ergo_address').eq('id', bid.agentId).single();

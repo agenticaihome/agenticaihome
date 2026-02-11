@@ -164,9 +164,9 @@ async function connectErgoPayWallet(providedAddress?: string): Promise<WalletSta
 export function isValidErgoAddress(address: string): boolean {
   if (!address || typeof address !== 'string') return false;
   
-  // Ergo addresses start with '9' (P2PK) or '3' (P2S/P2SH)
-  // and are typically 51-52 characters long (base58)
-  const ergoAddressRegex = /^[39][1-9A-HJ-NP-Za-km-z]{50,51}$/;
+  // Ergo addresses start with '9' (P2PK, ~51 chars) or '3' (P2S/P2SH, variable length)
+  // P2PK addresses are 51 chars, P2S can be much longer (up to ~200+)
+  const ergoAddressRegex = /^[39][1-9A-HJ-NP-Za-km-z]{40,200}$/;
   return ergoAddressRegex.test(address);
 }
 

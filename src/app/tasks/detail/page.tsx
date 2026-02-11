@@ -24,7 +24,8 @@ import TaskActionBar from '@/components/TaskActionBar';
 import type { Task, Bid, Agent } from '@/lib/types';
 import type { Milestone } from '@/lib/ergo/milestone-escrow';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';
-import { CheckCircle, X, Lock, AlertTriangle, ExternalLink, RotateCcw, PartyPopper, DollarSign } from 'lucide-react';
+import { dateToBlockHeight, checkEscrowExpiry } from '@/lib/ergo/escrow';
+import { CheckCircle, X, Lock, AlertTriangle, ExternalLink, RotateCcw, PartyPopper, DollarSign, Clock } from 'lucide-react';
 
 interface Deliverable {
   id: string;
@@ -161,6 +162,12 @@ function TaskDetailInner() {
   const [escrowTxId, setEscrowTxId] = useState<string | undefined>(undefined);
   const [fetchedAgent, setFetchedAgent] = useState<Agent | null>(null);
   
+  // Deadline and expiry state
+  const [deadlineHeight, setDeadlineHeight] = useState<number | undefined>(undefined);
+  const [escrowExpired, setEscrowExpired] = useState<boolean>(false);
+  const [deadlineDate, setDeadlineDate] = useState<Date | undefined>(undefined);
+  const [daysUntilExpiry, setDaysUntilExpiry] = useState<number | undefined>(undefined);
+  
   // Milestone escrow state
   const [currentMilestone, setCurrentMilestone] = useState<number>(0);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -194,9 +201,44 @@ function TaskDetailInner() {
             approved_pending_release: 'funded', // approved but not yet released on-chain
           };
           setEscrowStatus(statusMap[rawStatus] || 'funded');
+          
+          // Check escrow expiry if there's an active escrow box
+          if (statusMap[rawStatus] === 'funded' && meta.escrow_box_id) {
+            try {
+              const expiryInfo = await checkEscrowExpiry(meta.escrow_box_id);
+              setEscrowExpired(expiryInfo.expired);
+              setDeadlineDate(expiryInfo.deadlineDate);
+              
+              if (expiryInfo.deadlineDate) {
+                const now = new Date();
+                const timeDiff = expiryInfo.deadlineDate.getTime() - now.getTime();
+                const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                setDaysUntilExpiry(daysLeft);
+              }
+            } catch (err) {
+              console.error('Error checking escrow expiry:', err);
+            }
+          }
         }
         if (t.escrowTxId) {
           setEscrowTxId(t.escrowTxId);
+        }
+        
+        // Calculate deadline height if task has a deadline
+        if (meta?.deadline) {
+          try {
+            const deadline = new Date(meta.deadline);
+            const height = await dateToBlockHeight(deadline);
+            setDeadlineHeight(height);
+            setDeadlineDate(deadline);
+            
+            const now = new Date();
+            const timeDiff = deadline.getTime() - now.getTime();
+            const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+            setDaysUntilExpiry(daysLeft);
+          } catch (err) {
+            console.error('Error calculating deadline height:', err);
+          }
         }
         
         // Load milestone data if this is a milestone escrow task
@@ -1087,6 +1129,7 @@ function TaskDetailInner() {
                     // Use accepted bid rate if available, otherwise task budget
                     bids.find(b => b.id === task.acceptedBidId)?.proposedRate || task.budgetErg || 0
                   )}
+                  deadlineHeight={deadlineHeight}
                   escrowBoxId={escrowBoxId}
                   escrowStatus={escrowStatus}
                   onFunded={async (txId, boxId) => {

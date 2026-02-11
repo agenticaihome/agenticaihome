@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
-import { withWalletAuth, verifiedCreateTask } from '@/lib/supabaseStore';
+import { withWalletAuth, verifiedCreateTask, getAgentsByOwner, getUserCompletedTasks, createTaskAsAgent } from '@/lib/supabaseStore';
 import Link from 'next/link';
 import SkillSelector from '@/components/SkillSelector';
 import { initTaskFlow } from '@/lib/taskFlow';
 import { logEvent } from '@/lib/events';
 import { sanitizeText, sanitizeNumber, validateFormSubmission, INPUT_LIMITS } from '@/lib/sanitize';
 import { getErgPrice, usdToErg, ergToUsd, formatUsdAmount, formatErgAmount } from '@/lib/ergPrice';
-import { AlertTriangle, Lock, CheckCircle, Lightbulb, RefreshCw, DollarSign } from 'lucide-react';
+import { AlertTriangle, Lock, CheckCircle, Lightbulb, RefreshCw, DollarSign, Bot, Link2 } from 'lucide-react';
+import { Agent, Task } from '@/lib/types';
 
 export default function CreateTask() {
   const { userAddress, profile } = useWallet();
@@ -34,6 +35,13 @@ export default function CreateTask() {
   const [priceError, setPriceError] = useState<string | null>(null);
   const [isLoadingPrice, setIsLoadingPrice] = useState(false);
   const [convertedAmount, setConvertedAmount] = useState<string>('');
+  
+  // Agent creation and task chaining
+  const [creatorType, setCreatorType] = useState<'client' | 'agent'>('client');
+  const [selectedAgent, setSelectedAgent] = useState<string>('');
+  const [userAgents, setUserAgents] = useState<Agent[]>([]);
+  const [chainFromTask, setChainFromTask] = useState<string>('');
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
 
   const getMinDate = () => {
     const tomorrow = new Date();
@@ -59,6 +67,26 @@ export default function CreateTask() {
     
     fetchPrice();
   }, []);
+
+  // Load user's agents and completed tasks
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!userAddress) return;
+      
+      try {
+        const [agents, tasks] = await Promise.all([
+          getAgentsByOwner(userAddress),
+          getUserCompletedTasks(userAddress)
+        ]);
+        setUserAgents(agents);
+        setCompletedTasks(tasks);
+      } catch (error) {
+        console.error('Failed to load user data:', error);
+      }
+    };
+    
+    loadUserData();
+  }, [userAddress]);
 
   // Update converted amount when budget or currency mode changes
   useEffect(() => {
@@ -111,6 +139,7 @@ export default function CreateTask() {
     if (skills.length === 0) return setError('Add at least one required skill');
     if (!budget || Number(budget) <= 0) return setError('Set a budget');
     if (!userAddress) return setError('Connect your wallet first');
+    if (creatorType === 'agent' && !selectedAgent) return setError('Select an agent to create this task');
     if (deadline) {
       const d = new Date(deadline);
       if (d <= new Date()) return setError('Deadline must be in the future');
@@ -156,39 +185,50 @@ export default function CreateTask() {
           }))
         : undefined;
 
-      const payload = {
+      const basePayload = {
         title: sanitizedTitle,
         description: sanitizedDesc,
         skillsRequired: skills,
         budgetErg: budgetErg,
         budgetUsd: budgetUsd,
-        creatorName: profile?.displayName,
         escrowType,
+        parentTaskId: chainFromTask || undefined,
         ...(milestones && { milestones }),
       };
 
       let newTask;
 
-      try {
-        // Try wallet-verified creation
-        const auth = await Promise.race([
-          withWalletAuth(userAddress, async (msg) => {
-            const ergo = (window as any).ergo;
-            if (!ergo?.auth) throw new Error('Wallet auth unavailable');
-            return await ergo.auth(userAddress, msg);
-          }),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
-        ]);
-        newTask = await Promise.race([
-          verifiedCreateTask(payload, auth),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
-        ]);
-      } catch {
-        // Fallback to direct creation
-        newTask = await Promise.race([
-          createTaskData(payload, userAddress),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 15000))
-        ]);
+      if (creatorType === 'agent') {
+        // Create task as agent
+        newTask = await createTaskAsAgent(basePayload, selectedAgent, userAddress);
+      } else {
+        // Create task as client (existing logic)
+        const payload = {
+          ...basePayload,
+          creatorName: profile?.displayName,
+        };
+
+        try {
+          // Try wallet-verified creation
+          const auth = await Promise.race([
+            withWalletAuth(userAddress, async (msg) => {
+              const ergo = (window as any).ergo;
+              if (!ergo?.auth) throw new Error('Wallet auth unavailable');
+              return await ergo.auth(userAddress, msg);
+            }),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
+          ]);
+          newTask = await Promise.race([
+            verifiedCreateTask(payload, auth),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 15000))
+          ]);
+        } catch {
+          // Fallback to direct creation
+          newTask = await Promise.race([
+            createTaskData(payload, userAddress),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 15000))
+          ]);
+        }
       }
 
       const taskResult = newTask as any;
@@ -196,12 +236,17 @@ export default function CreateTask() {
 
       // Fire-and-forget
       try { initTaskFlow(taskResult.id, userAddress); } catch {}
-      try { logEvent({
-        type: 'task_created',
-        message: `Task "${sanitizedTitle}" created with ${currencyMode === 'USD' ? `$${budgetUsd} (${budgetErg.toFixed(3)} ERG)` : `${budgetErg} ERG ($${budgetUsd.toFixed(2)})`} budget`,
-        taskId: taskResult.id,
-        actor: userAddress,
-      }); } catch {}
+      try { 
+        const creatorDisplay = creatorType === 'agent' 
+          ? `Agent "${userAgents.find(a => a.id === selectedAgent)?.name}"` 
+          : profile?.displayName || 'You';
+        logEvent({
+          type: 'task_created',
+          message: `Task "${sanitizedTitle}" created by ${creatorDisplay} with ${currencyMode === 'USD' ? `$${budgetUsd} (${budgetErg.toFixed(3)} ERG)` : `${budgetErg} ERG ($${budgetUsd.toFixed(2)})`} budget`,
+          taskId: taskResult.id,
+          actor: userAddress,
+        });
+      } catch {}
 
       router.push(`/tasks/detail?id=${taskResult.id}`);
     } catch (err: any) {
@@ -276,6 +321,92 @@ export default function CreateTask() {
             />
             <p className="mt-1 text-xs text-[var(--text-muted)]">{description.length}/50 min</p>
           </div>
+
+          {/* Creator Type */}
+          {userAgents.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">
+                Create as
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCreatorType('client')}
+                  className={`p-3 rounded-xl border-2 transition-all text-left ${
+                    creatorType === 'client'
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : 'border-[var(--border-color)] hover:border-[var(--text-muted)]'
+                  }`}
+                >
+                  <div className="font-medium text-white text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                    Client
+                  </div>
+                  <div className="text-xs text-[var(--text-secondary)] mt-0.5">Post as yourself</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreatorType('agent')}
+                  className={`p-3 rounded-xl border-2 transition-all text-left ${
+                    creatorType === 'agent'
+                      ? 'border-purple-500 bg-purple-500/10'
+                      : 'border-[var(--border-color)] hover:border-[var(--text-muted)]'
+                  }`}
+                >
+                  <div className="font-medium text-white text-sm flex items-center gap-2">
+                    <Bot className="w-4 h-4 text-purple-400" />
+                    Agent
+                  </div>
+                  <div className="text-xs text-[var(--text-secondary)] mt-0.5">Post as one of your agents</div>
+                </button>
+              </div>
+
+              {/* Agent Selection */}
+              {creatorType === 'agent' && (
+                <div className="mt-3">
+                  <select
+                    value={selectedAgent}
+                    onChange={(e) => setSelectedAgent(e.target.value)}
+                    className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
+                  >
+                    <option value="">Select an agent...</option>
+                    {userAgents.map(agent => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.name} (EGO: {agent.egoScore})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Task Chaining */}
+          {completedTasks.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                Chain from task <span className="text-[var(--text-muted)]">(optional)</span>
+              </label>
+              <select
+                value={chainFromTask}
+                onChange={(e) => setChainFromTask(e.target.value)}
+                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
+              >
+                <option value="">None - standalone task</option>
+                {completedTasks.map(task => (
+                  <option key={task.id} value={task.id}>
+                    {task.title} (completed {new Date(task.completedAt!).toLocaleDateString()})
+                  </option>
+                ))}
+              </select>
+              {chainFromTask && (
+                <p className="mt-1 text-xs text-purple-400 flex items-center gap-1">
+                  <Link2 className="w-3 h-3" />
+                  This task will be linked as a follow-up
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Skills */}
           <div>
@@ -495,9 +626,31 @@ export default function CreateTask() {
                 <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 font-medium">Open</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)] mb-4">
-                <span>by {profile?.displayName || 'You'}</span>
+                <span>by {
+                  creatorType === 'agent' && selectedAgent 
+                    ? `Agent ${userAgents.find(a => a.id === selectedAgent)?.name || 'Agent'}`
+                    : profile?.displayName || 'You'
+                }</span>
                 <span>•</span>
                 <span>{formatDate(new Date().toISOString())}</span>
+                {creatorType === 'agent' && (
+                  <>
+                    <span>•</span>
+                    <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs flex items-center gap-1">
+                      <Bot className="w-3 h-3" />
+                      Agent Task
+                    </span>
+                  </>
+                )}
+                {chainFromTask && (
+                  <>
+                    <span>•</span>
+                    <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 text-xs flex items-center gap-1">
+                      <Link2 className="w-3 h-3" />
+                      Chained
+                    </span>
+                  </>
+                )}
                 {escrowType === 'milestone' && (
                   <>
                     <span>•</span>

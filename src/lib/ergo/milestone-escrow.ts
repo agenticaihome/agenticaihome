@@ -294,12 +294,20 @@ export async function releaseMilestoneTx(
   const milestone = escrowData.milestones[currentMilestone];
   const isFinalMilestone = currentMilestone === escrowData.milestones.length - 1;
 
-  // Calculate payment amounts
+  // Calculate payment amounts — MUST match contract logic exactly
+  // Contract: milestonePayment = (escrowValue * currentPercentage) / 10000L - protocolFee - txFee
   const escrowValue = BigInt(escrowBox.value);
   const protocolFee = escrowValue / BigInt(100); // 1%
   const txFee = RECOMMENDED_TX_FEE;
-  const netValue = escrowValue - protocolFee;
-  const milestonePayment = (netValue * BigInt(Math.round(milestone.percentage * 100))) / BigInt(10000) - txFee;
+  const milestonePayment = (escrowValue * BigInt(Math.round(milestone.percentage * 100))) / BigInt(10000) - protocolFee - txFee;
+
+  // SECURITY: Validate no underflow
+  if (milestonePayment < MIN_BOX_VALUE) {
+    throw new Error('Milestone payment too small after fees');
+  }
+  if (protocolFee < MIN_BOX_VALUE) {
+    throw new Error('Protocol fee below minimum box value');
+  }
 
   const outputs: OutputBuilder[] = [];
 
@@ -310,16 +318,27 @@ export async function releaseMilestoneTx(
   outputs.push(new OutputBuilder(protocolFee, PLATFORM_FEE_ADDRESS));
 
   // Continuation box for remaining milestones (if not final)
+  // Contract: remainingValue = escrowValue - milestonePayment - protocolFee - txFee
   if (!isFinalMilestone) {
     const remainingValue = escrowValue - milestonePayment - protocolFee - txFee;
+    if (remainingValue < MIN_BOX_VALUE) {
+      throw new Error('Remaining escrow value too small for continuation box');
+    }
+    // Convert explorer box registers to Fleet SDK format (serialized hex strings)
+    const regs = escrowBox.additionalRegisters || {};
+    const getRegHex = (key: string): string => {
+      const val = regs[key] as any;
+      if (typeof val === 'object' && val?.serializedValue) return val.serializedValue;
+      return val;
+    };
     const continuationOutput = new OutputBuilder(remainingValue, MILESTONE_ESCROW_CONTRACT_ADDRESS)
       .setAdditionalRegisters({
-        R4: escrowBox.additionalRegisters.R4,                   // Client key (unchanged)
-        R5: escrowBox.additionalRegisters.R5,                   // Agent address (unchanged)
-        R6: escrowBox.additionalRegisters.R6,                   // Deadlines (unchanged)
-        R7: escrowBox.additionalRegisters.R7,                   // Percentages (unchanged)
+        R4: getRegHex('R4'),                                    // Client key (unchanged)
+        R5: getRegHex('R5'),                                    // Agent address (unchanged)
+        R6: getRegHex('R6'),                                    // Deadlines (unchanged)
+        R7: getRegHex('R7'),                                    // Percentages (unchanged)
         R8: SConstant(SInt(currentMilestone + 1)),              // Next milestone
-        R9: escrowBox.additionalRegisters.R9,                   // Metadata (unchanged)
+        R9: getRegHex('R9'),                                    // Fee address (unchanged)
       });
     outputs.push(continuationOutput);
   }
@@ -423,34 +442,52 @@ export function parseMilestoneEscrowBox(box: any): MilestoneEscrowBox | null {
       return null;
     }
 
-    // Parse metadata
-    const metadataBytes = Buffer.from(registers.R9, 'hex');
-    const metadataStr = new TextDecoder().decode(metadataBytes);
-    const metadata = JSON.parse(metadataStr);
+    // Registers are serialized Sigma values — use renderedValue from explorer if available
+    const getRendered = (reg: any): any => {
+      if (typeof reg === 'object' && reg?.renderedValue !== undefined) return reg.renderedValue;
+      return reg;
+    };
 
-    // Reconstruct milestones from metadata and register data
-    const deadlines = JSON.parse(registers.R6); // Array of deadlines
-    const percentagesBp = JSON.parse(registers.R7); // Array of percentages in basis points
+    // R6 = SColl[SInt] deadlines, R7 = SColl[SInt] percentages (basis points)
+    // R8 = SInt current milestone, R9 = SColl[SByte] fee address (not metadata)
+    // NOTE: Milestone names/descriptions are stored off-chain in Supabase, not in registers
+    const r6Rendered = getRendered(registers.R6);
+    const r7Rendered = getRendered(registers.R7);
+    const r8Rendered = getRendered(registers.R8);
     
-    const milestones: Milestone[] = metadata.milestones.map((m: any, i: number) => ({
-      name: m.name,
-      description: m.description,
-      percentage: percentagesBp[i] / 100, // Convert back from basis points
-      deadlineHeight: deadlines[i],
-      deliverables: m.deliverables || [],
-      egoReward: m.egoReward || 10,
+    // Parse rendered values — explorer renders SColl[SInt] as array strings
+    let deadlines: number[] = [];
+    let percentagesBp: number[] = [];
+    let currentMilestone = 0;
+    
+    try {
+      deadlines = Array.isArray(r6Rendered) ? r6Rendered : JSON.parse(String(r6Rendered));
+      percentagesBp = Array.isArray(r7Rendered) ? r7Rendered : JSON.parse(String(r7Rendered));
+      currentMilestone = typeof r8Rendered === 'number' ? r8Rendered : parseInt(String(r8Rendered));
+    } catch {
+      console.error('Failed to parse milestone register values');
+      return null;
+    }
+    
+    const milestones: Milestone[] = deadlines.map((deadline: number, i: number) => ({
+      name: `Milestone ${i + 1}`,
+      description: '',
+      percentage: (percentagesBp[i] || 0) / 100,
+      deadlineHeight: deadline,
+      deliverables: [],
+      egoReward: 10,
     }));
 
     return {
       boxId: box.boxId,
       transactionId: box.transactionId,
-      clientAddress: '', // Would need to derive from R4
-      agentAddress: '', // Would need to derive from R5  
+      clientAddress: '', // Would need to derive from R4 SigmaProp
+      agentAddress: '', // Would need to derive from R5 SColl[SByte]
       totalAmount: BigInt(box.value),
-      currentMilestone: parseInt(registers.R8),
+      currentMilestone,
       milestones,
-      taskId: metadata.taskId,
-      metadata: metadata,
+      taskId: '', // Not stored in registers — stored in Supabase
+      metadata: {},
       status: box.spentTransactionId ? 'completed' : 'active',
       creationHeight: box.creationHeight || 0,
     };

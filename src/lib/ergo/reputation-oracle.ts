@@ -199,6 +199,11 @@ export async function updateReputationOracleTx(
   }
 
   // Extract existing data (R4=treasury, R5=agent must remain the same)
+  // Handle both explorer format ({serializedValue, ...}) and raw hex strings
+  const getRegHex = (reg: any): string => {
+    if (typeof reg === 'object' && reg?.serializedValue) return reg.serializedValue;
+    return reg;
+  };
   const existingTreasuryPk = existingBox.additionalRegisters?.R4;
   const existingAgentPubKey = existingBox.additionalRegisters?.R5;
   
@@ -209,8 +214,8 @@ export async function updateReputationOracleTx(
   // Create updated oracle box
   const updatedOracleOutput = new OutputBuilder(MIN_BOX_VALUE, REPUTATION_ORACLE_CONTRACT_ADDRESS)
     .setAdditionalRegisters({
-      R4: existingTreasuryPk,                             // Treasury key preserved
-      R5: existingAgentPubKey,                            // Agent key preserved
+      R4: getRegHex(existingTreasuryPk),                  // Treasury key preserved
+      R5: getRegHex(existingAgentPubKey),                  // Agent key preserved
       R6: SConstant(SLong(egoScore)),                     // Updated EGO score
       R7: SConstant(SInt(tasksCompleted)),                // Updated tasks count
       R8: SConstant(SInt(disputeRate)),                   // Updated dispute rate
@@ -241,8 +246,12 @@ export async function findAgentOracleBox(agentAddress: string): Promise<any | nu
     const boxes = await getBoxesByAddress(REPUTATION_ORACLE_CONTRACT_ADDRESS);
     
     for (const box of boxes) {
-      const boxAgentPubKey = box.additionalRegisters?.R5; // Agent key now in R5
-      if (boxAgentPubKey && Buffer.from(boxAgentPubKey, 'hex').equals(agentPubKey)) {
+      const r5 = box.additionalRegisters?.R5;
+      if (!r5) continue;
+      // R5 is serialized SColl[SByte] — check if it contains the agent's pubkey hex
+      const serialized = typeof r5 === 'object' ? (r5 as any).serializedValue || '' : r5;
+      const pubkeyHex = Buffer.from(agentPubKey).toString('hex');
+      if (serialized.toLowerCase().includes(pubkeyHex.toLowerCase())) {
         return box;
       }
     }
@@ -265,13 +274,24 @@ export function parseReputationOracleData(box: any): ReputationOracleData | null
       return null;
     }
 
+    // Registers are serialized Sigma values from explorer — need renderedValue or proper deserialization
+    // For now, extract renderedValue if available (explorer format), else use raw
+    const getRendered = (reg: any): string => {
+      if (typeof reg === 'object' && reg?.renderedValue) return reg.renderedValue;
+      return String(reg);
+    };
+    const getSerializedBytes = (reg: any): string => {
+      if (typeof reg === 'object' && reg?.serializedValue) return reg.serializedValue;
+      return String(reg);
+    };
+
     return {
-      agentPubKey: Uint8Array.from(Buffer.from(registers.R5, 'hex')), // Agent key now in R5
-      egoScore: BigInt(registers.R6),                                  // EGO score now in R6
-      tasksCompleted: parseInt(registers.R7),                         // Tasks now in R7
-      disputeRate: parseInt(registers.R8),                            // Dispute rate now in R8
-      lastUpdated: parseInt(registers.R9),                            // Last updated now in R9
-      agentIdentityHash: new Uint8Array(32), // Removed identity hash for simplicity
+      agentPubKey: Uint8Array.from(Buffer.from(getSerializedBytes(registers.R5), 'hex')),
+      egoScore: BigInt(getRendered(registers.R6) || '0'),
+      tasksCompleted: parseInt(getRendered(registers.R7) || '0'),
+      disputeRate: parseInt(getRendered(registers.R8) || '0'),
+      lastUpdated: parseInt(getRendered(registers.R9) || '0'),
+      agentIdentityHash: new Uint8Array(32),
     };
   } catch (error) {
     console.error('Error parsing oracle data:', error);

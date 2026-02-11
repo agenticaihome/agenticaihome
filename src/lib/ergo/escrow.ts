@@ -239,6 +239,10 @@ export async function releaseEscrowTx(
   const protocolFee = escrowValue / 100n; // 1%
   const agentAmount = escrowValue - protocolFee - fee;
 
+  // SECURITY: Validate no integer underflow (escrow too small)
+  if (escrowValue < protocolFee + fee) {
+    throw new Error('Escrow value too small to cover fees');
+  }
   if (agentAmount < MIN_BOX_VALUE) {
     throw new Error('Escrow amount too small to release after fees');
   }
@@ -511,9 +515,152 @@ export function validateEscrowParams(params: EscrowParams): { valid: boolean; er
   if (params.deadlineHeight <= 0) {
     errors.push('Deadline must be a positive block height');
   }
+  // SECURITY: Validate deadline is in the future (at least ~2 hours / 120 blocks)
+  // This can't be checked here without currentHeight, but we document the expectation
+
+  // SECURITY: Validate total cost doesn't overflow
+  const totalNeeded = params.amountNanoErg + RECOMMENDED_TX_FEE;
+  if (totalNeeded < params.amountNanoErg) {
+    errors.push('Amount overflow detected');
+  }
 
   return { valid: errors.length === 0, errors };
 }
+
+// ─── Deadline utilities ──────────────────────────────────────────────
+
+/**
+ * Convert a deadline date to approximate block height.
+ * Ergo blocks are approximately 2 minutes each (30 blocks per hour).
+ */
+export async function dateToBlockHeight(deadlineDate: Date): Promise<number> {
+  const currentHeight = await getCurrentHeight();
+  const currentTime = new Date();
+  const timeUntilDeadline = deadlineDate.getTime() - currentTime.getTime();
+  const hoursUntilDeadline = timeUntilDeadline / (1000 * 60 * 60);
+  
+  // If deadline is in the past, return current height
+  if (hoursUntilDeadline <= 0) {
+    return currentHeight;
+  }
+  
+  const blocksUntilDeadline = Math.floor(hoursUntilDeadline * 30);
+  return currentHeight + blocksUntilDeadline;
+}
+
+/**
+ * Convert a block height to approximate date.
+ * Ergo blocks are approximately 2 minutes each.
+ */
+export async function blockHeightToDate(blockHeight: number): Promise<Date> {
+  const currentHeight = await getCurrentHeight();
+  const currentTime = new Date();
+  const blocksUntilDeadline = blockHeight - currentHeight;
+  const hoursUntilDeadline = blocksUntilDeadline / 30; // 30 blocks per hour
+  const millisecondsUntilDeadline = hoursUntilDeadline * 60 * 60 * 1000;
+  
+  return new Date(currentTime.getTime() + millisecondsUntilDeadline);
+}
+
+/**
+ * Check if an escrow box has expired based on its deadline.
+ * Returns expiry status and deadline information.
+ * 
+ * APPLICATION-LEVEL ENFORCEMENT NOTICE:
+ * This is app-level deadline checking, not contract-level enforcement.
+ * The actual ErgoScript contract allows refunds after the deadline block height,
+ * but this function helps the UI enforce deadline rules before users attempt transactions.
+ */
+export async function checkEscrowExpiry(boxId: string): Promise<{
+  expired: boolean;
+  deadlineHeight: number;
+  currentHeight: number;
+  deadlineDate?: Date;
+}> {
+  const currentHeight = await getCurrentHeight();
+  
+  try {
+    const rawBox = await getBoxById(boxId);
+    if (!rawBox) {
+      throw new Error('Escrow box not found on-chain');
+    }
+
+    // Convert explorer box format to Fleet SDK format
+    const convertedRegisters = Object.fromEntries(
+      Object.entries((rawBox as any).additionalRegisters || {}).map(([key, val]: [string, any]) => {
+        if (typeof val === 'object' && val?.serializedValue) {
+          return [key, val.serializedValue];
+        }
+        return [key, val];
+      })
+    );
+
+    const escrowBox: any = {
+      ...rawBox,
+      additionalRegisters: convertedRegisters,
+    };
+
+    // Extract deadline from escrow box R6 register
+    const deadlineReg = escrowBox.additionalRegisters?.R6;
+    if (!deadlineReg) {
+      throw new Error('Missing deadline register R6 in escrow box');
+    }
+    
+    // R6 contains an SInt value — Sigma uses ZigZag + VLQ encoding
+    const deadlineHeight = decodeSInt(deadlineReg);
+    const expired = currentHeight > deadlineHeight;
+    
+    // Convert deadline height back to approximate date for UI display
+    const deadlineDate = await blockHeightToDate(deadlineHeight);
+    
+    return {
+      expired,
+      deadlineHeight,
+      currentHeight,
+      deadlineDate,
+    };
+  } catch (error) {
+    console.error('Error checking escrow expiry:', error);
+    throw new Error(`Failed to check escrow expiry: ${(error as Error).message}`);
+  }
+}
+
+/**
+ * Build a refund transaction for expired escrow.
+ * This is the same as refundEscrowTx but with a clearer name for expired escrows.
+ * 
+ * APPLICATION-LEVEL ENFORCEMENT NOTICE:
+ * The deadline check here is app-level guidance. The actual ErgoScript contract
+ * will enforce the deadline at the blockchain level when the transaction is submitted.
+ */
+export async function buildRefundExpiredEscrowTx(
+  escrowBoxId: string,
+  clientAddress: string,
+  walletUtxos: any[],
+  changeAddress: string
+): Promise<any> {
+  // First check if escrow is actually expired
+  const expiryInfo = await checkEscrowExpiry(escrowBoxId);
+  
+  if (!expiryInfo.expired) {
+    throw new Error(
+      `Escrow has not expired yet. Current height: ${expiryInfo.currentHeight}, ` +
+      `deadline: ${expiryInfo.deadlineHeight}. ` +
+      `Expires approximately on ${expiryInfo.deadlineDate?.toLocaleDateString()}.`
+    );
+  }
+  
+  // Use the existing refund transaction builder
+  return await refundEscrowTx(escrowBoxId, clientAddress, walletUtxos, changeAddress);
+}
+
+// ─── Legacy function aliases for backward compatibility ──────────────
+
+/**
+ * Create an escrow transaction (alias for createEscrowTx).
+ * Maintained for backward compatibility.
+ */
+export const buildFundEscrowTx = createEscrowTx;
 
 // ─── Utilities ───────────────────────────────────────────────────────
 

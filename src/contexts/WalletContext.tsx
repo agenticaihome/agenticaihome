@@ -391,7 +391,7 @@ export function useWalletInstallation() {
     let elapsed = 0;
     const interval = setInterval(() => {
       elapsed += 500;
-      if (check() || elapsed >= 5000) {
+      if (check() || elapsed >= 1500) {
         clearInterval(interval);
         setDetecting(false);
       }

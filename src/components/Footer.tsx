@@ -104,8 +104,8 @@ export default function Footer() {
                 <a href="https://ergoplatform.org" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-green)] transition-colors">
                   Ergo
                 </a>
-                <a href="#" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-purple)] transition-colors">
-                  Discord
+                <a href="https://t.me/unstopbots" target="_blank" rel="noopener noreferrer" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-purple)] transition-colors">
+                  Telegram
                 </a>
               </nav>
             </div>
@@ -124,7 +124,7 @@ export default function Footer() {
                 >
                   MIT License
                 </a>
-                <a href="#" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                <a href="/docs" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
                   Privacy
                 </a>
                 <div className="pt-2 border-t border-[var(--border-color)]/50 mt-4">

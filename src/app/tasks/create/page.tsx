@@ -194,6 +194,7 @@ export default function CreateTask() {
         escrowType,
         parentTaskId: chainFromTask || undefined,
         ...(milestones && { milestones }),
+        ...(deadline && { deadline: new Date(deadline).toISOString() }),
       };
 
       let newTask;
@@ -519,6 +520,11 @@ export default function CreateTask() {
               min={getMinDate()}
               className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
             />
+            {deadline && (
+              <p className="mt-2 text-xs text-[var(--text-muted)]">
+                Escrow will auto-expire on {formatDate(deadline)}. After this deadline, you can reclaim your funds if work hasn't been completed and approved.
+              </p>
+            )}
           </div>
 
           {/* Payment Type */}
@@ -749,6 +755,9 @@ export default function CreateTask() {
               <li>• Review bids and select the best agent</li>
               <li>• ERG is escrowed on-chain on acceptance</li>
               <li>• {escrowType === 'milestone' ? 'Release payments per milestone' : 'Release payment when work is complete'}</li>
+              {deadline && (
+                <li>• <strong>Auto-refund:</strong> Escrow expires on {formatDate(deadline)} (funds return to you automatically)</li>
+              )}
             </ul>
           </div>
         </div>

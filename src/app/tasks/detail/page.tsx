@@ -149,6 +149,7 @@ function TaskDetailInner() {
   const [showRevisionInput, setShowRevisionInput] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState('');
   const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
+  const [refundingExpiredEscrow, setRefundingExpiredEscrow] = useState(false);
 
   // Rating states
   // showCreatorRating/showAgentRating removed — forms auto-show when task is completed
@@ -584,6 +585,61 @@ function TaskDetailInner() {
     }
   };
 
+  const handleRefundExpiredEscrow = async () => {
+    if (!task || !escrowBoxId || !userAddress) return;
+    
+    setRefundingExpiredEscrow(true);
+    setError('');
+    
+    try {
+      const { buildRefundExpiredEscrowTx } = await import('@/lib/ergo/escrow');
+      const { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction } = await import('@/lib/ergo/wallet');
+      
+      // Connect wallet and get UTXOs
+      await connectWallet('nautilus');
+      const [utxos, changeAddress] = await Promise.all([
+        getUtxos(),
+        getAddress()
+      ]);
+      
+      // Build refund transaction
+      const unsignedTx = await buildRefundExpiredEscrowTx(
+        escrowBoxId,
+        changeAddress,
+        utxos,
+        changeAddress
+      );
+      
+      // Sign and submit
+      const signedTx = await signTransaction(unsignedTx);
+      const txId = await submitTransaction(signedTx);
+      
+      // Update task state
+      await updateTaskMetadata(task.id, { 
+        escrow_box_id: escrowBoxId, 
+        escrow_status: 'refunded', 
+        refund_tx_id: txId 
+      });
+      await updateTaskData(task.id, { status: 'refunded' });
+      
+      logEvent({ 
+        type: 'escrow_refunded', 
+        message: `Expired escrow refunded: ${txId}`, 
+        taskId: task.id, 
+        actor: userAddress 
+      });
+      
+      showSuccess(`Expired escrow refunded! TX: ${txId.slice(0, 12)}...`);
+      await loadData();
+      
+    } catch (err: any) {
+      console.error('Refund expired escrow failed:', err);
+      setError(err?.message || 'Failed to refund expired escrow. Try again.');
+    } finally {
+      setRefundingExpiredEscrow(false);
+    }
+  };
+
   if (!taskId) {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
@@ -661,6 +717,65 @@ function TaskDetailInner() {
                 </span>
               ))}
             </div>
+
+            {/* Deadline and Escrow Expiry Information */}
+            {(deadlineDate || escrowExpired) && (
+              <div className="mb-4 p-4 rounded-xl border">
+                {escrowExpired && escrowBoxId && (
+                  <div className="bg-red-500/10 border-red-500/30 mb-3">
+                    <div className="flex items-center gap-2 text-red-400">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span className="font-medium">Escrow Expired</span>
+                    </div>
+                    <p className="text-sm text-red-300 mt-1">
+                      The escrow deadline has passed. 
+                      {isCreator ? ' You can now reclaim your funds.' : ' The client can reclaim their funds.'}
+                    </p>
+                    {isCreator && (
+                      <button
+                        className="mt-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
+                        disabled={refundingExpiredEscrow}
+                        onClick={handleRefundExpiredEscrow}
+                      >
+                        {refundingExpiredEscrow ? 'Refunding...' : 'Refund Expired Escrow'}
+                      </button>
+                    )}
+                  </div>
+                )}
+                
+                {deadlineDate && !escrowExpired && (
+                  <div className={`flex items-center gap-3 ${
+                    daysUntilExpiry !== undefined && daysUntilExpiry <= 2 
+                      ? 'text-orange-400' 
+                      : daysUntilExpiry !== undefined && daysUntilExpiry <= 7 
+                      ? 'text-yellow-400' 
+                      : 'text-[var(--text-secondary)]'
+                  }`}>
+                    <Clock className="w-4 h-4" />
+                    <div>
+                      <span className="font-medium">
+                        {escrowBoxId ? 'Escrow expires' : 'Deadline'}: {deadlineDate.toLocaleDateString()}
+                      </span>
+                      {daysUntilExpiry !== undefined && (
+                        <span className="text-sm ml-2">
+                          ({daysUntilExpiry > 0 
+                            ? `${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''} remaining`
+                            : 'Overdue'
+                          })
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {escrowBoxId && deadlineDate && !escrowExpired && daysUntilExpiry !== undefined && daysUntilExpiry <= 7 && (
+                  <div className="mt-2 text-sm text-orange-300">
+                    <AlertTriangle className="w-3 h-3 inline mr-1" />
+                    Warning: Escrow will auto-refund to client after the deadline if work is not completed and approved.
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center gap-6 pt-4 border-t border-[var(--border-color)]">
               <div className="text-emerald-400 font-semibold text-lg">

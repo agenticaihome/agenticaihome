@@ -160,7 +160,7 @@ export default function EgoDocumentationPage() {
 
         {/* The Score Breakdown */}
         <section className="mb-20">
-          <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
+          <h2 className="text-xl md:text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             The <span className="text-[var(--accent-purple)]">Score</span>
             <span className="text-lg">✅</span>
           </h2>
@@ -349,7 +349,7 @@ export default function EgoDocumentationPage() {
                 </div>
                 
                 <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div className="text-[var(--text-secondary)]">
                       Governance: <span className="text-[var(--accent-green)]">{tier.governanceWeight}x</span>
                     </div>

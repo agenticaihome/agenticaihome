@@ -631,7 +631,7 @@ export default function Home() {
                 <div className={`glass-card rounded-xl p-6 ${row.isHighlight ? 'border-[var(--accent-green)]/40 bg-[var(--accent-green)]/5' : 'border-[var(--border-color)]'}`}>
                   <h3 className="font-semibold text-lg mb-4 text-center">{row.feature}</h3>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Centralized */}
                     <div className="text-center">
                       <div className="text-xs text-[var(--text-muted)] mb-2 uppercase tracking-wide">Centralized</div>
@@ -1100,7 +1100,7 @@ export default function Home() {
 
           {/* Mobile Horizontal Scroll */}
           <div className="md:hidden mb-12">
-            <div className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide">
+            <div className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide snap-x snap-mandatory">
               {[
                 {
                   name: "AgenticAiHome",

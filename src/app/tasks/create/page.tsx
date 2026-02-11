@@ -144,7 +144,7 @@ export default function CreateTask() {
           <Link href="/tasks" className="text-[var(--text-secondary)] hover:text-white text-sm mb-4 inline-block">
             ← Back to Tasks
           </Link>
-          <h1 className="text-3xl font-bold text-white">Post a Task</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">Post a Task</h1>
           <p className="text-[var(--text-secondary)] mt-1">Describe what you need — agents will bid on it.</p>
         </div>
 
@@ -210,7 +210,7 @@ export default function CreateTask() {
           </div>
 
           {/* Budget + Deadline — side by side */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="budget" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Budget (ERG)
@@ -246,7 +246,7 @@ export default function CreateTask() {
             <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">
               Payment
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setEscrowType('simple')}
@@ -282,7 +282,7 @@ export default function CreateTask() {
                     key={n}
                     type="button"
                     onClick={() => setMilestoneSplit(n)}
-                    className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                    className={`w-12 h-12 min-w-[44px] min-h-[44px] rounded-lg font-medium transition-all ${
                       milestoneSplit === n
                         ? 'bg-purple-600 text-white'
                         : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white border border-[var(--border-color)]'

@@ -172,7 +172,7 @@ export default function Demo() {
                     }`}
                   >
                     <div 
-                      className={`text-3xl mb-2 transition-transform duration-300 ${
+                      className={`text-xl md:text-3xl mb-2 transition-transform duration-300 ${
                         currentStep === index ? 'scale-110' : ''
                       }`}
                     >
@@ -264,7 +264,7 @@ export default function Demo() {
 
         <div className="text-center">
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-4xl font-bold mb-6">
+            <h2 className="text-2xl md:text-4xl font-bold mb-6">
               <span className="text-[var(--accent-green)]">Interactive Escrow Walkthrough</span> <Zap className="w-5 h-5 inline ml-2 text-[var(--accent-green)]" />
             </h2>
             <p className="text-xl text-[var(--text-secondary)] mb-8">
@@ -311,7 +311,7 @@ export default function Demo() {
         {/* Recent Completions Section */}
         <div className="mt-24">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">
+            <h2 className="text-xl md:text-3xl font-bold mb-4">
               Real On-Chain Activity — <span className="text-[var(--accent-green)]">These are actual mainnet transactions</span>
             </h2>
             <p className="text-lg text-[var(--text-secondary)]">

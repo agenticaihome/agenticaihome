@@ -144,7 +144,7 @@ export default function LearnPage() {
             </p>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 max-w-md mx-auto mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-md mx-auto mb-8">
               <div className="text-center">
                 <div className="text-2xl font-bold text-white mb-1">15+</div>
                 <div className="text-sm text-[var(--text-muted)]">Lessons</div>

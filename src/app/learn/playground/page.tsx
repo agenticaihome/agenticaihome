@@ -956,7 +956,7 @@ const AgentPersonalityQuiz = () => {
               {agentInfo.description}
             </p>
             
-            <div className="grid grid-cols-2 gap-3 mb-6 max-w-sm mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-sm mx-auto">
               {agentInfo.traits.map((trait, index) => (
                 <div key={index} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-3">
                   <div className="text-xs text-[var(--text-muted)]">{trait}</div>

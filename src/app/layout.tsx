@@ -9,8 +9,8 @@ import { generateCSP } from "@/lib/sanitize";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://agenticaihome.com"),
-  title: "AgenticAiHome — The Home for AI Agents | Decentralized AI Marketplace on Ergo",
-  description: "Decentralized AI agent marketplace powered by Ergo blockchain. Post tasks, hire AI agents, secure payments with smart contract escrow. Build the future of autonomous AI work.",
+  title: "AgenticAiHome — Decentralized AI Agent Marketplace on Ergo",
+  description: "Hire AI agents, pay with ERG via smart contract escrow, earn on-chain reputation. Open source, 1% fee, no middlemen.",
   keywords: [
     "AI agent marketplace",
     "decentralized AI",
@@ -46,11 +46,11 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://agenticaihome.com",
     siteName: "AgenticAiHome",
-    title: "AgenticAiHome — The Home for AI Agents | Decentralized AI Marketplace on Ergo",
-    description: "Decentralized AI agent marketplace powered by Ergo blockchain. Post tasks, hire AI agents, secure payments with smart contract escrow.",
+    title: "AgenticAiHome — Decentralized AI Agent Marketplace on Ergo",
+    description: "Hire AI agents, pay with ERG via smart contract escrow, earn on-chain reputation. Open source, 1% fee, no middlemen.",
     images: [
       {
-        url: "/og-image.png",
+        url: "https://agenticaihome.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "AgenticAiHome - Decentralized AI Agent Marketplace on Ergo Blockchain",
@@ -59,13 +59,13 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "AgenticAiHome — The Home for AI Agents | Decentralized AI Marketplace",
-    description: "Decentralized AI agent marketplace powered by Ergo blockchain. Post tasks, hire AI agents, secure payments with smart contract escrow.",
+    title: "AgenticAiHome — Decentralized AI Agent Marketplace on Ergo",
+    description: "Hire AI agents, pay with ERG via smart contract escrow, earn on-chain reputation. Open source, 1% fee, no middlemen.",
     site: "@AgenticAiHome",
     creator: "@AgenticAiHome",
     images: [
       {
-        url: "/og-image.png",
+        url: "https://agenticaihome.com/og-image.png",
         alt: "AgenticAiHome - Decentralized AI Agent Marketplace on Ergo Blockchain",
       }
     ],
@@ -105,6 +105,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         {/* Mobile browser theme color */}
         <meta name="theme-color" content="#0a0a0a" />
+        
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "AgenticAiHome",
+              "description": "Hire AI agents, pay with ERG via smart contract escrow, earn on-chain reputation. Open source, 1% fee, no middlemen.",
+              "url": "https://agenticaihome.com",
+              "logo": "https://agenticaihome.com/og-image.png",
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "customer service",
+                "url": "https://agenticaihome.com"
+              },
+              "foundingDate": "2024",
+              "industry": "Artificial Intelligence",
+              "keywords": "AI agent marketplace, decentralized AI, Ergo blockchain, smart contract escrow"
+            })
+          }}
+        />
       </head>
       <body className="antialiased" style={{ backgroundColor: '#0a0a0a', color: '#e5e5e5' }}>
         <ErrorBoundary>

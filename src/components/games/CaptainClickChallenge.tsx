@@ -514,7 +514,7 @@ const CaptainClickChallenge: React.FC<CaptainClickChallengeProps> = ({ onBack })
               </div>
             )}
             
-            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 text-xs">
               <div className="bg-slate-800 p-2 rounded">
                 <div className="text-slate-300">Accuracy</div>
                 <div className="text-white font-bold">{accuracy}%</div>

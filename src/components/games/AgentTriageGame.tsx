@@ -944,7 +944,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
             exit={{ opacity: 0, height: 0 }}
             className="bg-slate-800/90 border-b border-slate-600 px-4 py-3 overflow-hidden"
           >
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs">
               <div className="flex items-center gap-2">
                 <kbd className="px-2 py-1 bg-green-900/50 rounded text-green-400 font-mono">D</kbd>
                 <span className="text-slate-300">Delegate</span>
@@ -1022,7 +1022,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
                 Train your AI Triage Agent! Sort 20 emails before time runs out.
               </p>
 
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                 <div className="bg-green-900/40 border border-green-500/40 rounded-xl p-3 sm:p-4">
                   <div className="flex items-center justify-center gap-2 text-green-400 font-bold mb-1 text-sm sm:text-base">
                     <Check size={18} /> DELEGATE
@@ -1120,7 +1120,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
               )}
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-2 mt-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 mb-6">
                 <div className="bg-slate-800/60 rounded-xl p-3">
                   <div className="text-slate-300 text-xs mb-1">Triaged</div>
                   <div className="text-2xl font-bold text-white">{emailsTriaged}<span className="text-slate-300 text-lg">/20</span></div>

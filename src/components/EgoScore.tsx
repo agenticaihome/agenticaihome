@@ -269,7 +269,7 @@ export default function EgoScore({
               <span>{tier.name} Tier</span>
             </div>
             
-            <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
                 <div className="text-white/60">Current Score</div>
                 <div className="font-mono text-sm" style={{ color: tier.color }}>{displayScore}</div>

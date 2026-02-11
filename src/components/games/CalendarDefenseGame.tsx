@@ -740,7 +740,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
             </div>
             <div className="text-3xl font-bold text-white mb-2">{score}</div>
             
-            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 text-xs">
               <div className="bg-slate-800 p-2 rounded">
                 <div className="text-slate-300">Time</div>
                 <div className="text-white font-bold">{timer}s</div>

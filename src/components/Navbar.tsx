@@ -275,7 +275,7 @@ export default function Navbar() {
                       </span>
                     </div>
                   </div>
-                  <button onClick={() => { disconnect(); setOpen(false); }} className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-md hover:bg-red-500/10 transition-colors">
+                  <button onClick={() => { disconnect(); setOpen(false); }} className="text-xs text-red-400 hover:text-red-300 px-3 py-2 min-h-[44px] min-w-[44px] rounded-md hover:bg-red-500/10 transition-colors">
                     Disconnect
                   </button>
                 </div>

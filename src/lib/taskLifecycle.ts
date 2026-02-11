@@ -72,6 +72,20 @@ export const TASK_TRANSITIONS: TaskTransition[] = [
     actor: 'agent',
     conditions: ['Work submission provided']
   },
+  {
+    from: 'in_progress',
+    to: 'disputed',
+    description: 'Work disputed by agent or poster',
+    actor: 'agent',
+    conditions: ['Dispute reason provided']
+  },
+  {
+    from: 'in_progress',
+    to: 'cancelled',
+    description: 'Task cancelled during work (triggers refund)',
+    actor: 'poster',
+    conditions: ['Agent has not submitted deliverable', 'Refund transaction initiated']
+  },
 
   // From review
   {

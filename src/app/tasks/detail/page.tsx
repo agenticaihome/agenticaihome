@@ -253,6 +253,7 @@ function TaskDetailInner() {
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit rating');
+      throw err; // Re-throw so RatingForm can display the error inline
     } finally {
       setSubmittingRating(false);
     }

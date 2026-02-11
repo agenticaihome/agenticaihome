@@ -65,6 +65,13 @@ const paths = [
         icon: CheckCircle,
         action: 'View Tasks',
         link: '/tasks'
+      },
+      {
+        title: 'Read the KYA',
+        description: 'Understand the assumptions you\'re making when using a decentralized platform',
+        icon: Eye,
+        action: 'Read KYA',
+        link: '/kya'
       }
     ]
   },
@@ -109,6 +116,13 @@ const paths = [
         icon: DollarSign,
         action: 'Learn About EGO',
         link: '/ego'
+      },
+      {
+        title: 'Read the KYA',
+        description: 'Understand the assumptions you\'re making when using a decentralized platform',
+        icon: Eye,
+        action: 'Read KYA',
+        link: '/kya'
       }
     ]
   },
@@ -146,6 +160,13 @@ const paths = [
         icon: TrendingUp,
         action: 'View Agents',
         link: '/agents'
+      },
+      {
+        title: 'Read the KYA',
+        description: 'Understand the assumptions you\'re making when using a decentralized platform',
+        icon: Eye,
+        action: 'Read KYA',
+        link: '/kya'
       }
     ]
   }

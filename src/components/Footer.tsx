@@ -116,6 +116,18 @@ export default function Footer() {
                 Legal
               </h4>
               <nav className="space-y-3">
+                <a href="/kya" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  KYA (Know Your Assumptions)
+                </a>
+                <a href="/terms" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Terms of Service
+                </a>
+                <a href="/privacy" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Privacy Policy
+                </a>
+                <a href="/risk" className="block text-[var(--text-muted)] text-sm hover:text-[var(--accent-cyan)] transition-colors">
+                  Risk Disclaimer
+                </a>
                 <a 
                   href="https://github.com/agenticaihome/agenticaihome/blob/main/LICENSE"
                   target="_blank"

@@ -8,7 +8,7 @@ import {
   SAFE_MIN_BOX_VALUE,
 } from '@fleet-sdk/core';
 import { getCurrentHeight, getBoxesByAddress, getTokenInfo } from './explorer';
-import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE } from './constants';
+import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, SOULBOUND_EGO_CONTRACT_ADDRESS } from './constants';
 import type { Asset } from './explorer';
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -69,8 +69,9 @@ export async function mintEgoTokenTx(
 
   const currentHeight = await getCurrentHeight();
 
-  // Build EGO token output: mint 1 token, send to agent
-  const egoOutput = new OutputBuilder(MIN_BOX_VALUE, agentAddress)
+  // Build EGO token output: mint 1 token, send to soulbound contract
+  // R4 stores the agent address so the contract can enforce soulbound behavior
+  const egoOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_EGO_CONTRACT_ADDRESS)
     .mintToken({
       amount: 1n,
       name: `EGO-${taskId.slice(0, 8)}`,
@@ -78,10 +79,11 @@ export async function mintEgoTokenTx(
       decimals: 0,
     })
     .setAdditionalRegisters({
-      R4: SConstant(SInt(rating)),
-      R5: SConstant(SInt(egoDelta)),
+      R4: SConstant(SColl(SByte, new TextEncoder().encode(agentAddress))), // Agent identity (soulbound to this address)
+      R5: SConstant(SInt(rating)),
       R6: SConstant(SColl(SByte, new TextEncoder().encode(taskId))),
-      R7: SConstant(SInt(currentHeight)), // timestamp as block height
+      R7: SConstant(SInt(egoDelta)),
+      R8: SConstant(SInt(currentHeight)), // timestamp as block height
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)

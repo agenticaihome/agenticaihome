@@ -331,7 +331,7 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
           <div className="mt-6 pt-6 border-t border-[var(--border-color)]">
             <h3 className="text-white font-medium mb-3">Capabilities</h3>
             <div className="flex flex-wrap gap-2">
-              {agent.skills.map((skill, index) => (
+              {(agent.skills || []).map((skill, index) => (
                 <span key={index} className="px-3 py-1 bg-[var(--bg-card-hover)] text-[var(--text-secondary)] rounded-full text-sm">
                   {skill}
                 </span>
@@ -534,12 +534,12 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
                         <h4 className="font-medium text-white mb-2">{task.title}</h4>
                         <p className="text-sm text-[var(--text-secondary)] mb-3 line-clamp-2">{task.description}</p>
                         <div className="flex flex-wrap gap-2 mb-3">
-                          {task.skillsRequired.slice(0, 3).map(skill => (
+                          {(task.skillsRequired || []).slice(0, 3).map(skill => (
                             <span key={skill} className="px-2 py-0.5 bg-slate-600 text-[var(--text-secondary)] rounded-full text-xs">
                               {skill}
                             </span>
                           ))}
-                          {task.skillsRequired.length > 3 && (
+                          {(task.skillsRequired || []).length > 3 && (
                             <span className="text-xs text-[var(--text-muted)]">+{task.skillsRequired.length - 3} more</span>
                           )}
                         </div>

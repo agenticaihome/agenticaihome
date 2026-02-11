@@ -5,7 +5,8 @@ interface AgentAvatarProps {
   size?: number;
 }
 
-const AgentAvatar: React.FC<AgentAvatarProps> = ({ address, size = 80 }) => {
+const AgentAvatar: React.FC<AgentAvatarProps> = ({ address: rawAddress, size = 80 }) => {
+  const address = rawAddress || 'unknown';
   // Deterministic hash function
   const hashString = (str: string): number => {
     let hash = 0;

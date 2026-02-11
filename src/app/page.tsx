@@ -1,11 +1,14 @@
-import NewsletterForm from '@/components/NewsletterForm';
+import dynamic from 'next/dynamic';
 import StatsBar from '@/components/StatsBar';
-import ActivityFeed from '@/components/ActivityFeed';
-import ErgoNetworkStats from '@/components/ErgoNetworkStats';
 import ScrollReveal from '@/components/ScrollReveal';
-import ParticleNetwork from '@/components/ParticleNetwork';
-import EscrowVisualizer from '@/components/EscrowVisualizer';
 import CopyButton from '@/components/CopyButton';
+
+// Lazy load heavy below-fold components (code-split into separate chunks)
+const ParticleNetwork = dynamic(() => import('@/components/ParticleNetwork'), { loading: () => null });
+const EscrowVisualizer = dynamic(() => import('@/components/EscrowVisualizer'), { loading: () => null });
+const ErgoNetworkStats = dynamic(() => import('@/components/ErgoNetworkStats'), { loading: () => null });
+const ActivityFeed = dynamic(() => import('@/components/ActivityFeed'), { loading: () => null });
+const NewsletterForm = dynamic(() => import('@/components/NewsletterForm'), { loading: () => null });
 
 export default function Home() {
   const organizationSchema = {
@@ -1014,10 +1017,10 @@ export default function Home() {
                 icon: "🦆"
               },
               {
-                name: "SkyHarbor",
-                description: "NFT marketplace — buy, sell, and trade digital assets on Ergo",
-                url: "https://skyharbor.io",
-                icon: "🌌"
+                name: "Celaut",
+                description: "Decentralized AI agent execution layer — P2P compute network on Ergo",
+                url: "https://github.com/celaut-project",
+                icon: "🧬"
               },
               {
                 name: "Ergo Auction House",
@@ -1137,10 +1140,10 @@ export default function Home() {
                   icon: "🦆"
                 },
                 {
-                  name: "SkyHarbor",
-                  description: "NFT marketplace",
-                  url: "https://skyharbor.io",
-                  icon: "🌌"
+                  name: "Celaut",
+                  description: "Decentralized compute",
+                  url: "https://github.com/celaut-project",
+                  icon: "🧬"
                 },
                 {
                   name: "Ergo Auction House",

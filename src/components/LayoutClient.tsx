@@ -1,11 +1,14 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import CommandPalette, { useCommandPalette } from "@/components/CommandPalette";
-import WelcomeModal from "@/components/WelcomeModal";
+import { useCommandPalette } from "@/components/CommandPalette";
+
+const CommandPalette = dynamic(() => import('@/components/CommandPalette').then(m => ({ default: m.default })), { ssr: false });
+const WelcomeModal = dynamic(() => import('@/components/WelcomeModal'), { ssr: false });
 
 interface LayoutClientProps {
   children: ReactNode;

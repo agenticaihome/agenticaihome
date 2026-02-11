@@ -4,7 +4,8 @@
 import { useState } from 'react';
 import EgoScore from '@/components/EgoScore';
 import EgoBreakdown from '@/components/EgoBreakdown';
-import EgoProjection from '@/components/EgoProjection';
+import dynamic from 'next/dynamic';
+const EgoProjection = dynamic(() => import('@/components/EgoProjection'), { ssr: false });
 import EgoTokenViewer from '@/components/EgoTokenViewer';
 import { useWallet } from '@/contexts/WalletContext';
 import { getAllEgoTiers, EgoFactors, computeEgoScore } from '@/lib/ego';

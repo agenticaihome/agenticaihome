@@ -2,26 +2,40 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Zap, ArrowRight, Sparkles } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 
 export default function WelcomeModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const [autoCloseTimer, setAutoCloseTimer] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check if user has visited before
     const hasVisited = localStorage.getItem('agentichome_has_visited');
     
     if (!hasVisited) {
-      // Show modal after a brief delay
+      // Show banner after a brief delay
       const timer = setTimeout(() => {
         setIsOpen(true);
+        
+        // Auto-dismiss after 10 seconds if not interacted with
+        const autoClose = setTimeout(() => {
+          handleClose();
+        }, 10000);
+        setAutoCloseTimer(autoClose);
       }, 1500);
       
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        if (autoCloseTimer) clearTimeout(autoCloseTimer);
+      };
     }
   }, []);
 
   const handleClose = () => {
+    if (autoCloseTimer) {
+      clearTimeout(autoCloseTimer);
+      setAutoCloseTimer(null);
+    }
     setIsOpen(false);
     // Mark as visited
     localStorage.setItem('agentichome_has_visited', 'true');
@@ -35,124 +49,54 @@ export default function WelcomeModal() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={handleClose}
-          />
-          
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="relative max-w-lg mx-4 card p-8 border-[var(--accent-cyan)]/20 bg-[var(--bg-card)]/95 backdrop-blur-xl shadow-2xl"
-          >
+        <motion.div
+          initial={{ opacity: 0, y: 100, x: 50 }}
+          animate={{ opacity: 1, y: 0, x: 0 }}
+          exit={{ opacity: 0, y: 100, x: 50 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="fixed bottom-4 right-4 z-[100] max-w-sm"
+        >
+          <div className="bg-[var(--bg-card)]/95 backdrop-blur-xl border border-[var(--accent-cyan)]/30 rounded-xl p-4 shadow-2xl">
             {/* Close Button */}
             <button
               onClick={handleClose}
-              className="absolute top-4 right-4 p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+              className="absolute top-3 right-3 p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            {/* Sparkle Animation */}
-            <div className="absolute -top-2 -right-2">
-              <motion.div
-                animate={{ 
-                  rotate: [0, 360],
-                  scale: [1, 1.2, 1]
-                }}
-                transition={{ 
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <Sparkles className="w-6 h-6 text-[var(--accent-cyan)]" />
-              </motion.div>
-            </div>
-
             {/* Content */}
-            <div className="text-center">
-              {/* Icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, duration: 0.4, ease: "backOut" }}
-                className="w-16 h-16 mx-auto mb-6"
-              >
-                <img src="/logo.png" alt="AgenticAiHome" className="w-16 h-16 rounded-2xl" />
-              </motion.div>
-
+            <div className="pr-8">
               {/* Title */}
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.4 }}
-                className="text-2xl font-bold text-[var(--text-primary)] mb-3"
-              >
+              <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2">
                 Welcome to AgenticAiHome!
-              </motion.h2>
+              </h3>
 
               {/* Description */}
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.4 }}
-                className="text-[var(--text-secondary)] mb-8 leading-relaxed"
-              >
-                The first decentralized marketplace for AI agents. Whether you're looking to hire AI agents or monetize your own, we'll help you get started.
-              </motion.p>
+              <p className="text-sm text-[var(--text-secondary)] mb-4 leading-relaxed">
+                The decentralized AI agent marketplace.
+              </p>
 
-              {/* CTA Buttons */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.4 }}
-                className="flex flex-col sm:flex-row gap-3 justify-center"
+              {/* CTA Button */}
+              <button
+                onClick={handleGetStarted}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-purple)] text-white font-semibold rounded-lg hover:opacity-90 transition-all duration-200 text-sm"
               >
-                <button
-                  onClick={handleGetStarted}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-purple)] text-white font-semibold rounded-lg hover:opacity-90 hover:scale-105 transition-all duration-200 shadow-lg"
-                >
-                  Get Started
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                
-                <button
-                  onClick={handleClose}
-                  className="px-6 py-3 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:border-[var(--accent-cyan)]/40 rounded-lg transition-all"
-                >
-                  Explore First
-                </button>
-              </motion.div>
-
-              {/* Feature Pills */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.4 }}
-                className="flex flex-wrap justify-center gap-2 mt-6 pt-6 border-t border-[var(--border-color)]"
-              >
-                <span className="px-3 py-1 text-xs font-medium rounded-full bg-[var(--accent-cyan)]/10 text-[var(--accent-cyan)] border border-[var(--accent-cyan)]/20">
-                  Decentralized
-                </span>
-                <span className="px-3 py-1 text-xs font-medium rounded-full bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20">
-                  Secure Escrow
-                </span>
-                <span className="px-3 py-1 text-xs font-medium rounded-full bg-[var(--accent-purple)]/10 text-[var(--accent-purple)] border border-[var(--accent-purple)]/20">
-                  EGO Reputation
-                </span>
-              </motion.div>
+                Get Started
+                <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
-          </motion.div>
-        </div>
+
+            {/* Auto-close progress bar */}
+            <motion.div
+              initial={{ width: "100%" }}
+              animate={{ width: "0%" }}
+              transition={{ duration: 10, ease: "linear" }}
+              className="absolute bottom-0 left-0 h-0.5 bg-[var(--accent-cyan)]/50 rounded-bl-xl"
+              onAnimationComplete={handleClose}
+            />
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
 import { withWalletAuth, verifiedCreateTask } from '@/lib/supabaseStore';
-import AuthGuard from '@/components/AuthGuard';
+import Link from 'next/link';
 import SkillSelector from '@/components/SkillSelector';
 import StatusBadge from '@/components/StatusBadge';
 import { initTaskFlow } from '@/lib/taskFlow';
@@ -544,16 +544,34 @@ export default function CreateTask() {
   };
 
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-slate-900 py-8 md:py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Create New Task</h1>
-            <p className="text-gray-400">
-              Post a task and receive bids from AI agents in the marketplace
-            </p>
+    <div className="min-h-screen bg-slate-900 py-8 md:py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Create New Task</h1>
+          <p className="text-gray-400">
+            Post a task and receive bids from AI agents in the marketplace
+          </p>
+        </div>
+
+        {/* Wallet Warning Banner */}
+        {!userAddress && (
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <p className="text-amber-300 font-medium">Wallet Required</p>
+                <p className="text-amber-300/70 text-sm">You&apos;ll need an Ergo wallet connected to submit tasks. You can preview the form below.</p>
+              </div>
+            </div>
+            <Link
+              href="/getting-started"
+              className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+            >
+              Get a Wallet →
+            </Link>
           </div>
+        )}
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
             {/* Form */}
@@ -762,7 +780,7 @@ export default function CreateTask() {
                 <div className="space-y-2">
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !userAddress}
                     className="w-full px-6 py-3 bg-gradient-to-r from-[var(--accent-cyan)] to-[var(--accent-green)] hover:from-[var(--accent-cyan)]/90 hover:to-[var(--accent-green)]/90 disabled:from-gray-600 disabled:to-gray-600 text-[var(--bg-primary)] rounded-lg font-semibold transition-all duration-200 glow-hover-cyan disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
@@ -770,6 +788,8 @@ export default function CreateTask() {
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                         Creating Task...
                       </span>
+                    ) : !userAddress ? (
+                      '🔒 Connect Wallet to Create Task'
                     ) : (
                       'Create Task'
                     )}
@@ -886,6 +906,5 @@ export default function CreateTask() {
           </div>
         </div>
       </div>
-    </AuthGuard>
   );
 }

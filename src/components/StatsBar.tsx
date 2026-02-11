@@ -92,6 +92,7 @@ export default function StatsBar() {
   ]);
   
   const [isVisible, setIsVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
   const sectionRef = useRef<HTMLElement>(null);
 
   const fetchStats = useCallback(async () => {
@@ -99,9 +100,12 @@ export default function StatsBar() {
     const now = Date.now();
     if (statsCache.data && (now - statsCache.timestamp) < CACHE_DURATION) {
       setStats(statsCache.data);
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
+    
     try {
       // Use single query to minimize database load - count without fetching data
       const [agentsRes, transactionsRes] = await Promise.all([
@@ -155,6 +159,8 @@ export default function StatsBar() {
     } catch (error) {
       console.error('Error fetching stats:', error);
       // Keep default values on error
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -203,19 +209,33 @@ export default function StatsBar() {
                 transitionDelay: isVisible ? `${index * 0.1}s` : '0s'
               }}
             >
-              <div className="text-4xl lg:text-5xl font-bold text-[var(--accent-cyan)] mb-2 glow-text-cyan">
-                <AnimatedNumber
-                  finalValue={stat.finalValue}
-                  isPercentage={stat.isPercentage}
-                  isVisible={isVisible}
-                />
-              </div>
-              <div className="text-sm text-[var(--text-secondary)] font-medium">
-                {stat.label}
-                {stat.label === 'ERG Total Volume' && stat.finalValue > 0 && ergToUsdStr(stat.finalValue) && (
-                  <div className="text-xs text-[var(--text-muted)] mt-1">≈ {ergToUsdStr(stat.finalValue)}</div>
-                )}
-              </div>
+              {loading ? (
+                <>
+                  {/* Loading skeleton */}
+                  <div className="text-4xl lg:text-5xl font-bold mb-2 h-12 lg:h-14">
+                    <div className="bg-[var(--accent-cyan)]/20 rounded-lg h-full w-24 mx-auto animate-pulse"></div>
+                  </div>
+                  <div className="text-sm font-medium">
+                    <div className="bg-[var(--text-secondary)]/20 rounded h-4 w-20 mx-auto animate-pulse"></div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-4xl lg:text-5xl font-bold text-[var(--accent-cyan)] mb-2 glow-text-cyan">
+                    <AnimatedNumber
+                      finalValue={stat.finalValue}
+                      isPercentage={stat.isPercentage}
+                      isVisible={isVisible}
+                    />
+                  </div>
+                  <div className="text-sm text-[var(--text-secondary)] font-medium">
+                    {stat.label}
+                    {stat.label === 'ERG Total Volume' && stat.finalValue > 0 && ergToUsdStr(stat.finalValue) && (
+                      <div className="text-xs text-[var(--text-muted)] mt-1">≈ {ergToUsdStr(stat.finalValue)}</div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

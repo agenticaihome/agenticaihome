@@ -112,7 +112,8 @@ export default function DashboardPage() {
         const ergoPayData = await createErgoPayRequest(
           unsignedTx,
           userAddress,
-          `Mint Identity NFT for ${agent.name}`
+          `Mint Identity NFT for ${agent.name}`,
+          utxos
         );
         setErgoPayModal({
           isOpen: true,

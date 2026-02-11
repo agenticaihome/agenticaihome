@@ -95,7 +95,8 @@ export default function AgentDetailClient() {
         const ergoPayData = await createErgoPayRequest(
           unsignedTx,
           userAddress,
-          `Mint Identity NFT for ${agent.name}`
+          `Mint Identity NFT for ${agent.name}`,
+          utxos
         );
         setErgoPayModal({
           isOpen: true,

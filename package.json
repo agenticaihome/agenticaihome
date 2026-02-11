@@ -15,6 +15,7 @@
     "canvas": "^3.2.1",
     "canvas-confetti": "^1.9.4",
     "ergo-lib-wasm-browser": "^0.28.0",
+    "ergo-lib-wasm-nodejs": "^0.28.0",
     "file-type": "^21.3.0",
     "framer-motion": "^12.33.0",
     "isomorphic-dompurify": "^3.0.0-rc.2",

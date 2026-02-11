@@ -1,6 +1,5 @@
 import QRCode from 'qrcode';
 import { EDGE_FUNCTION_BASE } from '@/lib/supabase';
-import { reduceTransaction } from './transaction-reducer';
 
 const ERGOPAY_ENDPOINT = `${EDGE_FUNCTION_BASE}/ergopay`;
 
@@ -64,24 +63,13 @@ export async function createErgoPayRequest(
     message = messageArg || 'Sign transaction for AgenticAiHome';
   }
 
-  // Reduce the transaction client-side
-  let reducedTx: string | null = null;
-  if (inputBoxes && inputBoxes.length > 0) {
-    try {
-      reducedTx = await reduceTransaction(unsignedTx, inputBoxes);
-    } catch (err) {
-      console.error('Client-side tx reduction failed:', err);
-      // Fall through — send unsignedTx as fallback
-    }
-  }
-
-  const body: Record<string, any> = { address, message };
-  if (reducedTx) {
-    body.reducedTx = reducedTx;
-  } else {
-    // Fallback: send unsigned tx (won't work with Terminus but preserves backward compat)
-    body.unsignedTx = unsignedTx;
-  }
+  // Send unsigned tx + input boxes to edge function for server-side reduction
+  const body: Record<string, any> = { 
+    unsignedTx, 
+    inputBoxes: inputBoxes || [],
+    address, 
+    message 
+  };
 
   const res = await fetch(ERGOPAY_ENDPOINT, {
     method: 'POST',

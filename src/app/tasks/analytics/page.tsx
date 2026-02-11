@@ -2,22 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
-import { 
-  BarChart, 
-  Bar, 
-  LineChart, 
-  Line, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  Legend,
-  AreaChart,
-  Area
-} from 'recharts';
+import dynamic from 'next/dynamic';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, BarChart, Bar, Legend } from 'recharts';
+
+const AnalyticsCharts = dynamic(() => import('@/components/AnalyticsCharts'), {
+  loading: () => <div className="card p-6 h-[350px] flex items-center justify-center">Loading charts...</div>,
+  ssr: false
+});
 import { 
   Activity, 
   TrendingUp, 

@@ -169,8 +169,7 @@ export function getTransition(from: TaskStatus, to: TaskStatus): TaskTransition 
  * Check if an actor can perform a specific transition
  */
 export function canActorTransition(from: TaskStatus, to: TaskStatus, actor: 'poster' | 'agent' | 'system'): boolean {
-  const transition = getTransition(from, to);
-  return transition ? transition.actor === actor : false;
+  return isValidTransition(from, to, actor);
 }
 
 /**

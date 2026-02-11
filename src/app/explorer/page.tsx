@@ -80,17 +80,17 @@ export default function ExplorerPage() {
 
       // Parallel data fetching for better performance
       const [txData, tasksData, agentsData, completionsData, ergPrice, treasuryBalance, networkHeight] = await Promise.allSettled([
-        // Transaction data
+        // Transaction data - only need essential fields for analytics
         supabase.from('transactions').select('*').order('date', { ascending: false }),
         
-        // Tasks data with completion dates
-        supabase.from('tasks').select('*'),
+        // Tasks data - only need fields for statistics
+        supabase.from('tasks').select('id, title, budget_erg, created_at, completed_at, status, skills_required'),
         
-        // Agents data
-        supabase.from('agents').select('*'),
+        // Agents data - only need basic info
+        supabase.from('agents').select('id, name, created_at, ego_score, status'),
         
-        // Completion data for timing calculations
-        supabase.from('completions').select('*'),
+        // Completion data - only need timing fields
+        supabase.from('completions').select('completed_at, task_id'),
         
         // ERG price for USD calculations
         getErgPrice(),

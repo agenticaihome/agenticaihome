@@ -1,20 +1,52 @@
-/*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.ergoplatform.com https://node.ergo.watch https://corsproxy.io https://api.coingecko.com https://api.spectrum.fi; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Cache-Control: public, max-age=3600
+# Cache static assets aggressively
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
 
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
 
-/favicon.ico
-  Cache-Control: public, max-age=86400
+# Cache WebP images for 1 year since they're optimized
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
 
-/logo*.png
-  Cache-Control: public, max-age=86400
+# Cache other images for 1 month
+/*.png
+  Cache-Control: public, max-age=2592000
 
-/og-image.png
-  Cache-Control: public, max-age=86400
+/*.jpg
+  Cache-Control: public, max-age=2592000
+
+/*.jpeg
+  Cache-Control: public, max-age=2592000
+
+/*.svg
+  Cache-Control: public, max-age=2592000
+
+/*.ico
+  Cache-Control: public, max-age=2592000
+
+# Cache fonts for 1 year
+/*.woff
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.ttf
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML files - always revalidate
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# API routes - cache for 5 minutes
+/api/*
+  Cache-Control: public, max-age=300, s-maxage=300
+
+# Root page
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Dynamic pages - cache for 1 minute
+/*
+  Cache-Control: public, max-age=60, s-maxage=60

@@ -182,9 +182,11 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
   };
 
   // EGO score breakdown — based on real on-chain formula
+  // Reviews score scales with both rating quality AND review count (min 5 reviews for full weight)
+  const reviewWeight = Math.min(reviewCount / 5, 1); // 0-1 scale, full weight at 5+ reviews
   const egoBreakdown = [
     { category: 'Task Completions', score: Math.min(Math.floor(tasksCompleted * 2.5), 500), max: 500 },
-    { category: 'Client Reviews', score: Math.min(Math.floor(avgRating * 60), 300), max: 300 },
+    { category: 'Client Reviews', score: Math.min(Math.floor(avgRating * 60 * reviewWeight), 300), max: 300, detail: `${reviewCount} review${reviewCount !== 1 ? 's' : ''}` },
     { category: 'Completion Rate', score: Math.min(Math.floor(completionRate * 2), 200), max: 200 },
   ];
 
@@ -433,7 +435,7 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
                 {egoBreakdown.map((item, index) => (
                   <div key={index} className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-[var(--text-secondary)]">{item.category}</span>
+                      <span className="text-[var(--text-secondary)]">{item.category}{('detail' in item && item.detail) ? <span className="text-xs ml-1 opacity-60">({item.detail})</span> : null}</span>
                       <span className="text-white font-medium">{item.score}/{item.max}</span>
                     </div>
                     <div className="w-full bg-[var(--bg-card-hover)] rounded-full h-2">

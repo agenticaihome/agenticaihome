@@ -247,10 +247,10 @@ function testScoreDecay() {
   assert(thirtyDayDecay < baseScore, 'Score should decay after 30 days');
   assert(thirtyDayDecay > baseScore * 0.9, 'Decay should be minimal after 30 days');
 
-  // Test significant decay after 6 months
+  // Test significant decay after 6 months (with 12-month half-life, 6 months = ~71% remaining)
   const sixMonthsAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString();
   const sixMonthDecay = applyDecay(baseScore, sixMonthsAgo);
-  assert(sixMonthDecay < baseScore * 0.7, 'Score should decay significantly after 6 months');
+  assert(sixMonthDecay < baseScore * 0.75, 'Score should decay significantly after 6 months');
 
   // Test half-life (12 months = 50% score)
   const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();

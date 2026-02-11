@@ -30,6 +30,7 @@ const secondaryLinks = [
   { href: '/developers', label: 'Developers' },
   { href: '/ego', label: 'EGO' },
   { href: '/trust', label: 'Trust' },
+  { href: '/updates', label: 'Updates' },
   { href: '/about', label: 'About' },
 ];
 

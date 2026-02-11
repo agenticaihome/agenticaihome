@@ -74,13 +74,19 @@ Standard AIH agent container:
 Bridges AIH's ErgoScript escrow with Celaut's gas payment system:
 
 ```typescript
-// Convert escrow ERG to Celaut gas
-const gas = bridgeEscrowToGas(escrowNanoErg, gasPerErg);
+// Escrow split: agent gets 99%, platform gets 1%
+const { agentNanoErg, platformFeeNanoErg } = calculateEscrowSplit(escrowNanoErg);
 
-// Build unified payment: escrow release + Celaut node payment in one TX
-const txParams = createUnifiedPaymentTx(taskId, celautToken, agentAddress);
-// → 70% to agent, 27.5% to Celaut node, 2.5% platform fee
+// Gas deposit is SEPARATE — based on actual compute cost, not task value
+const cost = await client.estimateCost(serviceHash);
+const { gasAmount, gasNanoErg } = calculateGasDeposit(cost, gasPerErg);
+
+// Two payments:
+// 1. Gas deposit to Celaut node (upfront, refundable if unused)
+// 2. Escrow release to agent on completion (99% agent, 1% platform)
 ```
+
+**Key design decision:** The Celaut node gets paid for **actual compute used**, not a percentage of the task value. A small task and a big task pay the same gas if they use the same compute. Unused gas is refunded. This is fair for everyone.
 
 **We studied your actual payment implementation** (`src/payment_system/contracts/ergo/interface.py`):
 - We know payments go to the node's auxiliary address with `deposit_token` in R4
@@ -137,23 +143,32 @@ Testnet defaults, container specs, Ergo ledger identifiers, gas pricing.
               └─────────────────┘
 ```
 
-## Payment Flow (Unified Ergo TX)
+## Payment Flow (Fair for Everyone)
+
+**Two separate payments — escrow for work, gas for compute:**
 
 1. Task poster funds AIH escrow (ERG locked in ErgoScript contract)
-2. Agent completes work on Celaut node
-3. Task poster approves delivery
-4. **Single Ergo transaction:**
-   - Escrow releases
-   - 70% → Agent address
-   - 27.5% → Celaut node (as gas payment with deposit_token in R4)
-   - 2.5% → AIH treasury
+2. Task poster deposits gas to Celaut node (based on estimated compute cost + 20% buffer)
+3. Agent executes on Celaut node, gas is consumed for compute
+4. Agent delivers work, task poster approves
+5. **Escrow releases:**
+   - 99% → Agent (the one who did the work)
+   - 1% → AIH treasury (platform fee)
+6. **Unused gas refunded** to task poster via `StopService()`
+
+**Why this model?**
+- Agent gets paid for their **work** (task value)
+- Node gets paid for their **compute** (actual resource usage)
+- Platform takes a minimal cut (1%)
+- A 0.1 ERG task and a 100 ERG task pay the same gas for the same compute
+- Unused compute is always refunded
 
 ## What We Need From You
 
 1. **Review the types** — Do our TypeScript types accurately match your proto? Any missing fields?
 2. **Review the client interface** — Does the Gateway method mapping look correct? Any edge cases we're missing?
 3. **Review the Ergo bridge** — We based it on your `process_payment()` and `payment_process_validator()`. Is the deposit_token R4 flow correct?
-4. **Payment split** — Is 70/27.5/2.5 reasonable? How does gas pricing work in practice?
+4. **Payment model** — We separated escrow (for agent work) from gas (for node compute). Does this align with how you see node economics working?
 5. **Proxy architecture** — We need HTTP→gRPC relay since AIH is a browser app. Any existing relay, or should we build one?
 6. **Agent packaging** — What's the minimum viable Celaut service spec for an AI agent? Is our Python 3.11 + gRPC base reasonable?
 7. **Testnet node** — Can we get access to a testnet Nodo to start end-to-end testing?

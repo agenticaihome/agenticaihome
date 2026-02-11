@@ -257,45 +257,72 @@ export function prepareCelautDepositTx(params: CelautErgoPaymentParams): CelautE
 // ─── AIH Escrow → Celaut Bridge ────────────────────────────
 
 /**
- * Bridge AIH task escrow to a Celaut gas deposit.
+ * Bridge AIH task escrow to Celaut execution.
  *
- * In the unified flow:
+ * ## Payment Model: Cost-Based, Not Percentage-Based
+ *
+ * The Celaut node gets paid for ACTUAL COMPUTE USED, not a percentage of the task.
+ * A 0.1 ERG task and a 100 ERG task should pay the same gas if they use the same compute.
+ *
+ * Flow:
  * 1. Task creator funds AIH escrow (ERG locked in escrow contract)
- * 2. When task is assigned with Celaut execution:
- *    a. Portion of escrow is allocated for Celaut gas
- *    b. Escrow contract releases gas portion to node's aux address (with R4 deposit_token)
- *    c. Remaining escrow stays locked for agent payment on completion
- * 3. On task completion:
- *    a. Agent payment released from remaining escrow
- *    b. Unused gas refunded via `StopService` → refund credited back
+ * 2. Before execution, client estimates gas cost via `GetServiceEstimatedCost()`
+ * 3. Client deposits gas to Celaut node (separate from escrow)
+ * 4. Agent executes on Celaut node, gas is consumed
+ * 5. On task completion, escrow releases:
+ *    a. 99% to agent (the one who did the work)
+ *    b. 1% to AIH treasury (platform fee)
+ * 6. Unused gas refunded via `StopService()` → refund to task creator
+ *
+ * The gas deposit is PRE-PAID by the task creator, separate from the escrow.
+ * This keeps the payment model fair:
+ * - Agent gets paid for their work (from escrow)
+ * - Node gets paid for compute (from gas deposit)
+ * - Platform takes a small cut (1% of escrow)
+ * - Unused compute is refunded
  *
  * @param totalEscrowNanoErg - Total escrow amount in nanoERG
- * @param gasPerErg - Node's GAS_PER_ERG rate
- * @param gasAllocationPercent - What % of escrow to allocate for Celaut gas (default 30%)
  */
-export function bridgeEscrowToGas(
-  totalEscrowNanoErg: number,
-  gasPerErg: number,
-  gasAllocationPercent: number = 30,
-): {
-  gasAmount: CelautGasAmount;
-  gasNanoErg: number;
+export function calculateEscrowSplit(totalEscrowNanoErg: number): {
   agentNanoErg: number;
   platformFeeNanoErg: number;
 } {
-  const PLATFORM_FEE_PERCENT = 2.5;
+  const PLATFORM_FEE_PERCENT = 1; // 1% platform fee — same as our escrow contract
 
   const platformFee = Math.floor(totalEscrowNanoErg * (PLATFORM_FEE_PERCENT / 100));
-  const afterFee = totalEscrowNanoErg - platformFee;
-  const gasNanoErg = Math.floor(afterFee * (gasAllocationPercent / 100));
-  const agentNanoErg = afterFee - gasNanoErg;
+  const agentNanoErg = totalEscrowNanoErg - platformFee;
 
-  const gasAmount = nanoErgToGas(gasNanoErg, gasPerErg);
+  return {
+    agentNanoErg,
+    platformFeeNanoErg: platformFee,
+  };
+}
+
+/**
+ * Calculate the gas deposit needed for Celaut execution.
+ * This is SEPARATE from the escrow — paid upfront by the task creator.
+ *
+ * @param estimatedCost - From `CelautClient.estimateCost()` 
+ * @param gasPerErg - Node's GAS_PER_ERG rate
+ * @param bufferPercent - Extra buffer on top of estimate (default 20%) to avoid running out mid-task
+ */
+export function calculateGasDeposit(
+  estimatedCost: CelautGasAmount,
+  gasPerErg: number,
+  bufferPercent: number = 20,
+): {
+  gasAmount: CelautGasAmount;
+  gasNanoErg: number;
+  totalWithBuffer: number;
+} {
+  const baseGas = BigInt(estimatedCost.n);
+  const bufferedGas = baseGas + (baseGas * BigInt(bufferPercent) / 100n);
+  const gasAmount: CelautGasAmount = { n: bufferedGas.toString() };
+  const gasNanoErg = gasToNanoErg(gasAmount, gasPerErg);
 
   return {
     gasAmount,
     gasNanoErg,
-    agentNanoErg,
-    platformFeeNanoErg: platformFee,
+    totalWithBuffer: gasNanoErg + ERGO_TX_FEE,
   };
 }

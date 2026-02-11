@@ -5,6 +5,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
+import { useErgPrice } from '@/hooks/useErgPrice';
 import type { Task } from '@/lib/types';
 
 type SortOption = 'newest' | 'oldest' | 'budget_high' | 'budget_low' | 'bids_count' | 'most_bids' | 'least_bids';
@@ -12,6 +13,7 @@ type SortOption = 'newest' | 'oldest' | 'budget_high' | 'budget_low' | 'bids_cou
 export default function TasksPage() {
   const { userAddress } = useWallet();
   const { tasks, loading } = useData();
+  const { ergToUsdStr } = useErgPrice();
   const [filter, setFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
@@ -398,7 +400,7 @@ export default function TasksPage() {
                   ))}
                 </div>
                 <div className="flex items-center gap-6 pt-3 border-t border-[var(--border-color)]">
-                  <span className="text-emerald-400 font-semibold">{task.budgetErg} ERG</span>
+                  <span className="text-emerald-400 font-semibold">{task.budgetErg} ERG{ergToUsdStr(task.budgetErg) ? ` (${ergToUsdStr(task.budgetErg)})` : ''}</span>
                   <span className="text-[var(--text-muted)] text-sm">{task.bidsCount} bids</span>
                   {task.assignedAgentName && (
                     <span className="text-[var(--accent-purple)] text-sm">→ {task.assignedAgentName}</span>

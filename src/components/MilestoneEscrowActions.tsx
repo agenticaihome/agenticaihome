@@ -96,6 +96,11 @@ export default function MilestoneEscrowActions({
       );
       
       const walletState = await Promise.race([connectPromise, timeoutPromise]) as WalletState;
+      
+      if (!walletState.address) {
+        throw new Error('Wallet address not available');
+      }
+      
       setCurrentUserAddress(walletState.address);
       setTxState('building');
 
@@ -108,6 +113,12 @@ export default function MilestoneEscrowActions({
         deadlineHeight: currentHeight + (index + 1) * 720, // ~1 day per milestone
       }));
 
+      // Get wallet info for transaction building
+      const [utxos, changeAddress] = await Promise.all([
+        getUtxos(),
+        getAddress(),
+      ]);
+
       // Create milestone escrow transaction
       const unsignedTx = await createMilestoneEscrowTx({
         clientAddress: walletState.address,
@@ -115,7 +126,7 @@ export default function MilestoneEscrowActions({
         totalAmountNanoErg,
         milestones: milestonesWithDeadlines,
         taskId,
-      });
+      }, utxos, changeAddress);
 
       // Check if transaction is suitable for ErgoPay
       if (isTransactionSuitableForErgoPay(unsignedTx)) {
@@ -135,7 +146,7 @@ export default function MilestoneEscrowActions({
       setTxState('success');
 
       // Log event and call callback
-      await logEscrowFunded(taskId, submittedTxId, parseFloat(amountErg));
+      await logEscrowFunded(taskId, walletState.address, submittedTxId, parseFloat(amountErg));
       onFunded?.(submittedTxId, unsignedTx.outputs[0].boxId || submittedTxId);
 
     } catch (err) {
@@ -164,11 +175,23 @@ export default function MilestoneEscrowActions({
 
     try {
       const walletState = await connectWallet(walletType);
+      
+      if (!walletState.address) {
+        throw new Error('Wallet address not available');
+      }
+      
       setCurrentUserAddress(walletState.address);
       setTxState('building');
 
+      // Get wallet info for transaction building
+      const [utxos, changeAddress] = await Promise.all([
+        getUtxos(),
+        getAddress(),
+      ]);
+
       // Build milestone release transaction
-      const unsignedTx = await releaseMilestoneTx(escrowBoxId, walletState.address);
+      const result = await releaseMilestoneTx(escrowBoxId, utxos, changeAddress, agentName);
+      const unsignedTx = result.milestoneReleaseTx;
 
       if (isTransactionSuitableForErgoPay(unsignedTx)) {
         setUnsignedTxForErgoPay(unsignedTx);
@@ -189,15 +212,16 @@ export default function MilestoneEscrowActions({
       
       // Try to mint EGO tokens for this milestone
       try {
-        const egoTx = await mintEgoAfterRelease(
-          submittedTxId,
+        const userUtxos = await getUtxos(currentUserAddress || '');
+        const egoTx = await mintEgoAfterRelease({
           agentAddress,
-          nanoErgToErg(Number(milestonePayment)),
-          `${agentName} - Milestone ${currentMilestone + 1}`
-        );
+          agentName: `${agentName} - Milestone ${currentMilestone + 1}`,
+          minterAddress: currentUserAddress || '',
+          minterUtxos: userUtxos,
+        });
         
         if (egoTx.success && egoTx.txId) {
-          await logEgoMinted(taskId, egoTx.txId, egoTx.egoAmount || 0);
+          await logEgoMinted(taskId, currentUserAddress || '', egoTx.txId, egoTx.egoAmount || 0);
           setEgoMintResult({ success: true, txId: egoTx.txId });
         } else {
           setEgoMintResult({ success: false, error: egoTx.error });
@@ -208,10 +232,10 @@ export default function MilestoneEscrowActions({
       }
 
       // Send notification to agent
-      await notifyPaymentReleased(taskId, agentAddress, nanoErgToErg(Number(milestonePayment)));
+      await notifyPaymentReleased(taskId, agentAddress, parseFloat(nanoErgToErg(milestonePayment.toString())));
       
       // Log the milestone release
-      await logEscrowReleased(taskId, submittedTxId, nanoErgToErg(Number(milestonePayment)));
+      await logEscrowReleased(taskId, walletState.address, submittedTxId, parseFloat(nanoErgToErg(milestonePayment.toString())));
       
       setTxState('success');
       onMilestoneReleased?.(submittedTxId, currentMilestone);
@@ -242,10 +266,21 @@ export default function MilestoneEscrowActions({
 
     try {
       const walletState = await connectWallet(walletType);
+      
+      if (!walletState.address) {
+        throw new Error('Wallet address not available');
+      }
+      
       setCurrentUserAddress(walletState.address);
       setTxState('building');
 
-      const unsignedTx = await refundMilestoneEscrowTx(escrowBoxId, walletState.address);
+      // Get wallet info for transaction building
+      const [utxos, changeAddress] = await Promise.all([
+        getUtxos(),
+        getAddress(),
+      ]);
+
+      const unsignedTx = await refundMilestoneEscrowTx(escrowBoxId, utxos, changeAddress);
 
       if (isTransactionSuitableForErgoPay(unsignedTx)) {
         setUnsignedTxForErgoPay(unsignedTx);
@@ -262,7 +297,7 @@ export default function MilestoneEscrowActions({
       setTxId(submittedTxId);
       setTxState('success');
 
-      await logEscrowRefunded(taskId, submittedTxId, parseFloat(amountErg));
+      await logEscrowRefunded(taskId, walletState.address, submittedTxId);
       onRefunded?.(submittedTxId);
 
     } catch (err) {
@@ -321,7 +356,7 @@ export default function MilestoneEscrowActions({
                 Current: Milestone {currentMilestone + 1} of {milestones.length}
               </span>
               <span className="text-sm text-[var(--accent-cyan)]">
-                {currentMilestoneData?.percentage}% ({nanoErgToErg(Number((totalAmountNanoErg * BigInt(currentMilestoneData?.percentage || 0)) / BigInt(10000)))} ERG)
+                {currentMilestoneData?.percentage}% ({nanoErgToErg(((totalAmountNanoErg * BigInt(currentMilestoneData?.percentage || 0)) / BigInt(10000)))} ERG)
               </span>
             </div>
             <div className="text-sm text-gray-400 mb-2">
@@ -334,7 +369,7 @@ export default function MilestoneEscrowActions({
               />
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {progressData.completedPercentage}% of total value released
+              {progressData.progress}% of total value released
             </div>
           </div>
         )}
@@ -469,8 +504,8 @@ export default function MilestoneEscrowActions({
 
       {/* Wallet Selector Modal */}
       {showWalletSelector && (
-        <WalletSelector
-          onSelectWallet={(walletType) => {
+        <WalletSelector isOpen={showWalletSelector}
+          onSelect={(walletType) => {
             setShowWalletSelector(false);
             if (escrowStatus === 'unfunded') {
               handleFund(walletType);
@@ -487,9 +522,10 @@ export default function MilestoneEscrowActions({
       {txState === 'ergopay_qr' && unsignedTxForErgoPay && (
         <ErgoPayQR
           unsignedTx={unsignedTxForErgoPay}
-          onSubmit={onErgoPaySubmit}
-          onClose={() => setTxState('idle')}
+          userAddress={currentUserAddress || undefined}
           message={`${escrowStatus === 'unfunded' ? 'Fund' : 'Release'} Milestone Escrow`}
+          onGenerated={(data) => console.log('ErgoPay QR generated:', data.url)}
+          onError={(err) => { setError(err); setTxState('error'); }}
         />
       )}
     </div>

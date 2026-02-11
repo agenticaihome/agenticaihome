@@ -788,10 +788,10 @@ function TaskDetailInner() {
                       escrow_box_id: boxId, 
                       escrow_status: 'funded',
                       escrowType: 'milestone',
-                      currentMilestone: 0
+                      currentMilestone: '0'
                     });
                     await updateTaskData(task.id, { status: 'in_progress' });
-                    logEvent({ type: 'milestone_escrow_funded', message: `Milestone escrow funded: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    logEvent({ type: 'escrow_funded', message: `Milestone escrow funded: ${txId}`, taskId: task.id, actor: userAddress || '' });
                     showSuccess(`Milestone escrow funded! TX: ${txId.slice(0, 12)}...`);
                     await loadData();
                   }}
@@ -804,7 +804,7 @@ function TaskDetailInner() {
                         escrow_box_id: escrowBoxId || '', 
                         escrow_status: 'released', 
                         release_tx_id: txId,
-                        currentMilestone: milestoneIndex + 1
+                        currentMilestone: String(milestoneIndex + 1)
                       });
                       await updateTaskData(task.id, { status: 'completed', completedAt: new Date().toISOString() });
                       
@@ -822,20 +822,22 @@ function TaskDetailInner() {
                         milestoneIndex,
                         txId,
                         releasedAmount: parseFloat(milestones[milestoneIndex]?.percentage ? 
-                          String((parseFloat(amountErg) * milestones[milestoneIndex].percentage) / 100) : '0'),
+                          String((parseFloat(String(
+                            bids.find(b => b.id === task.acceptedBidId)?.proposedRate || task.budgetErg || 0
+                          )) * milestones[milestoneIndex].percentage) / 100) : '0'),
                         completedAt: new Date().toISOString()
                       }];
                       setCompletedMilestones(newCompleted);
                       
                       await updateTaskMetadata(task.id, { 
-                        currentMilestone: milestoneIndex + 1,
+                        currentMilestone: String(milestoneIndex + 1),
                         completedMilestones: JSON.stringify(newCompleted)
                       });
                       
                       showSuccess(`✓ Milestone ${milestoneIndex + 1} completed! TX: ${txId.slice(0, 12)}...`);
                     }
                     
-                    logEvent({ type: 'milestone_released', message: `Milestone ${milestoneIndex + 1} released: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    logEvent({ type: 'escrow_released', message: `Milestone ${milestoneIndex + 1} released: ${txId}`, taskId: task.id, actor: userAddress || '' });
                     await loadData();
 
                     // Check if user should rate after final completion
@@ -847,7 +849,7 @@ function TaskDetailInner() {
                     setEscrowStatus('refunded');
                     await updateTaskMetadata(task.id, { escrow_box_id: escrowBoxId || '', escrow_status: 'refunded', refund_tx_id: txId });
                     await updateTaskData(task.id, { status: 'disputed' });
-                    logEvent({ type: 'milestone_escrow_refunded', message: `Milestone escrow refunded: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    logEvent({ type: 'escrow_refunded', message: `Milestone escrow refunded: ${txId}`, taskId: task.id, actor: userAddress || '' });
                     showSuccess(`Milestone escrow refunded! TX: ${txId.slice(0, 12)}...`);
                     await loadData();
                   }}

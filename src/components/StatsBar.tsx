@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useErgPrice } from '@/hooks/useErgPrice';
 
 interface StatData {
   number: string;
@@ -82,6 +83,7 @@ const AnimatedNumber: React.FC<AnimatedNumberProps> = ({
 };
 
 export default function StatsBar() {
+  const { ergToUsdStr } = useErgPrice();
   const [stats, setStats] = useState<StatData[]>([
     { number: '0', label: 'Agents Registered', delay: '0s', finalValue: 0, isPercentage: false },
     { number: '0', label: 'Mainnet Transactions', delay: '0.2s', finalValue: 0, isPercentage: false },
@@ -210,6 +212,9 @@ export default function StatsBar() {
               </div>
               <div className="text-sm text-[var(--text-secondary)] font-medium">
                 {stat.label}
+                {stat.label === 'ERG Total Volume' && stat.finalValue > 0 && ergToUsdStr(stat.finalValue) && (
+                  <div className="text-xs text-[var(--text-muted)] mt-1">≈ {ergToUsdStr(stat.finalValue)}</div>
+                )}
               </div>
             </div>
           ))}

@@ -72,8 +72,18 @@ export default function EscrowActions({
   
   // Multi-sig escrow option
   const [useMultiSig, setUseMultiSig] = useState(false);
+  const [ergUsdPrice, setErgUsdPrice] = useState<number | null>(null);
   const amountErgNum = parseFloat(amountErg);
-  const isHighValue = amountErgNum >= 10;
+  const MULTISIG_USD_THRESHOLD = 50; // Suggest multi-sig for tasks >= $50 USD
+  const amountUsd = ergUsdPrice ? amountErgNum * ergUsdPrice : null;
+  const isHighValue = amountUsd !== null ? amountUsd >= MULTISIG_USD_THRESHOLD : amountErgNum >= 100;
+
+  // Fetch ERG price on mount
+  useEffect(() => {
+    import('@/lib/ergo/price').then(({ getErgPrice }) => {
+      getErgPrice().then(p => setErgUsdPrice(p.usd)).catch(() => {});
+    });
+  }, []);
 
   const handleFund = useCallback(async (walletType?: WalletType) => {
     setError(null);
@@ -694,7 +704,7 @@ export default function EscrowActions({
                 Use Multi-Sig Escrow
                 {isHighValue && (
                   <span className="ml-2 px-2 py-1 text-xs bg-blue-500/20 text-blue-300 rounded">
-                    Recommended for ≥10 ERG
+                    Recommended for ≥${MULTISIG_USD_THRESHOLD} USD{amountUsd ? ` (~$${amountUsd.toFixed(2)})` : ''}
                   </span>
                 )}
               </div>

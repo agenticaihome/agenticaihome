@@ -493,11 +493,11 @@ export function validateEscrowBox(
 export function validateEscrowParams(params: EscrowParams): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!params.clientAddress || params.clientAddress.length < 10) {
-    errors.push('Invalid client address');
+  if (!params.clientAddress || params.clientAddress.length < 40 || !params.clientAddress.startsWith('9')) {
+    errors.push('Invalid client address (must be a valid Ergo mainnet address)');
   }
-  if (!params.agentAddress || params.agentAddress.length < 10) {
-    errors.push('Invalid agent address');
+  if (!params.agentAddress || params.agentAddress.length < 40 || !params.agentAddress.startsWith('9')) {
+    errors.push('Invalid agent address (must be a valid Ergo mainnet address)');
   }
   // Note: same-address allowed for testing. In production, consider re-enabling.
   // if (params.clientAddress === params.agentAddress) {

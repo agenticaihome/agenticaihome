@@ -21,13 +21,13 @@ import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, PLATFORM_FEE_ADDRESS } from './const
  * Supports configurable N-of-M signature schemes (e.g., 2-of-3: client + agent + mediator).
  * Compatible with existing 1-of-1 escrow for simple tasks through configuration.
  *
- * Register Layout:
- * R4: Coll[Coll[Byte]] - Array of participant public keys (client, agent, mediator, etc.)
- * R5: Coll[Byte]       - Agent proposition bytes (payment destination)
- * R6: Int              - Deadline block height
- * R7: Coll[Byte]       - Protocol fee address proposition bytes
- * R8: Coll[Byte]       - Task ID (metadata)
- * R9: Coll[Int]        - Configuration: [requiredSignatures, totalParticipants, timeoutRefundIndex]
+ * Register Layout (matches ErgoScript exactly):
+ * R4: SigmaProp   - Client public key
+ * R5: SigmaProp   - Agent public key
+ * R6: SigmaProp   - Mediator public key
+ * R7: Int          - Deadline block height
+ * R8: Coll[Byte]   - Agent proposition bytes (payment destination)
+ * R9: Coll[Byte]   - Protocol fee address proposition bytes
  *
  * The contract logic:
  * 1. Multi-sig release: N-of-M signatures + valid outputs (agent + fee)

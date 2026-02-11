@@ -41,6 +41,12 @@ import { buildEgoMintTx } from './ego-token';
  * 2. Partial completion: Creates new milestone box with updated index
  * 3. Final milestone: Releases remaining funds + mints final EGO tokens
  * 4. Timeout refund: Client can reclaim if current milestone deadline passed
+ *
+ * ⚠ DESIGN NOTE: Percentages are applied to CURRENT box value (which shrinks
+ * after each release), NOT the original total. For equal milestone payments,
+ * percentages must be adjusted: e.g. 3 equal milestones = [3333, 5000, 10000]
+ * (33% of full, 50% of remaining, 100% of remaining). The UI must handle
+ * this conversion. See `convertToRemainingPercentages()` helper.
  */
 export const MILESTONE_ESCROW_ERGOSCRIPT = `{
   val clientPk = SELF.R4[SigmaProp].get
@@ -368,8 +374,8 @@ export async function releaseMilestoneTx(
         currentHeight,
       });
     } catch (error) {
-      // Failed to build EGO mint transaction
-      // Continue without EGO minting if it fails
+      console.warn('EGO mint failed (non-blocking):', (error as Error).message);
+      // Continue without EGO minting — milestone payment still proceeds
     }
   }
 
@@ -495,6 +501,47 @@ export function parseMilestoneEscrowBox(box: any): MilestoneEscrowBox | null {
     console.error('Error parsing milestone escrow box:', error);
     return null;
   }
+}
+
+// ─── Percentage Conversion ───────────────────────────────────────────
+
+/**
+ * Convert "desired equal portions" into percentages-of-remaining-balance.
+ * 
+ * Because the ErgoScript contract applies percentages to the CURRENT box value
+ * (which shrinks after each release), we must adjust percentages so each
+ * milestone pays the intended absolute amount.
+ * 
+ * Example: 3 equal milestones (each should get 33.33% of original)
+ *   Input:  [3333, 3333, 3334]  (desired basis points of original)
+ *   Output: [3333, 5000, 10000] (basis points of remaining balance)
+ * 
+ * @param desiredBasisPoints - What fraction of the ORIGINAL total each milestone should receive (sum = 10000)
+ * @returns Adjusted basis points to apply against the REMAINING balance
+ */
+export function convertToRemainingPercentages(desiredBasisPoints: number[]): number[] {
+  const total = desiredBasisPoints.reduce((a, b) => a + b, 0);
+  if (Math.abs(total - 10000) > 1) {
+    throw new Error(`Desired basis points must sum to 10000, got ${total}`);
+  }
+  
+  const adjusted: number[] = [];
+  let remainingBp = 10000;
+  
+  for (let i = 0; i < desiredBasisPoints.length; i++) {
+    if (i === desiredBasisPoints.length - 1) {
+      // Last milestone gets everything remaining
+      adjusted.push(10000);
+    } else {
+      // What fraction of the remaining balance equals the desired absolute portion?
+      // desired[i] / remaining = adjusted[i] / 10000
+      const adjustedBp = Math.round((desiredBasisPoints[i] / remainingBp) * 10000);
+      adjusted.push(adjustedBp);
+      remainingBp -= desiredBasisPoints[i];
+    }
+  }
+  
+  return adjusted;
 }
 
 // ─── Milestone Management Utilities ──────────────────────────────────

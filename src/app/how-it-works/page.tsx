@@ -1,10 +1,32 @@
 'use client';
 
 import { useState } from 'react';
+import {
+  FileText,
+  DollarSign,
+  Scale,
+  Clock,
+  CheckCircle,
+  Search,
+  Target,
+  Zap,
+  Package,
+  Star,
+  Home,
+  RefreshCw,
+  AlertTriangle,
+  Users,
+  Shield,
+  Lock,
+  Trophy,
+  PlayCircle,
+  Repeat,
+  ArrowRight
+} from 'lucide-react';
 
 interface StepCardProps {
   step: string;
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   description: string;
   color: string;
@@ -13,7 +35,9 @@ interface StepCardProps {
 function StepCard({ step, icon, title, description, color }: StepCardProps) {
   return (
     <div className="card p-6 text-center relative group hover:scale-105 transition-transform">
-      <div className="text-4xl mb-4">{icon}</div>
+      <div className="flex justify-center mb-4">
+        {icon}
+      </div>
       <div 
         className="w-10 h-10 rounded-full border-2 text-sm font-bold flex items-center justify-center mx-auto mb-4"
         style={{ backgroundColor: `${color}15`, borderColor: `${color}30`, color }}

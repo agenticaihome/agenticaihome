@@ -1031,7 +1031,7 @@ export default function Home() {
               {
                 name: "CRUX Finance",
                 description: "DeFi trading and portfolio management on Ergo",
-                url: "https://cruxfinance.com",
+                url: "https://cruxfinance.io",
                 icon: <BarChart3 className="w-10 h-10" />
               },
               {
@@ -1154,7 +1154,7 @@ export default function Home() {
                 {
                   name: "CRUX Finance",
                   description: "DeFi trading",
-                  url: "https://cruxfinance.com",
+                  url: "https://cruxfinance.io",
                   icon: <BarChart3 className="w-8 h-8" />
                 },
                 {

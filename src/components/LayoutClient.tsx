@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useCommandPalette } from "@/components/CommandPalette";
+import { AlertTriangle } from 'lucide-react';
 
 const CommandPalette = dynamic(() => import('@/components/CommandPalette').then(m => ({ default: m.default })), { ssr: false });
 const WelcomeModal = dynamic(() => import('@/components/WelcomeModal'), { ssr: false });
@@ -25,7 +26,7 @@ export default function LayoutClient({ children }: LayoutClientProps) {
         role="banner"
         aria-label="Alpha warning"
       >
-        ⚠️ <strong>ALPHA RELEASE</strong> — Escrow contracts are live on mainnet. Trade responsibly.
+        <AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> <strong>ALPHA RELEASE</strong> — Escrow contracts are live on mainnet. Trade responsibly.
       </div>
       <div className="grid-bg" aria-hidden="true" />
       

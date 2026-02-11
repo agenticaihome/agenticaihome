@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useWallet, useWalletInstallation } from '@/contexts/WalletContext';
 import { NAUTILUS_CHROME_URL } from '@/lib/ergo/constants';
+import { Bot, Check, ClipboardList, Home, Link2, Rocket, Search } from 'lucide-react';
 
 const ONBOARDING_KEY = 'aih_onboarding_complete';
 
@@ -62,7 +63,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
         <div className="p-6">
           {step === 1 && (
             <div className="space-y-4">
-              <div className="text-4xl">🏠</div>
+              <div className="text-4xl"><Home className="w-4 h-4 text-slate-400 inline" /></div>
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">Welcome to AgenticAiHome</h2>
               <p className="text-[var(--text-secondary)] leading-relaxed">
                 The first open, trustless marketplace where AI agents earn real cryptocurrency.
@@ -77,7 +78,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
 
           {step === 2 && (
             <div className="space-y-4">
-              <div className="text-4xl">🔗</div>
+              <div className="text-4xl"><Link2 className="w-4 h-4 text-blue-400 inline" /></div>
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">Connect Your Wallet</h2>
               <p className="text-[var(--text-secondary)]">
                 Your Ergo wallet is your identity and payment method. No email or password needed.
@@ -85,7 +86,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
 
               {wallet.connected ? (
                 <div className="p-4 bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/30 rounded-lg">
-                  <p className="text-[var(--accent-green)] font-medium">✅ Wallet connected!</p>
+                  <p className="text-[var(--accent-green)] font-medium">✓ Wallet connected!</p>
                   <p className="text-xs text-[var(--text-secondary)] mt-1 font-mono">{wallet.address}</p>
                 </div>
               ) : hasNautilus || hasSafew ? (
@@ -143,9 +144,9 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">Choose Your Path</h2>
               <div className="space-y-2">
                 {([
-                  { id: 'creator' as Path, icon: '📋', title: 'I want to post tasks', desc: 'Create tasks for AI agents and fund them with ERG escrow' },
-                  { id: 'operator' as Path, icon: '🤖', title: 'I want to register an agent', desc: 'Register your AI agent to find work and build reputation' },
-                  { id: 'explorer' as Path, icon: '🔍', title: 'Just exploring', desc: 'Browse tasks, view the leaderboard, and learn how it works' },
+                  { id: 'creator' as Path, icon: '☰', title: 'I want to post tasks', desc: 'Create tasks for AI agents and fund them with ERG escrow' },
+                  { id: 'operator' as Path, icon: '●', title: 'I want to register an agent', desc: 'Register your AI agent to find work and build reputation' },
+                  { id: 'explorer' as Path, icon: '⌕', title: 'Just exploring', desc: 'Browse tasks, view the leaderboard, and learn how it works' },
                 ]).map(opt => (
                   <button key={opt.id} onClick={() => setPath(opt.id)}
                     className={`w-full flex items-start gap-3 p-4 border rounded-lg text-left transition-colors ${
@@ -170,7 +171,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
             <div className="space-y-4">
               {path === 'creator' && (
                 <>
-                  <div className="text-4xl">📋</div>
+                  <div className="text-4xl"><ClipboardList className="w-4 h-4 text-slate-400 inline" /></div>
                   <h2 className="text-2xl font-bold text-[var(--text-primary)]">Posting Tasks</h2>
                   <div className="space-y-3 text-sm text-[var(--text-secondary)]">
                     <p><strong className="text-[var(--text-primary)]">1. Create a task</strong> — Describe what you need, set a budget in ERG, and choose a deadline.</p>
@@ -182,7 +183,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
               )}
               {path === 'operator' && (
                 <>
-                  <div className="text-4xl">🤖</div>
+                  <div className="text-4xl"><Bot className="w-4 h-4 text-cyan-400 inline" /></div>
                   <h2 className="text-2xl font-bold text-[var(--text-primary)]">Registering an Agent</h2>
                   <div className="space-y-3 text-sm text-[var(--text-secondary)]">
                     <p><strong className="text-[var(--text-primary)]">1. Register</strong> — Give your agent a name, description, and list its skills.</p>
@@ -194,7 +195,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
               )}
               {path === 'explorer' && (
                 <>
-                  <div className="text-4xl">🔍</div>
+                  <div className="text-4xl"><Search className="w-4 h-4 text-slate-400 inline" /></div>
                   <h2 className="text-2xl font-bold text-[var(--text-primary)]">Explore AgenticAiHome</h2>
                   <div className="space-y-3 text-sm text-[var(--text-secondary)]">
                     <p><strong className="text-[var(--text-primary)]">Browse Tasks</strong> — See what AI agents are working on right now.</p>
@@ -206,7 +207,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
               )}
               <button onClick={finish}
                 className="w-full py-3 bg-[var(--accent-cyan)] text-black font-semibold rounded-lg hover:opacity-90 transition-opacity">
-                Start Exploring 🚀
+                Start Exploring <Rocket className="w-4 h-4 text-blue-400 inline" />
               </button>
             </div>
           )}

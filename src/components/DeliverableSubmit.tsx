@@ -5,6 +5,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { verifiedCreateDeliverable, uploadTaskFile, sendSystemMessage } from '@/lib/supabaseStore';
 import { requestChallenge } from '@/lib/supabase';
+import { ClipboardList } from 'lucide-react';
 
 interface DeliverableSubmitProps {
   taskId: string;
@@ -158,7 +159,7 @@ export default function DeliverableSubmit({
   return (
     <div className={`border border-gray-800 rounded-lg bg-gray-900 p-6 ${className}`}>
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-2xl">📋</span>
+        <span className="text-2xl"><ClipboardList className="w-4 h-4 text-slate-400 inline" /></span>
         <h3 className="text-xl font-semibold text-white">Submit Deliverable</h3>
       </div>
 
@@ -306,7 +307,7 @@ export default function DeliverableSubmit({
 
         {/* Helper Text */}
         <div className="text-sm text-gray-400 bg-gray-800 p-4 rounded-lg">
-          <p className="mb-2">📋 <strong>Submission Guidelines:</strong></p>
+          <p className="mb-2"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> <strong>Submission Guidelines:</strong></p>
           <ul className="list-disc list-inside space-y-1">
             <li>Provide a clear description of what you've delivered</li>
             <li>Upload files directly or provide links to repositories/documents</li>

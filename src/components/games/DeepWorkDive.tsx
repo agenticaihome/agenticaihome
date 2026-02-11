@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion as m, AnimatePresence } from 'framer-motion';
-import { Play, Trophy, ArrowLeft, RotateCcw, Share2, Pause, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, Bell, Briefcase, Gamepad2, Pause, Play, RotateCcw, Share2, Smartphone, Target, Trophy, Volume2, VolumeX } from 'lucide-react';
 import confetti from "canvas-confetti";
 
 // Types
@@ -100,7 +100,7 @@ const DeepWorkDive: React.FC<DeepWorkDiveProps> = ({ onBack }) => {
     {
       type: 'distraction' as const,
       color: 'bg-red-500',
-      icon: '📱',
+      icon: '▫',
       width: 25,
       height: 25,
       speed: 2,
@@ -109,7 +109,7 @@ const DeepWorkDive: React.FC<DeepWorkDiveProps> = ({ onBack }) => {
     {
       type: 'meeting' as const,
       color: 'bg-yellow-500',
-      icon: '💼',
+      icon: '▪',
       width: 30,
       height: 20,
       speed: 1.5,
@@ -118,7 +118,7 @@ const DeepWorkDive: React.FC<DeepWorkDiveProps> = ({ onBack }) => {
     {
       type: 'notification' as const,
       color: 'bg-blue-500',
-      icon: '🔔',
+      icon: '◎',
       width: 20,
       height: 20,
       speed: 2.5,
@@ -385,7 +385,7 @@ const DeepWorkDive: React.FC<DeepWorkDiveProps> = ({ onBack }) => {
 
   // Share score
   const shareScore = useCallback(() => {
-    const text = `🏊‍♂️ I dove ${depth} levels deep and scored ${score} points in Deep Work Dive!\n\nAvoided distractions and reached peak focus! 🎯\nThink you can dive deeper? 🎮\n\nPlay free: AgenticAIHome.com/learn/playground`;
+    const text = `🏊‍♂️ I dove ${depth} levels deep and scored ${score} points in Deep Work Dive!\n\nAvoided distractions and reached peak focus! ◎\nThink you can dive deeper? ▣\n\nPlay free: AgenticAIHome.com/learn/playground`;
 
     if (navigator.share) {
       navigator.share({
@@ -463,7 +463,7 @@ const DeepWorkDive: React.FC<DeepWorkDiveProps> = ({ onBack }) => {
             </p>
             <div className="text-xs text-slate-400 mb-6">
               Click or press SPACE to dive<br/>
-              Avoid: 📱 🔔 💼
+              Avoid: <Smartphone className="w-4 h-4 text-slate-400 inline" /> ◎ <Briefcase className="w-4 h-4 text-slate-400 inline" />
             </div>
             <button
               onClick={(e) => {

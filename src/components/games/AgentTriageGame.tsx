@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion as m, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { Mail, Check, Trash2, Play, RotateCcw, ArrowLeft, Trophy, Volume2, VolumeX, Clock, Flame, Keyboard, ChevronLeft, ChevronRight, Share2, Pause } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BarChart3, Briefcase, Check, ChevronLeft, ChevronRight, CircleDollarSign, Clock, Dumbbell, Flame, Gamepad2, Gem, Keyboard, Mail, PartyPopper, Pause, Play, RotateCcw, Share2, Smartphone, Sparkles, Target, Trash2, Trophy, User, Volume2, VolumeX, Waves, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 // Types
@@ -171,7 +171,7 @@ const SwipeableEmailCard: React.FC<SwipeableEmailCardProps> = ({ email, onAction
             </div>
             <p className="text-sm sm:text-base font-semibold text-white truncate">{email.subject}</p>
             <p className="text-xs text-slate-300 mt-0.5 hidden sm:block">
-              {email.action === 'delegate' ? '💼 Work-related' : '🗑️ Low priority'}
+              {email.action === 'delegate' ? 'Work-related' : 'Low priority'}
             </p>
           </div>
         </div>
@@ -282,10 +282,10 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
     // DELEGATE emails (work-related)
     { type: 'urgent', subject: '🔥 Client deadline TODAY', action: 'delegate' as const, color: 'from-red-500/30 to-red-900/30', borderColor: 'border-red-500/60', icon: '🔥', priority: 'critical' as const },
     { type: 'boss', subject: '⚡ Meeting request from CEO', action: 'delegate' as const, color: 'from-amber-500/30 to-amber-900/30', borderColor: 'border-amber-500/60', icon: '⚡', priority: 'high' as const },
-    { type: 'work', subject: '📊 Q4 Report needs approval', action: 'delegate' as const, color: 'from-cyan-500/25 to-cyan-900/25', borderColor: 'border-cyan-500/50', icon: '📊', priority: 'normal' as const },
+    { type: 'work', subject: '▊ Q4 Report needs approval', action: 'delegate' as const, color: 'from-cyan-500/25 to-cyan-900/25', borderColor: 'border-cyan-500/50', icon: '▊', priority: 'normal' as const },
     { type: 'meeting', subject: '📅 Team sync in 30 mins', action: 'delegate' as const, color: 'from-purple-500/25 to-purple-900/25', borderColor: 'border-purple-500/50', icon: '📅', priority: 'normal' as const },
-    { type: 'client', subject: '💼 Contract ready for review', action: 'delegate' as const, color: 'from-emerald-500/25 to-emerald-900/25', borderColor: 'border-emerald-500/50', icon: '💼', priority: 'high' as const },
-    { type: 'project', subject: '🎯 Sprint blocker identified', action: 'delegate' as const, color: 'from-orange-500/25 to-orange-900/25', borderColor: 'border-orange-500/50', icon: '🎯', priority: 'high' as const },
+    { type: 'client', subject: '▪ Contract ready for review', action: 'delegate' as const, color: 'from-emerald-500/25 to-emerald-900/25', borderColor: 'border-emerald-500/50', icon: '▪', priority: 'high' as const },
+    { type: 'project', subject: '◎ Sprint blocker identified', action: 'delegate' as const, color: 'from-orange-500/25 to-orange-900/25', borderColor: 'border-orange-500/50', icon: '◎', priority: 'high' as const },
     { type: 'support', subject: '🆘 Customer needs help ASAP', action: 'delegate' as const, color: 'from-rose-500/25 to-rose-900/25', borderColor: 'border-rose-500/50', icon: '🆘', priority: 'high' as const },
 
     // DELETE emails (spam, junk)
@@ -293,9 +293,9 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
     { type: 'newsletter', subject: '📧 Weekly Marketing Digest', action: 'delete' as const, color: 'from-blue-500/20 to-blue-900/20', borderColor: 'border-blue-500/40', icon: '📧', priority: 'normal' as const },
     { type: 'receipt', subject: '🧾 Your Amazon receipt', action: 'delete' as const, color: 'from-green-500/20 to-green-900/20', borderColor: 'border-green-500/40', icon: '🧾', priority: 'normal' as const },
     { type: 'promo', subject: '🏷️ 50% OFF TODAY ONLY!!!', action: 'delete' as const, color: 'from-pink-500/20 to-pink-900/20', borderColor: 'border-pink-500/40', icon: '🏷️', priority: 'normal' as const },
-    { type: 'social', subject: '👤 LinkedIn: New connection', action: 'delete' as const, color: 'from-sky-500/20 to-sky-900/20', borderColor: 'border-sky-500/40', icon: '👤', priority: 'normal' as const },
+    { type: 'social', subject: '● LinkedIn: New connection', action: 'delete' as const, color: 'from-sky-500/20 to-sky-900/20', borderColor: 'border-sky-500/40', icon: '●', priority: 'normal' as const },
     { type: 'junk', subject: '💊 Miracle weight loss secret', action: 'delete' as const, color: 'from-gray-500/20 to-gray-900/20', borderColor: 'border-gray-500/40', icon: '💊', priority: 'normal' as const },
-    { type: 'crypto', subject: '🪙 10X your Bitcoin NOW', action: 'delete' as const, color: 'from-yellow-500/20 to-yellow-900/20', borderColor: 'border-yellow-500/40', icon: '🪙', priority: 'normal' as const },
+    { type: 'crypto', subject: '◎ 10X your Bitcoin NOW', action: 'delete' as const, color: 'from-yellow-500/20 to-yellow-900/20', borderColor: 'border-yellow-500/40', icon: '◎', priority: 'normal' as const },
   ], []);
 
   // Sound Effects
@@ -386,11 +386,11 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
   // Captain Messages
   const captainMessages = useMemo(() => ({
     start: [
-      { text: "Let's clear this inbox! 💪", mood: 'excited' as const },
+      { text: "Let's clear this inbox! ◇", mood: 'excited' as const },
       { text: "Work emails → Delegate, Junk → Delete!", mood: 'helpful' as const }
     ],
     correct: [
-      { text: "Perfect sort! ✨", mood: 'happy' as const },
+      { text: "Perfect sort! ✦", mood: 'happy' as const },
       { text: "That's efficiency!", mood: 'happy' as const },
       { text: "Nailed it!", mood: 'happy' as const },
       { text: "Keep it flowing!", mood: 'happy' as const }
@@ -400,16 +400,16 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
       { text: "That one slipped. Stay focused!", mood: 'concerned' as const },
       { text: "Shake it off, keep going!", mood: 'concerned' as const }
     ],
-    combo3: [{ text: "🔥 3x COMBO! You're heating up!", mood: 'excited' as const }],
-    combo5: [{ text: "⚡ 5x STREAK! +15 BONUS!", mood: 'excited' as const }],
-    combo7: [{ text: "💎 7x CHAIN! UNSTOPPABLE!", mood: 'excited' as const }],
-    combo10: [{ text: "🏆 10x LEGENDARY! +25 BONUS!", mood: 'excited' as const }],
+    combo3: [{ text: "3x COMBO! You're heating up!", mood: 'excited' as const }],
+    combo5: [{ text: "5x STREAK! +15 BONUS!", mood: 'excited' as const }],
+    combo7: [{ text: "7x CHAIN! UNSTOPPABLE!", mood: 'excited' as const }],
+    combo10: [{ text: "10x LEGENDARY! +25 BONUS!", mood: 'excited' as const }],
     critical: [{ text: "🚨 CRITICAL! Handle it NOW!", mood: 'urgent' as const }],
-    wave2: [{ text: "⚠️ WAVE 2: Speed increasing!", mood: 'urgent' as const }],
-    wave3: [{ text: "🌊 FINAL WAVE: Max intensity!", mood: 'urgent' as const }],
-    almostWin: [{ text: "Almost there! Push through! 🎯", mood: 'excited' as const }],
-    win: [{ text: "🎉 INBOX ZERO! You're a legend!", mood: 'victory' as const }],
-    lose: [{ text: "Inbox overflow! Train harder! 💪", mood: 'sad' as const }]
+    wave2: [{ text: "WAVE 2: Speed increasing!", mood: 'urgent' as const }],
+    wave3: [{ text: "FINAL WAVE: Max intensity!", mood: 'urgent' as const }],
+    almostWin: [{ text: "Almost there! Push through! ◎", mood: 'excited' as const }],
+    win: [{ text: "INBOX ZERO! You're a legend!", mood: 'victory' as const }],
+    lose: [{ text: "Inbox overflow! Train harder! ◇", mood: 'sad' as const }]
   }), []);
 
   const updateCaptain = useCallback((eventType: keyof typeof captainMessages) => {
@@ -464,7 +464,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
       ? Math.round((stats.correct / (stats.correct + stats.wrong)) * 100)
       : 0;
 
-    const text = `📧 I triaged ${emailsTriaged} emails and scored ${score} points in Inbox Defense!\n\nAccuracy: ${accuracy}% | Max Combo: ${maxCombo}x\nThink you can beat me? 🎮\n\nPlay free: AgenticAIHome.com/learn/playground`;
+    const text = `📧 I triaged ${emailsTriaged} emails and scored ${score} points in Inbox Defense!\n\nAccuracy: ${accuracy}% | Max Combo: ${maxCombo}x\nThink you can beat me? ▣\n\nPlay free: AgenticAIHome.com/learn/playground`;
 
     if (navigator.share) {
       navigator.share({
@@ -661,7 +661,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
             if (navigator.vibrate) navigator.vibrate([20, 15, 25]);
           } else if (newCombo >= 7) {
             points += 18;
-            setComboPopup({ text: '💎 7x CHAIN!', color: 'text-purple-400' });
+            setComboPopup({ text: '◆ 7x CHAIN!', color: 'text-purple-400' });
             updateCaptain('combo7');
             playSound('combo');
           } else if (newCombo >= 5) {
@@ -1039,7 +1039,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
 
               {/* Mobile hint */}
               <div className="text-xs text-slate-300 mb-4 sm:hidden">
-                📱 Swipe cards or tap buttons
+                ▫ Swipe cards or tap buttons
               </div>
 
               {/* Desktop hint */}
@@ -1104,7 +1104,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
                 transition={{ repeat: gameState === 'won' ? 3 : 0, duration: 0.3 }}
                 className={`text-3xl sm:text-4xl font-bold mb-3 ${gameState === 'won' ? 'text-green-400' : 'text-red-400'}`}
               >
-                {gameState === 'won' ? '🎯 INBOX ZERO!' : '📥 OVERFLOW!'}
+                {gameState === 'won' ? '◎ INBOX ZERO!' : '📥 OVERFLOW!'}
               </m.h3>
 
               <div className="text-5xl sm:text-6xl font-black text-white mb-2 font-mono">{score}</div>
@@ -1239,7 +1239,7 @@ const AgentTriageGame: React.FC<AgentTriageGameProps> = ({ onBack }) => {
             animate={{ y: 0, opacity: 1 }}
             className="absolute top-2 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm animate-pulse z-20 shadow-lg"
           >
-            ⚠️ INBOX CRITICAL! Clear emails NOW!
+            <AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> INBOX CRITICAL! Clear emails NOW!
           </m.div>
         )}
       </div>

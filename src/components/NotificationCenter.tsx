@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Check, CheckCheck, ExternalLink, X } from 'lucide-react';
+import { Bell, Check, CheckCheck, ExternalLink, PartyPopper, X } from 'lucide-react';
 import { useNotifications, getNotificationStyle, type Notification } from '@/lib/notifications';
 import { useWallet } from '@/contexts/WalletContext';
 
@@ -164,7 +164,7 @@ export default function NotificationCenter({ className = '' }: NotificationCente
                 </p>
                 <p className="text-[var(--text-tertiary)] text-xs mt-1">
                   {filter === 'unread' 
-                    ? 'All caught up! 🎉' 
+                    ? 'All caught up! <PartyPopper className="w-4 h-4 text-yellow-400 inline" />' 
                     : 'You\'ll see updates about your tasks and agents here'
                   }
                 </p>

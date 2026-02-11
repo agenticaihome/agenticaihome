@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion as m, AnimatePresence } from 'framer-motion';
-import { Zap, Target, Clock, Trophy, Play, RotateCcw, ArrowLeft, Flame, Star, Share2, Pause, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Clock, Flame, Gamepad2, Gem, Pause, Play, RotateCcw, Share2, Star, Target, Trophy, Volume2, VolumeX, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 // Types
@@ -100,8 +100,8 @@ const CaptainClickChallenge: React.FC<CaptainClickChallengeProps> = ({ onBack })
   // Power-up definitions
   const POWER_UP_TYPES = [
     { type: 'freeze' as const, emoji: '❄️', label: 'Freeze', color: 'from-cyan-400 to-cyan-600', duration: 3000 },
-    { type: 'double' as const, emoji: '💎', label: '2X Points', color: 'from-purple-400 to-purple-600', duration: 5000 },
-    { type: 'grow' as const, emoji: '🎯', label: 'Big Target', color: 'from-green-400 to-green-600', duration: 4000 },
+    { type: 'double' as const, emoji: '◆', label: '2X Points', color: 'from-purple-400 to-purple-600', duration: 5000 },
+    { type: 'grow' as const, emoji: '◎', label: 'Big Target', color: 'from-green-400 to-green-600', duration: 4000 },
   ];
 
   // Sound Effects
@@ -397,7 +397,7 @@ const CaptainClickChallenge: React.FC<CaptainClickChallengeProps> = ({ onBack })
   // Share Score
   const shareScore = useCallback(() => {
     const accuracy = clicks > 0 ? Math.round((hits / clicks) * 100) : 0;
-    const text = `🎯 I scored ${score} points with ${accuracy}% accuracy in Captain Click Challenge!\n\nMax combo: ${maxCombo}x | Reaction time game\nThink you can beat me? 🎮\n\nPlay free: AgenticAIHome.com/learn/playground`;
+    const text = `◎ I scored ${score} points with ${accuracy}% accuracy in Captain Click Challenge!\n\nMax combo: ${maxCombo}x | Reaction time game\nThink you can beat me? ▣\n\nPlay free: AgenticAIHome.com/learn/playground`;
 
     if (navigator.share) {
       navigator.share({
@@ -489,9 +489,9 @@ const CaptainClickChallenge: React.FC<CaptainClickChallengeProps> = ({ onBack })
               Click the moving Captain as fast as you can! Hit the center for critical damage.
             </p>
             <div className="text-xs text-slate-400 mb-6">
-              🎯 Center hits = 2x points<br/>
-              ⚡ Collect power-ups for bonuses<br/>
-              🔥 Build combos for frenzy mode
+              <Target className="w-4 h-4 text-red-400 inline" /> Center hits = 2x points<br/>
+              <Zap className="w-4 h-4 text-yellow-400 inline" /> Collect power-ups for bonuses<br/>
+              <Flame className="w-4 h-4 text-orange-400 inline" /> Build combos for frenzy mode
             </div>
             <button
               onClick={startGame}
@@ -505,7 +505,7 @@ const CaptainClickChallenge: React.FC<CaptainClickChallengeProps> = ({ onBack })
         {/* Finished Screen */}
         {gameState === 'finished' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-center p-4">
-            <div className="text-4xl mb-3">🎯</div>
+            <div className="text-4xl mb-3"><Target className="w-4 h-4 text-red-400 inline" /></div>
             <div className="text-3xl font-bold text-white mb-2">{score}</div>
             
             {isNewHighScore && (
@@ -622,7 +622,7 @@ const CaptainClickChallenge: React.FC<CaptainClickChallengeProps> = ({ onBack })
         {/* Game indicator */}
         {gameState === 'playing' && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-slate-400">
-            Click the Captain! 🎯
+            Click the Captain! <Target className="w-4 h-4 text-red-400 inline" />
           </div>
         )}
       </div>

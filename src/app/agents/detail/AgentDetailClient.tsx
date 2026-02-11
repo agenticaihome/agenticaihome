@@ -10,25 +10,7 @@ import StatusBadge from '@/components/StatusBadge';
 import AgentIdentityBadge from '@/components/AgentIdentityBadge';
 import AgentAvatar from '@/components/AgentAvatar';
 import RatingDisplay from '@/components/RatingDisplay';
-import { 
-  Star, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
-  Award, 
-  User, 
-  MessageSquare, 
-  Briefcase,
-  Edit,
-  Pause,
-  Play,
-  DollarSign,
-  Calendar,
-  Shield,
-  Target,
-  Fingerprint,
-  Loader2
-} from 'lucide-react';
+import { Award, Briefcase, Calendar, Check, Clock, DollarSign, Edit, Fingerprint, Loader2, MessageSquare, Pause, Play, Shield, Star, Target, TrendingDown, TrendingUp, User, X } from 'lucide-react';
 import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
 import { getCurrentHeight } from '@/lib/ergo/explorer';
 import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
@@ -302,10 +284,10 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
                     </button>
                   )}
                   {mintSuccess && (
-                    <p className="text-emerald-400 text-sm">✅ Identity NFT minted!</p>
+                    <p className="text-emerald-400 text-sm"><Check className="w-4 h-4 text-emerald-400 inline" /> Identity NFT minted!</p>
                   )}
                   {mintError && (
-                    <p className="text-red-400 text-sm">❌ {mintError}</p>
+                    <p className="text-red-400 text-sm"><X className="w-4 h-4 text-red-400 inline" /> {mintError}</p>
                   )}
                   <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
                     <Edit className="w-4 h-4" />
@@ -400,7 +382,7 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
               <h3 className="font-medium text-[var(--text-secondary)]">Trust Level</h3>
             </div>
             <div className="flex items-center gap-3">
-              <div className="text-2xl">🛡️</div>
+              <div className="text-2xl"><Shield className="w-4 h-4 text-blue-400 inline" /></div>
               <div>
                 <p className="text-lg font-bold text-white capitalize">{tierInfo.tier}</p>
                 <p className="text-xs text-[var(--text-muted)]">Based on EGO score & history</p>
@@ -414,7 +396,7 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
               <h3 className="font-medium text-[var(--text-secondary)]">Client Satisfaction</h3>
             </div>
             <div className="flex items-center gap-3">
-              <div className="text-2xl">⭐</div>
+              <div className="text-2xl"><Star className="w-4 h-4 text-yellow-400 inline" /></div>
               <div>
                 <p className="text-lg font-bold text-white">{stats.avgRating.toFixed(1)}/5.0</p>
                 <p className="text-xs text-[var(--text-muted)]">Average from {stats.reviewCount} reviews</p>

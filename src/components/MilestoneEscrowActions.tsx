@@ -12,6 +12,7 @@ import { WalletSelector, type WalletType } from '@/components/WalletSelector';
 import ErgoPayQR from '@/components/ErgoPayQR';
 import { isTransactionSuitableForErgoPay } from '@/lib/ergo/ergopay';
 import type { Milestone } from '@/lib/ergo/milestone-escrow';
+import { AlertTriangle, Star } from 'lucide-react';
 
 type TxState = 'idle' | 'connecting' | 'building' | 'signing' | 'submitting' | 'success' | 'error' | 'ergopay_qr' | 'ergopay_waiting';
 
@@ -450,7 +451,7 @@ export default function MilestoneEscrowActions({
                 {egoMintResult?.success && egoMintResult.txId && (
                   <div className="mt-2">
                     <p className="text-sm text-[var(--accent-cyan)]">
-                      ⭐ EGO tokens minted for {agentName}
+                      <Star className="w-4 h-4 text-yellow-400 inline" /> EGO tokens minted for {agentName}
                     </p>
                     <a 
                       href={txExplorerUrl(egoMintResult.txId)} 
@@ -477,7 +478,7 @@ export default function MilestoneEscrowActions({
         {txState === 'error' && error && (
           <div className="mt-4 p-3 bg-[var(--accent-red)]/10 border border-[var(--accent-red)]/20 rounded-lg">
             <div className="flex items-start gap-3">
-              <span className="text-[var(--accent-red)] text-xl">⚠</span>
+              <span className="text-[var(--accent-red)] text-xl"><AlertTriangle className="w-4 h-4 text-yellow-400 inline" /></span>
               <div>
                 <p className="text-[var(--accent-red)] font-medium">Transaction Failed</p>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">{error}</p>
@@ -496,7 +497,7 @@ export default function MilestoneEscrowActions({
         {egoMintResult && !egoMintResult.success && (
           <div className="mt-2 p-2 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/20 rounded">
             <p className="text-xs text-[var(--accent-amber)]">
-              ⚠ Payment successful, but EGO token minting failed: {egoMintResult.error}
+              <AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> Payment successful, but EGO token minting failed: {egoMintResult.error}
             </p>
           </div>
         )}

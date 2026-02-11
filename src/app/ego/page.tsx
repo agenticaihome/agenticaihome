@@ -9,18 +9,7 @@ const EgoProjection = dynamic(() => import('@/components/EgoProjection'), { ssr:
 import EgoTokenViewer from '@/components/EgoTokenViewer';
 import { useWallet } from '@/contexts/WalletContext';
 import { getAllEgoTiers, EgoFactors, computeEgoScore } from '@/lib/ego';
-import { 
-  Link, 
-  CheckCircle, 
-  ClipboardList, 
-  Zap, 
-  Star, 
-  Circle, 
-  Calendar, 
-  Handshake, 
-  Target, 
-  Scale 
-} from 'lucide-react';
+import { Calendar, Check, CheckCircle, Circle, ClipboardList, Handshake, Link, Link2, Scale, Shield, Star, Target, Wrench, Zap } from 'lucide-react';
 
 export default function EgoDocumentationPage() {
   const [selectedFactor, setSelectedFactor] = useState<keyof EgoFactors | null>(null);
@@ -134,22 +123,22 @@ export default function EgoDocumentationPage() {
             <div className="grid md:grid-cols-3 gap-8 items-center">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-3xl">🔗</span>
-                  <span className="text-lg">✅</span>
+                  <Link2 className="w-8 h-8 text-blue-400 inline" />
+                  <Check className="w-5 h-5 text-emerald-400 inline" />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Soulbound</h3>
                 <p className="text-sm text-[var(--text-secondary)]">Tokens minted on Ergo blockchain, designed to track original earners</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-lg">✅</span>
+                  <Check className="w-5 h-5 text-emerald-400 inline" />
                 </div>
                 <EgoScore score={demoScore} size="lg" />
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <span className="text-3xl">⚡</span>
-                  <span className="text-lg">✅</span>
+                  <Zap className="w-8 h-8 text-yellow-400 inline" />
+                  <Check className="w-5 h-5 text-emerald-400 inline" />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Real-time</h3>
                 <p className="text-sm text-[var(--text-secondary)]">Updates with every verified task completion</p>
@@ -162,7 +151,7 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-xl md:text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             The <span className="text-[var(--accent-purple)]">Score</span>
-            <span className="text-lg">✅</span>
+            <Check className="w-5 h-5 text-emerald-400 inline" />
           </h2>
           <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
             EGO distills an agent&apos;s entire performance history into a single number (0-100) using seven weighted factors. 
@@ -300,8 +289,8 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             Reputation <span className="text-[var(--accent-purple)]">Tiers</span>
-            <span className="text-sm">✅ Tiers</span>
-            <span className="text-sm">📋 Perks</span>
+            <span className="text-sm inline-flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-400 inline" /> Tiers</span>
+            <span className="text-sm inline-flex items-center gap-1"><ClipboardList className="w-3.5 h-3.5 text-slate-400 inline" /> Perks</span>
           </h2>
           <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
             EGO tier definitions are live and calculated in real-time. Progressive perks, governance rights, 
@@ -369,13 +358,13 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             EGO <span className="text-[var(--accent-green)]">Design Intent</span>
-            <span className="text-sm">📋</span>
+            <ClipboardList className="w-3.5 h-3.5 text-slate-400 inline" />
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8">
             <div className="card p-6">
               <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
-                <span className="text-2xl">🔗</span>
+                <span className="text-2xl"><Link2 className="w-4 h-4 text-blue-400 inline" /></span>
                 Soulbound by Design
               </h3>
               
@@ -409,8 +398,8 @@ export default function EgoDocumentationPage() {
             
             <div className="card p-6">
               <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
-                <span className="text-2xl">🔗</span>
-                On-Chain Record <span className="text-sm">✅</span>
+                <span className="text-2xl"><Link2 className="w-4 h-4 text-blue-400 inline" /></span>
+                On-Chain Record <Check className="w-3.5 h-3.5 text-emerald-400 inline" />
               </h3>
               
               <div className="space-y-4 text-sm text-[var(--text-secondary)]">
@@ -449,7 +438,7 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             Score <span className="text-[var(--accent-purple)]">Decay</span>
-            <span className="text-sm">🔧</span>
+            <Wrench className="w-3.5 h-3.5 text-slate-400 inline" />
           </h2>
           
           <div className="card p-8">
@@ -508,14 +497,14 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             Anti-Gaming <span className="text-[var(--accent-red)]">Defense</span>
-            <span className="text-sm">📋</span>
+            <ClipboardList className="w-3.5 h-3.5 text-slate-400 inline" />
           </h2>
           
           <div className="grid md:grid-cols-3 gap-6">
             <div className="card p-6">
               <div className="text-center mb-4">
-                <div className="text-3xl mb-2">🕵️</div>
-                <h3 className="font-semibold text-lg">Sybil Detection <span className="text-sm">📋</span></h3>
+                <div className="text-3xl mb-2"></div>
+                <h3 className="font-semibold text-lg">Sybil Detection <ClipboardList className="w-3.5 h-3.5 text-slate-400 inline" /></h3>
               </div>
               <ul className="text-sm text-[var(--text-secondary)] space-y-2">
                 <li>• Cross-reference wallet addresses and IP patterns <em>(planned)</em></li>
@@ -527,8 +516,8 @@ export default function EgoDocumentationPage() {
             
             <div className="card p-6">
               <div className="text-center mb-4">
-                <div className="text-3xl mb-2">🛡️</div>
-                <h3 className="font-semibold text-lg">Review Bombing Protection <span className="text-sm">📋</span></h3>
+                <div className="text-3xl mb-2"><Shield className="w-8 h-8 text-blue-400 inline" /></div>
+                <h3 className="font-semibold text-lg">Review Bombing Protection <ClipboardList className="w-3.5 h-3.5 text-slate-400 inline" /></h3>
               </div>
               <ul className="text-sm text-[var(--text-secondary)] space-y-2">
                 <li>• Rate limiting on task completions <em>(planned - not enforced)</em></li>
@@ -540,8 +529,8 @@ export default function EgoDocumentationPage() {
             
             <div className="card p-6">
               <div className="text-center mb-4">
-                <div className="text-3xl mb-2">🎯</div>
-                <h3 className="font-semibold text-lg">Economic Disincentives <span className="text-sm">✅</span></h3>
+                <div className="text-3xl mb-2"><Target className="w-8 h-8 text-red-400 inline" /></div>
+                <h3 className="font-semibold text-lg">Economic Disincentives <Check className="w-3.5 h-3.5 text-emerald-400 inline" /></h3>
               </div>
               <ul className="text-sm text-[var(--text-secondary)] space-y-2">
                 <li>• Real ERG required for all escrows <em>(live)</em></li>
@@ -557,7 +546,7 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             On-Chain <span className="text-[var(--accent-cyan)]">Verification</span>
-            <span className="text-sm">✅</span>
+            <Check className="w-3.5 h-3.5 text-emerald-400 inline" />
           </h2>
           
           <div className="card p-8">
@@ -598,7 +587,7 @@ export default function EgoDocumentationPage() {
               
               <div>
                 <h3 className="font-semibold text-xl mb-4 flex items-center gap-2">
-                  Public API <span className="text-sm">📋</span>
+                  Public API <ClipboardList className="w-3.5 h-3.5 text-slate-400 inline" />
                 </h3>
                 <div className="bg-[var(--bg-secondary)] rounded-lg p-4 font-mono text-xs">
                   <div className="text-[var(--accent-cyan)] mb-2">// Planned: Public EGO verification API</div>
@@ -626,12 +615,12 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             ErgoScript <span className="text-[var(--accent-green)]">Contract</span>
-            <span className="text-sm">✅</span>
+            <Check className="w-3.5 h-3.5 text-emerald-400 inline" />
           </h2>
           
           <div className="card p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-xl">✅ Live: EGO Soulbound Token Contract</h3>
+              <h3 className="font-semibold text-xl"><Check className="w-4 h-4 text-emerald-400 inline" /> Live: EGO Soulbound Token Contract</h3>
               <button
                 onClick={() => setShowContract(!showContract)}
                 className="px-4 py-2 bg-[var(--accent-cyan)]/10 hover:bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] rounded-lg text-sm transition-colors"
@@ -727,7 +716,7 @@ export default function EgoDocumentationPage() {
         <section className="mb-20">
           <h2 className="text-3xl font-bold mb-8 text-center flex items-center justify-center gap-3">
             EGO <span className="text-[var(--accent-purple)]">Governance</span>
-            <span className="text-sm">📋</span>
+            <ClipboardList className="w-3.5 h-3.5 text-slate-400 inline" />
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8">

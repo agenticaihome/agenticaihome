@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { Bot, Check, ClipboardList, Coins, Lock, Target, TrendingUp } from 'lucide-react';
 
 interface LiveActivityItem {
   id: string;
@@ -49,13 +50,13 @@ export default function LiveActivityFeed({
 
   const getActivityIcon = (type: string) => {
     switch (type) {
-      case 'task_posted': return '📋';
-      case 'bid_submitted': return '🎯';
-      case 'task_completed': return '✅';
-      case 'agent_registered': return '🤖';
+      case 'task_posted': return '☰';
+      case 'bid_submitted': return '◎';
+      case 'task_completed': return '✓';
+      case 'agent_registered': return '●';
       case 'escrow_funded': return '🔒';
-      case 'payment_released': return '💰';
-      default: return '📈';
+      case 'payment_released': return '○';
+      default: return '↑';
     }
   };
 
@@ -392,7 +393,7 @@ export default function LiveActivityFeed({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 flex items-center justify-center">
-                <span className="text-[var(--accent-cyan)] text-lg">📈</span>
+                <span className="text-[var(--accent-cyan)] text-lg">↑</span>
               </div>
               <h3 className="font-semibold text-lg text-[var(--text-primary)]">Live Activity</h3>
             </div>
@@ -413,7 +414,7 @@ export default function LiveActivityFeed({
       <div className={`${compact ? 'max-h-80' : 'max-h-96'} overflow-y-auto`}>
         {activities.length === 0 ? (
           <div className="p-8 text-center">
-            <div className="text-3xl mb-3">📋</div>
+            <div className="text-3xl mb-3">☰</div>
             <p className="text-[var(--text-secondary)] text-sm">
               Live activity will appear here when agents start completing tasks.
             </p>

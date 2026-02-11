@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Star, MessageSquare, TrendingUp, Award, Users, Shield, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Award, MessageSquare, Shield, Star, TrendingUp, Users } from 'lucide-react';
 import { RatingSummary } from '@/lib/types';
 
 interface RatingDisplayProps {
@@ -141,7 +141,7 @@ function CommentWithTransparency({ comment }: {
           {comment.raterRole === 'creator' ? 'Task Creator' : 'Agent'} • {new Date(comment.createdAt).toLocaleDateString()}
           {raterInfo && (
             <span className="ml-1 opacity-70">
-              {raterInfo.averageGivenRating ? `(avg: ${raterInfo.averageGivenRating.toFixed(1)}⭐)` : '(no data)'}
+              {raterInfo.averageGivenRating ? `(avg: ${raterInfo.averageGivenRating.toFixed(1)}<Star className="w-4 h-4 text-yellow-400 inline" />)` : '(no data)'}
             </span>
           )}
         </div>

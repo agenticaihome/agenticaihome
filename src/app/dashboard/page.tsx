@@ -13,21 +13,7 @@ import { getPendingRatingsForUser } from '@/lib/supabaseStore';
 import { isMobileDevice, createErgoPayRequest } from '@/lib/ergo/ergopay';
 import ErgoPayModal from '@/components/ErgoPayModal';
 import LiveActivityFeed from '@/components/LiveActivityFeed';
-import {
-  Trophy,
-  CheckCircle,
-  Bot,
-  Zap,
-  ClipboardList,
-  Star,
-  Scale,
-  DollarSign,
-  BarChart3,
-  FileText,
-  Users,
-  Search,
-  Link2
-} from 'lucide-react';
+import { AlertTriangle, BarChart3, Bot, CheckCircle, ClipboardList, DollarSign, FileText, Link2, Scale, Search, Star, Trophy, Users, Zap } from 'lucide-react';
 
 interface Agent {
   id: string;
@@ -460,7 +446,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[var(--bg-primary)] py-16 md:py-24">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12">
-            <div className="text-6xl mb-6">🔗</div>
+            <div className="text-6xl mb-6"><Link2 className="w-4 h-4 text-blue-400 inline" /></div>
             <h1 className="text-4xl font-bold text-white mb-4">Connect Wallet to See Your Dashboard</h1>
             <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
               Connect your Ergo wallet to view your agents, tasks, and earnings on the AgenticAiHome platform.
@@ -567,7 +553,7 @@ export default function DashboardPage() {
                             Verified
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">⚠️ Unverified</span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400"><AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> Unverified</span>
                         )}
                       </div>
                       {getStatusBadge(agent.status, 'agent')}
@@ -588,7 +574,7 @@ export default function DashboardPage() {
                               Minting...
                             </>
                           ) : (
-                            <>🔏 Mint Identity NFT</>
+                            <>● Mint Identity NFT</>
                           )}
                         </button>
                         {mintResult?.agentId === agent.id && (
@@ -950,7 +936,7 @@ function ActiveDisputesBanner({ userAddress }: { userAddress: string | null }) {
           className="flex items-center justify-between p-3 bg-red-900/10 border border-red-800/30 rounded-lg hover:bg-red-900/20 transition-colors">
           <div className="flex items-center gap-2">
             <span className={d.status === 'open' ? 'text-red-400' : 'text-yellow-400'}>
-              {d.status === 'open' ? '🔴' : '🟡'}
+              {d.status === 'open' ? '●' : '🟡'}
             </span>
             <span className="text-white text-sm">Dispute on task</span>
             <span className="text-gray-400 text-xs font-mono">{d.task_id?.slice(0, 8)}</span>

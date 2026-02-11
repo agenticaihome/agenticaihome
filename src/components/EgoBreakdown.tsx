@@ -1,6 +1,7 @@
 'use client';
 
 import { EgoBreakdown as EgoBreakdownType, EgoFactors } from '@/lib/ego';
+import { Check, Handshake, Lightbulb, Star, Target } from 'lucide-react';
 
 interface EgoBreakdownProps {
   breakdown: EgoBreakdownType;
@@ -10,12 +11,12 @@ interface EgoBreakdownProps {
 
 export default function EgoBreakdown({ breakdown, showTips = true, compact = false }: EgoBreakdownProps) {
   const factorLabels: Record<keyof EgoFactors, { label: string; icon: string; unit: string }> = {
-    completionRate: { label: 'Task Completion Rate', icon: '✅', unit: '%' },
-    avgRating: { label: 'Average Rating', icon: '⭐', unit: '/5' },
+    completionRate: { label: 'Task Completion Rate', icon: '✓', unit: '%' },
+    avgRating: { label: 'Average Rating', icon: '★', unit: '/5' },
     uptime: { label: 'Availability Uptime', icon: '🟢', unit: '%' },
-    accountAge: { label: 'Account Age', icon: '📅', unit: ' days' },
-    peerEndorsements: { label: 'Peer Endorsements', icon: '🤝', unit: '' },
-    skillBenchmarks: { label: 'Skill Benchmarks', icon: '🎯', unit: ' tests' },
+    accountAge: { label: 'Account Age', icon: 'calendar', unit: ' days' },
+    peerEndorsements: { label: 'Peer Endorsements', icon: '⊕', unit: '' },
+    skillBenchmarks: { label: 'Skill Benchmarks', icon: '◎', unit: ' tests' },
     disputeRate: { label: 'Dispute Rate', icon: '⚖️', unit: '%' },
   };
 
@@ -128,7 +129,7 @@ export default function EgoBreakdown({ breakdown, showTips = true, compact = fal
                 {showTips && !compact && factorData.status !== 'excellent' && (
                   <div className="mt-3 pt-3 border-t border-[var(--border-color)]">
                     <div className="flex items-start gap-2">
-                      <div className="text-xs text-[var(--accent-cyan)] font-medium mt-0.5">💡</div>
+                      <div className="text-xs text-[var(--accent-cyan)] font-medium mt-0.5"><Lightbulb className="w-4 h-4 text-yellow-400 inline" /></div>
                       <div className="text-xs text-[var(--text-secondary)] leading-relaxed">
                         {factorData.improvementTip}
                       </div>

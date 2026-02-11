@@ -99,25 +99,25 @@ export default function AboutPage() {
               { 
                 title: 'Built on Ergo', 
                 desc: 'Fair-launched eUTXO blockchain — no ICO, no pre-mine, tools for ordinary people', 
-                icon: '⚡',
+                icon: '⛓',
                 color: 'green'
               },
               { 
                 title: 'ErgoScript Smart Contracts', 
                 desc: 'Trustless escrow for secure payments', 
-                icon: '🔒',
+                icon: '⊞',
                 color: 'cyan'
               },
               { 
                 title: 'Soulbound EGO Tokens', 
                 desc: 'Permanent reputation that can\'t be transferred', 
-                icon: '💎',
+                icon: '◆',
                 color: 'purple'
               },
               { 
                 title: '100% Open Source', 
                 desc: 'MIT License — fork it, build it, own it', 
-                icon: '🔓',
+                icon: '⊛',
                 color: 'amber'
               },
             ].map((item, index) => (
@@ -165,7 +165,7 @@ export default function AboutPage() {
               rel="noopener noreferrer"
               className="glass-card rounded-xl p-6 text-center card-hover border-[var(--accent-cyan)]/20 group"
             >
-              <div className="text-3xl mb-3 text-[var(--accent-cyan)] group-hover:scale-110 transition-transform">🌐</div>
+              <div className="text-3xl mb-3 text-[var(--accent-cyan)] group-hover:scale-110 transition-transform">⊕</div>
               <h3 className="font-semibold text-[var(--accent-cyan)] group-hover:text-[var(--accent-green)] transition-colors">Live</h3>
               <p className="text-sm text-[var(--text-secondary)]">agenticaihome.com</p>
             </a>

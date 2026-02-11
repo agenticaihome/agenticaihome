@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion as m, AnimatePresence } from 'framer-motion';
-import { Calendar, XCircle, Shield, Clock, Play, RotateCcw, ArrowLeft, Trophy, Volume2, VolumeX, Coffee, Zap, Battery, Keyboard, Share2, Pause } from 'lucide-react';
+import { ArrowLeft, BarChart3, Battery, Bot, Calendar, Clock, Coffee, Dumbbell, Flame, Gamepad2, Keyboard, Lightbulb, MessageSquare, PartyPopper, Pause, Play, RotateCcw, Share2, Shield, Target, Trophy, Volume2, VolumeX, XCircle, Zap } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 // Types
@@ -173,7 +173,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
       points: 100,
       priority: 'medium' as const,
       pattern: 'zigzag' as const,
-      icon: '💡'
+      icon: '✦'
     },
     {
       name: 'Status Update',
@@ -184,7 +184,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
       points: 100,
       priority: 'medium' as const,
       pattern: 'sine' as const,
-      icon: '📊'
+      icon: '▊'
     },
     // HIGH PRIORITY - Hard to hit, fast moving
     {
@@ -229,7 +229,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
       type: 'shield' as const,
       name: 'Focus Shield',
       color: 'from-blue-500 to-cyan-500',
-      icon: '🛡️',
+      icon: '🛡',
       speed: 2.0,
       effect: 'Blocks all meetings for 2 seconds'
     },
@@ -253,7 +253,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
       type: 'auto' as const,
       name: 'Auto-Decline',
       color: 'from-violet-500 to-purple-500',
-      icon: '🤖',
+      icon: '●',
       speed: 2.2,
       effect: 'Declines meetings automatically for 3 seconds'
     }
@@ -311,7 +311,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
   // Captain Messages
   const captainMessages = {
     start: [
-      { text: "Protect your Deep Work blocks! 💪", mood: 'excited' as const },
+      { text: "Protect your Deep Work blocks! ◇", mood: 'excited' as const },
       { text: "Decline non-essential meetings!", mood: 'helpful' as const }
     ],
     damage: [
@@ -328,10 +328,10 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
       { text: "Critical state! Focus! 🚨", mood: 'urgent' as const }
     ],
     win: [
-      { text: "Calendar defended! 🎉", mood: 'victory' as const }
+      { text: "Calendar defended! ✦", mood: 'victory' as const }
     ],
     lose: [
-      { text: "Calendar overwhelmed! 📅", mood: 'sad' as const }
+      { text: "Calendar overwhelmed! ◈", mood: 'sad' as const }
     ]
   };
 
@@ -602,7 +602,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
 
   // Share Score
   const shareScore = useCallback(() => {
-    const text = `🛡️ I defended my calendar for ${timer} seconds and scored ${score} points in Calendar Defense!\n\nMeetings declined: ${stats.declined} | Deep Work saved: ${Math.round((8 - deepWorkHours) * 10) / 10}h\nThink you can beat me? 🎮\n\nPlay free: AgenticAIHome.com/learn/playground`;
+    const text = `🛡 I defended my calendar for ${timer} seconds and scored ${score} points in Calendar Defense!\n\nMeetings declined: ${stats.declined} | Deep Work saved: ${Math.round((8 - deepWorkHours) * 10) / 10}h\nThink you can beat me? ▣\n\nPlay free: AgenticAIHome.com/learn/playground`;
 
     if (navigator.share) {
       navigator.share({
@@ -720,7 +720,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
               Protect your Deep Work time! Click to decline meetings.
             </p>
             <div className="text-xs text-slate-400 mb-6">
-              🛡️ Click shield to activate protection<br/>
+              <Shield className="w-4 h-4 text-blue-400 inline" /> Click shield to activate protection<br/>
               ⚡ Collect power-ups for bonuses
             </div>
             <button
@@ -736,7 +736,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
         {(gameState === 'won' || gameState === 'lost') && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-center p-4">
             <div className={`text-4xl mb-3 ${gameState === 'won' ? 'text-green-400' : 'text-red-400'}`}>
-              {gameState === 'won' ? '🎯 VICTORY!' : '📅 OVERLOADED!'}
+              {gameState === 'won' ? '◎ VICTORY!' : 'OVERLOADED!'}
             </div>
             <div className="text-3xl font-bold text-white mb-2">{score}</div>
             
@@ -849,7 +849,7 @@ const CalendarDefenseGame: React.FC<CalendarDefenseGameProps> = ({ onBack }) => 
 
         {autoDeclineReady && (
           <div className="absolute top-2 left-2 bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs font-bold animate-pulse">
-            🤖 AUTO-DECLINE
+            <Bot className="w-4 h-4 text-cyan-400 inline" /> AUTO-DECLINE
           </div>
         )}
       </div>

@@ -1,28 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  FileText,
-  DollarSign,
-  Scale,
-  Clock,
-  CheckCircle,
-  Search,
-  Target,
-  Zap,
-  Package,
-  Star,
-  Home,
-  RefreshCw,
-  AlertTriangle,
-  Users,
-  Shield,
-  Lock,
-  Trophy,
-  PlayCircle,
-  Repeat,
-  ArrowRight
-} from 'lucide-react';
+import { AlertTriangle, ArrowRight, CheckCircle, Clock, DollarSign, FileText, Home, Lock, Package, PlayCircle, RefreshCw, Repeat, Scale, Search, Shield, Sparkles, Star, Target, Trophy, Users, Zap } from 'lucide-react';
 
 interface StepCardProps {
   step: string;
@@ -736,7 +715,7 @@ export default function HowItWorks() {
               </div>
               
               <div className="card p-6">
-                <h3 className="text-lg font-semibold mb-4 text-[#f59e0b]">⚠️ Traditional Platform Issues</h3>
+                <h3 className="text-lg font-semibold mb-4 text-[#f59e0b]"><AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> Traditional Platform Issues</h3>
                 <ul className="space-y-3 text-sm text-[var(--text-secondary)]">
                   <li className="flex items-start gap-2">
                     <span className="text-[#f59e0b]">•</span>
@@ -766,7 +745,7 @@ export default function HowItWorks() {
               </div>
               
               <div className="card p-6">
-                <h3 className="text-lg font-semibold mb-4 text-[var(--accent-cyan)]">🔮 Why Blockchain Matters</h3>
+                <h3 className="text-lg font-semibold mb-4 text-[var(--accent-cyan)]"><Sparkles className="w-4 h-4 text-purple-400 inline" /> Why Blockchain Matters</h3>
                 <ul className="space-y-3 text-sm text-[var(--text-secondary)]">
                   <li className="flex items-start gap-2">
                     <span className="text-[var(--accent-cyan)]">•</span>

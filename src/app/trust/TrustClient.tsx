@@ -14,6 +14,7 @@ import {
   txExplorerUrl,
 } from '@/lib/ergo/constants';
 import { TIER_LIMITS } from '@/lib/safety';
+import { Gem } from 'lucide-react';
 
 /* ────────────────────────────── SVG Icons ────────────────────────────── */
 
@@ -396,10 +397,10 @@ export default function TrustClient() {
                   <tbody className="divide-y divide-[var(--border-color)]">
                     {[
                       { icon: '🟢', name: 'Newcomer', range: '0–20', limit: `${TIER_LIMITS.newcomer} ERG`, req: 'In probation — 5 tasks, 3.5+ rating' },
-                      { icon: '🔵', name: 'Rising', range: '21–50', limit: `${TIER_LIMITS.rising} ERG`, req: '5+ completions, 3.5+ rating, EGO ≥ 200' },
+                      { icon: '●', name: 'Rising', range: '21–50', limit: `${TIER_LIMITS.rising} ERG`, req: '5+ completions, 3.5+ rating, EGO ≥ 200' },
                       { icon: '🟣', name: 'Established', range: '51–75', limit: `${TIER_LIMITS.established} ERG`, req: '20+ completions, 4.0+ rating, 70%+ dispute win' },
                       { icon: '🟡', name: 'Elite', range: '76–90', limit: `${TIER_LIMITS.elite.toLocaleString()} ERG`, req: '50+ completions, 4.5+ rating, arbiter eligible' },
-                      { icon: '💎', name: 'Legendary', range: '91–100', limit: 'Unlimited', req: '100+ completions, 4.8+ rating, 90%+ dispute win' },
+                      { icon: '◆', name: 'Legendary', range: '91–100', limit: 'Unlimited', req: '100+ completions, 4.8+ rating, 90%+ dispute win' },
                     ].map(t => (
                       <tr key={t.name} className="bg-[var(--bg-card)]">
                         <td className="p-4 font-medium"><span className="mr-2">{t.icon}</span>{t.name}</td>

@@ -6,6 +6,7 @@
  */
 
 import { Agent } from './types';
+import { BarChart3, MessageSquare, Smartphone } from 'lucide-react';
 
 // ============================================================================
 // INTERFACES
@@ -121,7 +122,7 @@ const DEFAULT_TEMPLATES: AgentTemplate[] = [
     description: 'Expert at gathering, analyzing, and synthesizing information from multiple sources. Perfect for market research, competitive analysis, and academic research.',
     category: 'research',
     subcategory: 'Business Intelligence',
-    avatar: '🔬',
+    avatar: 'RA',
     skillsRequired: ['research', 'data-analysis', 'fact-checking', 'reporting'],
     suggestedHourlyRate: { min: 8, max: 15 },
     promptTemplate: `You are a professional Research Analyst with expertise in {{research_area}}. Your role is to:
@@ -188,7 +189,7 @@ Output Format:
     description: 'Professional content creator specializing in engaging, SEO-optimized content across multiple formats and industries.',
     category: 'writing',
     subcategory: 'Content Creation',
-    avatar: '✍️',
+    avatar: 'CW',
     skillsRequired: ['writing', 'content-creation', 'SEO', 'storytelling'],
     suggestedHourlyRate: { min: 6, max: 12 },
     promptTemplate: `You are an expert Content Writer specializing in {{content_type}} for {{target_audience}}. Your role is to create compelling, engaging content that:
@@ -257,7 +258,7 @@ Quality Standards:
     description: 'Skilled Python developer specializing in automation, data processing, web scraping, and API development.',
     category: 'coding',
     subcategory: 'Backend Development',
-    avatar: '🐍',
+    avatar: 'PY',
     skillsRequired: ['python', 'automation', 'web-scraping', 'API-development'],
     suggestedHourlyRate: { min: 12, max: 25 },
     promptTemplate: `You are an experienced Python Developer with expertise in {{specialization}}. Your role is to:
@@ -326,7 +327,7 @@ Deliverables Include:
     description: 'Expert in data analysis, visualization, and insights generation using statistical methods and modern tools.',
     category: 'data',
     subcategory: 'Analytics',
-    avatar: '📊',
+    avatar: 'DA',
     skillsRequired: ['data-analysis', 'statistics', 'visualization', 'excel'],
     suggestedHourlyRate: { min: 10, max: 18 },
     promptTemplate: `You are a skilled Data Analyst specializing in {{analysis_type}} for {{industry}}. Your role is to:
@@ -395,7 +396,7 @@ Deliverables:
     description: 'Creative social media specialist focused on content creation, community engagement, and brand building across platforms.',
     category: 'marketing',
     subcategory: 'Social Media',
-    avatar: '📱',
+    avatar: 'MA',
     skillsRequired: ['social-media', 'content-creation', 'community-management', 'brand-strategy'],
     suggestedHourlyRate: { min: 8, max: 15 },
     promptTemplate: `You are a Social Media Manager specializing in {{platform}} for {{business_type}} businesses. Your role is to:
@@ -464,7 +465,7 @@ Engagement Guidelines:
     description: 'Professional customer service specialist focused on problem resolution, satisfaction, and relationship building.',
     category: 'customer-service',
     subcategory: 'Support',
-    avatar: '💬',
+    avatar: 'CS',
     skillsRequired: ['customer-service', 'communication', 'problem-solving', 'empathy'],
     suggestedHourlyRate: { min: 5, max: 12 },
     promptTemplate: `You are a Customer Support Specialist for {{company_name}} specializing in {{product_type}}. Your role is to:

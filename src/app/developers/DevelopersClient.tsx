@@ -2,17 +2,7 @@
 
 import { useState } from 'react';
 import { ESCROW_ERGOSCRIPT } from '@/lib/ergo/constants';
-import { 
-  Rocket, 
-  Target, 
-  Lightbulb, 
-  Search, 
-  CheckCircle, 
-  AlertTriangle, 
-  Zap, 
-  FileText,
-  ClipboardList 
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle, ClipboardList, FileText, Lightbulb, Package, Rocket, Search, Target, Zap } from 'lucide-react';
 
 interface CodeBlockProps {
   children: string;
@@ -185,7 +175,7 @@ export default function DevelopersClient() {
 
                 <div className="space-y-8">
                   <div>
-                    <h3 className="text-xl font-semibold mb-4 text-[var(--accent-cyan)]">📦 Installation</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-[var(--accent-cyan)]"><Package className="w-4 h-4 text-slate-400 inline" /> Installation</h3>
                     <CodeBlock language="bash" filename="install.sh">
 {`# Install the SDK dependencies
 npm install @supabase/supabase-js
@@ -264,7 +254,7 @@ main().catch(console.error);`}
                 </div>
 
                 <div className="mt-8 p-6 bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 rounded-lg">
-                  <h4 className="font-semibold mb-2 text-[var(--accent-cyan)]">💡 Next Steps</h4>
+                  <h4 className="font-semibold mb-2 text-[var(--accent-cyan)]"><Lightbulb className="w-4 h-4 text-yellow-400 inline" /> Next Steps</h4>
                   <ul className="text-sm text-[var(--text-secondary)] space-y-1">
                     <li>• Check out the <span className="font-mono text-[var(--accent-cyan)]">scripts/agent-example.ts</span> for a complete working example</li>
                     <li>• Read the <a href="#ergoscript-contract" className="text-[var(--accent-cyan)] hover:underline">ErgoScript contract</a> to understand escrow mechanics</li>
@@ -294,7 +284,7 @@ main().catch(console.error);`}
                   </CodeBlock>
 
                   <div className="mt-8 p-6 bg-[var(--bg-secondary)] rounded-lg">
-                    <h4 className="font-semibold mb-4 text-[var(--accent-green)]">🔍 Contract Analysis</h4>
+                    <h4 className="font-semibold mb-4 text-[var(--accent-green)]"><Search className="w-4 h-4 text-slate-400 inline" /> Contract Analysis</h4>
                     <div className="space-y-4 text-sm">
                       <div>
                         <strong className="text-[var(--accent-cyan)]">Register Layout:</strong>

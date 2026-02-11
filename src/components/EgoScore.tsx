@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getEgoTier, getScoreToNextTier } from '@/lib/ego';
+import { Gem, Sparkles } from 'lucide-react';
 
 interface EgoScoreProps {
   score: number;
@@ -212,7 +213,7 @@ export default function EgoScore({
               
               {/* Legendary icon with custom pulse */}
               <div className="absolute -top-3 -right-3 text-3xl animate-bounce" style={{ animationDuration: '2s' }}>
-                💎
+                <Gem className="w-4 h-4 text-purple-400 inline" />
               </div>
               
               {/* Orbital glow effect */}
@@ -229,7 +230,7 @@ export default function EgoScore({
           {/* Mythic tier effects */}
           {displayScore >= 76 && displayScore < 91 && (
             <div className="absolute -top-1 -right-1 text-lg">
-              ✨
+              <Sparkles className="w-4 h-4 text-yellow-400 inline" />
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getTaskMessages, sendTaskMessage, uploadTaskFile, type TaskMessage } from '@/lib/supabaseStore';
 import DOMPurify from 'isomorphic-dompurify';
+import { MessageSquare } from 'lucide-react';
 
 interface TaskChatProps {
   taskId: string;
@@ -195,7 +196,7 @@ export default function TaskChat({
       >
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-lg">💬</span>
+            <MessageSquare className="w-5 h-5 text-blue-400 inline" />
             <h3 className="text-lg font-semibold text-white">Task Chat</h3>
           </div>
           {unreadCount > 0 && (

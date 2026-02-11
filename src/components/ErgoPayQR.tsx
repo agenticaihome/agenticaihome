@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createErgoPayRequest } from '@/lib/ergo/ergopay';
+import { AlertTriangle, Book, ClipboardList, Lightbulb, Smartphone, Wrench } from 'lucide-react';
 
 interface ErgoPayQRProps {
   /** The unsigned transaction to convert to ErgoPay */
@@ -81,7 +82,7 @@ export function ErgoPayQR({
   if (error) {
     return (
       <div className="text-center p-8 bg-red-500/10 border border-red-500/20 rounded-lg">
-        <div className="text-4xl mb-4">⚠️</div>
+        <div className="text-4xl mb-4"><AlertTriangle className="w-4 h-4 text-yellow-400 inline" /></div>
         <h3 className="text-lg font-semibold text-red-400 mb-2">QR Code Error</h3>
         <p className="text-sm text-[var(--text-secondary)] mb-4">{error}</p>
         <button 
@@ -141,7 +142,7 @@ export function ErgoPayQR({
             }
           }}
         >
-          📱 Open in Wallet App
+          <Smartphone className="w-4 h-4 text-slate-400 inline" /> Open in Wallet App
         </a>
 
         {/* Copy Link Button */}
@@ -159,14 +160,14 @@ export function ErgoPayQR({
           }}
           className="block w-full py-2 px-6 border border-[var(--border-secondary)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--accent-cyan)]/10 transition-colors text-sm"
         >
-          📋 Copy Link
+          <ClipboardList className="w-4 h-4 text-slate-400 inline" /> Copy Link
         </button>
       </div>
 
       {/* Instructions */}
       <div className="bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 rounded-lg p-4 text-left">
         <h4 className="font-semibold text-[var(--text-primary)] mb-2">
-          📖 Instructions:
+          <Book className="w-4 h-4 text-blue-400 inline" /> Instructions:
         </h4>
         <ol className="text-sm text-[var(--text-secondary)] space-y-1 list-decimal list-inside">
           <li>Open your Ergo mobile wallet (Terminus, SAFEW, etc.)</li>
@@ -176,14 +177,14 @@ export function ErgoPayQR({
           <li>Confirm to sign and broadcast the transaction</li>
         </ol>
         <p className="text-xs text-[var(--text-secondary)] mt-3 opacity-80">
-          💡 On mobile? Tap "Open in Wallet App" button instead of scanning.
+          <Lightbulb className="w-4 h-4 text-yellow-400 inline" /> On mobile? Tap "Open in Wallet App" button instead of scanning.
         </p>
       </div>
 
       {/* Technical Details (Collapsible) */}
       <details className="text-left">
         <summary className="text-sm text-[var(--text-secondary)] cursor-pointer hover:text-[var(--text-primary)] select-none">
-          🔧 Technical Details
+          <Wrench className="w-4 h-4 text-slate-400 inline" /> Technical Details
         </summary>
         <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--border-secondary)] rounded-lg">
           <div className="space-y-2 text-xs text-[var(--text-secondary)] font-mono">

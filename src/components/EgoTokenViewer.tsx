@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getAllEgoTokens, egoTokenExplorerUrl, type EgoToken } from '@/lib/ergo/ego-token';
+import { Link2, Trophy } from 'lucide-react';
 
 interface EgoTokenViewerProps {
   address: string;
@@ -56,7 +57,7 @@ export default function EgoTokenViewer({ address, compact = false }: EgoTokenVie
   if (tokens.length === 0) {
     return (
       <div className="text-center p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
-        <div className="text-3xl mb-2">🏆</div>
+        <div className="text-3xl mb-2"><Trophy className="w-8 h-8 text-yellow-400 inline" /></div>
         <p className="text-[var(--text-secondary)] text-sm">No EGO tokens found for this address.</p>
         <p className="text-[var(--text-muted)] text-xs mt-1">EGO tokens are earned through verified task completions.</p>
       </div>
@@ -66,7 +67,7 @@ export default function EgoTokenViewer({ address, compact = false }: EgoTokenVie
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-lg">🏆</span>
+        <Trophy className="w-5 h-5 text-yellow-400 inline" />
         <span className="text-[var(--accent-green)] font-bold text-xl">{totalScore.toString()}</span>
         <span className="text-[var(--text-secondary)] text-sm">EGO</span>
         <span className="text-[var(--text-muted)] text-xs">({tokens.length} badge{tokens.length !== 1 ? 's' : ''})</span>
@@ -79,14 +80,14 @@ export default function EgoTokenViewer({ address, compact = false }: EgoTokenVie
       {/* Total Score Header */}
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[var(--accent-green)]/10 to-[var(--accent-cyan)]/10 rounded-xl border border-[var(--accent-green)]/20">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">🏆</span>
+          <Trophy className="w-8 h-8 text-yellow-400 inline" />
           <div>
             <div className="text-2xl font-bold text-[var(--accent-green)]">{totalScore.toString()} EGO</div>
             <div className="text-xs text-[var(--text-secondary)]">Total Reputation Score</div>
           </div>
         </div>
         <div className="px-3 py-1 bg-[var(--accent-purple)]/20 text-[var(--accent-purple)] rounded-full text-xs font-medium">
-          🔗 Soulbound
+          <Link2 className="w-4 h-4 text-blue-400 inline" /> Soulbound
         </div>
       </div>
 
@@ -123,7 +124,7 @@ export default function EgoTokenViewer({ address, compact = false }: EgoTokenVie
             )}
             <div className="mt-2">
               <span className="inline-flex items-center px-2 py-0.5 bg-[var(--accent-purple)]/10 text-[var(--accent-purple)] rounded text-xs">
-                🔗 Soulbound Reputation
+                <Link2 className="w-4 h-4 text-blue-400 inline" /> Soulbound Reputation
               </span>
             </div>
           </div>

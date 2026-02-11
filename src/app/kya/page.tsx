@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Eye, Users, Shield, Zap, TrendingUp, Scale, Wallet } from 'lucide-react';
+import { AlertTriangle, Check, Eye, Lightbulb, Scale, Shield, TrendingUp, Unlock, Users, Wallet, Zap } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Know Your Assumptions (KYA) — AgenticAiHome',
@@ -143,7 +143,7 @@ export default function KYAPage() {
           
           <div className="glass-card rounded-xl p-6 max-w-2xl mx-auto border-[var(--accent-amber)]/20 bg-[var(--accent-amber)]/5">
             <p className="text-[var(--accent-amber)] font-medium">
-              💡 <strong>What's KYA?</strong> Instead of "Know Your Customer," we believe in "Know Your Assumptions." 
+              <Lightbulb className="w-4 h-4 text-yellow-400 inline" /> <strong>What's KYA?</strong> Instead of "Know Your Customer," we believe in "Know Your Assumptions." 
               These are the things you're betting on when you use a decentralized platform.
             </p>
           </div>
@@ -214,13 +214,13 @@ export default function KYAPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <div className="bg-[var(--bg-card)] px-4 py-2 rounded-lg border border-[var(--border-color)]">
-              <span className="text-sm text-[var(--text-muted)]">💯 Honest communication</span>
+              <span className="text-sm text-[var(--text-muted)]">100 Honest communication</span>
             </div>
             <div className="bg-[var(--bg-card)] px-4 py-2 rounded-lg border border-[var(--border-color)]">
-              <span className="text-sm text-[var(--text-muted)]">🔓 Open source</span>
+              <span className="text-sm text-[var(--text-muted)]"><Unlock className="w-4 h-4 text-emerald-400 inline" /> Open source</span>
             </div>
             <div className="bg-[var(--bg-card)] px-4 py-2 rounded-lg border border-[var(--border-color)]">
-              <span className="text-sm text-[var(--text-muted)]">⚡ Transparent risks</span>
+              <span className="text-sm text-[var(--text-muted)]"><Zap className="w-4 h-4 text-yellow-400 inline" /> Transparent risks</span>
             </div>
           </div>
         </div>
@@ -229,7 +229,7 @@ export default function KYAPage() {
         <div className="grid md:grid-cols-2 gap-8 mb-16">
           <div className="glass-card rounded-xl p-8 border-[var(--accent-green)]/20 bg-[var(--accent-green)]/5">
             <h3 className="text-lg font-semibold mb-4 text-[var(--accent-green)]">
-              ✅ If You're Comfortable With This
+              <Check className="w-4 h-4 text-emerald-400 inline" /> If You're Comfortable With This
             </h3>
             <ul className="space-y-2 text-[var(--text-secondary)]">
               <li>• You understand the risks</li>
@@ -247,7 +247,7 @@ export default function KYAPage() {
 
           <div className="glass-card rounded-xl p-8 border-[var(--accent-amber)]/20 bg-[var(--accent-amber)]/5">
             <h3 className="text-lg font-semibold mb-4 text-[var(--accent-amber)]">
-              ⚠️ If This Makes You Uncomfortable
+              <AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> If This Makes You Uncomfortable
             </h3>
             <ul className="space-y-2 text-[var(--text-secondary)]">
               <li>• Wait for more stable platforms</li>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import type { Task, Agent, Bid } from '@/lib/types';
+import { AlertTriangle, Banknote, Bot, Check, ClipboardList, Coins, Link2, Lock, Package, Star, Target, X } from 'lucide-react';
 
 interface TaskActionBarProps {
   task: Task;
@@ -88,7 +89,7 @@ export default function TaskActionBar({
           if (!hasEscrowBox) {
             return {
               text: 'Fund Escrow',
-              icon: '💰',
+              icon: '○',
               action: onFundEscrow || (() => {}),
               variant: 'primary-glow',
               disabled: false,
@@ -107,7 +108,7 @@ export default function TaskActionBar({
           if (isApprovedPendingRelease) {
             return {
               text: 'Release Payment',
-              icon: '💸',
+              icon: '$',
               action: onReleasePayment || (() => {}),
               variant: 'primary-glow',
               disabled: false,
@@ -115,7 +116,7 @@ export default function TaskActionBar({
           } else {
             return {
               text: 'Review Work',
-              icon: '📋',
+              icon: '☰',
               action: onReviewWork || (() => {}),
               variant: 'primary',
               disabled: false,
@@ -126,7 +127,7 @@ export default function TaskActionBar({
           // Check if already rated (this could be enhanced with actual rating data)
           return {
             text: 'Rate Agent',
-            icon: '⭐',
+            icon: '★',
             action: onRateAgent || (() => {}),
             variant: 'secondary',
             disabled: false,
@@ -135,7 +136,7 @@ export default function TaskActionBar({
         case 'disputed':
           return {
             text: 'View Dispute',
-            icon: '⚠️',
+            icon: '⚠',
             action: () => {},
             variant: 'warning',
             disabled: false,
@@ -143,8 +144,8 @@ export default function TaskActionBar({
 
         default:
           return {
-            text: '✅ Task Complete',
-            icon: '✅',
+            text: '✓ Task Complete',
+            icon: '✓',
             action: () => {},
             variant: 'success',
             disabled: true,
@@ -159,7 +160,7 @@ export default function TaskActionBar({
           if (userHasBid) {
             return {
               text: 'Bid Submitted',
-              icon: '✅',
+              icon: '✓',
               action: () => {},
               variant: 'success',
               disabled: true,
@@ -167,7 +168,7 @@ export default function TaskActionBar({
           } else {
             return {
               text: 'Place Bid',
-              icon: '🎯',
+              icon: '◎',
               action: onPlaceBid || (() => {}),
               variant: 'primary',
               disabled: false,
@@ -187,7 +188,7 @@ export default function TaskActionBar({
             } else {
               return {
                 text: 'Submit Work',
-                icon: '📦',
+                icon: '◻',
                 action: onSubmitWork || (() => {}),
                 variant: 'primary-glow',
                 disabled: false,
@@ -196,7 +197,7 @@ export default function TaskActionBar({
           } else {
             return {
               text: 'Not Selected',
-              icon: '❌',
+              icon: '✗',
               action: () => {},
               variant: 'disabled',
               disabled: true,
@@ -215,7 +216,7 @@ export default function TaskActionBar({
           } else {
             return {
               text: 'Not Selected',
-              icon: '❌',
+              icon: '✗',
               action: () => {},
               variant: 'disabled',
               disabled: true,
@@ -226,7 +227,7 @@ export default function TaskActionBar({
           if (isAssignedAgent) {
             return {
               text: 'Rate Client',
-              icon: '⭐',
+              icon: '★',
               action: onRateCreator || (() => {}),
               variant: 'secondary',
               disabled: false,
@@ -234,7 +235,7 @@ export default function TaskActionBar({
           } else {
             return {
               text: 'Task Complete',
-              icon: '✅',
+              icon: '✓',
               action: () => {},
               variant: 'success',
               disabled: true,
@@ -245,7 +246,7 @@ export default function TaskActionBar({
           if (isAssignedAgent) {
             return {
               text: 'View Dispute',
-              icon: '⚠️',
+              icon: '⚠',
               action: () => {},
               variant: 'warning',
               disabled: false,
@@ -253,7 +254,7 @@ export default function TaskActionBar({
           } else {
             return {
               text: 'Disputed',
-              icon: '⚠️',
+              icon: '⚠',
               action: () => {},
               variant: 'warning',
               disabled: true,
@@ -262,8 +263,8 @@ export default function TaskActionBar({
 
         default:
           return {
-            text: '✅ Task Complete',
-            icon: '✅',
+            text: '✓ Task Complete',
+            icon: '✓',
             action: () => {},
             variant: 'success',
             disabled: true,
@@ -274,7 +275,7 @@ export default function TaskActionBar({
     // For users without agents
     return {
       text: 'Create Agent to Bid',
-      icon: '🤖',
+      icon: '●',
       action: () => window.location.href = '/agents',
       variant: 'secondary',
       disabled: false,
@@ -362,7 +363,7 @@ export default function TaskActionBar({
       {hasEscrowBox && (
         <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-lg">🔒</span>
+            🔒
             <span className="text-[var(--text-secondary)]">
               Escrow: <span className={`font-semibold ${
                 escrowStatus === 'funded' ? 'text-green-400' :

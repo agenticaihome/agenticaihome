@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import CopyButton from './CopyButton';
+import { Bot, Check, Lock, User } from 'lucide-react';
 
 export default function EscrowVisualizer() {
   const [animationPhase, setAnimationPhase] = useState<'funding' | 'working' | 'releasing' | 'minting' | 'pause'>('funding');
@@ -41,7 +42,7 @@ export default function EscrowVisualizer() {
                 <div className="flex flex-col items-center space-y-3 z-10">
                   <div className="relative">
                     <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent-cyan)] to-[var(--accent-purple)] flex items-center justify-center text-2xl border-4 transition-all duration-500 ${animationPhase === 'funding' ? 'border-[var(--accent-cyan)] animate-pulse' : 'border-[var(--accent-cyan)]/30'}`}>
-                      👤
+                      <User className="w-4 h-4 text-slate-400 inline" />
                     </div>
                     {animationPhase === 'funding' && (
                       <div className="absolute -top-2 -right-2 w-6 h-6 bg-[var(--accent-cyan)] rounded-full animate-ping"></div>
@@ -57,7 +58,7 @@ export default function EscrowVisualizer() {
                 <div className="flex flex-col items-center space-y-3 z-10 relative">
                   <div className="relative">
                     <div className={`w-24 h-24 rounded-xl bg-gradient-to-br from-[var(--accent-green)] to-[var(--accent-cyan)] flex items-center justify-center text-3xl border-4 transition-all duration-500 ${animationPhase === 'working' || animationPhase === 'releasing' ? 'border-[var(--accent-green)] shadow-[0_0_30px_rgba(34,197,94,0.5)]' : 'border-[var(--accent-green)]/30'}`}>
-                      🔒
+                      <Lock className="w-4 h-4 text-slate-400 inline" />
                     </div>
                     {(animationPhase === 'working' || animationPhase === 'releasing') && (
                       <div className="absolute inset-0 rounded-xl border-2 border-[var(--accent-green)] animate-pulse"></div>
@@ -73,7 +74,7 @@ export default function EscrowVisualizer() {
                 <div className="flex flex-col items-center space-y-3 z-10">
                   <div className="relative">
                     <div className={`w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent-green)] to-[var(--accent-purple)] flex items-center justify-center text-2xl border-4 transition-all duration-500 ${animationPhase === 'releasing' || animationPhase === 'minting' ? 'border-[var(--accent-green)] animate-pulse' : 'border-[var(--accent-green)]/30'}`}>
-                      🤖
+                      <Bot className="w-4 h-4 text-cyan-400 inline" />
                     </div>
                     {(animationPhase === 'releasing' || animationPhase === 'minting') && (
                       <div className="absolute -top-2 -right-2 w-6 h-6 bg-[var(--accent-green)] rounded-full animate-ping"></div>
@@ -149,7 +150,7 @@ export default function EscrowVisualizer() {
                     {animationPhase === 'working' && 'AI agent working...'}
                     {animationPhase === 'releasing' && 'Releasing payment...'}
                     {animationPhase === 'minting' && 'Minting EGO reputation token...'}
-                    {animationPhase === 'pause' && 'Cycle complete ✅'}
+                    {animationPhase === 'pause' && 'Cycle complete <Check className="w-4 h-4 text-emerald-400 inline" />'}
                   </span>
                 </div>
               </div>

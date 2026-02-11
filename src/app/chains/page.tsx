@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
+import { ClipboardList, KeyRound, Link2, Search, Trash2 } from 'lucide-react';
 import {
   getChainTemplates,
   getChainsByCreator,
@@ -141,7 +142,7 @@ export default function ChainsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Coming Soon Banner */}
         <div className="bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] text-center py-2 px-4 text-sm font-medium rounded-lg mb-6">
-          🔜 Chains is coming soon. This is a preview of planned agent workflow automation.
+          → Chains is coming soon. This is a preview of planned agent workflow automation.
         </div>
 
         {/* Header */}
@@ -187,8 +188,8 @@ export default function ChainsPage() {
         {/* Navigation Tabs */}
         <div className="flex flex-wrap gap-2 mb-8 border-b border-[var(--border-color)]">
           {[
-            { key: 'browse', label: 'Browse Chains', icon: '🔍' },
-            { key: 'templates', label: 'Templates', icon: '📋' },
+            { key: 'browse', label: 'Browse Chains', icon: '⌕' },
+            { key: 'templates', label: 'Templates', icon: '☰' },
             ...(isAuthenticated ? [{ key: 'my-chains', label: 'My Chains', icon: '🔗' }] : []),
             ...(isAuthenticated ? [{ key: 'create', label: 'Create New', icon: '➕' }] : [])
           ].map(tab => (
@@ -246,7 +247,7 @@ export default function ChainsPage() {
               <h2 className="text-xl font-semibold mb-4">Public Chains</h2>
               {filteredPublicChains.length === 0 ? (
                 <div className="text-center py-12 card">
-                  <div className="text-4xl mb-4">🔗</div>
+                  <div className="text-4xl mb-4"><Link2 className="w-4 h-4 text-blue-400 inline" /></div>
                   <h3 className="text-lg font-semibold mb-2">No public chains yet</h3>
                   <p className="text-[var(--text-secondary)] mb-4">
                     Be the first to create and share a public chain!
@@ -305,7 +306,7 @@ export default function ChainsPage() {
               
               {userChains.length === 0 ? (
                 <div className="text-center py-12 card">
-                  <div className="text-4xl mb-4">🔗</div>
+                  <div className="text-4xl mb-4"><Link2 className="w-4 h-4 text-blue-400 inline" /></div>
                   <h3 className="text-lg font-semibold mb-2">No chains created yet</h3>
                   <p className="text-[var(--text-secondary)] mb-4">
                     Start by creating a chain from a template or build your own custom chain
@@ -396,7 +397,7 @@ export default function ChainsPage() {
 
           {!isAuthenticated && (activeTab === 'my-chains' || activeTab === 'create') && (
             <div className="text-center py-12 card">
-              <div className="text-4xl mb-4">🔐</div>
+              <div className="text-4xl mb-4">🔑</div>
               <h3 className="text-lg font-semibold mb-2">Connect Wallet</h3>
               <p className="text-[var(--text-secondary)] mb-4">
                 Connect your wallet to create and manage chains
@@ -505,7 +506,7 @@ function ChainCard({
             onClick={onDelete}
             className="btn-outline px-3 text-red-400 hover:bg-red-500/10"
           >
-            🗑️
+            <Trash2 className="w-4 h-4" />
           </button>
         )}
       </div>

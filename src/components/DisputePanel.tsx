@@ -9,6 +9,7 @@ import { resolveMultiSigDispute } from '@/lib/ergo/multisig-escrow';
 import { getMediatorForTask, getMediatorByAddress } from '@/lib/mediators';
 import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
 import { PLATFORM_FEE_ADDRESS } from '@/lib/ergo/constants';
+import { AlertTriangle, Check, ClipboardList, Shield } from 'lucide-react';
 
 interface DisputeEvidence {
   id: string;
@@ -327,10 +328,10 @@ export default function DisputePanel({
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'disputed': return '⚠️';
-      case 'evidence_submitted': return '📋';
+      case 'disputed': return '⚠';
+      case 'evidence_submitted': return '☰';
       case 'under_review': return '👨‍⚖️';
-      case 'resolved': return '✅';
+      case 'resolved': return '✓';
       default: return '❓';
     }
   };
@@ -350,7 +351,7 @@ export default function DisputePanel({
       {/* Header */}
       <div className="p-6 border-b border-red-800">
         <div className="flex items-center gap-3 mb-2">
-          <span className="text-2xl">⚠️</span>
+          <span className="text-2xl">⚠</span>
           <h3 className="text-xl font-semibold text-red-400">Task Dispute</h3>
         </div>
         
@@ -496,7 +497,7 @@ export default function DisputePanel({
       {escrowType === 'multisig' && mediatorAddress && (
         <div className="p-6 border-b border-gray-800">
           <h4 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
-            <span className="text-lg">🛡️</span>
+            <Shield className="w-5 h-5 text-blue-400 inline" />
             Multi-Sig Escrow
           </h4>
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">

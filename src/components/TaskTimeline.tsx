@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Task } from '@/lib/types';
+import { AlertTriangle, Check, Coins, FileText, Handshake, Link2, Lock, Package, Star } from 'lucide-react';
 
 interface TimelineStep {
   key: string;
@@ -60,7 +61,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
       key: 'created',
       label: 'Task Created',
       description: 'Task posted to marketplace',
-      icon: '📝',
+      icon: '☰',
       status: 'completed',
       timestamp: task.createdAt,
     });
@@ -71,7 +72,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'bid_accepted',
         label: 'Bid Accepted',
         description: `${task.assignedAgentName || 'Agent'} was selected`,
-        icon: '🤝',
+        icon: '⊕',
         status: 'completed',
         // Find timestamp from events or fallback to created date
         timestamp: events.find(e => e.event_type === 'bid_accepted')?.created_at || task.createdAt,
@@ -81,7 +82,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'bid_accepted',
         label: 'Awaiting Bid Selection',
         description: 'Waiting for task creator to accept a bid',
-        icon: '🤝',
+        icon: '⊕',
         status: taskStatus === 'open' ? 'current' : 'future',
       });
     }
@@ -121,7 +122,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'work_submitted',
         label: 'Work Submitted',
         description: 'Agent submitted deliverable for review',
-        icon: '📦',
+        icon: '◻',
         status: 'completed',
         timestamp: events.find(e => e.event_type === 'work_submitted')?.created_at,
       });
@@ -130,7 +131,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'work_submitted',
         label: 'Work in Progress',
         description: 'Agent is working on the task',
-        icon: '📦',
+        icon: '◻',
         status: 'current',
       });
     } else {
@@ -138,7 +139,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'work_submitted',
         label: 'Work Submission',
         description: 'Agent will submit work when ready',
-        icon: '📦',
+        icon: '◻',
         status: 'future',
       });
     }
@@ -157,7 +158,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'under_review',
         label: 'Reviewed',
         description: 'Work has been reviewed and approved',
-        icon: '✅',
+        icon: '✓',
         status: 'completed',
         timestamp: events.find(e => e.event_type === 'work_approved')?.created_at,
       });
@@ -166,7 +167,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'under_review',
         label: 'Disputed',
         description: 'Work is under dispute resolution',
-        icon: '⚠️',
+        icon: '⚠',
         status: 'current',
       });
     } else {
@@ -185,7 +186,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'payment_released',
         label: 'Payment Released',
         description: 'Funds transferred to agent',
-        icon: '💰',
+        icon: '○',
         status: 'completed',
         timestamp: events.find(e => e.event_type === 'payment_released')?.created_at,
         txId: metadata.release_tx_id,
@@ -195,7 +196,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'payment_released',
         label: 'Release Payment',
         description: 'Work approved, ready to release payment',
-        icon: '💰',
+        icon: '○',
         status: 'current',
       });
     } else if (taskStatus === 'completed') {
@@ -203,7 +204,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'payment_released',
         label: 'Payment Complete',
         description: 'Task completed and paid',
-        icon: '💰',
+        icon: '○',
         status: 'completed',
         timestamp: task.completedAt,
       });
@@ -212,7 +213,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'payment_released',
         label: 'Payment Release',
         description: 'Payment will be released upon approval',
-        icon: '💰',
+        icon: '○',
         status: 'future',
       });
     }
@@ -224,7 +225,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'rated',
         label: 'Task Complete',
         description: 'Ready for ratings and feedback',
-        icon: '⭐',
+        icon: '★',
         status: 'current',
       });
     } else {
@@ -232,7 +233,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'rated',
         label: 'Rating & Feedback',
         description: 'Final ratings will be collected',
-        icon: '⭐',
+        icon: '★',
         status: 'future',
       });
     }
@@ -320,7 +321,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-purple-400 hover:text-purple-300 text-xs"
                     >
-                      <span>🔗</span>
+                      <span><Link2 className="w-4 h-4 text-blue-400 inline" /></span>
                       View Transaction
                     </a>
                   )}

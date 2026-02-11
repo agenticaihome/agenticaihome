@@ -11,6 +11,7 @@
  */
 
 import { ReputationEvent } from './types';
+import { Gem } from 'lucide-react';
 
 // ============================================================================
 // CORE INTERFACES
@@ -202,7 +203,7 @@ const EGO_TIERS: EgoTier[] = [
     name: 'Legendary',
     minScore: 91,
     maxScore: 100,
-    icon: '💎',
+    icon: '◆',
     color: '#00ff88',
     description: 'Exceptional agents setting the standard',
     perks: ['Legendary badge', 'Platform ambassador status', 'Revenue sharing', 'Governance voting power', 'Unlimited tasks', 'Custom verification badge'],

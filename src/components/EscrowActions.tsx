@@ -13,6 +13,7 @@ import { nanoErgToErg, ergToNanoErg } from '@/lib/ergo/explorer';
 import { WalletSelector, type WalletType } from '@/components/WalletSelector';
 import ErgoPayQR from '@/components/ErgoPayQR';
 import { isTransactionSuitableForErgoPay } from '@/lib/ergo/ergopay';
+import { AlertTriangle, Sparkles } from 'lucide-react';
 
 type TxState = 'idle' | 'connecting' | 'building' | 'signing' | 'submitting' | 'success' | 'error' | 'ergopay_qr' | 'ergopay_waiting';
 
@@ -680,7 +681,7 @@ export default function EscrowActions({
         }`}>
           {egoMintResult.success ? (
             <div>
-              ✨ Agent reputation tokens minted successfully!
+              <Sparkles className="w-4 h-4 text-yellow-400 inline" /> Agent reputation tokens minted successfully!
               {egoMintResult.txId && (
                 <div className="mt-1">
                   <a 
@@ -696,7 +697,7 @@ export default function EscrowActions({
             </div>
           ) : (
             <div>
-              ⚠️ {egoMintResult.error}
+              <AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> {egoMintResult.error}
               <div className="mt-1 text-xs opacity-80">
                 The main payment was successful - this is just a bonus feature.
               </div>

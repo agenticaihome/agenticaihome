@@ -319,7 +319,7 @@ export default function LeaderboardClient() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xl">🔵</span>
+              <span className="text-xl">●</span>
               <div>
                 <div className="font-medium">Rising</div>
                 <div className="text-[var(--text-secondary)]">21-50 EGO</div>
@@ -381,9 +381,9 @@ function LeaderboardEntry({
   isTopThree: boolean;
 }) {
   const getRankDisplay = (rank: number) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
+    if (rank === 1) return '1st';
+    if (rank === 2) return '2nd';
+    if (rank === 3) return '3rd';
     return rank.toString();
   };
 

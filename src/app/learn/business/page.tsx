@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle, Copy, ChevronRight, Clock, ArrowLeft, ArrowRight, Briefcase, Mail, TrendingUp, Users, DollarSign, Phone, Settings, ExternalLink, Eye, Bell } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, Banknote, BarChart3, Bell, Briefcase, CheckCircle, ChevronRight, ClipboardList, Clock, Copy, DollarSign, ExternalLink, Eye, FileText, Flame, Lightbulb, Link2, Lock, Mail, PartyPopper, Phone, RefreshCw, Rocket, Settings, Star, Target, TrendingUp, Trophy, Users } from 'lucide-react';
 import Link from 'next/link';
 
 interface Lesson {
@@ -26,7 +26,7 @@ const CopyPrompt = ({ prompt, title }: { prompt: string; title: string }) => {
   return (
     <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
       <div className="flex items-center justify-between p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
-        <span className="text-sm font-medium text-slate-300">📋 {title}</span>
+        <span className="text-sm font-medium text-slate-300"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> {title}</span>
         <button
           onClick={handleCopy}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -95,7 +95,7 @@ const lessons: Lesson[] = [
               <div className="bg-black/40 rounded-lg p-3 text-sm space-y-1">
                 <p>🌅 <strong className="text-white">Morning Briefing:</strong> Weather, calendar, priorities, urgent emails</p>
                 <p>📧 <strong className="text-white">Email Triage:</strong> Urgent flagging, draft replies, archive recommendations</p>
-                <p>📊 <strong className="text-white">Daily Review:</strong> What's done, what's pending, tomorrow's focus</p>
+                <p><BarChart3 className="w-4 h-4 text-blue-400 inline" /> <strong className="text-white">Daily Review:</strong> What's done, what's pending, tomorrow's focus</p>
                 <p>🚨 <strong className="text-white">Crisis Mode:</strong> Emergency prioritization and rapid response</p>
               </div>
             </div>
@@ -167,16 +167,16 @@ Here are the emails:
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-semibold text-white">📅 Weekly Planning Session</h4>
+                <h4 className="font-semibold text-white">  Weekly Planning Session</h4>
                 <CopyPrompt
                   title="Strategic Planning Agent"
                   prompt={`Help me plan my week. I'll tell you what's on my plate, and you help me prioritize.
 
 **The Framework:**
-- 🎯 **Big 3**: The 3 things that would make this week a win
-- 📅 **Time Blocks**: When I'll do focused work vs. meetings vs. admin
+- <Target className="w-4 h-4 text-red-400 inline" /> **Big 3**: The 3 things that would make this week a win
+-   **Time Blocks**: When I'll do focused work vs. meetings vs. admin
 - 🚨 **Risks**: What might derail me and how to prevent it
-- 🏆 **Quick Wins**: Easy tasks I can knock out to build momentum
+- <Trophy className="w-4 h-4 text-yellow-400 inline" /> **Quick Wins**: Easy tasks I can knock out to build momentum
 
 **My context:**
 - Business type: [YOUR BUSINESS]
@@ -196,7 +196,7 @@ What do you have on your plate this week?`}
         </TryThis>
 
         <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-amber-400 mb-2">🔒 Privacy Note</h4>
+          <h4 className="font-semibold text-amber-400 mb-2"><Lock className="w-4 h-4 text-slate-400 inline" /> Privacy Note</h4>
           <p className="text-slate-300 text-sm">
             Never share sensitive customer data, financial details, or confidential information with AI agents. 
             Use general descriptions and remove specific names/details when needed.
@@ -324,7 +324,7 @@ Here's the lead inquiry:
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">📊 Content Strategy Agent</h4>
+            <h4 className="font-semibold text-white"><BarChart3 className="w-4 h-4 text-blue-400 inline" /> Content Strategy Agent</h4>
             <CopyPrompt
               title="Content Planning Assistant"
               prompt={`Create a month-long content calendar for my [BUSINESS TYPE].
@@ -359,7 +359,7 @@ Focus on content that builds trust and generates leads.`}
         </TryThis>
 
         <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-blue-400 mb-2">🔄 Content Automation Loop</h4>
+          <h4 className="font-semibold text-blue-400 mb-2"><RefreshCw className="w-4 h-4 text-blue-400 inline" /> Content Automation Loop</h4>
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-blue-400"></span>
@@ -432,7 +432,7 @@ Start by asking: What's the #1 process that causes you the most headaches?`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">📊 KPI Tracking Agent</h4>
+              <h4 className="font-semibold text-white"><BarChart3 className="w-4 h-4 text-blue-400 inline" /> KPI Tracking Agent</h4>
               <CopyPrompt
                 title="Performance Dashboard Creator"
                 prompt={`Help me create a simple KPI dashboard for my [BUSINESS TYPE].
@@ -461,7 +461,7 @@ What metrics should I focus on?`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">📋 SOP Creator</h4>
+              <h4 className="font-semibold text-white"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> SOP Creator</h4>
               <CopyPrompt
                 title="Process Documentation Agent"
                 prompt={`Help me create a Standard Operating Procedure (SOP) for [SPECIFIC PROCESS/TASK].
@@ -489,7 +489,7 @@ Current process to document:`}
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">🔄 Workflow Optimizer</h4>
+            <h4 className="font-semibold text-white"><RefreshCw className="w-4 h-4 text-blue-400 inline" /> Workflow Optimizer</h4>
             <CopyPrompt
               title="Process Improvement Agent"
               prompt={`Analyze my current workflow and suggest improvements.
@@ -531,7 +531,7 @@ What's the biggest bottleneck in this process?`}
         </TryThis>
 
         <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-green-400 mb-2">💡 Automation Pyramid</h4>
+          <h4 className="font-semibold text-green-400 mb-2"><Lightbulb className="w-4 h-4 text-yellow-400 inline" /> Automation Pyramid</h4>
           <p className="text-slate-300 text-sm mb-3">Build automation in this order for maximum impact:</p>
           <div className="space-y-2 text-sm">
             <div className="bg-green-800/20 rounded p-2">
@@ -642,7 +642,7 @@ Based on my business, what are the top 15 questions customers ask?`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">🔥 Crisis Response Agent</h4>
+              <h4 className="font-semibold text-white"><Flame className="w-4 h-4 text-orange-400 inline" /> Crisis Response Agent</h4>
               <CopyPrompt
                 title="Complaint Resolution Assistant"
                 prompt={`You are my Complaint Resolution Agent. Help me turn upset customers into happy ones.
@@ -719,7 +719,7 @@ Create scripts that sound natural, not robotic.`}
         </TryThis>
 
         <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-blue-400 mb-2">⭐ Customer Delight Strategy</h4>
+          <h4 className="font-semibold text-blue-400 mb-2"><Star className="w-4 h-4 text-yellow-400 inline" /> Customer Delight Strategy</h4>
           <div className="space-y-2 text-sm">
             <p className="text-slate-300 mb-2">Turn support interactions into growth opportunities:</p>
             <div className="flex items-start gap-2">
@@ -798,7 +798,7 @@ What's your biggest money management headache right now?`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">💸 Expense Tracker</h4>
+              <h4 className="font-semibold text-white"><Banknote className="w-4 h-4 text-emerald-400 inline" /> Expense Tracker</h4>
               <CopyPrompt
                 title="Expense Management Agent"
                 prompt={`Help me create a simple expense tracking system for my [BUSINESS TYPE].
@@ -833,7 +833,7 @@ What categories should I track?`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">📊 Cash Flow Forecaster</h4>
+              <h4 className="font-semibold text-white"><BarChart3 className="w-4 h-4 text-blue-400 inline" /> Cash Flow Forecaster</h4>
               <CopyPrompt
                 title="Cash Flow Planning Agent"
                 prompt={`Create a 3-month cash flow forecast for my [BUSINESS TYPE].
@@ -866,7 +866,7 @@ Based on this info, what should I watch for?`}
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">📄 Invoicing Automation</h4>
+            <h4 className="font-semibold text-white"><FileText className="w-4 h-4 text-slate-400 inline" /> Invoicing Automation</h4>
             <CopyPrompt
               title="Invoice Management Agent"
               prompt={`Streamline my invoicing process to get paid faster.
@@ -986,7 +986,7 @@ What's your biggest people challenge right now?`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">📝 Job Description Creator</h4>
+              <h4 className="font-semibold text-white"><FileText className="w-4 h-4 text-slate-400 inline" /> Job Description Creator</h4>
               <CopyPrompt
                 title="Job Posting Agent"
                 prompt={`Create a compelling job description for [JOB TITLE] at my [COMPANY TYPE].
@@ -1025,7 +1025,7 @@ What makes this role exciting?`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">🎯 Candidate Screening</h4>
+              <h4 className="font-semibold text-white"><Target className="w-4 h-4 text-red-400 inline" /> Candidate Screening</h4>
               <CopyPrompt
                 title="Application Reviewer Agent"
                 prompt={`Help me screen candidates for [JOB TITLE] efficiently.
@@ -1059,7 +1059,7 @@ Here are the applications:
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">🎉 Onboarding Checklist</h4>
+            <h4 className="font-semibold text-white"><PartyPopper className="w-4 h-4 text-yellow-400 inline" /> Onboarding Checklist</h4>
             <CopyPrompt
               title="New Hire Onboarding Agent"
               prompt={`Create a complete onboarding checklist for new [JOB TITLE] at my [COMPANY TYPE].
@@ -1108,7 +1108,7 @@ What does success look like after 90 days?`}
         </TryThis>
 
         <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-green-400 mb-2">🎯 Hiring Success Formula</h4>
+          <h4 className="font-semibold text-green-400 mb-2"><Target className="w-4 h-4 text-red-400 inline" /> Hiring Success Formula</h4>
           <div className="space-y-2 text-sm">
             <p className="text-slate-300 mb-2">Great hires come from this sequence:</p>
             <div className="flex items-center gap-2">
@@ -1150,7 +1150,7 @@ What does success look like after 90 days?`}
         </div>
 
         <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-xl p-6 border border-purple-500/30">
-          <h4 className="font-semibold text-purple-400 mb-3">🔗 Your AI Business Ecosystem</h4>
+          <h4 className="font-semibold text-purple-400 mb-3"><Link2 className="w-4 h-4 text-blue-400 inline" /> Your AI Business Ecosystem</h4>
           <div className="grid md:grid-cols-2 gap-6 text-sm">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -1220,7 +1220,7 @@ This week's priorities and challenges:`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">🔄 Workflow Automation</h4>
+              <h4 className="font-semibold text-white"><RefreshCw className="w-4 h-4 text-blue-400 inline" /> Workflow Automation</h4>
               <div className="space-y-3 text-sm">
                 <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Lead to Customer Flow</div>
@@ -1238,7 +1238,7 @@ This week's priorities and challenges:`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">📊 Success Metrics</h4>
+              <h4 className="font-semibold text-white"><BarChart3 className="w-4 h-4 text-blue-400 inline" /> Success Metrics</h4>
               <CopyPrompt
                 title="AI Team Performance Tracker"
                 prompt={`Track the performance of my AI agent team and suggest improvements.
@@ -1277,7 +1277,7 @@ This week's metrics:`}
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">🚀 Scaling Strategy</h4>
+            <h4 className="font-semibold text-white"><Rocket className="w-4 h-4 text-blue-400 inline" /> Scaling Strategy</h4>
             <CopyPrompt
               title="AI Business Growth Agent"
               prompt={`Help me scale my AI agent team as my business grows.
@@ -1318,7 +1318,7 @@ What should I automate next for maximum impact?`}
         </TryThis>
 
         <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-amber-400 mb-2">⚠️ Scaling Pitfalls to Avoid</h4>
+          <h4 className="font-semibold text-amber-400 mb-2"><AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> Scaling Pitfalls to Avoid</h4>
           <div className="space-y-2 text-sm">
             <div className="flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0"></span>
@@ -1566,7 +1566,7 @@ export default function LearnBusinessPage() {
                     {currentLesson === lessons.length && (
                       <div className="mt-8 text-center">
                         <div className="bg-gradient-to-r from-[var(--accent-purple)]/10 to-pink-500/10 border border-[var(--accent-purple)]/30 rounded-xl p-6">
-                          <h3 className="text-xl font-bold text-white mb-2">🎉 Course Complete!</h3>
+                          <h3 className="text-xl font-bold text-white mb-2"><PartyPopper className="w-4 h-4 text-yellow-400 inline" /> Course Complete!</h3>
                           <p className="text-[var(--text-secondary)] mb-4">
                             You've mastered business AI agents. Ready to practice or find agents to hire?
                           </p>

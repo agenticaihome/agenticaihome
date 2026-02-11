@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { AlertTriangle, Bot, Check, ClipboardList, Lock, TrendingUp } from 'lucide-react';
 
 interface ActivityItem {
   id: string;
@@ -78,7 +79,7 @@ export default function ActivityFeed() {
           activities.push({
             id: `tx-${tx.id}`,
             type: 'payment_released',
-            icon: '✅',
+            icon: '✓',
             description: `Payment released: ${tx.amount_erg} ERG to agent`,
             timestamp: tx.date,
             txId: tx.tx_id,
@@ -92,7 +93,7 @@ export default function ActivityFeed() {
         activities.push({
           id: `agent-${agent.id}`,
           type: 'agent_registered',
-          icon: '🤖',
+          icon: '●',
           description: `New agent registered: ${agent.name}`,
           timestamp: agent.created_at,
           actorName: agent.name,
@@ -104,7 +105,7 @@ export default function ActivityFeed() {
         activities.push({
           id: `task-${task.id}`,
           type: 'task_posted',
-          icon: '📋',
+          icon: '☰',
           description: `New task posted: "${task.title}" (${task.budget_erg} ERG)`,
           timestamp: task.created_at,
           amount: task.budget_erg,
@@ -130,7 +131,7 @@ export default function ActivityFeed() {
           {
             id: 'genesis-2',
             type: 'payment_released' as const,
-            icon: '✅',
+            icon: '✓',
             description: 'First trustless payment: 0.099 ERG to ErgoMiner-01',
             timestamp: new Date(Date.now() - 7200000).toISOString(),
             txId: 'aed2c635b6f60118a601c5095cb3e14f242a6018047f39a66583da67af2501f6',
@@ -139,7 +140,7 @@ export default function ActivityFeed() {
           {
             id: 'genesis-3',
             type: 'agent_registered' as const,
-            icon: '🤖',
+            icon: '●',
             description: 'Genesis agent registered: ErgoMiner-01',
             timestamp: new Date(Date.now() - 10800000).toISOString(),
             actorName: 'ErgoMiner-01',
@@ -194,7 +195,7 @@ export default function ActivityFeed() {
   if (error) {
     return (
       <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-8 text-center">
-        <div className="text-3xl mb-3">⚠️</div>
+        <div className="text-3xl mb-3"><AlertTriangle className="w-8 h-8 text-yellow-400 inline" /></div>
         <p className="text-[var(--text-secondary)] text-sm">{error}</p>
       </div>
     );
@@ -207,7 +208,7 @@ export default function ActivityFeed() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 flex items-center justify-center">
-              <span className="text-[var(--accent-cyan)] text-lg">📈</span>
+              <span className="text-[var(--accent-cyan)] text-lg"><TrendingUp className="w-4 h-4 text-emerald-400 inline" /></span>
             </div>
             <h3 className="font-semibold text-lg text-[var(--text-primary)]">Recent Activity</h3>
           </div>
@@ -222,7 +223,7 @@ export default function ActivityFeed() {
       <div className="max-h-96 overflow-y-auto">
         {activities.length === 0 ? (
           <div className="p-8 text-center">
-            <div className="text-3xl mb-3">📋</div>
+            <div className="text-3xl mb-3">☰</div>
             <p className="text-[var(--text-secondary)] text-sm">
               Activity will appear here when agents start completing tasks.
             </p>

@@ -23,11 +23,11 @@ interface DisputeRow {
 }
 
 const STATUS_BADGES: Record<string, { label: string; icon: string; cls: string }> = {
-  open: { label: 'Open', icon: '🔴', cls: 'bg-red-500/20 text-red-400' },
+  open: { label: 'Open', icon: '●', cls: 'bg-red-500/20 text-red-400' },
   mediation: { label: 'Under Review', icon: '🟡', cls: 'bg-yellow-500/20 text-yellow-400' },
   resolved: { label: 'Resolved', icon: '🟢', cls: 'bg-green-500/20 text-green-400' },
   refunded: { label: 'Refunded', icon: '🟢', cls: 'bg-green-500/20 text-green-400' },
-  expired: { label: 'Dismissed', icon: '⚪', cls: 'bg-gray-500/20 text-gray-400' },
+  expired: { label: 'Dismissed', icon: '○', cls: 'bg-gray-500/20 text-gray-400' },
 };
 
 export default function DisputesClient() {
@@ -127,14 +127,14 @@ export default function DisputesClient() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold">⚖️ Dispute Resolution</h1>
+            <h1 className="text-3xl font-bold">⊖️ Dispute Resolution</h1>
             <p className="text-gray-400 mt-1">
               {isMediator ? 'Review and resolve disputes as mediator' : 'Your active and past disputes'}
             </p>
           </div>
           {isMediator && (
             <span className="px-3 py-1.5 bg-yellow-500/20 text-yellow-400 rounded-full text-sm font-medium">
-              👨‍⚖️ Mediator View
+              👨‍⊖️ Mediator View
             </span>
           )}
         </div>
@@ -146,7 +146,7 @@ export default function DisputesClient() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 filter === f ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}>
-              {f === 'all' ? 'All' : f === 'mediation' ? '🟡 Under Review' : f === 'open' ? '🔴 Open' : '🟢 Resolved'}
+              {f === 'all' ? 'All' : f === 'mediation' ? '🟡 Under Review' : f === 'open' ? '● Open' : '🟢 Resolved'}
               {f !== 'all' && (
                 <span className="ml-1.5 text-xs opacity-70">
                   ({disputes.filter(d => {
@@ -168,7 +168,7 @@ export default function DisputesClient() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
-            <div className="text-4xl mb-4">⚖️</div>
+            <div className="text-4xl mb-4">⊖️</div>
             <p className="text-lg">No disputes found</p>
             <p className="text-sm mt-1">Disputes will appear here when opened on tasks</p>
           </div>

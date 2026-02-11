@@ -6,6 +6,7 @@ import { formatErgAmount, truncateAddress } from '@/lib/ergo/explorer';
 import { NAUTILUS_CHROME_URL } from '@/lib/ergo/constants';
 import { isMobileDevice } from '@/lib/ergo/ergopay';
 import { isValidErgoAddress } from '@/lib/ergo/wallet';
+import { ClipboardList, Smartphone } from 'lucide-react';
 
 interface WalletConnectProps {
   /** Render as full-width inline form (for mobile menu) */
@@ -72,7 +73,7 @@ export default function WalletConnect({ inline, onConnect }: WalletConnectProps)
           className="px-3 py-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors whitespace-nowrap"
           title="Paste from clipboard"
         >
-          📋 Paste
+          <ClipboardList className="w-4 h-4 text-slate-400 inline" /> Paste
         </button>
       </div>
       {addressError && <p className="text-xs text-red-400">{addressError}</p>}
@@ -98,7 +99,7 @@ export default function WalletConnect({ inline, onConnect }: WalletConnectProps)
               onClick={() => setShowErgoPayInput(true)}
               className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-[var(--text-primary)] hover:border-purple-500/50 transition-all text-sm font-medium"
             >
-              <span className="text-lg">📱</span>
+              <Smartphone className="w-5 h-5 text-slate-400 inline" />
               Connect via ErgoPay
             </button>
             {!isMobile && hasNautilus && (
@@ -193,7 +194,7 @@ export default function WalletConnect({ inline, onConnect }: WalletConnectProps)
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors"
                 >
                   <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-xs">📱</span>
+                    <span className="text-white text-xs"><Smartphone className="w-4 h-4 text-slate-400 inline" /></span>
                   </div>
                   <div>
                     <div className="font-medium">Connect via ErgoPay</div>
@@ -373,7 +374,7 @@ export default function WalletConnect({ inline, onConnect }: WalletConnectProps)
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors"
                 >
                   <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white text-xs">📱</span>
+                    <span className="text-white text-xs"><Smartphone className="w-4 h-4 text-slate-400 inline" /></span>
                   </div>
                   <div>
                     <div className="font-medium">{isMobile ? 'Connect via ErgoPay' : 'ErgoPay (Mobile)'}</div>

@@ -13,6 +13,7 @@ import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction
 import DisputeEvidence from '@/components/DisputeEvidence';
 import DisputeMessages from '@/components/DisputeMessages';
 import Navbar from '@/components/Navbar';
+import { BarChart3, Bot, Check, ClipboardList, Coins, User } from 'lucide-react';
 
 interface DisputeDetail {
   id: string;
@@ -47,11 +48,11 @@ interface EvidenceItem {
 }
 
 const STATUS_BADGES: Record<string, { label: string; icon: string; cls: string }> = {
-  open: { label: 'Open', icon: '🔴', cls: 'bg-red-500/20 text-red-400 border-red-500/30' },
+  open: { label: 'Open', icon: '●', cls: 'bg-red-500/20 text-red-400 border-red-500/30' },
   mediation: { label: 'Under Review', icon: '🟡', cls: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
   resolved: { label: 'Resolved', icon: '🟢', cls: 'bg-green-500/20 text-green-400 border-green-500/30' },
   refunded: { label: 'Refunded', icon: '🟢', cls: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  expired: { label: 'Dismissed', icon: '⚪', cls: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+  expired: { label: 'Dismissed', icon: '○', cls: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
 };
 
 export default function DisputeDetailPage() {
@@ -206,7 +207,7 @@ function DisputeDetailInner() {
     try {
       await supabase.from('dispute_messages').insert([{
         dispute_id: dispute.id, author_address: userAddress, author_role: 'mediator',
-        message: `📋 Mediator has requested additional information from the ${target}. Please provide more details about your case.`,
+        message: `<ClipboardList className="w-4 h-4 text-slate-400 inline" /> Mediator has requested additional information from the ${target}. Please provide more details about your case.`,
       }]);
       if (dispute.status === 'open') {
         await supabase.from('disputes').update({ status: 'mediation' }).eq('id', dispute.id);
@@ -259,7 +260,7 @@ function DisputeDetailInner() {
                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${badge.cls}`}>
                   {badge.icon} {badge.label}
                 </span>
-                {isMediator && <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium">👨‍⚖️ You are the mediator</span>}
+                {isMediator && <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium">👨‍⊖️ You are the mediator</span>}
               </div>
               <h1 className="text-2xl font-bold mb-1">{dispute.taskTitle}</h1>
               <p className="text-gray-400 text-sm">Dispute opened {new Date(dispute.createdAt).toLocaleDateString()}</p>
@@ -272,17 +273,17 @@ function DisputeDetailInner() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
             <div className="bg-gray-800/50 rounded-lg p-3">
-              <div className="text-cyan-400 font-medium mb-1">👤 Client</div>
+              <div className="text-cyan-400 font-medium mb-1"><User className="w-4 h-4 text-slate-400 inline" /> Client</div>
               <div className="text-gray-300 font-mono text-xs">{truncAddr(dispute.posterAddress)}</div>
               {isClient && <span className="text-cyan-400 text-xs">(you)</span>}
             </div>
             <div className="bg-gray-800/50 rounded-lg p-3">
-              <div className="text-green-400 font-medium mb-1">🤖 Agent</div>
+              <div className="text-green-400 font-medium mb-1"><Bot className="w-4 h-4 text-cyan-400 inline" /> Agent</div>
               <div className="text-gray-300 font-mono text-xs">{truncAddr(dispute.agentAddress)}</div>
               {isAgent && <span className="text-green-400 text-xs">(you)</span>}
             </div>
             <div className="bg-gray-800/50 rounded-lg p-3">
-              <div className="text-yellow-400 font-medium mb-1">⚖️ Mediator</div>
+              <div className="text-yellow-400 font-medium mb-1">⊖️ Mediator</div>
               <div className="text-gray-300 font-mono text-xs">
                 {dispute.mediatorAddress ? (dispute.mediatorAddress === PLATFORM_FEE_ADDRESS ? 'AgenticAiHome Platform' : truncAddr(dispute.mediatorAddress)) : 'Not assigned'}
               </div>
@@ -301,7 +302,7 @@ function DisputeDetailInner() {
         {/* Resolution Summary */}
         {dispute.status === 'resolved' && (
           <div className="border border-green-800 rounded-lg bg-green-900/10 p-6 mb-6">
-            <h3 className="text-green-400 font-semibold text-lg mb-3">✅ Resolution</h3>
+            <h3 className="text-green-400 font-semibold text-lg mb-3"><Check className="w-4 h-4 text-emerald-400 inline" /> Resolution</h3>
             {dispute.proposedPosterPercent !== null && dispute.proposedAgentPercent !== null && (
               <div className="flex gap-4 mb-3">
                 <div className="flex-1 bg-gray-800/50 rounded-lg p-3 text-center">
@@ -329,34 +330,34 @@ function DisputeDetailInner() {
         {/* Mediator Actions */}
         {canResolve && (
           <div className="border border-yellow-800 rounded-lg bg-yellow-900/10 p-6 mb-6">
-            <h3 className="text-yellow-400 font-semibold text-lg mb-4">👨‍⚖️ Mediator Actions</h3>
+            <h3 className="text-yellow-400 font-semibold text-lg mb-4">👨‍⊖️ Mediator Actions</h3>
             {!splitMode ? (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button onClick={() => handleResolve('agent')} disabled={resolving}
                     className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg hover:bg-green-500/20 transition-colors disabled:opacity-50 text-left">
-                    <div className="text-green-400 font-semibold">✅ Release to Agent</div>
+                    <div className="text-green-400 font-semibold"><Check className="w-4 h-4 text-emerald-400 inline" /> Release to Agent</div>
                     <div className="text-gray-400 text-sm mt-1">Agent completed the work. Release full escrow.</div>
                   </button>
                   <button onClick={() => handleResolve('client')} disabled={resolving}
                     className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg hover:bg-red-500/20 transition-colors disabled:opacity-50 text-left">
-                    <div className="text-red-400 font-semibold">💰 Refund to Client</div>
+                    <div className="text-red-400 font-semibold"><Coins className="w-4 h-4 text-yellow-400 inline" /> Refund to Client</div>
                     <div className="text-gray-400 text-sm mt-1">Work not satisfactory. Full refund to client.</div>
                   </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button onClick={() => setSplitMode(true)} disabled={resolving}
                     className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg hover:bg-blue-500/20 transition-colors disabled:opacity-50 text-left">
-                    <div className="text-blue-400 font-semibold text-sm">📊 Propose Split</div>
+                    <div className="text-blue-400 font-semibold text-sm"><BarChart3 className="w-4 h-4 text-blue-400 inline" /> Propose Split</div>
                     <div className="text-gray-400 text-xs mt-1">Custom percentage split</div>
                   </button>
                   <button onClick={() => handleRequestInfo('client')} disabled={resolving}
                     className="p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg hover:bg-gray-500/20 transition-colors disabled:opacity-50 text-left">
-                    <div className="text-gray-300 font-semibold text-sm">📋 Request Info (Client)</div>
+                    <div className="text-gray-300 font-semibold text-sm"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> Request Info (Client)</div>
                   </button>
                   <button onClick={() => handleRequestInfo('agent')} disabled={resolving}
                     className="p-3 bg-gray-500/10 border border-gray-500/30 rounded-lg hover:bg-gray-500/20 transition-colors disabled:opacity-50 text-left">
-                    <div className="text-gray-300 font-semibold text-sm">📋 Request Info (Agent)</div>
+                    <div className="text-gray-300 font-semibold text-sm"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> Request Info (Agent)</div>
                   </button>
                 </div>
               </div>
@@ -399,7 +400,7 @@ function DisputeDetailInner() {
 
         {/* Evidence */}
         <div className="border border-gray-800 rounded-lg bg-gray-900/50 p-6 mb-6">
-          <h3 className="text-white font-semibold text-lg mb-4">📋 Evidence</h3>
+          <h3 className="text-white font-semibold text-lg mb-4"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> Evidence</h3>
           <DisputeEvidence
             taskId={dispute.taskId}
             disputeId={dispute.id}

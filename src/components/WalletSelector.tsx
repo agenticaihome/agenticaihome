@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { isMobileDevice } from '@/lib/ergo/ergopay';
 import { isNautilusAvailable } from '@/lib/ergo/wallet';
+import { Monitor, Smartphone } from 'lucide-react';
 
 export type WalletType = 'nautilus' | 'ergopay';
 
@@ -49,7 +50,7 @@ export function WalletSelector({
       id: 'ergopay',
       name: 'Mobile Wallet',
       description: 'Terminus, SAFEW or other ErgoPay wallet',
-      icon: '📱',
+      icon: '▫',
       available: true, // ErgoPay is always "available" as a protocol
       recommended: isMobile,
     },
@@ -152,11 +153,11 @@ export function WalletSelector({
           <p className="text-xs text-[var(--text-secondary)]">
             {isMobile ? (
               <>
-                📱 <strong>Mobile:</strong> Use QR codes or deep links to connect your mobile wallet
+                <Smartphone className="w-4 h-4 text-slate-400 inline" /> <strong>Mobile:</strong> Use QR codes or deep links to connect your mobile wallet
               </>
             ) : (
               <>
-                💻 <strong>Desktop:</strong> Browser extension wallets offer the smoothest experience
+                <Monitor className="w-4 h-4 text-slate-400 inline" /> <strong>Desktop:</strong> Browser extension wallets offer the smoothest experience
               </>
             )}
           </p>

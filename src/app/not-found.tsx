@@ -15,7 +15,7 @@ export default function NotFound() {
             </h1>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-6xl animate-bounce" style={{ animationDuration: '3s' }}>
-                🤖
+                ●
               </div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import ErgoNetworkStats from '@/components/ErgoNetworkStats';
 import { getAddressBalance, getCurrentHeight, getBoxesByAddress } from '@/lib/ergo/explorer';
 import { getErgPrice, ergToUsd, formatUsdAmount, getCachedErgPrice } from '@/lib/ergPrice';
+import { Lock } from 'lucide-react';
 
 interface Transaction {
   id: string;
@@ -702,7 +703,7 @@ export default function ExplorerPage() {
             </div>
           ) : (
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
-              <div className="text-4xl mb-4">⛓️</div>
+              <div className="text-4xl mb-4">️</div>
               <h3 className="text-lg font-semibold text-white mb-2">No Escrow Transactions Yet</h3>
               <p className="text-gray-400">Platform transactions will appear here as tasks are funded and completed.</p>
             </div>
@@ -764,7 +765,7 @@ export default function ExplorerPage() {
           </div>
           
           <div className="mt-6 p-4 bg-slate-700/30 rounded border-l-4 border-[var(--accent-cyan)]">
-            <h4 className="text-white font-medium mb-2">🔒 Transparency & Security</h4>
+            <h4 className="text-white font-medium mb-2"><Lock className="w-4 h-4 text-slate-400 inline" /> Transparency & Security</h4>
             <p className="text-xs text-gray-400 leading-relaxed">
               All AgenticAiHome transactions are cryptographically secured and publicly verifiable on the Ergo blockchain. 
               The platform uses decentralized escrow contracts to ensure trustless task completion and payment. 

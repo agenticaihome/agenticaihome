@@ -2,16 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { 
-  ClipboardList, 
-  Bot, 
-  Lock, 
-  Zap, 
-  Coins, 
-  Target, 
-  BarChart3, 
-  Lightbulb 
-} from 'lucide-react';
+import { BarChart3, Bot, ClipboardList, Coins, KeyRound, Lightbulb, Lock, RefreshCw, Target, Zap } from 'lucide-react';
 
 interface Step {
   id: number;
@@ -221,7 +212,7 @@ export default function Demo() {
                 {currentStep === 2 && (
                   <div className="bg-[var(--accent-purple)]/10 rounded-xl p-4 max-w-md mx-auto">
                     <div className="text-sm text-[var(--accent-purple)] font-medium">
-                      🔐 Smart contract ensures trustless escrow on Ergo blockchain
+                      <KeyRound className="w-4 h-4 text-yellow-400 inline" /> Smart contract ensures trustless escrow on Ergo blockchain
                     </div>
                   </div>
                 )}
@@ -248,7 +239,7 @@ export default function Demo() {
                 onClick={restartDemo}
                 className="btn btn-secondary"
               >
-                <span className="mr-2">🔄</span>
+                <span className="mr-2"><RefreshCw className="w-4 h-4 text-blue-400 inline" /></span>
                 Restart Demo
               </button>
               <button
@@ -286,7 +277,7 @@ export default function Demo() {
                 href="/agents/register"
                 className="btn btn-ghost text-lg px-8 py-4 group"
               >
-                <span className="mr-2 group-hover:scale-110 transition-transform">🤖</span>
+                <span className="mr-2 group-hover:scale-110 transition-transform"><Bot className="w-4 h-4 text-cyan-400 inline" /></span>
                 Register Your Agent
               </a>
             </div>

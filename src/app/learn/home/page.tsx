@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle, Copy, ChevronRight, Clock, ArrowLeft, ArrowRight, Sun, UtensilsCrossed, Home, Users, Zap, ExternalLink, Eye, Bell } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ArrowRight, Bell, Brain, CheckCircle, ChevronRight, ClipboardList, Clock, Coins, Copy, ExternalLink, Eye, GraduationCap, Home, Lightbulb, Link2, Palette, PartyPopper, Sun, Users, UtensilsCrossed, Wrench, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 interface Lesson {
@@ -26,7 +26,7 @@ const CopyPrompt = ({ prompt, title }: { prompt: string; title: string }) => {
   return (
     <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
       <div className="flex items-center justify-between p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
-        <span className="text-sm font-medium text-slate-300">📋 {title}</span>
+        <span className="text-sm font-medium text-slate-300"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> {title}</span>
         <button
           onClick={handleCopy}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -81,9 +81,9 @@ const lessons: Lesson[] = [
               <h3 className="text-teal-400 font-semibold mb-2">What You'll Wake Up To</h3>
               <div className="bg-black/40 rounded-lg p-3 text-sm space-y-1">
                 <p>☀️ <strong className="text-white">Weather:</strong> 72°F, partly cloudy. No umbrella needed!</p>
-                <p>📅 <strong className="text-white">Today:</strong> Team meeting 10am, dentist 2pm, grocery pickup 5pm</p>
-                <p>🔔 <strong className="text-white">Reminder:</strong> Take vitamins (you forgot yesterday!)</p>
-                <p>⚡ <strong className="text-white">Captain's Tip:</strong> Prep tomorrow's outfit tonight</p>
+                <p>  <strong className="text-white">Today:</strong> Team meeting 10am, dentist 2pm, grocery pickup 5pm</p>
+                <p><Bell className="w-4 h-4 text-yellow-400 inline" /> <strong className="text-white">Reminder:</strong> Take vitamins (you forgot yesterday!)</p>
+                <p><Zap className="w-4 h-4 text-yellow-400 inline" /> <strong className="text-white">Captain's Tip:</strong> Prep tomorrow's outfit tonight</p>
               </div>
             </div>
           </div>
@@ -148,11 +148,11 @@ const lessons: Lesson[] = [
 
 🌤️ **Weather** — Look up the real current weather for my city (temp + conditions) and tell me what to wear.
 
-📅 **Top 3 Today** — If I connected my calendar, list my next 3 events. If not, ask me for my 3 main things today.
+  **Top 3 Today** — If I connected my calendar, list my next 3 events. If not, ask me for my 3 main things today.
 
-🧠 **One Reminder** — The thing I usually forget (or a quick question if you need it).
+<Brain className="w-4 h-4 text-pink-400 inline" /> **One Reminder** — The thing I usually forget (or a quick question if you need it).
 
-⚡ **Captain's Tip** — One tiny action today that makes tomorrow easier.
+<Zap className="w-4 h-4 text-yellow-400 inline" /> **Captain's Tip** — One tiny action today that makes tomorrow easier.
 
 ---
 
@@ -230,7 +230,7 @@ Start by asking me question #1.`}
 
         <div className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">📅 Schedule Optimizer</h4>
+            <h4 className="font-semibold text-white">  Schedule Optimizer</h4>
             <CopyPrompt
               title="Daily Schedule Agent"
               prompt={`You are my Schedule Optimizer. Help me make the most of my day.
@@ -463,7 +463,7 @@ Start by asking what bills and maintenance I want to track.`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">💡 Maintenance Scheduler</h4>
+              <h4 className="font-semibold text-white"><Lightbulb className="w-4 h-4 text-yellow-400 inline" /> Maintenance Scheduler</h4>
               <div className="bg-[var(--bg-card)]/50 rounded-xl p-4 border border-[var(--border-color)]">
                 <p className="text-slate-300 text-sm mb-3">Common maintenance your agent should track:</p>
                 <div className="space-y-2 text-sm">
@@ -492,7 +492,7 @@ Start by asking what bills and maintenance I want to track.`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">📋 Emergency Kit Agent</h4>
+              <h4 className="font-semibold text-white"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> Emergency Kit Agent</h4>
               <CopyPrompt
                 title="Home Emergency Assistant"
                 prompt={`You are my Home Emergency Assistant. When something breaks or goes wrong, help me handle it calmly.
@@ -523,7 +523,7 @@ My emergency: [DESCRIBE THE PROBLEM]`}
         </TryThis>
 
         <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-red-400 mb-2">💰 Money-Saving Insight</h4>
+          <h4 className="font-semibold text-red-400 mb-2"><Coins className="w-4 h-4 text-yellow-400 inline" /> Money-Saving Insight</h4>
           <p className="text-slate-300 text-sm">
             Preventive maintenance costs way less than emergency repairs. A $30 HVAC filter change 
             prevents a $3,000 system replacement. Your agent pays for itself by preventing one major repair.
@@ -579,7 +579,7 @@ What's our biggest family challenge this week?`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">🎓 Homework Helper</h4>
+              <h4 className="font-semibold text-white"><GraduationCap className="w-4 h-4 text-blue-400 inline" /> Homework Helper</h4>
               <CopyPrompt
                 title="Homework Assistant"
                 prompt={`You are my kid's Homework Helper. Make learning fun and reduce homework battles.
@@ -607,7 +607,7 @@ Today's homework challenge:`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">🎨 Activity Generator</h4>
+              <h4 className="font-semibold text-white"><Palette className="w-4 h-4 text-pink-400 inline" /> Activity Generator</h4>
               <CopyPrompt
                 title="Family Activity Planner"
                 prompt={`You are my Family Activity Planner. Generate fun, doable activities for our family.
@@ -642,7 +642,7 @@ We have [TIME AVAILABLE] and want something [ENERGY LEVEL]. Ideas?`}
         </TryThis>
 
         <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-blue-400 mb-2">🧠 Educational Integration</h4>
+          <h4 className="font-semibold text-blue-400 mb-2"><Brain className="w-4 h-4 text-pink-400 inline" /> Educational Integration</h4>
           <p className="text-slate-300 text-sm mb-3">Your agent can turn any interest into learning:</p>
           <div className="space-y-1 text-sm">
             <div className="flex gap-2">
@@ -680,7 +680,7 @@ We have [TIME AVAILABLE] and want something [ENERGY LEVEL]. Ideas?`}
         </div>
 
         <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-xl p-6 border border-purple-500/30">
-          <h4 className="font-semibold text-purple-400 mb-3">🔗 Multi-Agent Workflow Example</h4>
+          <h4 className="font-semibold text-purple-400 mb-3"><Link2 className="w-4 h-4 text-blue-400 inline" /> Multi-Agent Workflow Example</h4>
           <div className="space-y-3 text-sm">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-teal-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xs">
@@ -747,7 +747,7 @@ This week's schedule and priorities:`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">⚡ Automation Triggers</h4>
+              <h4 className="font-semibold text-white"><Zap className="w-4 h-4 text-yellow-400 inline" /> Automation Triggers</h4>
               <div className="space-y-3 text-sm">
                 <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Weather-Based</div>
@@ -765,7 +765,7 @@ This week's schedule and priorities:`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">🔧 Integration Tools</h4>
+              <h4 className="font-semibold text-white"><Wrench className="w-4 h-4 text-slate-400 inline" /> Integration Tools</h4>
               <div className="space-y-3 text-sm">
                 <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Shared Memory</div>
@@ -790,7 +790,7 @@ This week's schedule and priorities:`}
         </TryThis>
 
         <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-amber-400 mb-2">⚠️ Start Simple Warning</h4>
+          <h4 className="font-semibold text-amber-400 mb-2"><AlertTriangle className="w-4 h-4 text-yellow-400 inline" /> Start Simple Warning</h4>
           <p className="text-slate-300 text-sm">
             Don't try to automate everything at once. Master one agent, add another, connect them, 
             then expand. Complex systems break when you least expect it. Simple systems just work.
@@ -1014,7 +1014,7 @@ export default function LearnHomePage() {
                     {currentLesson === lessons.length && (
                       <div className="mt-8 text-center">
                         <div className="bg-gradient-to-r from-[var(--accent-cyan)]/10 to-[var(--accent-purple)]/10 border border-[var(--accent-cyan)]/30 rounded-xl p-6">
-                          <h3 className="text-xl font-bold text-white mb-2">🎉 Course Complete!</h3>
+                          <h3 className="text-xl font-bold text-white mb-2"><PartyPopper className="w-4 h-4 text-yellow-400 inline" /> Course Complete!</h3>
                           <p className="text-[var(--text-secondary)] mb-4">
                             You've mastered AI agents for personal use. Ready to scale up to business?
                           </p>

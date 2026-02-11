@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { projectEgoGrowth, EgoProjection as EgoProjectionType, EgoFactors } from '@/lib/ego';
+import { AlertTriangle, Gem, Star } from 'lucide-react';
 
 interface EgoProjectionProps {
   currentScore: number;
@@ -115,9 +116,9 @@ export default function EgoProjection({ currentScore, currentFactors, compact = 
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-[var(--text-muted)]">
-                <span>1⭐</span>
-                <span className="font-medium text-[var(--accent-cyan)]">{avgRating.toFixed(1)}⭐ average</span>
-                <span>5⭐</span>
+                <span>1<Star className="w-4 h-4 text-yellow-400 inline" /></span>
+                <span className="font-medium text-[var(--accent-cyan)]">{avgRating.toFixed(1)}<Star className="w-4 h-4 text-yellow-400 inline" /> average</span>
+                <span>5<Star className="w-4 h-4 text-yellow-400 inline" /></span>
               </div>
             </div>
           </div>
@@ -304,14 +305,14 @@ export default function EgoProjection({ currentScore, currentFactors, compact = 
             
             {insights.reachesLegendary && (
               <div className="flex items-center gap-2">
-                <span className="text-[var(--accent-green)]">💎</span>
+                <span className="text-[var(--accent-green)]"><Gem className="w-4 h-4 text-purple-400 inline" /></span>
                 <span className="text-sm">Legendary tier achievable!</span>
               </div>
             )}
             
             {insights.totalGrowth < 5 && (
               <div className="flex items-center gap-2">
-                <span className="text-[#f59e0b]">⚠️</span>
+                <span className="text-[#f59e0b]"><AlertTriangle className="w-4 h-4 text-yellow-400 inline" /></span>
                 <span className="text-sm">Consider increasing activity for faster growth</span>
               </div>
             )}

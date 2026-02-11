@@ -2,27 +2,7 @@ import dynamic from 'next/dynamic';
 import StatsBar from '@/components/StatsBar';
 import ScrollReveal from '@/components/ScrollReveal';
 import CopyButton from '@/components/CopyButton';
-import { 
-  Bot, 
-  ClipboardList, 
-  Coins, 
-  Zap, 
-  CheckCircle, 
-  Lock, 
-  Target, 
-  BarChart3, 
-  Shield, 
-  Globe, 
-  Clock, 
-  Gem, 
-  Gamepad2, 
-  Rocket, 
-  Cat, 
-  Building2, 
-  DollarSign, 
-  Pickaxe, 
-  Palette 
-} from 'lucide-react';
+import { Banknote, BarChart3, Bot, Building2, Cat, Check, CheckCircle, ClipboardList, Clock, Coins, DollarSign, Gamepad2, Gem, Globe, Lock, Palette, Pickaxe, Rocket, Shield, Target, Zap } from 'lucide-react';
 
 // Lazy load heavy below-fold components (code-split into separate chunks)
 const ParticleNetwork = dynamic(() => import('@/components/ParticleNetwork'), { loading: () => null });
@@ -733,10 +713,10 @@ export default function Home() {
             {/* Key Numbers Strip */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
               {[
-                { number: '0', label: 'Security Incidents', icon: '🛡️', color: 'green' },
+                { number: '0', label: 'Security Incidents', icon: '🛡', color: 'green' },
                 { number: 'MIT', label: 'Licensed', icon: '📜', color: 'cyan' },
                 { number: '100%', label: 'On-Chain Settlement', icon: '⚡', color: 'green' },
-                { number: '< $0.01', label: 'Transaction Fee', icon: '💸', color: 'cyan' },
+                { number: '< $0.01', label: 'Transaction Fee', icon: '$', color: 'cyan' },
               ].map((stat, index) => (
                 <ScrollReveal key={index} animation="scale-in" delay={index * 100}>
                   <div className="glass-card rounded-xl p-6 text-center card-hover border-[var(--accent-green)]/20 group">
@@ -850,7 +830,7 @@ export default function Home() {
           {/* What's Live Today */}
           <div className="mb-16">
             <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="text-[var(--accent-green)]">✅</span>
+              <span className="text-[var(--accent-green)]"><Check className="w-4 h-4 text-emerald-400 inline" /></span>
               What's Live Today
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
@@ -868,7 +848,7 @@ export default function Home() {
                 'Live ERG/USD price feed — see real dollar values everywhere'
               ].map((item, index) => (
                 <div key={index} className="glass-card rounded-xl p-4 flex items-start gap-3 card-hover border-[var(--accent-green)]/20">
-                  <span className="text-[var(--accent-green)] text-lg mt-0.5">✅</span>
+                  <span className="text-[var(--accent-green)] text-lg mt-0.5">✓</span>
                   <span className="text-sm text-[var(--text-secondary)]">{item}</span>
                 </div>
               ))}
@@ -878,7 +858,7 @@ export default function Home() {
           {/* What's Next */}
           <div className="mb-16">
             <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="text-[var(--accent-cyan)]">🔜</span>
+              <span className="text-[var(--accent-cyan)]">→</span>
               What's Next
             </h3>
             <div className="space-y-4">
@@ -895,7 +875,7 @@ export default function Home() {
                   <span className={`text-lg mt-0.5 ${
                     item.status === 'live' ? 'text-emerald-400' : 'text-[var(--accent-cyan)]'
                   }`}>
-                    {item.status === 'live' ? '✅' : '🔜'}
+                    {item.status === 'live' ? '✓' : '→'}
                   </span>
                   <span className="text-sm text-[var(--text-secondary)]">{item.text}</span>
                   {item.status === 'live' && (
@@ -911,7 +891,7 @@ export default function Home() {
           {/* The Vision */}
           <div className="mb-8">
             <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="text-[var(--accent-purple)]">🌍</span>
+              <span className="text-[var(--accent-purple)]"><Globe className="w-4 h-4 text-blue-400 inline" /></span>
               The Vision
             </h3>
             <div className="space-y-4">
@@ -922,7 +902,7 @@ export default function Home() {
                 'Agent marketplace SDK — build your own agent marketplace'
               ].map((item, index) => (
                 <div key={index} className="glass-card rounded-xl p-4 flex items-start gap-3 card-hover border-[var(--accent-purple)]/20">
-                  <span className="text-[var(--accent-purple)] text-lg mt-0.5">🌍</span>
+                  <span className="text-[var(--accent-purple)] text-lg mt-0.5">◉</span>
                   <span className="text-sm text-[var(--text-secondary)]">{item}</span>
                 </div>
               ))}

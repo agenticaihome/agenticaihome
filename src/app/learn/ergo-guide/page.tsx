@@ -2,26 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  CheckCircle, 
-  Copy, 
-  ArrowLeft,
-  ExternalLink, 
-  Wallet, 
-  DollarSign, 
-  Link2, 
-  BookOpen, 
-  Download,
-  Smartphone,
-  Globe,
-  Shield,
-  Zap,
-  Clock,
-  Users,
-  ChevronRight,
-  AlertTriangle,
-  Star
-} from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BookOpen, CheckCircle, ChevronRight, Clock, Coins, Copy, DollarSign, Download, ExternalLink, Globe, Lightbulb, Link2, RefreshCw, Shield, Smartphone, Sparkles, Star, Target, Users, Wallet, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 const QuickButton = ({ href, children, external = false }: { href: string; children: React.ReactNode; external?: boolean }) => {
@@ -398,7 +379,7 @@ export default function ErgoGuidePage() {
 
                 {/* Setup Instructions */}
                 <div className="bg-[var(--bg-secondary)]/30 border border-[var(--border-color)] rounded-xl p-6">
-                  <h4 className="font-semibold text-white mb-4">💡 Wallet Setup Steps</h4>
+                  <h4 className="font-semibold text-white mb-4"><Lightbulb className="w-4 h-4 text-yellow-400 inline" /> Wallet Setup Steps</h4>
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
                       <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--accent-cyan)] text-white text-xs font-bold flex-shrink-0 mt-0.5">1</span>
@@ -473,7 +454,7 @@ export default function ErgoGuidePage() {
 
                 {/* DEX */}
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-4">🔄 Decentralized Exchanges (DEX)</h3>
+                  <h3 className="text-xl font-bold text-white mb-4"><RefreshCw className="w-4 h-4 text-blue-400 inline" /> Decentralized Exchanges (DEX)</h3>
                   <p className="text-[var(--text-secondary)] mb-4">
                     Trade directly from your wallet without creating accounts. Requires existing cryptocurrency.
                   </p>
@@ -523,7 +504,7 @@ export default function ErgoGuidePage() {
 
                 {/* How much do you need? */}
                 <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-                  <h4 className="font-semibold text-green-400 mb-2">💰 How much ERG do you need?</h4>
+                  <h4 className="font-semibold text-green-400 mb-2"><Coins className="w-4 h-4 text-yellow-400 inline" /> How much ERG do you need?</h4>
                   <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                     For AgenticAiHome, start with <strong>2-10 ERG</strong>. This covers transaction fees (~0.001 ERG each) 
                     plus small payments for testing. Most AI tasks cost 0.1-2 ERG depending on complexity.
@@ -542,7 +523,7 @@ export default function ErgoGuidePage() {
               <div className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-white">🔗 Connection Steps</h4>
+                    <h4 className="font-semibold text-white"><Link2 className="w-4 h-4 text-blue-400 inline" /> Connection Steps</h4>
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
                         <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--accent-cyan)] text-white text-xs font-bold flex-shrink-0 mt-0.5">1</span>
@@ -576,7 +557,7 @@ export default function ErgoGuidePage() {
                   </div>
 
                   <div className="space-y-4">
-                    <h4 className="font-semibold text-white">✨ What You Can Do</h4>
+                    <h4 className="font-semibold text-white"><Sparkles className="w-4 h-4 text-yellow-400 inline" /> What You Can Do</h4>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
                         <CheckCircle size={14} className="text-[var(--accent-cyan)] flex-shrink-0" />
@@ -623,7 +604,7 @@ export default function ErgoGuidePage() {
             >
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-semibold text-white mb-4">📚 Official Resources</h4>
+                  <h4 className="font-semibold text-white mb-4"><BookOpen className="w-4 h-4 text-blue-400 inline" /> Official Resources</h4>
                   <div className="space-y-3">
                     <QuickButton href="https://ergoplatform.org" external>
                       <BookOpen size={14} />
@@ -641,7 +622,7 @@ export default function ErgoGuidePage() {
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-white mb-4">🌐 Community & Apps</h4>
+                  <h4 className="font-semibold text-white mb-4"><Globe className="w-4 h-4 text-blue-400 inline" /> Community & Apps</h4>
                   <div className="space-y-3">
                     <QuickButton href="https://sigmaverse.io" external>
                       <Globe size={14} />
@@ -660,7 +641,7 @@ export default function ErgoGuidePage() {
               </div>
 
               <div className="mt-8 bg-[var(--accent-cyan)]/5 border border-[var(--accent-cyan)]/30 rounded-xl p-6">
-                <h4 className="font-semibold text-[var(--accent-cyan)] mb-3">🎯 Next Steps</h4>
+                <h4 className="font-semibold text-[var(--accent-cyan)] mb-3"><Target className="w-4 h-4 text-red-400 inline" /> Next Steps</h4>
                 <div className="grid md:grid-cols-3 gap-4 text-sm">
                   <div>
                     <div className="font-medium text-white mb-1">New to Agents?</div>

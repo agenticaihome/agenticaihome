@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle, Copy, ArrowLeft, ArrowRight, GamepadIcon, Brain, Calculator, User, Zap, Target, Sparkles, Timer, TrendingUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BarChart3, Brain, Calculator, Check, CheckCircle, ClipboardList, Coins, Copy, FileText, GamepadIcon, Lightbulb, Lock, PartyPopper, Search, Shield, Sparkles, Star, Target, Timer, TrendingUp, User, Users, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 // Agent Triage Challenge Component
@@ -81,9 +81,9 @@ const AgentTriageChallenge = () => {
           <h3 className="text-xl font-bold text-white mb-2">Challenge Complete!</h3>
           <div className="text-3xl font-bold text-green-400 mb-2">{score}/{tasks.length}</div>
           <p className="text-slate-300 mb-4">
-            {percentage >= 80 ? "🎉 Excellent! You understand AI agent specialization." :
-             percentage >= 60 ? "👍 Good job! You're getting the hang of this." :
-             "🤔 Keep learning! Each agent has specific strengths."}
+            {percentage >= 80 ? "Excellent! You understand AI agent specialization." :
+             percentage >= 60 ? "Good job! You're getting the hang of this." :
+             "Keep learning! Each agent has specific strengths."}
           </p>
           <p className="text-slate-400 text-sm">
             {percentage >= 80 ? "You're ready to build your own agent team!" :
@@ -270,7 +270,7 @@ const PromptBuilder = () => {
 
         <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
           <div className="flex items-center justify-between p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
-            <span className="text-sm font-medium text-slate-300">📋 Generated Prompt</span>
+            <span className="text-sm font-medium text-slate-300"><ClipboardList className="w-4 h-4 text-slate-400 inline" /> Generated Prompt</span>
             <button
               onClick={copyPrompt}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
@@ -429,7 +429,7 @@ const CostCalculator = () => {
 
             <div className="mt-6 pt-4 border-t border-[var(--border-color)]">
               <div className="text-center text-sm text-[var(--text-secondary)]">
-                💡 <strong>ROI: {netSavings > 0 ? ((netSavings / aiCost) * 100).toFixed(0) : 0}%</strong> return on AI investment
+                <Lightbulb className="w-4 h-4 text-yellow-400 inline" /> <strong>ROI: {netSavings > 0 ? ((netSavings / aiCost) * 100).toFixed(0) : 0}%</strong> return on AI investment
               </div>
             </div>
           </div>
@@ -438,7 +438,7 @@ const CostCalculator = () => {
             <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-4 text-center">
               <Sparkles className="w-6 h-6 text-green-400 mx-auto mb-2" />
               <p className="text-green-400 font-medium text-sm">
-                🎉 Excellent ROI! You should definitely invest in AI agents.
+                <PartyPopper className="w-4 h-4 text-yellow-400 inline" /> Excellent ROI! You should definitely invest in AI agents.
               </p>
             </div>
           )}
@@ -463,52 +463,52 @@ const TaskFlowSimulator = () => {
   const [showResults, setShowResults] = useState(false);
 
   const mockAgents = [
-    { id: 1, name: "Alex Research Pro", skills: ["research", "analysis"], egoScore: 85, hourlyRate: 12, completionRate: 95, avatar: "🔬" },
-    { id: 2, name: "Sarah Content Creator", skills: ["writing", "content"], egoScore: 78, hourlyRate: 10, completionRate: 92, avatar: "✍️" },
-    { id: 3, name: "Mike Data Analyst", skills: ["data-analysis", "python"], egoScore: 91, hourlyRate: 15, completionRate: 98, avatar: "📊" }
+    { id: 1, name: "Alex Research Pro", skills: ["research", "analysis"], egoScore: 85, hourlyRate: 12, completionRate: 95, avatar: "AR" },
+    { id: 2, name: "Sarah Content Creator", skills: ["writing", "content"], egoScore: 78, hourlyRate: 10, completionRate: 92, avatar: "SC" },
+    { id: 3, name: "Mike Data Analyst", skills: ["data-analysis", "python"], egoScore: 91, hourlyRate: 15, completionRate: 98, avatar: "MD" }
   ];
 
   const steps = [
     {
       title: "Post Your Task",
       description: "Create a task with clear requirements and budget",
-      icon: "📝",
+      icon: "post",
       action: "Task Posted"
     },
     {
       title: "Agents Bid",
       description: "Qualified agents submit proposals for your task",
-      icon: "🙋‍♂️",
+      icon: "bid",
       action: "3 Bids Received"
     },
     {
       title: "Select Agent",
       description: "Choose the best agent based on skills and EGO score",
-      icon: "✅",
+      icon: "select",
       action: "Agent Selected"
     },
     {
       title: "Escrow Funds",
       description: "Your payment is secured in blockchain escrow",
-      icon: "🔒",
+      icon: "lock",
       action: "Funds Locked"
     },
     {
       title: "Work Completed",
       description: "Agent delivers the completed work for review",
-      icon: "🎯",
+      icon: "complete",
       action: "Work Delivered"
     },
     {
       title: "Release Payment",
       description: "Review work, rate agent, and release payment",
-      icon: "💰",
+      icon: "pay",
       action: "Payment Released"
     },
     {
       title: "EGO Updated",
       description: "Agent's reputation score is updated based on performance",
-      icon: "⭐",
+      icon: "ego",
       action: "EGO +5"
     }
   ];
@@ -550,7 +550,7 @@ const TaskFlowSimulator = () => {
     return (
       <div className="text-center space-y-6">
         <div className="bg-gradient-to-r from-[var(--accent-green)]/20 to-emerald-500/20 border border-[var(--accent-green)]/30 rounded-xl p-6">
-          <div className="text-4xl mb-4">🎉</div>
+          <div className="text-4xl mb-4"><PartyPopper className="w-4 h-4 text-yellow-400 inline" /></div>
           <h4 className="text-xl font-bold text-white mb-2">Task Flow Complete!</h4>
           <p className="text-[var(--text-secondary)] mb-4">
             You've experienced the full AgenticAiHome workflow from task posting to completion.
@@ -570,7 +570,7 @@ const TaskFlowSimulator = () => {
               <div className="text-xs text-[var(--text-secondary)]">EGO Reward</div>
             </div>
             <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-3">
-              <div className="text-lg font-bold text-yellow-400">5⭐</div>
+              <div className="text-lg font-bold text-yellow-400">5<Star className="w-4 h-4 text-yellow-400 inline" /></div>
               <div className="text-xs text-[var(--text-secondary)]">Rating</div>
             </div>
           </div>
@@ -580,28 +580,28 @@ const TaskFlowSimulator = () => {
           <h5 className="font-bold text-white mb-3">What Makes This Special?</h5>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div className="flex items-start gap-3">
-              <span className="text-[var(--accent-cyan)]">🛡️</span>
+              <span className="text-[var(--accent-cyan)]"><Shield className="w-4 h-4 text-blue-400 inline" /></span>
               <div>
                 <div className="font-medium text-white">Blockchain Security</div>
                 <div className="text-[var(--text-secondary)]">Escrow protects both parties</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-[var(--accent-green)]">⭐</span>
+              <span className="text-[var(--accent-green)]"><Star className="w-4 h-4 text-yellow-400 inline" /></span>
               <div>
                 <div className="font-medium text-white">EGO Reputation</div>
                 <div className="text-[var(--text-secondary)]">Tamper-proof agent ratings</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-[var(--accent-purple)]">🔍</span>
+              <span className="text-[var(--accent-purple)]"><Search className="w-4 h-4 text-slate-400 inline" /></span>
               <div>
                 <div className="font-medium text-white">Skill Matching</div>
                 <div className="text-[var(--text-secondary)]">Find the perfect agent</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-yellow-400">⚡</span>
+              <span className="text-yellow-400"><Zap className="w-4 h-4 text-yellow-400 inline" /></span>
               <div>
                 <div className="font-medium text-white">Fast & Efficient</div>
                 <div className="text-[var(--text-secondary)]">No middlemen or delays</div>
@@ -641,7 +641,15 @@ const TaskFlowSimulator = () => {
       {/* Current Step */}
       <div className={`bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl p-6 transition-all duration-300 ${isAnimating ? 'scale-95 opacity-50' : 'scale-100 opacity-100'}`}>
         <div className="text-center mb-6">
-          <div className="text-4xl mb-3">{steps[currentStep].icon}</div>
+          <div className="text-4xl mb-3">
+            {steps[currentStep].icon === 'post' && <FileText className="w-10 h-10 text-slate-400 mx-auto" />}
+            {steps[currentStep].icon === 'bid' && <Users className="w-10 h-10 text-blue-400 mx-auto" />}
+            {steps[currentStep].icon === 'select' && <Check className="w-10 h-10 text-emerald-400 mx-auto" />}
+            {steps[currentStep].icon === 'lock' && <Lock className="w-10 h-10 text-slate-400 mx-auto" />}
+            {steps[currentStep].icon === 'complete' && <Target className="w-10 h-10 text-red-400 mx-auto" />}
+            {steps[currentStep].icon === 'pay' && <Coins className="w-10 h-10 text-yellow-400 mx-auto" />}
+            {steps[currentStep].icon === 'ego' && <Star className="w-10 h-10 text-yellow-400 mx-auto" />}
+          </div>
           <h4 className="text-xl font-bold text-white mb-2">{steps[currentStep].title}</h4>
           <p className="text-[var(--text-secondary)]">{steps[currentStep].description}</p>
         </div>
@@ -747,18 +755,18 @@ const TaskFlowSimulator = () => {
                 </div>
                 {currentStep === 3 && (
                   <div className="text-sm text-[var(--accent-cyan)]">
-                    🔒 {simulationData.taskBudget} ERG secured in escrow
+                    <Lock className="w-4 h-4 text-slate-400 inline" /> {simulationData.taskBudget} ERG secured in escrow
                   </div>
                 )}
                 {currentStep === 4 && (
                   <div className="text-sm text-[var(--accent-green)]">
-                    ✅ Work completed and delivered for review
+                    <Check className="w-4 h-4 text-emerald-400 inline" /> Work completed and delivered for review
                   </div>
                 )}
                 {currentStep === 5 && (
                   <div className="space-y-3">
                     <div className="text-sm text-[var(--accent-green)]">
-                      ⭐ Rate the completed work (1-5 stars)
+                      <Star className="w-4 h-4 text-yellow-400 inline" /> Rate the completed work (1-5 stars)
                     </div>
                     <div className="flex justify-center gap-1">
                       {[1,2,3,4,5].map(rating => (
@@ -767,7 +775,7 @@ const TaskFlowSimulator = () => {
                           onClick={() => setSimulationData({...simulationData, completionRating: rating, egoReward: rating})}
                           className={`text-2xl ${simulationData.completionRating >= rating ? 'text-yellow-400' : 'text-gray-600'}`}
                         >
-                          ⭐
+                          <Star className="w-4 h-4 text-yellow-400 inline" />
                         </button>
                       ))}
                     </div>
@@ -782,7 +790,7 @@ const TaskFlowSimulator = () => {
           <div className="text-center space-y-4">
             <div className="bg-[var(--accent-green)]/20 border border-[var(--accent-green)]/30 rounded-lg p-4">
               <div className="text-[var(--accent-green)] font-medium mb-2">
-                Transaction Complete! 🎉
+                Transaction Complete! <PartyPopper className="w-4 h-4 text-yellow-400 inline" />
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
                 Agent's EGO score increased by {simulationData.egoReward} points for excellent work

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
+import { MessageSquare } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -108,7 +109,7 @@ export default function DisputeMessages({
   return (
     <div className="border border-gray-700 rounded-lg bg-gray-800/30 flex flex-col" style={{ maxHeight: '400px' }}>
       <div className="px-4 py-3 border-b border-gray-700">
-        <h5 className="text-white font-semibold text-sm">💬 Discussion</h5>
+        <h5 className="text-white font-semibold text-sm"><MessageSquare className="w-4 h-4 text-blue-400 inline" /> Discussion</h5>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[120px]">

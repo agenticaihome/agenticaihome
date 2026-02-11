@@ -1,25 +1,21 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
+import { isMobileDevice } from '@/lib/ergo/ergopay';
 
 interface AuthGuardProps {
   children: React.ReactNode;
-  redirectTo?: string;
 }
 
-export default function AuthGuard({ children, redirectTo = '/auth' }: AuthGuardProps) {
+export default function AuthGuard({ children }: AuthGuardProps) {
   const { isAuthenticated, loading, connect, isAvailable } = useWallet();
-  const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push(redirectTo);
-    }
-  }, [isAuthenticated, loading, router, redirectTo]);
+    setIsMobile(isMobileDevice());
+  }, []);
 
-  // Show loading state while checking auth
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -31,7 +27,6 @@ export default function AuthGuard({ children, redirectTo = '/auth' }: AuthGuardP
     );
   }
 
-  // Show wallet connection prompt if not authenticated
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
@@ -43,10 +38,24 @@ export default function AuthGuard({ children, redirectTo = '/auth' }: AuthGuardP
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Connect Your Wallet</h1>
           <p className="text-gray-400 mb-6">
-            You need to connect your Ergo wallet to continue
+            {isMobile 
+              ? 'Connect your mobile Ergo wallet to continue' 
+              : 'You need to connect your Ergo wallet to continue'}
           </p>
           
-          {isAvailable ? (
+          {isMobile ? (
+            <div className="space-y-4">
+              <a
+                href="/getting-started"
+                className="block px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all"
+              >
+                Connect via ErgoPay →
+              </a>
+              <p className="text-xs text-gray-500">
+                Use Terminus (iOS) or Ergo Wallet (Android) to connect
+              </p>
+            </div>
+          ) : isAvailable ? (
             <button
               onClick={() => connect()}
               className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-all"
@@ -54,19 +63,27 @@ export default function AuthGuard({ children, redirectTo = '/auth' }: AuthGuardP
               Connect Wallet
             </button>
           ) : (
-            <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
-              <p className="text-orange-400 font-medium mb-2">No Wallet Detected</p>
-              <p className="text-orange-300 text-sm mb-4">
-                You need an Ergo wallet to continue
-              </p>
-              <button
-                onClick={() => window.open('https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai', '_blank')}
-                className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-all"
-              >
-                Install Nautilus Wallet
-              </button>
+            <div className="space-y-4">
+              <div className="p-4 bg-orange-500/10 border border-orange-500/30 rounded-lg">
+                <p className="text-orange-400 font-medium mb-2">No Wallet Detected</p>
+                <p className="text-orange-300 text-sm mb-4">
+                  Install an Ergo wallet to continue
+                </p>
+                <button
+                  onClick={() => window.open('https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai', '_blank')}
+                  className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-all"
+                >
+                  Install Nautilus Wallet
+                </button>
+              </div>
             </div>
           )}
+          
+          <div className="mt-6">
+            <a href="/" className="text-gray-400 hover:text-gray-300 transition-colors text-sm">
+              ← Back to Home
+            </a>
+          </div>
         </div>
       </div>
     );

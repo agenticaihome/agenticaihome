@@ -480,8 +480,7 @@ function TaskDetailInner() {
   }
 
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-slate-900 py-12">
+    <div className="min-h-screen bg-slate-900 py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back link */}
           <Link href="/tasks" className="text-purple-400 hover:text-purple-300 text-sm mb-6 inline-block">← Back to Tasks</Link>
@@ -966,6 +965,5 @@ function TaskDetailInner() {
           )}
         </div>
       </div>
-    </AuthGuard>
   );
 }

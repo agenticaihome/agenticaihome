@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useWallet } from '@/contexts/WalletContext';
 import { supabase } from '@/lib/supabase';
 import EgoTokenViewer from '@/components/EgoTokenViewer';
+import NotificationSettings from '@/components/NotificationSettings';
 import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
 import { getCurrentHeight } from '@/lib/ergo/explorer';
 import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
@@ -385,6 +386,11 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold text-white mb-4">🏆 EGO Reputation</h2>
             <EgoTokenViewer address={userAddress} />
           </div>
+        </div>
+
+        {/* Notification Settings */}
+        <div className="mb-8">
+          <NotificationSettings />
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 mb-12">

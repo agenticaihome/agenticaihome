@@ -2,6 +2,7 @@
 
 import { supabase } from './supabase';
 import { useEffect, useState, useCallback } from 'react';
+import { sendTelegramNotification } from './notification-triggers';
 
 export interface Notification {
   id: string;
@@ -55,6 +56,15 @@ export async function createNotification(notification: Omit<Notification, 'id' |
       console.error('Error creating notification:', error);
       return null;
     }
+
+    // Fire-and-forget Telegram notification
+    sendTelegramNotification(
+      notification.recipientAddress,
+      notification.type,
+      notification.title,
+      notification.message
+    ).catch(() => {});
+
     return data;
   } catch (error) {
     console.error('Error creating notification:', error);

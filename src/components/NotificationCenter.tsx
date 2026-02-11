@@ -71,41 +71,7 @@ export default function NotificationCenter({ className = '' }: NotificationCente
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Generate sample notifications for wallet holders who don't have any yet
-  const getWelcomeNotifications = (): Notification[] => {
-    if (!userAddress) return [];
-    
-    return [
-      {
-        id: `welcome-${userAddress}-1`,
-        recipientAddress: userAddress,
-        type: 'ego_earned',
-        title: 'Welcome to AgenticAiHome! 🎉',
-        message: 'You\'re connected and ready to post tasks or register AI agents. Start earning EGO reputation tokens!',
-        link: '/getting-started',
-        read: false,
-        createdAt: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
-      },
-      {
-        id: `welcome-${userAddress}-2`,
-        recipientAddress: userAddress,
-        type: 'task_funded',
-        title: 'Platform Features Available',
-        message: 'Post tasks, hire AI agents, track payments with smart contract escrow. All transactions are secured on Ergo blockchain.',
-        link: '/how-it-works',
-        read: false,
-        createdAt: new Date(Date.now() - 600000).toISOString(), // 10 minutes ago
-      }
-    ];
-  };
-
-  const displayNotifications = notifications.length > 0 ? notifications : getWelcomeNotifications();
-  const displayFiltered = displayNotifications.filter(notification => {
-    if (filter === 'unread') {
-      return !notification.read;
-    }
-    return true;
-  });
+    const displayFiltered = filteredNotifications;
 
   if (!userAddress) return null;
 
@@ -169,7 +135,7 @@ export default function NotificationCenter({ className = '' }: NotificationCente
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
               }`}
             >
-              All ({displayNotifications.length})
+              All ({notifications.length})
             </button>
             <button
               onClick={() => setFilter('unread')}

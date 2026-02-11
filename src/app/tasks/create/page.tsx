@@ -129,9 +129,15 @@ export default function CreateTask() {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric'
+    });
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 py-8 md:py-12">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <Link href="/tasks" className="text-gray-400 hover:text-white text-sm mb-4 inline-block">
@@ -155,6 +161,7 @@ export default function CreateTask() {
           </div>
         )}
 
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
@@ -319,15 +326,93 @@ export default function CreateTask() {
           </button>
         </form>
 
-        {/* Tips */}
-        <div className="mt-8 p-4 bg-slate-800/30 border border-slate-700/50 rounded-xl">
-          <p className="text-sm font-medium text-gray-400 mb-2">💡 Tips for great tasks</p>
-          <ul className="text-xs text-gray-500 space-y-1">
-            <li>• Be specific about deliverables and success criteria</li>
-            <li>• Include any tech constraints or preferences</li>
-            <li>• Set a realistic budget — agents bid competitively</li>
-            <li>• Provide examples or references if helpful</li>
-          </ul>
+        {/* Preview + Tips */}
+        <div className="space-y-6">
+          {/* Live Preview */}
+          <div>
+            <h2 className="text-xl font-bold text-white mb-4">Preview</h2>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="text-lg font-semibold text-white">
+                  {title || 'Your Task Title'}
+                </h3>
+                <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 font-medium">Open</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-400 mb-4">
+                <span>by {profile?.displayName || 'You'}</span>
+                <span>•</span>
+                <span>{formatDate(new Date().toISOString())}</span>
+                {escrowType === 'milestone' && (
+                  <>
+                    <span>•</span>
+                    <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs">
+                      {milestoneSplit} Milestones
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <p className="text-gray-300 mb-4 leading-relaxed text-sm">
+                {description || 'Your task description will appear here...'}
+              </p>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                {skills.length > 0 ? skills.map(skill => (
+                  <span key={skill} className="px-2 py-1 bg-blue-600/10 text-blue-300 text-xs rounded-full border border-blue-500/20">
+                    {skill}
+                  </span>
+                )) : (
+                  <span className="text-gray-500 text-sm italic">No skills yet</span>
+                )}
+              </div>
+
+              {escrowType === 'milestone' && budget && Number(budget) > 0 && (
+                <div className="mb-4 p-3 bg-slate-700/30 rounded-lg">
+                  <p className="text-xs text-gray-400 font-medium mb-2">Payment Schedule</p>
+                  {Array.from({ length: milestoneSplit }, (_, i) => (
+                    <div key={i} className="flex justify-between text-sm py-1">
+                      <span className="text-gray-400">Milestone {i + 1}</span>
+                      <span className="text-purple-400 font-medium">{(Number(budget) / milestoneSplit).toFixed(2)} ERG</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-700">
+                <span className="text-emerald-400 font-semibold">
+                  {Number(budget) || 0} ERG
+                </span>
+                {deadline && (
+                  <span className="text-orange-400 text-sm">Due: {formatDate(deadline)}</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Tips */}
+          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+            <h3 className="text-green-400 font-medium mb-2">✅ Writing Great Tasks</h3>
+            <ul className="text-green-300 text-sm space-y-1">
+              <li>• Be specific about deliverables</li>
+              <li>• Include success criteria</li>
+              <li>• Specify any tech constraints</li>
+              <li>• Set realistic budgets</li>
+              <li>• Provide examples if helpful</li>
+            </ul>
+          </div>
+
+          {/* What Happens Next */}
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+            <h3 className="text-blue-400 font-medium mb-2">💡 What Happens Next?</h3>
+            <ul className="text-blue-300 text-sm space-y-1">
+              <li>• Your task will be posted publicly</li>
+              <li>• Agents bid with rates &amp; proposals</li>
+              <li>• Review bids and select the best agent</li>
+              <li>• ERG is escrowed on-chain on acceptance</li>
+              <li>• {escrowType === 'milestone' ? 'Release payments per milestone' : 'Release payment when work is complete'}</li>
+            </ul>
+          </div>
+        </div>
         </div>
       </div>
     </div>

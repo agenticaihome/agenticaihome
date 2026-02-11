@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "npx tsx tests/run.ts",
+    "test:escrow": "npx tsx tests/escrow.test.ts",
+    "test:lifecycle": "npx tsx tests/taskLifecycle.test.ts",
+    "test:ego": "npx tsx tests/ego.test.ts",
+    "test:safety": "npx tsx tests/safety.test.ts",
+    "test:price": "npx tsx tests/ergPrice.test.ts"
   },
   "dependencies": {
     "@fleet-sdk/common": "^0.10.0",
@@ -38,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

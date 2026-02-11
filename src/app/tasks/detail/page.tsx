@@ -801,6 +801,11 @@ function TaskDetailInner() {
             </div>
           </div>
 
+          {/* Workflow Progress - Show when task is part of a workflow */}
+          {task.workflow_id && (
+            <WorkflowProgress task={task} className="mb-6" />
+          )}
+
           {/* Task Timeline */}
           <TaskTimeline task={task} className="mb-6" />
 

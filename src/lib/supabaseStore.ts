@@ -558,6 +558,20 @@ async function serviceUpdate(table: string, data: Record<string, unknown>, match
 export async function updateTask(id: string, updates: Partial<Task>): Promise<Task | null> {
   const dbUpdates = taskToDb(updates);
   await serviceUpdate('tasks', dbUpdates, { id });
+  
+  // Check if task status was changed to 'completed' for workflow automation
+  if (updates.status === 'completed') {
+    try {
+      const { onTaskComplete } = await import('./workflows');
+      // Fire-and-forget: don't block task update on workflow processing
+      onTaskComplete(id).catch(error => {
+        console.error('Workflow automation failed for completed task:', error);
+      });
+    } catch (error) {
+      console.error('Failed to trigger workflow automation:', error);
+    }
+  }
+  
   // Re-fetch to return fresh data
   const { data } = await supabase.from('tasks').select('*').eq('id', id).single();
   return data ? dbToTask(data) : null;

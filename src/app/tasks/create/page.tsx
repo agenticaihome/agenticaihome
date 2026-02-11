@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
@@ -10,7 +10,8 @@ import SkillSelector from '@/components/SkillSelector';
 import { initTaskFlow } from '@/lib/taskFlow';
 import { logEvent } from '@/lib/events';
 import { sanitizeText, sanitizeNumber, validateFormSubmission, INPUT_LIMITS } from '@/lib/sanitize';
-import { AlertTriangle, Lock, CheckCircle, Lightbulb } from 'lucide-react';
+import { getErgPrice, usdToErg, ergToUsd, formatUsdAmount, formatErgAmount } from '@/lib/ergPrice';
+import { AlertTriangle, Lock, CheckCircle, Lightbulb, RefreshCw, DollarSign } from 'lucide-react';
 
 export default function CreateTask() {
   const { userAddress, profile } = useWallet();
@@ -26,11 +27,78 @@ export default function CreateTask() {
   const [deadline, setDeadline] = useState('');
   const [escrowType, setEscrowType] = useState<'simple' | 'milestone'>('simple');
   const [milestoneSplit, setMilestoneSplit] = useState<2 | 3 | 4>(2);
+  
+  // USD/ERG currency toggle and price states
+  const [currencyMode, setCurrencyMode] = useState<'USD' | 'ERG'>('USD');
+  const [ergPrice, setErgPrice] = useState<number | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [isLoadingPrice, setIsLoadingPrice] = useState(false);
+  const [convertedAmount, setConvertedAmount] = useState<string>('');
 
   const getMinDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
+  };
+
+  // Fetch ERG price on component mount
+  useEffect(() => {
+    const fetchPrice = async () => {
+      setIsLoadingPrice(true);
+      setPriceError(null);
+      try {
+        const price = await getErgPrice();
+        setErgPrice(price);
+      } catch (error) {
+        console.error('Failed to fetch ERG price:', error);
+        setPriceError('Unable to fetch current ERG price');
+      } finally {
+        setIsLoadingPrice(false);
+      }
+    };
+    
+    fetchPrice();
+  }, []);
+
+  // Update converted amount when budget or currency mode changes
+  useEffect(() => {
+    const updateConversion = async () => {
+      if (!budget || !ergPrice || Number(budget) <= 0) {
+        setConvertedAmount('');
+        return;
+      }
+
+      try {
+        const budgetNum = Number(budget);
+        if (currencyMode === 'USD') {
+          const ergAmount = await usdToErg(budgetNum);
+          setConvertedAmount(ergAmount.toFixed(3));
+        } else {
+          const usdAmount = await ergToUsd(budgetNum);
+          setConvertedAmount(usdAmount.toFixed(2));
+        }
+      } catch (error) {
+        console.error('Failed to convert currency:', error);
+        setConvertedAmount('');
+      }
+    };
+
+    updateConversion();
+  }, [budget, currencyMode, ergPrice]);
+
+  const refreshPrice = async () => {
+    setIsLoadingPrice(true);
+    setPriceError(null);
+    try {
+      // Force a fresh price fetch by clearing cache
+      const price = await getErgPrice();
+      setErgPrice(price);
+    } catch (error) {
+      console.error('Failed to refresh ERG price:', error);
+      setPriceError('Unable to fetch current ERG price');
+    } finally {
+      setIsLoadingPrice(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,11 +123,23 @@ export default function CreateTask() {
       const sanitizedDesc = sanitizeText(description, INPUT_LIMITS.TASK_DESCRIPTION);
       const sanitizedBudget = sanitizeNumber(budget, 0.001, 1000000);
 
+      // Calculate both ERG and USD amounts
+      let budgetErg: number;
+      let budgetUsd: number;
+      
+      if (currencyMode === 'USD') {
+        budgetUsd = sanitizedBudget;
+        budgetErg = await usdToErg(sanitizedBudget);
+      } else {
+        budgetErg = sanitizedBudget;
+        budgetUsd = await ergToUsd(sanitizedBudget);
+      }
+
       const validation = validateFormSubmission({
         title: sanitizedTitle,
         description: sanitizedDesc,
         skillsRequired: skills,
-        budgetErg: sanitizedBudget
+        budgetErg: budgetErg
       });
       if (!validation.valid || validation.isSpam) {
         throw new Error(validation.errors.join(', '));
@@ -80,7 +160,8 @@ export default function CreateTask() {
         title: sanitizedTitle,
         description: sanitizedDesc,
         skillsRequired: skills,
-        budgetErg: sanitizedBudget,
+        budgetErg: budgetErg,
+        budgetUsd: budgetUsd,
         creatorName: profile?.displayName,
         escrowType,
         ...(milestones && { milestones }),
@@ -117,7 +198,7 @@ export default function CreateTask() {
       try { initTaskFlow(taskResult.id, userAddress); } catch {}
       try { logEvent({
         type: 'task_created',
-        message: `Task "${sanitizedTitle}" created with ${sanitizedBudget} ERG budget`,
+        message: `Task "${sanitizedTitle}" created with ${currencyMode === 'USD' ? `$${budgetUsd} (${budgetErg.toFixed(3)} ERG)` : `${budgetErg} ERG ($${budgetUsd.toFixed(2)})`} budget`,
         taskId: taskResult.id,
         actor: userAddress,
       }); } catch {}
@@ -209,36 +290,104 @@ export default function CreateTask() {
             />
           </div>
 
-          {/* Budget + Deadline — side by side */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="budget" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                Budget (ERG)
-              </label>
+          {/* Budget */}
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+              Budget
+            </label>
+            
+            {/* Currency Toggle */}
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setCurrencyMode('USD')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
+                    currencyMode === 'USD'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)]'
+                  }`}
+                >
+                  <DollarSign className="w-3.5 h-3.5" />
+                  USD
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrencyMode('ERG')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                    currencyMode === 'ERG'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:text-white hover:bg-[var(--bg-card)]'
+                  }`}
+                >
+                  Σ ERG
+                </button>
+              </div>
+              
+              {/* Price refresh */}
+              <div className="flex items-center gap-2">
+                {ergPrice && (
+                  <span className="text-xs text-[var(--text-muted)]">
+                    1 ERG = ${ergPrice.toFixed(4)}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={refreshPrice}
+                  disabled={isLoadingPrice}
+                  className="p-1.5 text-[var(--text-secondary)] hover:text-[var(--accent-cyan)] hover:bg-[var(--bg-card)] rounded-lg transition-all disabled:opacity-50"
+                  title="Refresh price"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingPrice ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Budget Input */}
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]">
+                {currencyMode === 'USD' ? '$' : 'Σ'}
+              </div>
               <input
                 id="budget"
                 type="number"
-                step="0.01"
+                step={currencyMode === 'USD' ? '1' : '0.01'}
                 min="0"
                 value={budget}
                 onChange={e => setBudget(e.target.value)}
-                placeholder="10.00"
-                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
+                placeholder={currencyMode === 'USD' ? '50' : '10.00'}
+                className="w-full pl-8 pr-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
               />
             </div>
-            <div>
-              <label htmlFor="deadline" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                Deadline <span className="text-[var(--text-muted)]">(optional)</span>
-              </label>
-              <input
-                id="deadline"
-                type="date"
-                value={deadline}
-                onChange={e => setDeadline(e.target.value)}
-                min={getMinDate()}
-                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
-              />
-            </div>
+            
+            {/* Conversion Display */}
+            {convertedAmount && (
+              <div className="mt-2 text-sm text-[var(--text-secondary)]">
+                ≈ {currencyMode === 'USD' ? `${convertedAmount} ERG` : `$${convertedAmount}`}
+              </div>
+            )}
+            
+            {/* Price Error */}
+            {priceError && (
+              <div className="mt-2 text-xs text-red-400">
+                {priceError}
+              </div>
+            )}
+          </div>
+
+          {/* Deadline */}
+          <div>
+            <label htmlFor="deadline" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+              Deadline <span className="text-[var(--text-muted)]">(optional)</span>
+            </label>
+            <input
+              id="deadline"
+              type="date"
+              value={deadline}
+              onChange={e => setDeadline(e.target.value)}
+              min={getMinDate()}
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
+            />
           </div>
 
           {/* Payment Type */}
@@ -294,7 +443,10 @@ export default function CreateTask() {
                 <span className="text-sm text-[var(--text-secondary)]">equal payments</span>
                 {budget && Number(budget) > 0 && (
                   <span className="text-sm text-purple-400 ml-auto">
-                    {(Number(budget) / milestoneSplit).toFixed(2)} ERG each
+                    {currencyMode === 'USD' 
+                      ? `$${(Number(budget) / milestoneSplit).toFixed(2)} each`
+                      : `${(Number(budget) / milestoneSplit).toFixed(2)} ERG each`
+                    }
                   </span>
                 )}
               </div>
@@ -376,16 +528,40 @@ export default function CreateTask() {
                   {Array.from({ length: milestoneSplit }, (_, i) => (
                     <div key={i} className="flex justify-between text-sm py-1">
                       <span className="text-[var(--text-secondary)]">Milestone {i + 1}</span>
-                      <span className="text-purple-400 font-medium">{(Number(budget) / milestoneSplit).toFixed(2)} ERG</span>
+                      <span className="text-purple-400 font-medium">
+                        {currencyMode === 'USD' 
+                          ? `$${(Number(budget) / milestoneSplit).toFixed(2)}`
+                          : `${(Number(budget) / milestoneSplit).toFixed(2)} ERG`
+                        }
+                        {convertedAmount && (
+                          <span className="text-xs text-[var(--text-muted)] ml-1">
+                            (≈ {currencyMode === 'USD' 
+                              ? `${(Number(convertedAmount) / milestoneSplit).toFixed(3)} ERG`
+                              : `$${(Number(convertedAmount) / milestoneSplit).toFixed(2)}`
+                            })
+                          </span>
+                        )}
+                      </span>
                     </div>
                   ))}
                 </div>
               )}
 
               <div className="flex items-center justify-between pt-3 border-t border-[var(--border-color)]">
-                <span className="text-emerald-400 font-semibold">
-                  {Number(budget) || 0} ERG
-                </span>
+                <div className="text-emerald-400 font-semibold">
+                  {currencyMode === 'USD' 
+                    ? `$${Number(budget) || 0}`
+                    : `${Number(budget) || 0} ERG`
+                  }
+                  {convertedAmount && (
+                    <div className="text-xs text-[var(--text-muted)] font-normal">
+                      ≈ {currencyMode === 'USD' 
+                        ? `${convertedAmount} ERG`
+                        : `$${convertedAmount}`
+                      }
+                    </div>
+                  )}
+                </div>
                 {deadline && (
                   <span className="text-orange-400 text-sm">Due: {formatDate(deadline)}</span>
                 )}

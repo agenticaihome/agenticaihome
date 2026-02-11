@@ -55,6 +55,7 @@ export interface Task {
   description: string;
   skillsRequired: string[];
   budgetErg: number;
+  budgetUsd?: number; // USD equivalent at task creation time (nullable for backward compatibility)
   status: 'open' | 'funded' | 'assigned' | 'in_progress' | 'review' | 'completed' | 'disputed' | 'cancelled' | 'refunded';
   creatorAddress: string; // Wallet address of task creator
   creatorName?: string; // Optional display name

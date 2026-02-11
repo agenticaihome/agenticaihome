@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
+import { ergToUsd } from '@/lib/ergPrice';
 import AuthGuard from '@/components/AuthGuard';
 import StatusBadge from '@/components/StatusBadge';
 import EgoScore from '@/components/EgoScore';
@@ -36,6 +37,78 @@ interface Deliverable {
   reviewNotes?: string;
   revisionNumber: number;
   createdAt: string;
+}
+
+function BudgetUsdConverter({ ergAmount }: { ergAmount: number }) {
+  const [usdAmount, setUsdAmount] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const convertToUsd = async () => {
+      setIsLoading(true);
+      try {
+        const usd = await ergToUsd(ergAmount);
+        setUsdAmount(usd);
+      } catch (error) {
+        console.error('Failed to convert ERG to USD:', error);
+        // Silently fail for better UX
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    convertToUsd();
+  }, [ergAmount]);
+
+  if (isLoading) {
+    return (
+      <div className="text-xs text-[var(--text-muted)] font-normal">
+        Converting...
+      </div>
+    );
+  }
+
+  if (usdAmount === null) {
+    return null; // Don't show anything if conversion failed
+  }
+
+  return (
+    <div className="text-xs text-[var(--text-muted)] font-normal">
+      ≈ ${usdAmount.toFixed(2)} at current price
+    </div>
+  );
+}
+
+function BidUsdConverter({ ergAmount }: { ergAmount: number }) {
+  const [usdAmount, setUsdAmount] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const convertToUsd = async () => {
+      setIsLoading(true);
+      try {
+        const usd = await ergToUsd(ergAmount);
+        setUsdAmount(usd);
+      } catch (error) {
+        console.error('Failed to convert ERG to USD:', error);
+        // Silently fail for better UX
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    convertToUsd();
+  }, [ergAmount]);
+
+  if (usdAmount === null) {
+    return null; // Don't show anything if conversion failed
+  }
+
+  return (
+    <div className="text-xs text-[var(--text-muted)] font-normal">
+      (≈ ${usdAmount.toFixed(2)})
+    </div>
+  );
 }
 
 export default function TaskDetailPage() {
@@ -548,7 +621,21 @@ function TaskDetailInner() {
             </div>
 
             <div className="flex items-center gap-6 pt-4 border-t border-[var(--border-color)]">
-              <span className="text-emerald-400 font-semibold text-lg">{task.budgetErg} ERG</span>
+              <div className="text-emerald-400 font-semibold text-lg">
+                {task.budgetUsd ? (
+                  <div>
+                    <div>${task.budgetUsd.toFixed(2)} (≈ {task.budgetErg.toFixed(3)} ERG)</div>
+                    <div className="text-xs text-[var(--text-muted)] font-normal">
+                      Price at creation time
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div>{task.budgetErg} ERG</div>
+                    <BudgetUsdConverter ergAmount={task.budgetErg} />
+                  </div>
+                )}
+              </div>
               <span className="text-[var(--text-muted)]">{task.bidsCount} bids</span>
               {task.assignedAgentName && (
                 <span className="text-purple-400">Assigned: {task.assignedAgentName}</span>
@@ -746,7 +833,10 @@ function TaskDetailInner() {
                         <span className="text-white font-medium">{bid.agentName}</span>
                         <EgoScore score={bid.agentEgoScore} />
                       </div>
-                      <span className="text-emerald-400 font-semibold">{bid.proposedRate} ERG</span>
+                      <div className="text-emerald-400 font-semibold">
+                        {bid.proposedRate} ERG
+                        <BidUsdConverter ergAmount={bid.proposedRate} />
+                      </div>
                     </div>
                     <p className="text-[var(--text-secondary)] text-sm mb-3">{bid.message}</p>
                     <div className="flex items-center justify-between">

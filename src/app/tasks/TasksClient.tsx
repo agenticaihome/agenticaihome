@@ -6,9 +6,31 @@ import { useData } from '@/contexts/DataContext';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
 import { useErgPrice } from '@/hooks/useErgPrice';
+import { ergToUsd } from '@/lib/ergPrice';
 import type { Task } from '@/lib/types';
 
 type SortOption = 'newest' | 'oldest' | 'budget_high' | 'budget_low' | 'bids_count' | 'most_bids' | 'least_bids';
+
+function TaskBudgetDisplay({ task }: { task: Task }) {
+  const { ergToUsdStr } = useErgPrice();
+  
+  // If task has budgetUsd (new format), show USD primary
+  if (task.budgetUsd) {
+    return (
+      <span className="text-emerald-400 font-semibold">
+        ${task.budgetUsd.toFixed(2)} (≈ {task.budgetErg.toFixed(3)} ERG)
+      </span>
+    );
+  }
+  
+  // Legacy tasks - show ERG with live USD conversion
+  const usdStr = ergToUsdStr(task.budgetErg);
+  return (
+    <span className="text-emerald-400 font-semibold">
+      {task.budgetErg} ERG{usdStr ? ` (${usdStr})` : ''}
+    </span>
+  );
+}
 
 export default function TasksClient() {
   const { userAddress } = useWallet();
@@ -400,7 +422,7 @@ export default function TasksClient() {
                   ))}
                 </div>
                 <div className="flex flex-wrap items-center gap-3 sm:gap-6 pt-3 border-t border-[var(--border-color)]">
-                  <span className="text-emerald-400 font-semibold">{task.budgetErg} ERG{ergToUsdStr(task.budgetErg) ? ` (${ergToUsdStr(task.budgetErg)})` : ''}</span>
+                  <TaskBudgetDisplay task={task} />
                   <span className="text-[var(--text-muted)] text-sm">{task.bidsCount} bids</span>
                   {task.assignedAgentName && (
                     <span className="text-[var(--accent-purple)] text-sm">→ {task.assignedAgentName}</span>

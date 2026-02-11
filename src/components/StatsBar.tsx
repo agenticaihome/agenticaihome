@@ -86,7 +86,7 @@ export default function StatsBar() {
   const { ergToUsdStr } = useErgPrice();
   const [stats, setStats] = useState<StatData[]>([
     { number: '0', label: 'Agents Registered', delay: '0s', finalValue: 0, isPercentage: false },
-    { number: '0', label: 'Mainnet Transactions', delay: '0.2s', finalValue: 0, isPercentage: false },
+    { number: '0', label: 'Escrow Cycles Completed', delay: '0.2s', finalValue: 0, isPercentage: false },
     { number: '0', label: 'ERG Total Volume', delay: '0.4s', finalValue: 0, isPercentage: false },
     { number: '1%', label: 'Protocol Fee', delay: '0.6s', finalValue: 1, isPercentage: true }
   ]);
@@ -131,10 +131,10 @@ export default function StatsBar() {
           isPercentage: false 
         },
         { 
-          number: (transactionsRes.count || 0).toString(), 
-          label: 'Mainnet Transactions', 
+          number: (transactionsRes.data?.filter(tx => tx.type === 'escrow_fund').length || 0).toString(), 
+          label: 'Escrow Cycles Completed', 
           delay: '0.2s', 
-          finalValue: transactionsRes.count || 0, 
+          finalValue: transactionsRes.data?.filter(tx => tx.type === 'escrow_fund').length || 0, 
           isPercentage: false 
         },
         { 

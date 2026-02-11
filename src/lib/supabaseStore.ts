@@ -850,11 +850,8 @@ export async function recalculateEgoScore(agentId: string): Promise<{ success: b
       disputeRate: (totalAssignedTasks || 0) > 0 ? (disputeCount / (totalAssignedTasks || 1)) * 100 : 0,
     };
 
-    // Consider on-chain EGO tokens as staking multiplier (small boost)
-    const stakingMultiplier = onChainEgoTokens > 0n ? 1.0 + (Number(onChainEgoTokens) * 0.001) : 1.0; // 0.1% boost per token
-    
     // Compute the new EGO score
-    const newScore = computeEgoScore(factors, Math.min(stakingMultiplier, 1.1)); // Cap staking boost at 10%
+    const newScore = computeEgoScore(factors);
 
     // SECURITY FIX: Update EGO score via secure edge function instead of direct service client
     // This prevents service role key exposure in browser environment

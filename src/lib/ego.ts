@@ -1,12 +1,12 @@
 /**
  * EGO (Earned Governance & Output) Reputation System
- * 
+ *
  * The mathematical brain of AgenticAiHome's trust infrastructure.
- * 
- * EGO is a soulbound reputation score (0-100) that reflects an agent's 
+ *
+ * EGO is a soulbound reputation score (0-100) that reflects an agent's
  * track record through verified task completions on the Ergo blockchain.
  * Non-transferable, tamper-proof, and designed to resist gaming.
- * 
+ *
  * This is how trust works in an agent economy where you can't shake hands.
  */
 
@@ -22,22 +22,22 @@ import { ReputationEvent } from './types';
 export interface EgoFactors {
   /** % of assigned tasks completed successfully (weight: 30%) */
   completionRate: number; // 0-100
-  
+
   /** Average client rating across all completions (weight: 25%) */
   avgRating: number; // 1.0-5.0
-  
+
   /** % of time agent reports as available (weight: 10%) */
   uptime: number; // 0-100
-  
+
   /** Days since registration, capped at 365 (weight: 10%) */
   accountAge: number; // 0-365
-  
+
   /** Number of endorsements from other verified agents (weight: 10%) */
   peerEndorsements: number; // 0+
-  
+
   /** Verified skill benchmark tests passed (weight: 10%) */
   skillBenchmarks: number; // 0+
-  
+
   /** % of tasks that escalated to disputes - INVERTED (weight: 5%) */
   disputeRate: number; // 0-100 (lower is better)
 }
@@ -218,12 +218,12 @@ const EGO_TIERS: EgoTier[] = [
 // ============================================================================
 
 /**
- * Compute raw EGO score from 7 weighted factors with optional staking multiplier
- * 
- * Formula: Σ(factor_value * weight) * stakingMultiplier with careful normalization
+ * Compute raw EGO score from 7 weighted factors
+ *
+ * Formula: Σ(factor_value * weight) with careful normalization
  * Each factor is normalized to 0-100 before weighting
  */
-export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number = 1.0): number {
+export function computeEgoScore(factors: EgoFactors): number {
   // Validate input factors to prevent NaN propagation
   const validation = validateEgoFactors(factors);
   if (!validation.isValid) {
@@ -232,12 +232,6 @@ export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number =
     return 50;
   }
 
-  // Validate staking multiplier
-  if (!isFinite(stakingMultiplier) || stakingMultiplier < 0) {
-    // Invalid staking multiplier, using 1.0
-    stakingMultiplier = 1.0;
-  }
-  
   // Helper to safely normalize values and prevent NaN
   const safeNormalize = (value: number, min: number = 0, max: number = 100): number => {
     if (!isFinite(value)) return 0;
@@ -254,11 +248,11 @@ export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number =
     skillBenchmarks: safeNormalize(Math.min(factors.skillBenchmarks * 20, 100)), // Cap at 5 benchmarks = 100%
     disputeRate: safeNormalize(100 - factors.disputeRate), // Invert: lower dispute rate = higher score
   };
-  
+
   // Calculate weighted sum
   let weightedSum = 0;
   let totalWeight = 0;
-  
+
   for (const [factor, value] of Object.entries(normalizedFactors)) {
     const weight = EGO_WEIGHTS[factor as keyof EgoFactors];
     if (isFinite(weight) && isFinite(value)) {
@@ -266,68 +260,64 @@ export function computeEgoScore(factors: EgoFactors, stakingMultiplier: number =
       totalWeight += weight;
     }
   }
-  
+
   // Ensure we have valid weights (defensive programming)
   if (totalWeight <= 0 || !isFinite(weightedSum)) {
     console.error('Invalid weight calculation, using safe default');
     return 50; // Safe default for new agents
   }
-  
+
   const rawScore = weightedSum / totalWeight;
-  
+
   // Apply penalties for insufficient data
   let finalScore = rawScore;
-  
+
   // New agents start with reduced score until they have proven track record
   if (factors.accountAge < 30) {
     finalScore *= 0.8; // 20% penalty for accounts < 30 days
   }
-  
+
   // Severely penalize agents with high dispute rates
   if (factors.disputeRate > 10) {
     finalScore *= Math.max(0.1, 1 - (factors.disputeRate - 10) / 100);
   }
 
-  // Apply staking multiplier boost (cap at 50% boost)
-  const cappedMultiplier = Math.min(stakingMultiplier, 1.5);
-  finalScore *= cappedMultiplier;
-  
   // Final safety check and return
   const result = Math.round(Math.min(100, Math.max(0, finalScore)));
-  
+
   if (!isFinite(result)) {
     console.error('EGO calculation resulted in non-finite value, using safe default');
     return 50;
   }
-  
+
   return result;
 }
 
 /**
  * Apply exponential decay to EGO score based on inactivity
- * 
+ *
  * Uses 12-month half-life: score_new = score_old * (0.5^(days_inactive / 365))
  */
 export function applyDecay(score: number, lastActiveDate: string): number {
   const lastActive = new Date(lastActiveDate);
   const now = new Date();
   const daysInactive = Math.max(0, (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24));
-  
+
   // No decay for first 7 days
   if (daysInactive <= 7) {
     return score;
   }
-  
+
   // Exponential decay: score * (0.5^(days / half_life))
   const decayFactor = Math.pow(0.5, (daysInactive - 7) / DECAY_HALF_LIFE_DAYS);
   const decayedScore = score * decayFactor;
-  
+
   return Math.round(Math.max(0, decayedScore));
 }
 
 /**
  * Calculate EGO delta for a single task completion
- * 
+ *
  * Factors affecting delta:
  * - Star rating (1-5)
  * - Task complexity
@@ -337,29 +327,29 @@ export function applyDecay(score: number, lastActiveDate: string): number {
  */
 export function calculateEgoDelta(completion: CompletionData): number {
   let baseDelta = 0;
-  
+
   // Base points from star rating
   const ratingDeltas = { 1: -2, 2: -1, 3: 0.5, 4: 2, 5: 4 };
   baseDelta = ratingDeltas[Math.round(completion.rating) as keyof typeof ratingDeltas] || 0;
-  
+
   // Complexity multiplier
   const complexityMultipliers = { simple: 1, moderate: 1.2, complex: 1.5 };
   baseDelta *= complexityMultipliers[completion.taskComplexity];
-  
+
   // Bonus modifiers
   if (completion.completedOnTime) baseDelta += 0.5;
   if (completion.bonusAwarded) baseDelta += 1.0;
   if (completion.clientRepeat) baseDelta += 0.3; // Repeat clients indicate trust
-  
+
   // High-value task bonus (>100 ERG)
   if (completion.budgetErg > 100) baseDelta += 0.2;
-  
+
   return Math.round(baseDelta * 10) / 10; // Round to 1 decimal
 }
 
 /**
  * Detect anomalous patterns in reputation events
- * 
+ *
  * Flags potential gaming attempts:
  * - Rapid score increases
  * - Review bombing patterns
@@ -368,7 +358,7 @@ export function calculateEgoDelta(completion: CompletionData): number {
  */
 export function detectAnomalies(events: ReputationEvent[]): AnomalyReport {
   const anomalies: AnomalyReport['anomalies'] = [];
-  
+
   if (events.length === 0) {
     return {
       agentId: '',
@@ -377,25 +367,25 @@ export function detectAnomalies(events: ReputationEvent[]): AnomalyReport {
       recommendedActions: [],
     };
   }
-  
+
   const agentId = events[0].agentId;
-  
+
   // Sort events by date
-  const sortedEvents = [...events].sort((a, b) => 
+  const sortedEvents = [...events].sort((a, b) =>
     new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
-  
+
   // 1. Rapid score increase detection
   let scoreIncrease30Days = 0;
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
+
   for (const event of sortedEvents) {
     if (new Date(event.createdAt) > thirtyDaysAgo && event.egoDelta > 0) {
       scoreIncrease30Days += event.egoDelta;
     }
   }
-  
+
   if (scoreIncrease30Days > 20) {
     anomalies.push({
       type: 'rapid_score_increase',
@@ -406,12 +396,12 @@ export function detectAnomalies(events: ReputationEvent[]): AnomalyReport {
       actionRequired: scoreIncrease30Days > 30,
     });
   }
-  
+
   // 2. Review bombing pattern (many small positive events in short time)
   const completionEvents = sortedEvents.filter(e => e.eventType === 'completion');
   let consecutivePositive = 0;
   let maxConsecutive = 0;
-  
+
   for (const event of completionEvents) {
     if (event.egoDelta > 0 && event.egoDelta < 2) {
       consecutivePositive++;
@@ -420,7 +410,7 @@ export function detectAnomalies(events: ReputationEvent[]): AnomalyReport {
       consecutivePositive = 0;
     }
   }
-  
+
   if (maxConsecutive > 10) {
     anomalies.push({
       type: 'review_bombing',
@@ -431,11 +421,11 @@ export function detectAnomalies(events: ReputationEvent[]): AnomalyReport {
       actionRequired: true,
     });
   }
-  
+
   // 3. Sudden inactivity after score gains
   const lastEvent = sortedEvents[sortedEvents.length - 1];
   const daysSinceLastEvent = (Date.now() - new Date(lastEvent.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-  
+
   if (daysSinceLastEvent > 90 && scoreIncrease30Days > 15) {
     anomalies.push({
       type: 'sudden_inactivity',
@@ -446,16 +436,16 @@ export function detectAnomalies(events: ReputationEvent[]): AnomalyReport {
       actionRequired: false,
     });
   }
-  
+
   // Calculate overall risk level
   const highSeverityCount = anomalies.filter(a => a.severity === 'high').length;
   const mediumSeverityCount = anomalies.filter(a => a.severity === 'medium').length;
-  
+
   let riskLevel: AnomalyReport['riskLevel'] = 'low';
   if (highSeverityCount > 0) riskLevel = 'critical';
   else if (mediumSeverityCount > 2) riskLevel = 'high';
   else if (mediumSeverityCount > 0) riskLevel = 'medium';
-  
+
   // Generate recommended actions
   const recommendedActions: string[] = [];
   if (anomalies.some(a => a.actionRequired)) {
@@ -467,7 +457,7 @@ export function detectAnomalies(events: ReputationEvent[]): AnomalyReport {
     recommendedActions.push('Temporarily flag account');
     recommendedActions.push('Require identity verification');
   }
-  
+
   return {
     agentId,
     anomalies,
@@ -498,7 +488,7 @@ export function getAllEgoTiers(): EgoTier[] {
 
 /**
  * Project future EGO score based on current activity patterns
- * 
+ *
  * Takes into account:
  * - Historical performance trends
  * - Planned completion rate
@@ -512,7 +502,7 @@ export function projectEgoGrowth(
   currentFactors?: Partial<EgoFactors>
 ): EgoProjection[] {
   const projections: EgoProjection[] = [];
-  
+
   // Default factors if not provided
   const factors: EgoFactors = {
     completionRate: 85,
@@ -524,18 +514,18 @@ export function projectEgoGrowth(
     disputeRate: 5,
     ...currentFactors,
   };
-  
+
   let projectedScore = currentScore;
-  
+
   for (let month = 1; month <= 6; month++) {
     // Simulate monthly activity
     const monthlyDelta = calculateMonthlyEgoDelta(completionsPerMonth, avgRating, factors);
-    
+
     // Apply gradual improvement in factors (learning effect)
     factors.completionRate = Math.min(95, factors.completionRate + 0.5);
     factors.uptime = Math.min(90, factors.uptime + 0.3);
     factors.accountAge += 30; // Add 30 days
-    
+
     // Occasional peer endorsements and skill benchmarks
     if (month % 2 === 0 && Math.random() > 0.5) {
       factors.peerEndorsements += 1;
@@ -543,18 +533,18 @@ export function projectEgoGrowth(
     if (month % 3 === 0 && Math.random() > 0.3) {
       factors.skillBenchmarks += 1;
     }
-    
+
     // Recompute score with updated factors
     const newBaseScore = computeEgoScore(factors);
     projectedScore = Math.min(100, newBaseScore + monthlyDelta);
-    
+
     // Add uncertainty bounds (±5 points, increasing over time)
     const uncertainty = 5 + (month * 1.5);
     const confidenceInterval: [number, number] = [
       Math.max(0, projectedScore - uncertainty),
       Math.min(100, projectedScore + uncertainty),
     ];
-    
+
     projections.push({
       month,
       projectedScore: Math.round(projectedScore),
@@ -566,7 +556,7 @@ export function projectEgoGrowth(
       },
     });
   }
-  
+
   return projections;
 }
 
@@ -585,22 +575,22 @@ function calculateMonthlyEgoDelta(completionsPerMonth: number, avgRating: number
     bonusAwarded: false,
     clientRepeat: false,
   });
-  
+
   // Account for diminishing returns at high scores
   const diminishingFactor = factors.completionRate > 90 ? 0.7 : 1.0;
-  
+
   return avgDelta * completionsPerMonth * diminishingFactor;
 }
 
 /**
  * Generate detailed breakdown of where an agent's EGO score comes from
- * 
+ *
  * Shows each factor's contribution and improvement suggestions
  */
-export function getEgoBreakdown(agentId: string, factors: EgoFactors, stakingMultiplier: number = 1.0): EgoBreakdown {
-  const totalScore = computeEgoScore(factors, stakingMultiplier);
+export function getEgoBreakdown(agentId: string, factors: EgoFactors): EgoBreakdown {
+  const totalScore = computeEgoScore(factors);
   const tier = getEgoTier(totalScore);
-  
+
   const breakdown: EgoBreakdown = {
     agentId,
     totalScore,
@@ -608,12 +598,12 @@ export function getEgoBreakdown(agentId: string, factors: EgoFactors, stakingMul
     tier,
     lastCalculated: new Date().toISOString(),
   };
-  
+
   // Analyze each factor
   for (const [factorKey, value] of Object.entries(factors)) {
     const factor = factorKey as keyof EgoFactors;
     const weight = EGO_WEIGHTS[factor];
-    
+
     // Normalize the value for contribution calculation
     let normalizedValue = value;
     if (factor === 'avgRating') {
@@ -627,13 +617,13 @@ export function getEgoBreakdown(agentId: string, factors: EgoFactors, stakingMul
     } else if (factor === 'disputeRate') {
       normalizedValue = 100 - value; // Invert
     }
-    
+
     const contribution = (normalizedValue * weight);
-    
+
     // Determine status and improvement tip
     let status: 'excellent' | 'good' | 'fair' | 'poor';
     let improvementTip: string;
-    
+
     if (normalizedValue >= 90) {
       status = 'excellent';
       improvementTip = `Your ${factor} is exceptional. Keep up the great work!`;
@@ -647,7 +637,7 @@ export function getEgoBreakdown(agentId: string, factors: EgoFactors, stakingMul
       status = 'poor';
       improvementTip = getImprovementTip(factor, value);
     }
-    
+
     breakdown.factors[factor] = {
       value,
       weight,
@@ -656,7 +646,7 @@ export function getEgoBreakdown(agentId: string, factors: EgoFactors, stakingMul
       improvementTip,
     };
   }
-  
+
   return breakdown;
 }
 
@@ -666,32 +656,32 @@ export function getEgoBreakdown(agentId: string, factors: EgoFactors, stakingMul
 function getImprovementTip(factor: keyof EgoFactors, value: number): string {
   switch (factor) {
     case 'completionRate':
-      return value < 70 
+      return value < 70
         ? 'Focus on completing all accepted tasks. Consider taking fewer tasks until you improve consistency.'
         : 'Complete more tasks successfully. Aim for 90%+ completion rate.';
-    
+
     case 'avgRating':
       return value < 3.5
         ? 'Work on communication and delivery quality. Ask clients for specific feedback.'
         : 'Exceed client expectations. Go above and beyond on task requirements.';
-    
+
     case 'uptime':
       return 'Update your availability status more frequently. Be responsive to client messages.';
-    
+
     case 'accountAge':
       return 'Keep building your reputation over time. EGO rewards long-term commitment.';
-    
+
     case 'peerEndorsements':
       return 'Collaborate with other agents and ask for endorsements after successful projects.';
-    
+
     case 'skillBenchmarks':
       return 'Take skill verification tests to prove your expertise in specific areas.';
-    
+
     case 'disputeRate':
       return value > 10
         ? 'URGENT: Too many disputes. Focus on clear communication and meeting deadlines.'
         : 'Keep disputes low by setting clear expectations and delivering as promised.';
-    
+
     default:
       return 'Keep improving this metric to boost your EGO score.';
   }
@@ -706,35 +696,35 @@ function getImprovementTip(factor: keyof EgoFactors, value: number): string {
  */
 export function validateEgoFactors(factors: EgoFactors): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
-  
+
   if (factors.completionRate < 0 || factors.completionRate > 100) {
     errors.push('Completion rate must be between 0 and 100');
   }
-  
+
   if (factors.avgRating < 1 || factors.avgRating > 5) {
     errors.push('Average rating must be between 1 and 5');
   }
-  
+
   if (factors.uptime < 0 || factors.uptime > 100) {
     errors.push('Uptime must be between 0 and 100');
   }
-  
+
   if (factors.accountAge < 0) {
     errors.push('Account age cannot be negative');
   }
-  
+
   if (factors.peerEndorsements < 0) {
     errors.push('Peer endorsements cannot be negative');
   }
-  
+
   if (factors.skillBenchmarks < 0) {
     errors.push('Skill benchmarks cannot be negative');
   }
-  
+
   if (factors.disputeRate < 0 || factors.disputeRate > 100) {
     errors.push('Dispute rate must be between 0 and 100');
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -747,11 +737,11 @@ export function validateEgoFactors(factors: EgoFactors): { isValid: boolean; err
 export function getScoreToNextTier(currentScore: number): { nextTier: EgoTier | null; pointsNeeded: number } {
   const currentTier = getEgoTier(currentScore);
   const nextTier = EGO_TIERS.find(tier => tier.minScore > currentScore);
-  
+
   if (!nextTier) {
     return { nextTier: null, pointsNeeded: 0 }; // Already at max tier
   }
-  
+
   return {
     nextTier,
     pointsNeeded: nextTier.minScore - currentScore,
@@ -773,22 +763,22 @@ export function generateEgoSummary(breakdown: EgoBreakdown): string {
   const strongFactors = Object.entries(breakdown.factors)
     .filter(([_, data]) => data.status === 'excellent' || data.status === 'good')
     .map(([factor, _]) => factor);
-  
+
   const weakFactors = Object.entries(breakdown.factors)
     .filter(([_, data]) => data.status === 'poor' || data.status === 'fair')
     .map(([factor, _]) => factor);
-  
+
   let summary = `This agent has a ${tier.name} tier EGO score of ${totalScore}. `;
-  
+
   if (strongFactors.length > 0) {
     summary += `Strong performance in ${strongFactors.join(', ')}. `;
   }
-  
+
   if (weakFactors.length > 0) {
     summary += `Room for improvement in ${weakFactors.join(', ')}.`;
   } else {
     summary += `Excellent performance across all factors.`;
   }
-  
+
   return summary;
 }

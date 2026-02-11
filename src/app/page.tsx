@@ -981,10 +981,16 @@ export default function Home() {
             {[
               {
                 name: "AgenticAiHome",
-                description: "AI Agent Marketplace",
+                description: "AI Agent Marketplace — hire agents, escrow payments, earn reputation",
                 url: "https://agenticaihome.com",
                 icon: <Bot className="w-10 h-10" />,
                 featured: true
+              },
+              {
+                name: "Celaut",
+                description: "Decentralized AI agent execution — P2P verifiable compute on Ergo",
+                url: "https://github.com/celaut-project",
+                icon: <Bot className="w-10 h-10" />
               },
               {
                 name: "Rosen Bridge",
@@ -994,13 +1000,13 @@ export default function Home() {
               },
               {
                 name: "USE Stablecoin",
-                description: "USD-pegged decentralized stablecoin — Dexy framework, on-chain algorithmic stability",
+                description: "USD-pegged decentralized stablecoin — Dexy framework, algorithmic stability",
                 url: "https://ergoplatform.org/en/blog/Ecosystem-Spotlight-USE-a-Universal-Stablecoin-for-Ergo/",
                 icon: <DollarSign className="w-10 h-10" />
               },
               {
                 name: "Nautilus Wallet",
-                description: "Browser wallet for Ergo — the primary dApp connector",
+                description: "Browser wallet for Ergo — the primary dApp connector for all Ergo apps",
                 url: "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai",
                 icon: <Rocket className="w-10 h-10" />
               },
@@ -1017,22 +1023,16 @@ export default function Home() {
                 icon: <Cat className="w-10 h-10" />
               },
               {
-                name: "SigmaFi",
-                description: "Peer-to-peer DeFi lending and borrowing",
-                url: "https://sigmafi.app",
-                icon: <BarChart3 className="w-10 h-10" />
-              },
-              {
-                name: "SigmaUSD",
-                description: "Algorithmic stablecoin backed by ERG reserves",
-                url: "https://sigmausd.io",
-                icon: <DollarSign className="w-10 h-10" />
-              },
-              {
                 name: "Paideia",
                 description: "DAO governance toolkit — create and manage DAOs on Ergo",
                 url: "https://paideia.im",
                 icon: <Building2 className="w-10 h-10" />
+              },
+              {
+                name: "CRUX Finance",
+                description: "DeFi trading and portfolio management on Ergo",
+                url: "https://cruxfinance.com",
+                icon: <BarChart3 className="w-10 h-10" />
               },
               {
                 name: "DuckPools",
@@ -1041,10 +1041,10 @@ export default function Home() {
                 icon: <BarChart3 className="w-10 h-10" />
               },
               {
-                name: "Celaut",
-                description: "Decentralized AI agent execution layer — P2P compute network on Ergo",
-                url: "https://github.com/celaut-project",
-                icon: <Bot className="w-10 h-10" />
+                name: "SigmaUSD",
+                description: "Algorithmic stablecoin backed by ERG reserves",
+                url: "https://sigmausd.io",
+                icon: <DollarSign className="w-10 h-10" />
               },
               {
                 name: "Ergo Auction House",
@@ -1058,7 +1058,7 @@ export default function Home() {
                   href={project.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`block glass-card rounded-xl p-6 text-center card-hover group relative overflow-hidden transition-all ${
+                  className={`block glass-card rounded-xl p-6 text-center card-hover group relative overflow-hidden transition-all h-[220px] flex flex-col items-center justify-center ${
                     project.featured 
                       ? 'border-[var(--accent-green)]/40 bg-[var(--accent-green)]/5 glow-green' 
                       : 'border-[var(--border-color)]'
@@ -1110,6 +1110,12 @@ export default function Home() {
                   featured: true
                 },
                 {
+                  name: "Celaut",
+                  description: "Decentralized compute",
+                  url: "https://github.com/celaut-project",
+                  icon: <Bot className="w-8 h-8" />
+                },
+                {
                   name: "Rosen Bridge",
                   description: "Cross-chain bridge",
                   url: "https://rosen.tech",
@@ -1140,22 +1146,16 @@ export default function Home() {
                   icon: <Cat className="w-8 h-8" />
                 },
                 {
-                  name: "SigmaFi",
-                  description: "DeFi lending",
-                  url: "https://sigmafi.app",
-                  icon: <BarChart3 className="w-8 h-8" />
-                },
-                {
-                  name: "SigmaUSD",
-                  description: "Stablecoin",
-                  url: "https://sigmausd.io",
-                  icon: <DollarSign className="w-8 h-8" />
-                },
-                {
                   name: "Paideia",
                   description: "DAO governance",
                   url: "https://paideia.im",
                   icon: <Building2 className="w-8 h-8" />
+                },
+                {
+                  name: "CRUX Finance",
+                  description: "DeFi trading",
+                  url: "https://cruxfinance.com",
+                  icon: <BarChart3 className="w-8 h-8" />
                 },
                 {
                   name: "DuckPools",
@@ -1164,10 +1164,10 @@ export default function Home() {
                   icon: <BarChart3 className="w-8 h-8" />
                 },
                 {
-                  name: "Celaut",
-                  description: "Decentralized compute",
-                  url: "https://github.com/celaut-project",
-                  icon: <Bot className="w-8 h-8" />
+                  name: "SigmaUSD",
+                  description: "Stablecoin",
+                  url: "https://sigmausd.io",
+                  icon: <DollarSign className="w-8 h-8" />
                 },
                 {
                   name: "Ergo Auction House",

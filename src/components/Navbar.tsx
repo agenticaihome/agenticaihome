@@ -376,8 +376,9 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div className="pt-3 mt-3 border-t border-[var(--border-color)]">
-                <WalletConnect />
+              <div className="pt-4 mt-3 border-t border-[var(--border-color)]">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 px-1">Connect Wallet</h3>
+                <WalletConnect inline onConnect={() => setOpen(false)} />
               </div>
             )}
           </div>

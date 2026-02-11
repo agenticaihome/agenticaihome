@@ -5,12 +5,147 @@ import { useWallet, useWalletInstallation } from '@/contexts/WalletContext';
 import { formatErgAmount, truncateAddress } from '@/lib/ergo/explorer';
 import { NAUTILUS_CHROME_URL } from '@/lib/ergo/constants';
 import { isMobileDevice } from '@/lib/ergo/ergopay';
+import { isValidErgoAddress } from '@/lib/ergo/wallet';
 
-export default function WalletConnect() {
+interface WalletConnectProps {
+  /** Render as full-width inline form (for mobile menu) */
+  inline?: boolean;
+  /** Called after successful connection */
+  onConnect?: () => void;
+}
+
+export default function WalletConnect({ inline, onConnect }: WalletConnectProps) {
   const { wallet, connecting, error, connect, disconnect, clearError, isAvailable } = useWallet();
   const { hasNautilus, hasSafew, detecting } = useWalletInstallation();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showErgoPayInput, setShowErgoPayInput] = useState(false);
+  const [addressInput, setAddressInput] = useState('');
+  const [addressError, setAddressError] = useState('');
   const isMobile = typeof window !== 'undefined' && isMobileDevice();
+
+  const handleErgoPayConnect = async () => {
+    const trimmed = addressInput.trim();
+    if (!trimmed) {
+      setAddressError('Please enter your Ergo address');
+      return;
+    }
+    if (!isValidErgoAddress(trimmed)) {
+      setAddressError('Invalid address. Must start with 9 or 3 and be 51-52 characters.');
+      return;
+    }
+    setAddressError('');
+    clearError();
+    await connect('ergopay', trimmed);
+    setShowDropdown(false);
+    setShowErgoPayInput(false);
+    setAddressInput('');
+    onConnect?.();
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setAddressInput(text.trim());
+      setAddressError('');
+    } catch {
+      setAddressError('Unable to read clipboard. Please paste manually.');
+    }
+  };
+
+  const ergoPayInputUI = (
+    <div className={`space-y-3 ${inline ? '' : 'p-3 border-t border-[var(--border)]'}`}>
+      <p className="text-xs text-[var(--text-secondary)]">
+        Open your wallet app (Terminus, SAFEW), copy your address, and paste it below.
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={addressInput}
+          onChange={(e) => { setAddressInput(e.target.value); setAddressError(''); }}
+          placeholder="9f... or 3..."
+          className="flex-1 px-3 py-2 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)]/50 font-mono"
+          onKeyDown={(e) => e.key === 'Enter' && handleErgoPayConnect()}
+          autoFocus
+        />
+        <button
+          onClick={handlePasteFromClipboard}
+          className="px-3 py-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] transition-colors whitespace-nowrap"
+          title="Paste from clipboard"
+        >
+          📋 Paste
+        </button>
+      </div>
+      {addressError && <p className="text-xs text-red-400">{addressError}</p>}
+      <button
+        onClick={handleErgoPayConnect}
+        disabled={connecting || !addressInput.trim()}
+        className="w-full py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
+      >
+        {connecting ? 'Connecting...' : 'Connect Wallet'}
+      </button>
+    </div>
+  );
+
+  // Inline mode for mobile menu
+  if (inline) {
+    if (wallet.connected) return null; // Connected state handled by Navbar
+
+    return (
+      <div className="space-y-3">
+        {!showErgoPayInput ? (
+          <>
+            <button
+              onClick={() => setShowErgoPayInput(true)}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-[var(--text-primary)] hover:border-purple-500/50 transition-all text-sm font-medium"
+            >
+              <span className="text-lg">📱</span>
+              Connect via ErgoPay
+            </button>
+            {!isMobile && hasNautilus && (
+              <button
+                onClick={async () => { clearError(); await connect('nautilus'); onConnect?.(); }}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-cyan)]/40 hover:text-[var(--text-primary)] transition-all text-sm"
+              >
+                <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-md flex items-center justify-center">
+                  <span className="text-white font-bold text-[10px]">N</span>
+                </div>
+                Nautilus Wallet
+              </button>
+            )}
+            {!isMobile && hasSafew && (
+              <button
+                onClick={async () => { clearError(); await connect('safew'); onConnect?.(); }}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent-cyan)]/40 hover:text-[var(--text-primary)] transition-all text-sm"
+              >
+                <div className="w-6 h-6 bg-gradient-to-r from-green-500 to-teal-500 rounded-md flex items-center justify-center">
+                  <span className="text-white font-bold text-[10px]">S</span>
+                </div>
+                SAFEW
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => { setShowErgoPayInput(false); setAddressError(''); }}
+              className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              ← Back
+            </button>
+            {ergoPayInputUI}
+          </>
+        )}
+        {error && (
+          <div className="p-3 bg-red-500/10 rounded-lg">
+            <p className="text-sm text-red-400">{error}</p>
+            <button onClick={clearError} className="text-xs text-red-300 hover:text-red-200 mt-1">Dismiss</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // --- Standard dropdown mode (desktop / non-inline) ---
 
   // On mobile, always show connect (ErgoPay available without extension)
   // On desktop, show loading while detecting, then install if nothing found
@@ -47,17 +182,14 @@ export default function WalletConnect() {
 
         {showDropdown && (
           <>
-            <div className="absolute right-0 mt-2 w-64 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl z-50">
+            <div className="absolute right-0 mt-2 w-72 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl z-50">
               <div className="p-4 border-b border-[var(--border)]">
                 <h3 className="font-semibold text-[var(--text-primary)] mb-2">Connect Wallet</h3>
                 <p className="text-sm text-[var(--text-secondary)]">No browser wallet detected</p>
               </div>
               <div className="p-2 space-y-2">
                 <button
-                  onClick={() => {
-                    connect('ergopay');
-                    setShowDropdown(false);
-                  }}
+                  onClick={() => setShowErgoPayInput(true)}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors"
                 >
                   <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
@@ -68,6 +200,7 @@ export default function WalletConnect() {
                     <div className="text-xs text-[var(--text-secondary)]">Enter your Ergo address</div>
                   </div>
                 </button>
+                {showErgoPayInput && ergoPayInputUI}
                 <div className="border-t border-[var(--border)] pt-2">
                   <button
                     onClick={() => window.open(NAUTILUS_CHROME_URL, '_blank')}
@@ -78,7 +211,7 @@ export default function WalletConnect() {
                 </div>
               </div>
             </div>
-            <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
+            <div className="fixed inset-0 z-40" onClick={() => { setShowDropdown(false); setShowErgoPayInput(false); }} />
           </>
         )}
       </div>
@@ -193,7 +326,7 @@ export default function WalletConnect() {
 
       {showDropdown && !wallet.connected && (
         <>
-          <div className="absolute right-0 mt-2 w-64 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl z-50">
+          <div className="absolute right-0 mt-2 w-72 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg shadow-xl z-50">
             <div className="p-4 border-b border-[var(--border)]">
               <h3 className="font-semibold text-[var(--text-primary)] mb-2">Connect Wallet</h3>
               <p className="text-sm text-[var(--text-secondary)]">
@@ -205,7 +338,7 @@ export default function WalletConnect() {
               {/* Desktop browser wallets */}
               {!isMobile && hasNautilus && (
                 <button
-                  onClick={() => { connect('nautilus'); setShowDropdown(false); clearError(); }}
+                  onClick={() => { connect('nautilus'); setShowDropdown(false); clearError(); onConnect?.(); }}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors"
                 >
                   <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
@@ -220,7 +353,7 @@ export default function WalletConnect() {
               
               {!isMobile && hasSafew && (
                 <button
-                  onClick={() => { connect('safew'); setShowDropdown(false); clearError(); }}
+                  onClick={() => { connect('safew'); setShowDropdown(false); clearError(); onConnect?.(); }}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors"
                 >
                   <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center">
@@ -236,7 +369,7 @@ export default function WalletConnect() {
               {/* ErgoPay — always available, prominent on mobile */}
               <div className={!isMobile && (hasNautilus || hasSafew) ? 'border-t border-[var(--border)] pt-2 mt-2' : ''}>
                 <button
-                  onClick={() => { connect('ergopay'); setShowDropdown(false); clearError(); }}
+                  onClick={() => setShowErgoPayInput(!showErgoPayInput)}
                   className="w-full flex items-center gap-3 px-3 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-md transition-colors"
                 >
                   <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
@@ -250,6 +383,8 @@ export default function WalletConnect() {
                   </div>
                 </button>
               </div>
+
+              {showErgoPayInput && ergoPayInputUI}
 
               {/* Install link on desktop if no wallets found */}
               {!isMobile && !hasNautilus && !hasSafew && (
@@ -273,7 +408,7 @@ export default function WalletConnect() {
               </div>
             )}
           </div>
-          <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
+          <div className="fixed inset-0 z-40" onClick={() => { setShowDropdown(false); setShowErgoPayInput(false); }} />
         </>
       )}
     </div>

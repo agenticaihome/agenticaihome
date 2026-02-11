@@ -17,6 +17,10 @@ export default function TasksPage() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [minBudget, setMinBudget] = useState<string>('');
+  const [maxBudget, setMaxBudget] = useState<string>('');
+  const [escrowTypeFilter, setEscrowTypeFilter] = useState<string>('all');
+  const [showMyTasks, setShowMyTasks] = useState(false);
 
   // Get all unique skills from tasks
   const allSkills = [...new Set(tasks.flatMap(task => task.skillsRequired))].sort();
@@ -38,6 +42,29 @@ export default function TasksPage() {
       
       // Skills filter
       if (selectedSkills.length > 0 && !selectedSkills.some(skill => task.skillsRequired.includes(skill))) {
+        return false;
+      }
+      
+      // Budget range filter
+      const min = minBudget ? parseFloat(minBudget) : undefined;
+      const max = maxBudget ? parseFloat(maxBudget) : undefined;
+      if (min !== undefined && task.budgetErg < min) {
+        return false;
+      }
+      if (max !== undefined && task.budgetErg > max) {
+        return false;
+      }
+      
+      // Escrow type filter
+      if (escrowTypeFilter !== 'all') {
+        const taskEscrowType = (task as any).escrowType || 'simple';
+        if (taskEscrowType !== escrowTypeFilter) {
+          return false;
+        }
+      }
+      
+      // "My Tasks" filter
+      if (showMyTasks && userAddress && task.creatorAddress !== userAddress) {
         return false;
       }
       
@@ -125,6 +152,76 @@ export default function TasksPage() {
                 </svg>
               </div>
 
+              {/* Budget Range Filter */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="Min ERG"
+                  value={minBudget}
+                  onChange={(e) => setMinBudget(e.target.value)}
+                  className="w-24 px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
+                />
+                <span className="text-[var(--text-muted)]">-</span>
+                <input
+                  type="number"
+                  placeholder="Max ERG"
+                  value={maxBudget}
+                  onChange={(e) => setMaxBudget(e.target.value)}
+                  className="w-24 px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
+                />
+              </div>
+
+              {/* Escrow Type Filter */}
+              <div className="flex items-center gap-1 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg p-1">
+                <button
+                  onClick={() => setEscrowTypeFilter('all')}
+                  className={`px-3 py-1 text-sm rounded-md transition-all ${
+                    escrowTypeFilter === 'all'
+                      ? 'bg-[var(--accent-cyan)] text-white'
+                      : 'text-[var(--text-secondary)] hover:text-white'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setEscrowTypeFilter('simple')}
+                  className={`px-3 py-1 text-sm rounded-md transition-all ${
+                    escrowTypeFilter === 'simple'
+                      ? 'bg-[var(--accent-cyan)] text-white'
+                      : 'text-[var(--text-secondary)] hover:text-white'
+                  }`}
+                >
+                  Simple
+                </button>
+                <button
+                  onClick={() => setEscrowTypeFilter('milestone')}
+                  className={`px-3 py-1 text-sm rounded-md transition-all ${
+                    escrowTypeFilter === 'milestone'
+                      ? 'bg-[var(--accent-cyan)] text-white'
+                      : 'text-[var(--text-secondary)] hover:text-white'
+                  }`}
+                >
+                  Milestone
+                </button>
+              </div>
+
+              {/* "My Tasks" Filter */}
+              {userAddress && (
+                <button
+                  onClick={() => setShowMyTasks(!showMyTasks)}
+                  className={`px-4 py-2 border rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                    showMyTasks
+                      ? 'bg-[var(--accent-cyan)]/10 border-[var(--accent-cyan)]/50 text-[var(--accent-cyan)]'
+                      : 'bg-[var(--bg-card)] border-[var(--border-color)] text-[var(--text-secondary)] hover:border-[var(--accent-cyan)]/50'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  My Tasks
+                </button>
+              )}
+
               {/* Skills Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -144,19 +241,23 @@ export default function TasksPage() {
               </button>
 
               {/* Results Count */}
-              {(selectedSkills.length > 0 || searchQuery || filter !== 'all') && (
+              {(selectedSkills.length > 0 || searchQuery || filter !== 'all' || minBudget || maxBudget || escrowTypeFilter !== 'all' || showMyTasks) && (
                 <div className="text-sm text-[var(--text-secondary)]">
                   Showing {filteredAndSorted.length} of {tasks.length} tasks
                 </div>
               )}
 
               {/* Clear Filters */}
-              {(selectedSkills.length > 0 || searchQuery || filter !== 'all') && (
+              {(selectedSkills.length > 0 || searchQuery || filter !== 'all' || minBudget || maxBudget || escrowTypeFilter !== 'all' || showMyTasks) && (
                 <button
                   onClick={() => {
                     setSelectedSkills([]);
                     setSearchQuery('');
                     setFilter('all');
+                    setMinBudget('');
+                    setMaxBudget('');
+                    setEscrowTypeFilter('all');
+                    setShowMyTasks(false);
                   }}
                   className="text-sm text-[var(--accent-red)] hover:text-[var(--accent-red)]/80 transition-colors"
                 >
@@ -245,6 +346,10 @@ export default function TasksPage() {
                 setSelectedSkills([]);
                 setSearchQuery('');
                 setFilter('all');
+                setMinBudget('');
+                setMaxBudget('');
+                setEscrowTypeFilter('all');
+                setShowMyTasks(false);
               }}
               className="text-[var(--accent-cyan)] hover:text-[var(--accent-cyan)]/80 transition-colors font-medium"
             >

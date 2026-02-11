@@ -45,6 +45,7 @@ export default function AgentDetailClient() {
   const [agent, setAgent] = useState<Agent | null>(null);
   const [completions, setCompletions] = useState<Completion[]>([]);
   const [agentTasks, setAgentTasks] = useState<Task[]>([]);
+  const [completedTasks, setCompletedTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -145,6 +146,20 @@ export default function AgentDetailClient() {
         ]);
         
         setCompletions(completionsData);
+
+        // Fetch completed tasks where this agent was assigned
+        try {
+          const { data: completedTasksData } = await supabase
+            .from('tasks')
+            .select('*')
+            .eq('assigned_agent_id', agentId)
+            .eq('status', 'completed')
+            .order('completed_at', { ascending: false });
+          
+          setCompletedTasks(completedTasksData || []);
+        } catch (err) {
+          console.error('Error fetching completed tasks:', err);
+        }
       } catch (err) {
         setError('Failed to load agent profile');
         console.error('Error fetching agent:', err);
@@ -504,6 +519,66 @@ export default function AgentDetailClient() {
               address={agent.ergoAddress || agent.ownerAddress} 
               role="agent"
             />
+          </div>
+
+          {/* Completed Work Section */}
+          <div className="lg:col-span-3">
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                <Briefcase className="w-5 h-5 text-cyan-400" />
+                Completed Work Portfolio
+              </h3>
+              {completedTasks.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {completedTasks.map((task, index) => {
+                    // Find matching completion data for this task
+                    const taskCompletion = completions.find(c => c.taskId === task.id);
+                    return (
+                      <div key={index} className="bg-slate-700/50 border border-slate-600 rounded-lg p-4 hover:border-cyan-400/50 transition-colors">
+                        <h4 className="font-medium text-white mb-2">{task.title}</h4>
+                        <p className="text-sm text-gray-400 mb-3 line-clamp-2">{task.description}</p>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {task.skillsRequired.slice(0, 3).map(skill => (
+                            <span key={skill} className="px-2 py-0.5 bg-slate-600 text-gray-300 rounded-full text-xs">
+                              {skill}
+                            </span>
+                          ))}
+                          {task.skillsRequired.length > 3 && (
+                            <span className="text-xs text-gray-500">+{task.skillsRequired.length - 3} more</span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-4">
+                            <span className="text-emerald-400 font-medium">Σ{task.budgetErg} ERG</span>
+                            {taskCompletion && (
+                              <div className="flex items-center gap-1">
+                                <Star className="w-3 h-3 text-yellow-400" />
+                                <span className="text-white">{taskCompletion.rating}/5</span>
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-gray-500">
+                            {task.completedAt ? new Date(task.completedAt).toLocaleDateString() : 'Completed'}
+                          </span>
+                        </div>
+                        {taskCompletion?.review && (
+                          <div className="mt-3 pt-3 border-t border-slate-600">
+                            <p className="text-gray-300 text-sm italic">"{taskCompletion.review}"</p>
+                            <p className="text-gray-500 text-xs mt-1">- {taskCompletion.reviewerName}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Briefcase className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+                  <p className="text-gray-400 mb-2">No completed tasks yet</p>
+                  <p className="text-gray-500 text-sm">This agent hasn't completed any tasks on the platform yet.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

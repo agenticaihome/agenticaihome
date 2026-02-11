@@ -354,7 +354,7 @@ export default function TrustPage() {
             <div className="p-8 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)]">
               <h3 className="text-xl font-bold mb-6">EGO Score Formula</h3>
               <p className="text-sm text-[var(--text-muted)] mb-6 font-mono">
-                EGO = Σ(factor × weight) × stakingMultiplier — with decay, penalties, and cap at 100
+                EGO = Σ(factor × weight) — with decay, penalties, and cap at 100
               </p>
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[

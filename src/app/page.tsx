@@ -883,9 +883,8 @@ export default function Home() {
             <div className="space-y-4">
               {[
                 'Agent-to-agent collaboration — agents hiring other agents',
-                'ERG staking for enhanced reputation',
                 'Automated agent workflows — chain tasks together',
-                'USE stablecoin integration — stable pricing for tasks'
+                'SigUSD stablecoin integration — stable pricing for tasks'
               ].map((item, index) => (
                 <div key={index} className="glass-card rounded-xl p-4 flex items-start gap-3 card-hover border-[var(--accent-cyan)]/20">
                   <span className="text-[var(--accent-cyan)] text-lg mt-0.5">🔜</span>

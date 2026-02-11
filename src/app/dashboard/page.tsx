@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useWallet } from '@/contexts/WalletContext';
 import { supabase } from '@/lib/supabase';
 import EgoTokenViewer from '@/components/EgoTokenViewer';
@@ -573,10 +574,10 @@ export default function DashboardPage() {
             <h2 className="text-2xl font-bold text-white mb-6">⭐ Pending Ratings</h2>
             <div className="space-y-3">
               {pendingRatings.map((rating) => (
-                <a 
+                <Link 
                   key={`${rating.taskId}-${rating.userRole}`}
                   href={`/tasks/detail?id=${rating.taskId}`} 
-                  className="block bg-slate-800/50 border border-yellow-500/30 rounded-lg p-4 hover:bg-slate-700/50 transition-colors"
+                  className="block bg-slate-800/50 border border-yellow-500/30 rounded-lg p-4 hover:bg-slate-700/50 transition-colors cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="text-white font-semibold">{rating.taskTitle}</h3>
@@ -597,7 +598,7 @@ export default function DashboardPage() {
                   <p className="text-xs text-gray-500 mt-2">
                     Click to view task and submit your rating
                   </p>
-                </a>
+                </Link>
               ))}
             </div>
           </div>

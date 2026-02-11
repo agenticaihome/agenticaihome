@@ -554,6 +554,18 @@ function TaskDetailInner() {
               const deliverablesSection = document.getElementById('deliverables-section');
               deliverablesSection?.scrollIntoView({ behavior: 'smooth' });
             }}
+            onRateAgent={() => {
+              setShowCreatorRating(true);
+              setTimeout(() => {
+                document.getElementById('rating-section')?.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
+            onRateCreator={() => {
+              setShowAgentRating(true);
+              setTimeout(() => {
+                document.getElementById('rating-section')?.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }}
             className="mb-6"
           />
 
@@ -930,7 +942,7 @@ function TaskDetailInner() {
 
           {/* Rating Forms - Show after task completion */}
           {task?.status === 'completed' && userAddress && (
-            <>
+            <div id="rating-section">
               {/* Creator Rating Agent */}
               {task.creatorAddress === userAddress && task.acceptedAgentAddress && (
                 <div className="mb-6">
@@ -962,7 +974,7 @@ function TaskDetailInner() {
                   />
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>

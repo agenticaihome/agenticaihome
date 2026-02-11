@@ -74,8 +74,7 @@ function TaskDetailInner() {
   const [walletVerified, setWalletVerified] = useState<boolean | null>(null);
 
   // Rating states
-  const [showCreatorRating, setShowCreatorRating] = useState(false);
-  const [showAgentRating, setShowAgentRating] = useState(false);
+  // showCreatorRating/showAgentRating removed — forms auto-show when task is completed
   const [creatorRatingExists, setCreatorRatingExists] = useState(false);
   const [agentRatingExists, setAgentRatingExists] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
@@ -180,7 +179,7 @@ function TaskDetailInner() {
       // Check for existing ratings when task is completed
       // Pass agents directly since setUserAgents hasn't re-rendered yet
       if (t?.status === 'completed' && userAddress) {
-        await checkExistingRatings(t, agents);
+        await checkExistingRatings(t);
       }
     } catch (err) {
       console.error('Error loading task:', err);
@@ -190,24 +189,14 @@ function TaskDetailInner() {
     }
   }, [taskId, userAddress, getTask, getTaskBids, getAgentsByOwnerAddress, bidAgentId]);
 
-  const checkExistingRatings = async (task: Task, agents: Agent[]) => {
-    if (!userAddress || !task.assignedAgentId) return;
-
+  const checkExistingRatings = async (task: Task) => {
+    if (!userAddress) return;
     try {
-      // Check if user (as creator) has rated the agent
-      if (task.creatorAddress === userAddress) {
-        const creatorRating = await getRatingForTask(task.id, userAddress);
-        setCreatorRatingExists(!!creatorRating);
-        if (!creatorRating) setShowCreatorRating(true);
-      }
-
-      // Check if user (as agent) has rated the creator
-      // Use passed-in agents array (not stale userAgents state)
-      const isAssignedAgent = agents.some(a => a.id === task.assignedAgentId);
-      if (isAssignedAgent) {
-        const agentRating = await getRatingForTask(task.id, userAddress);
-        setAgentRatingExists(!!agentRating);
-        if (!agentRating) setShowAgentRating(true);
+      const existing = await getRatingForTask(task.id, userAddress);
+      if (existing) {
+        // User already rated — figure out which role
+        if (task.creatorAddress === userAddress) setCreatorRatingExists(true);
+        else setAgentRatingExists(true);
       }
     } catch (err) {
       console.error('Error checking existing ratings:', err);
@@ -231,10 +220,8 @@ function TaskDetailInner() {
       
       if (ratingData.raterRole === 'creator') {
         setCreatorRatingExists(true);
-        setShowCreatorRating(false);
       } else {
         setAgentRatingExists(true);
-        setShowAgentRating(false);
       }
       
       showSuccess('Rating submitted successfully!');
@@ -396,7 +383,7 @@ function TaskDetailInner() {
       
       // Check if user should rate after completion
       if (userAddress) {
-        await checkExistingRatings(task, userAgents);
+        await checkExistingRatings(task);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve');
@@ -557,65 +544,43 @@ function TaskDetailInner() {
               deliverablesSection?.scrollIntoView({ behavior: 'smooth' });
             }}
             onRateAgent={() => {
-              setShowCreatorRating(true);
-              setTimeout(() => {
-                document.getElementById('rating-section')?.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
+              document.getElementById('rating-section')?.scrollIntoView({ behavior: 'smooth' });
             }}
             onRateCreator={() => {
-              setShowAgentRating(true);
-              setTimeout(() => {
-                document.getElementById('rating-section')?.scrollIntoView({ behavior: 'smooth' });
-              }, 100);
+              document.getElementById('rating-section')?.scrollIntoView({ behavior: 'smooth' });
             }}
             className="mb-6"
           />
 
-          {/* Rating Forms - Show right after action bar for completed tasks */}
+          {/* Rating — just show it, no extra clicks */}
           {task?.status === 'completed' && userAddress && (
             <div id="rating-section" className="mb-6">
-              {/* Creator Rating Agent */}
-              {task.creatorAddress === userAddress && task.acceptedAgentAddress && !creatorRatingExists && showCreatorRating && (
-                <div className="mb-4">
-                  <RatingForm
-                    taskId={task.id}
-                    raterAddress={userAddress}
-                    rateeAddress={task.acceptedAgentAddress}
-                    raterRole="creator"
-                    rateeName={task.assignedAgentName || 'Agent'}
-                    onSubmit={handleRatingSubmit}
-                    onSkip={() => setShowCreatorRating(false)}
-                    existingRating={false}
-                  />
-                </div>
-              )}
-              {task.creatorAddress === userAddress && creatorRatingExists && (
-                <div className="bg-slate-800/50 border border-emerald-500/30 rounded-2xl p-4 mb-4 flex items-center gap-3 text-emerald-400">
-                  <span>✅</span>
-                  <span className="font-medium">You&apos;ve rated the agent for this task</span>
-                </div>
+              {/* Creator rates Agent */}
+              {task.creatorAddress === userAddress && task.acceptedAgentAddress && (
+                <RatingForm
+                  taskId={task.id}
+                  raterAddress={userAddress}
+                  rateeAddress={task.acceptedAgentAddress}
+                  raterRole="creator"
+                  rateeName={task.assignedAgentName || 'Agent'}
+                  onSubmit={handleRatingSubmit}
+                  onSkip={() => {}}
+                  existingRating={creatorRatingExists}
+                />
               )}
 
-              {/* Agent Rating Creator */}
-              {userAgents.some(a => a.id === task.assignedAgentId) && !agentRatingExists && showAgentRating && (
-                <div className="mb-4">
-                  <RatingForm
-                    taskId={task.id}
-                    raterAddress={userAddress}
-                    rateeAddress={task.creatorAddress}
-                    raterRole="agent"
-                    rateeName={task.creatorName || 'Task Creator'}
-                    onSubmit={handleRatingSubmit}
-                    onSkip={() => setShowAgentRating(false)}
-                    existingRating={false}
-                  />
-                </div>
-              )}
-              {userAgents.some(a => a.id === task.assignedAgentId) && agentRatingExists && (
-                <div className="bg-slate-800/50 border border-emerald-500/30 rounded-2xl p-4 mb-4 flex items-center gap-3 text-emerald-400">
-                  <span>✅</span>
-                  <span className="font-medium">You&apos;ve rated the client for this task</span>
-                </div>
+              {/* Agent rates Creator */}
+              {userAgents.some(a => a.id === task.assignedAgentId) && (
+                <RatingForm
+                  taskId={task.id}
+                  raterAddress={userAddress}
+                  rateeAddress={task.creatorAddress}
+                  raterRole="agent"
+                  rateeName={task.creatorName || 'Task Creator'}
+                  onSubmit={handleRatingSubmit}
+                  onSkip={() => {}}
+                  existingRating={agentRatingExists}
+                />
               )}
             </div>
           )}
@@ -905,7 +870,7 @@ function TaskDetailInner() {
 
                     // Check if user should rate after final completion
                     if (isFinal && userAddress) {
-                      await checkExistingRatings(task, userAgents);
+                      await checkExistingRatings(task);
                     }
                   }}
                   onRefunded={async (txId) => {
@@ -961,7 +926,7 @@ function TaskDetailInner() {
 
                     // Check if user should rate after completion
                     if (userAddress) {
-                      await checkExistingRatings(task, userAgents);
+                      await checkExistingRatings(task);
                     }
                   }}
                   onRefunded={async (txId) => {

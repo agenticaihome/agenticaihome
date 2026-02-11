@@ -256,24 +256,14 @@ export default function RatingForm({
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-3">
-        <button
-          onClick={handleSubmit}
-          disabled={!isValid || isSubmitting}
-          className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Rating'}
-        </button>
-        
-        <button
-          onClick={onSkip}
-          disabled={isSubmitting}
-          className="px-6 py-3 border border-slate-600 text-gray-300 hover:text-white hover:border-slate-500 rounded-lg transition-colors"
-        >
-          Skip
-        </button>
-      </div>
+      {/* Submit */}
+      <button
+        onClick={handleSubmit}
+        disabled={!isValid || isSubmitting}
+        className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-xl transition-all duration-200"
+      >
+        {isSubmitting ? 'Submitting...' : 'Submit Rating'}
+      </button>
 
       {/* Note */}
       <p className="text-xs text-gray-500 mt-4 text-center">

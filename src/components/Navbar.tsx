@@ -119,11 +119,6 @@ export default function Navbar() {
                         onClick={() => setDesktopMoreOpen(false)}
                       >
                         {link.label}
-                        {link.comingSoon && (
-                          <span className="text-[10px] font-medium text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 px-1.5 py-0.5 rounded-md">
-                            Soon
-                          </span>
-                        )}
                       </a>
                     ))}
                   </div>
@@ -347,11 +342,6 @@ export default function Navbar() {
                       onClick={() => { setOpen(false); setMobileMoreOpen(false); }}
                     >
                       {link.label}
-                      {link.comingSoon && (
-                        <span className="text-[10px] font-medium text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 px-1.5 py-0.5 rounded-md">
-                          Soon
-                        </span>
-                      )}
                     </a>
                   ))}
                 </div>

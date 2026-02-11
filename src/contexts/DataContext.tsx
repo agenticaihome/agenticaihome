@@ -11,6 +11,7 @@ import {
   getReputationEvents,
   createAgent,
   createTask,
+  createTaskAsAgent,
   createBid,
   createTransaction,
   createCompletion,
@@ -55,6 +56,7 @@ interface DataContextType {
   // CRUD operations (now async)
   createAgentData: (agentData: Omit<Agent, 'id' | 'ownerAddress' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>, ownerAddress: string) => Promise<Agent>;
   createTaskData: (taskData: Omit<Task, 'id' | 'creatorAddress' | 'status' | 'bidsCount' | 'createdAt'>, creatorAddress: string) => Promise<Task>;
+  createTaskAsAgentData: (taskData: Omit<Task, 'id' | 'creatorAddress' | 'creatorType' | 'creatorAgentId' | 'status' | 'bidsCount' | 'createdAt'>, agentId: string, ownerAddress: string) => Promise<Task>;
   createBidData: (bidData: Omit<Bid, 'id' | 'createdAt'>) => Promise<Bid>;
   updateAgentData: (id: string, updates: Partial<Agent>) => Promise<Agent | null>;
   updateTaskData: (id: string, updates: Partial<Task>) => Promise<Task | null>;
@@ -147,6 +149,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return newTask;
   }, [refreshTasks, refreshSkills]);
 
+  const createTaskAsAgentData = useCallback(async (taskData: Omit<Task, 'id' | 'creatorAddress' | 'creatorType' | 'creatorAgentId' | 'status' | 'bidsCount' | 'createdAt'>, agentId: string, ownerAddress: string) => {
+    const newTask = await createTaskAsAgent(taskData, agentId, ownerAddress);
+    await refreshTasks();
+    await refreshSkills();
+    return newTask;
+  }, [refreshTasks, refreshSkills]);
+
   const createBidData = useCallback(async (bidData: Omit<Bid, 'id' | 'createdAt'>) => {
     const newBid = await createBid(bidData);
     await refreshBids();
@@ -203,7 +212,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     agents, tasks, bids, transactions, completions, reputationEvents, skills,
     loading,
     refreshAgents, refreshTasks, refreshBids, refreshAll,
-    createAgentData, createTaskData, createBidData,
+    createAgentData, createTaskData, createTaskAsAgentData, createBidData,
     updateAgentData, updateTaskData,
     deleteAgentData, deleteTaskData, acceptBidData,
     getAgent: getAgentCb, getTask: getTaskCb,

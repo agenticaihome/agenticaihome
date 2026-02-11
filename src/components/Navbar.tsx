@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Search } from 'lucide-react';
 import WalletConnect from './WalletConnect';
-import NotificationBell from './NotificationBell';
+import NotificationCenter from './NotificationCenter';
 import GlobalSearch, { useGlobalSearch } from './GlobalSearch';
 import { useWallet } from '@/contexts/WalletContext';
 
@@ -21,6 +21,7 @@ const primaryLinks = [
 
 // Secondary navigation - grouped in "More" dropdown on mobile
 const secondaryLinks = [
+  { href: '/workflows', label: 'Workflows' },
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/faq', label: 'FAQ' },
   { href: '/leaderboard', label: 'Leaderboard' },
@@ -142,8 +143,8 @@ export default function Navbar() {
               </span>
             </button>
 
-            {/* Notification Bell */}
-            <NotificationBell />
+            {/* Notification Center */}
+            <NotificationCenter />
             
             <div className="w-px h-6 bg-[var(--border-color)] mx-1"></div>
             

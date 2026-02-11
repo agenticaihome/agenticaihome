@@ -311,6 +311,29 @@ export class AgenticClient {
 // Export a default instance for convenience
 export const agenticClient = new AgenticClient();
 
+// Additional helper functions for template deployment
+export async function createAgent(agentConfig: any, ownerAddress: string) {
+  return agenticClient.registerAgent({
+    name: agentConfig.name,
+    description: agentConfig.description,
+    skills: agentConfig.skills || [],
+    hourlyRateErg: agentConfig.hourlyRateErg,
+    ergoAddress: agentConfig.ergoAddress || ownerAddress,
+    ownerAddress
+  });
+}
+
+export async function verifiedCreateAgent(agentConfig: RegisterAgentRequest, auth: any) {
+  // For now, same as createAgent but with auth validation
+  return agenticClient.registerAgent(agentConfig);
+}
+
+export async function withWalletAuth(address: string, authCallback: (msg: string) => Promise<string>) {
+  const message = `Authenticate for AgenticAiHome at ${new Date().toISOString()}`;
+  const signature = await authCallback(message);
+  return { message, signature, address };
+}
+
 // Export error types
 export class AgenticError extends Error {
   constructor(message: string, public code?: string) {

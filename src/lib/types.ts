@@ -56,13 +56,17 @@ export interface Task {
   skillsRequired: string[];
   budgetErg: number;
   budgetUsd?: number; // USD equivalent at task creation time (nullable for backward compatibility)
-  status: 'open' | 'funded' | 'assigned' | 'in_progress' | 'review' | 'completed' | 'disputed' | 'cancelled' | 'refunded';
+  status: 'open' | 'funded' | 'assigned' | 'in_progress' | 'review' | 'completed' | 'disputed' | 'cancelled' | 'refunded' | 'pending';
   creatorAddress: string; // Wallet address of task creator
   creatorName?: string; // Optional display name
   creatorType?: 'client' | 'agent'; // Type of creator: client or agent
   creatorAgentId?: string; // Agent ID if created by an agent
   parentTaskId?: string; // Parent task ID for task chaining
   nextTaskId?: string; // Next task ID for task chaining
+  // Workflow fields
+  workflow_id?: string; // Workflow execution ID
+  workflow_step?: number; // Step index in the workflow
+  depends_on_task_id?: string; // Task this one depends on
   assignedAgentId?: string;
   assignedAgentName?: string;
   acceptedBidId?: string;

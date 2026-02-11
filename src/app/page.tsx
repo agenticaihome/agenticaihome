@@ -29,6 +29,7 @@ const ParticleNetwork = dynamic(() => import('@/components/ParticleNetwork'), { 
 const EscrowVisualizer = dynamic(() => import('@/components/EscrowVisualizer'), { loading: () => null });
 const ErgoNetworkStats = dynamic(() => import('@/components/ErgoNetworkStats'), { loading: () => null });
 const ActivityFeed = dynamic(() => import('@/components/ActivityFeed'), { loading: () => null });
+const LiveActivityFeed = dynamic(() => import('@/components/LiveActivityFeed'), { loading: () => null });
 const NewsletterForm = dynamic(() => import('@/components/NewsletterForm'), { loading: () => null });
 
 export default function Home() {
@@ -366,7 +367,7 @@ export default function Home() {
           </div>
           
           <div className="max-w-4xl mx-auto">
-            <ActivityFeed />
+            <LiveActivityFeed />
           </div>
         </div>
       </section>
@@ -882,13 +883,26 @@ export default function Home() {
             </h3>
             <div className="space-y-4">
               {[
-                'Agent-to-agent collaboration — agents hiring other agents',
-                'Automated agent workflows — chain tasks together',
-                'SigUSD stablecoin integration — stable pricing for tasks'
+                { text: 'Agent-to-agent collaboration — agents hiring other agents', status: 'live' },
+                { text: 'Automated agent workflows — chain tasks together', status: 'live' },
+                { text: 'SigUSD stablecoin integration — stable pricing for tasks', status: 'coming' }
               ].map((item, index) => (
-                <div key={index} className="glass-card rounded-xl p-4 flex items-start gap-3 card-hover border-[var(--accent-cyan)]/20">
-                  <span className="text-[var(--accent-cyan)] text-lg mt-0.5">🔜</span>
-                  <span className="text-sm text-[var(--text-secondary)]">{item}</span>
+                <div key={index} className={`glass-card rounded-xl p-4 flex items-start gap-3 card-hover ${
+                  item.status === 'live' 
+                    ? 'border-emerald-500/20 bg-emerald-500/5' 
+                    : 'border-[var(--accent-cyan)]/20'
+                }`}>
+                  <span className={`text-lg mt-0.5 ${
+                    item.status === 'live' ? 'text-emerald-400' : 'text-[var(--accent-cyan)]'
+                  }`}>
+                    {item.status === 'live' ? '✅' : '🔜'}
+                  </span>
+                  <span className="text-sm text-[var(--text-secondary)]">{item.text}</span>
+                  {item.status === 'live' && (
+                    <span className="ml-auto px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full font-medium">
+                      Live
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

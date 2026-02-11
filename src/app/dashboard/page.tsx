@@ -12,6 +12,7 @@ import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet'
 import { getPendingRatingsForUser } from '@/lib/supabaseStore';
 import { isMobileDevice, createErgoPayRequest } from '@/lib/ergo/ergopay';
 import ErgoPayModal from '@/components/ErgoPayModal';
+import LiveActivityFeed from '@/components/LiveActivityFeed';
 import {
   Trophy,
   CheckCircle,
@@ -24,7 +25,8 @@ import {
   BarChart3,
   FileText,
   Users,
-  Search
+  Search,
+  Link2
 } from 'lucide-react';
 
 interface Agent {
@@ -47,6 +49,10 @@ interface Task {
   title: string;
   description: string;
   creator_address: string;
+  creator_type?: 'client' | 'agent';
+  creator_agent_id?: string;
+  parent_task_id?: string;
+  next_task_id?: string;
   assigned_agent_id: string | null;
   budget_erg: number;
   status: string;
@@ -68,11 +74,116 @@ interface RecentActivity {
   data: any;
 }
 
+function TaskCard({ 
+  task, 
+  showAgentBadge = false, 
+  showCreatorAgent = false 
+}: { 
+  task: Task; 
+  showAgentBadge?: boolean;
+  showCreatorAgent?: boolean;
+}) {
+  const formatDate = (dateStr: string) => {
+    try {
+      if (!dateStr) return 'Unknown';
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime()) || date.getFullYear() < 2000) return 'Unknown';
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return 'Unknown';
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const colors = {
+      open: 'bg-blue-500/20 text-blue-400',
+      assigned: 'bg-yellow-500/20 text-yellow-400',
+      in_progress: 'bg-purple-500/20 text-purple-400',
+      review: 'bg-orange-500/20 text-orange-400',
+      completed: 'bg-emerald-500/20 text-emerald-400',
+      disputed: 'bg-red-500/20 text-red-400',
+      cancelled: 'bg-gray-500/20 text-gray-400',
+    };
+
+    const displayName = status.replace('_', ' ').toUpperCase();
+    const colorClass = colors[status as keyof typeof colors] || 'bg-gray-500/20 text-gray-400';
+
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+        {displayName}
+      </span>
+    );
+  };
+
+  return (
+    <a 
+      href={`/tasks/detail?id=${task.id}`} 
+      className="block bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-700/50 transition-colors"
+    >
+      <div className="flex items-start justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <h3 className="text-white font-semibold">{task.title}</h3>
+          {task.creator_type === 'agent' && (
+            <Bot className="w-4 h-4 text-purple-400" />
+          )}
+          {task.parent_task_id && (
+            <Link2 className="w-4 h-4 text-blue-400" />
+          )}
+        </div>
+        {getStatusBadge(task.status)}
+      </div>
+      
+      {showCreatorAgent && task.creator_agent_id && (
+        <div className="mb-2">
+          <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded flex items-center gap-1 inline-flex">
+            <Bot className="w-3 h-3" />
+            Created by Agent
+          </span>
+        </div>
+      )}
+
+      {showAgentBadge && (
+        <div className="mb-2">
+          <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+            Assigned to your agent
+          </span>
+        </div>
+      )}
+
+      <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+        {task.description}
+      </p>
+
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center gap-4">
+          <span className="text-gray-500">
+            Budget: <span className="text-emerald-400">Σ{Number(task.budget_erg).toFixed(2)} ERG</span>
+          </span>
+          <span className="text-gray-500">
+            Created: {formatDate(task.created_at)}
+          </span>
+        </div>
+        {task.completed_at && (
+          <span className="text-gray-500">
+            Completed: {formatDate(task.completed_at)}
+          </span>
+        )}
+      </div>
+    </a>
+  );
+}
+
 export default function DashboardPage() {
   const { userAddress } = useWallet();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [assignedTasks, setAssignedTasks] = useState<Task[]>([]);
+  const [tasksCreatedByAgents, setTasksCreatedByAgents] = useState<Task[]>([]);
+  const [activeTab, setActiveTab] = useState<'client' | 'agent' | 'agent-created'>('client');
   const [stats, setStats] = useState<UserStats>({
     tasksCreated: 0,
     tasksCompleted: 0,
@@ -181,14 +292,29 @@ export default function DashboardPage() {
 
       if (agentsError) throw agentsError;
 
-      // Fetch user's tasks
+      // Fetch user's tasks (as client)
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
         .select('*')
         .eq('creator_address', userAddress)
+        .eq('creator_type', 'client')
         .order('created_at', { ascending: false });
 
       if (tasksError) throw tasksError;
+
+      // Fetch tasks created by user's agents
+      const agentIds = (agentsData || []).map(agent => agent.id);
+      let tasksCreatedByAgentsData: Task[] = [];
+      if (agentIds.length > 0) {
+        const { data: agentTasksData } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('creator_type', 'agent')
+          .in('creator_agent_id', agentIds)
+          .order('created_at', { ascending: false });
+        tasksCreatedByAgentsData = (agentTasksData || []) as Task[];
+        setTasksCreatedByAgents(tasksCreatedByAgentsData);
+      }
 
       setAgents(agentsData || []);
       setTasks(tasksData || []);
@@ -197,9 +323,9 @@ export default function DashboardPage() {
       const userAgents = agentsData || [];
       const userTasks = tasksData || [];
       const completedTasks = userTasks.filter(task => task.status === 'completed');
+      const completedAgentTasks = tasksCreatedByAgentsData.filter(task => task.status === 'completed');
       
-      // Fetch tasks assigned to user's agents
-      const agentIds = userAgents.map(agent => agent.id);
+      // Fetch tasks assigned to user's agents (reuse existing agentIds)
       let assignedTasksData: Task[] = [];
       if (agentIds.length > 0) {
         const { data: atData } = await supabase
@@ -225,8 +351,8 @@ export default function DashboardPage() {
       // Count completed tasks: ones user created + ones their agents completed
       const agentCompletedCount = assignedTasksData.filter(t => t.status === 'completed').length;
       setStats({
-        tasksCreated: userTasks.length,
-        tasksCompleted: completedTasks.length + agentCompletedCount,
+        tasksCreated: userTasks.length + tasksCreatedByAgentsData.length,
+        tasksCompleted: completedTasks.length + completedAgentTasks.length + agentCompletedCount,
         totalEarned: earnings // Already in ERG
       });
 
@@ -514,36 +640,7 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Working On (tasks assigned to my agents) */}
-          {assignedTasks.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <Zap className="w-6 h-6" />
-                Working On
-              </h2>
-              <div className="space-y-3">
-                {assignedTasks.map(task => (
-                  <a key={task.id} href={`/tasks/detail?id=${task.id}`} className="block bg-slate-800/50 border border-purple-500/30 rounded-lg p-4 hover:bg-slate-700/50 transition-colors">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-white font-semibold">{task.title}</h3>
-                      {getStatusBadge(task.status, 'task')}
-                    </div>
-                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">{task.description}</p>
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="text-gray-500">
-                        Budget: <span className="text-emerald-400">Σ{Number(task.budget_erg).toFixed(2)} ERG</span>
-                      </span>
-                      <span className="text-gray-500">
-                        Created: {formatDate(task.created_at)}
-                      </span>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* My Tasks (created) */}
+          {/* My Tasks (with tabs) */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-white">My Tasks</h2>
@@ -554,55 +651,107 @@ export default function DashboardPage() {
                 + Create New Task
               </a>
             </div>
-            
-            {loading ? (
-              <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 text-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent-cyan)] mx-auto mb-3"></div>
-                <p className="text-gray-400">Loading tasks...</p>
-              </div>
-            ) : tasks.length > 0 ? (
-              <div className="space-y-3">
-                {tasks.map(task => (
-                  <a key={task.id} href={`/tasks/detail?id=${task.id}`} className="block bg-slate-800/50 border border-slate-700 rounded-lg p-4 hover:bg-slate-700/50 transition-colors">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-white font-semibold">{task.title}</h3>
-                      {getStatusBadge(task.status, 'task')}
-                    </div>
-                    <p className="text-gray-400 text-sm mb-3 line-clamp-2">
-                      {task.description}
-                    </p>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-4">
-                        <span className="text-gray-500">
-                          Budget: <span className="text-emerald-400">Σ{Number(task.budget_erg).toFixed(2)} ERG</span>
-                        </span>
-                        <span className="text-gray-500">
-                          Created: {formatDate(task.created_at)}
-                        </span>
-                      </div>
-                      {task.completed_at && (
-                        <span className="text-gray-500">
-                          Completed: {formatDate(task.completed_at)}
-                        </span>
-                      )}
-                    </div>
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
-                <div className="mb-4">
-                  <ClipboardList className="w-10 h-10 text-purple-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-2">No Tasks Yet</h3>
-                <p className="text-gray-400 mb-4">Create your first task to get started</p>
-                <a
-                  href="/tasks/create"
-                  className="inline-flex items-center px-4 py-2 bg-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/80 text-white rounded-lg text-sm font-medium transition-colors"
+
+            {/* Tab Navigation */}
+            <div className="flex bg-slate-800/50 rounded-lg p-1 mb-4">
+              <button
+                onClick={() => setActiveTab('client')}
+                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'client'
+                    ? 'bg-[var(--accent-cyan)] text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                My Tasks (as client)
+              </button>
+              <button
+                onClick={() => setActiveTab('agent')}
+                className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                  activeTab === 'agent'
+                    ? 'bg-[var(--accent-cyan)] text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                My Tasks (as agent)
+              </button>
+              {tasksCreatedByAgents.length > 0 && (
+                <button
+                  onClick={() => setActiveTab('agent-created')}
+                  className={`flex-1 px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                    activeTab === 'agent-created'
+                      ? 'bg-[var(--accent-cyan)] text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
                 >
-                  Create Task
-                </a>
-              </div>
+                  Created by My Agents
+                </button>
+              )}
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'client' && (
+              loading ? (
+                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent-cyan)] mx-auto mb-3"></div>
+                  <p className="text-gray-400">Loading tasks...</p>
+                </div>
+              ) : tasks.length > 0 ? (
+                <div className="space-y-3">
+                  {tasks.map(task => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
+                  <div className="mb-4">
+                    <ClipboardList className="w-10 h-10 text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">No Tasks Yet</h3>
+                  <p className="text-gray-400 mb-4">Create your first task to get started</p>
+                  <a
+                    href="/tasks/create"
+                    className="inline-flex items-center px-4 py-2 bg-[var(--accent-cyan)] hover:bg-[var(--accent-cyan)]/80 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Create Task
+                  </a>
+                </div>
+              )
+            )}
+
+            {activeTab === 'agent' && (
+              assignedTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {assignedTasks.map(task => (
+                    <TaskCard key={task.id} task={task} showAgentBadge />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
+                  <div className="mb-4">
+                    <Bot className="w-10 h-10 text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">No Tasks Assigned</h3>
+                  <p className="text-gray-400 mb-4">Your agents haven't been assigned any tasks yet</p>
+                </div>
+              )
+            )}
+
+            {activeTab === 'agent-created' && (
+              tasksCreatedByAgents.length > 0 ? (
+                <div className="space-y-3">
+                  {tasksCreatedByAgents.map(task => (
+                    <TaskCard key={task.id} task={task} showCreatorAgent />
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
+                  <div className="mb-4">
+                    <Bot className="w-10 h-10 text-cyan-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">No Agent Tasks</h3>
+                  <p className="text-gray-400 mb-4">Your agents haven't created any tasks yet</p>
+                </div>
+              )
             )}
           </div>
         </div>
@@ -658,9 +807,15 @@ export default function DashboardPage() {
           <ActiveDisputesBanner userAddress={userAddress} />
         </div>
 
+        {/* Live Activity Feed */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-white mb-6">Live Platform Activity</h2>
+          <LiveActivityFeed maxItems={15} compact={false} />
+        </div>
+
         {/* Recent Activity */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">Recent Activity</h2>
+          <h2 className="text-2xl font-bold text-white mb-6">Your Recent Activity</h2>
           
           {loading ? (
             <div className="bg-[var(--bg-card)] border border-slate-700 rounded-lg p-6 text-center">

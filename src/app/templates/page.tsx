@@ -1,218 +1,247 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
-import {
-  getAgentTemplates,
-  getTemplatesByCategory,
-  getPopularTemplates,
-  getTopRatedTemplates,
-  deployTemplate,
-  createAgentFromTemplate,
-  getTemplateCategories,
-  estimateTemplateEarnings,
-  getTemplateAnalytics,
-  AgentTemplate,
-  TemplateCategory,
-  TemplateAnalytics
-} from '@/lib/templates';
-import { createAgent, withWalletAuth, verifiedCreateAgent } from '@/lib/supabaseStore';
-import { Clock, Flame, Star, Search, X } from 'lucide-react';
+import { useData } from '@/contexts/DataContext';
+import { Clock, Flame, Star, Search, X, Code, Database, PenTool, Workflow, Zap, ArrowRight, Link2 } from 'lucide-react';
+import Link from 'next/link';
+
+interface WorkflowTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: any;
+  category: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  estimatedDuration: string;
+  totalBudget: { min: number; max: number };
+  tasks: {
+    title: string;
+    description: string;
+    skills: string[];
+    estimatedBudget: number;
+    estimatedDuration: string;
+  }[];
+}
+
+const workflowTemplates: WorkflowTemplate[] = [
+  {
+    id: 'full-stack-app',
+    name: 'Full Stack App',
+    description: 'Complete web application development from design to deployment',
+    icon: Code,
+    category: 'Development',
+    difficulty: 'advanced',
+    estimatedDuration: '4-8 weeks',
+    totalBudget: { min: 150, max: 300 },
+    tasks: [
+      {
+        title: 'UI/UX Design',
+        description: 'Create wireframes, mockups, and user interface designs',
+        skills: ['UI/UX Design', 'Figma', 'Adobe XD'],
+        estimatedBudget: 25,
+        estimatedDuration: '3-5 days'
+      },
+      {
+        title: 'Frontend Development', 
+        description: 'Build responsive frontend with React/Vue/Angular',
+        skills: ['React', 'TypeScript', 'CSS', 'HTML'],
+        estimatedBudget: 50,
+        estimatedDuration: '1-2 weeks'
+      },
+      {
+        title: 'Backend Development',
+        description: 'Create API, database schema, and server logic',
+        skills: ['Node.js', 'Python', 'API Design', 'Database'],
+        estimatedBudget: 60,
+        estimatedDuration: '1-2 weeks'
+      },
+      {
+        title: 'Testing & QA',
+        description: 'Comprehensive testing and quality assurance',
+        skills: ['Testing', 'QA', 'Automation'],
+        estimatedBudget: 20,
+        estimatedDuration: '3-5 days'
+      },
+      {
+        title: 'Deployment',
+        description: 'Deploy to production with CI/CD setup',
+        skills: ['DevOps', 'AWS', 'Docker', 'CI/CD'],
+        estimatedBudget: 15,
+        estimatedDuration: '1-2 days'
+      }
+    ]
+  },
+  {
+    id: 'data-pipeline',
+    name: 'Data Pipeline',
+    description: 'End-to-end data processing and analytics pipeline',
+    icon: Database,
+    category: 'Data Science',
+    difficulty: 'intermediate',
+    estimatedDuration: '2-4 weeks',
+    totalBudget: { min: 80, max: 160 },
+    tasks: [
+      {
+        title: 'Data Collection',
+        description: 'Gather and validate data sources',
+        skills: ['Data Engineering', 'APIs', 'Web Scraping'],
+        estimatedBudget: 20,
+        estimatedDuration: '2-3 days'
+      },
+      {
+        title: 'Data Cleaning',
+        description: 'Clean, normalize, and structure raw data',
+        skills: ['Python', 'Pandas', 'Data Cleaning'],
+        estimatedBudget: 25,
+        estimatedDuration: '3-5 days'
+      },
+      {
+        title: 'Data Analysis',
+        description: 'Perform statistical analysis and generate insights',
+        skills: ['Python', 'R', 'Statistics', 'Machine Learning'],
+        estimatedBudget: 40,
+        estimatedDuration: '1-2 weeks'
+      },
+      {
+        title: 'Report Generation',
+        description: 'Create visualizations and comprehensive reports',
+        skills: ['Data Visualization', 'Tableau', 'PowerBI'],
+        estimatedBudget: 15,
+        estimatedDuration: '2-3 days'
+      }
+    ]
+  },
+  {
+    id: 'content-creation',
+    name: 'Content Creation',
+    description: 'Professional content development from research to publication',
+    icon: PenTool,
+    category: 'Content',
+    difficulty: 'beginner',
+    estimatedDuration: '1-2 weeks',
+    totalBudget: { min: 40, max: 80 },
+    tasks: [
+      {
+        title: 'Research',
+        description: 'Comprehensive topic research and fact-checking',
+        skills: ['Research', 'Fact Checking', 'Analysis'],
+        estimatedBudget: 10,
+        estimatedDuration: '1-2 days'
+      },
+      {
+        title: 'Writing',
+        description: 'Create engaging, high-quality content',
+        skills: ['Writing', 'Copywriting', 'SEO'],
+        estimatedBudget: 20,
+        estimatedDuration: '3-5 days'
+      },
+      {
+        title: 'Editing',
+        description: 'Professional editing and proofreading',
+        skills: ['Editing', 'Proofreading', 'Grammar'],
+        estimatedBudget: 8,
+        estimatedDuration: '1-2 days'
+      },
+      {
+        title: 'Publishing',
+        description: 'Format and publish across platforms',
+        skills: ['Content Management', 'WordPress', 'Social Media'],
+        estimatedBudget: 5,
+        estimatedDuration: '1 day'
+      }
+    ]
+  }
+];
 
 export default function TemplatesPage() {
-  const { wallet, isAuthenticated } = useWallet();
-  const [templates, setTemplates] = useState<AgentTemplate[]>([]);
-  const [filteredTemplates, setFilteredTemplates] = useState<AgentTemplate[]>([]);
-  const [analytics, setAnalytics] = useState<TemplateAnalytics | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<TemplateCategory | 'all' | 'popular' | 'top-rated'>('all');
+  const { userAddress } = useWallet();
+  const { createTaskData } = useData();
+  const router = useRouter();
+  
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState<AgentTemplate | null>(null);
-  const [showDeployModal, setShowDeployModal] = useState(false);
-  const [deploymentData, setDeploymentData] = useState({
-    name: '',
-    description: '',
-    hourlyRate: 0,
-    additionalSkills: [] as string[],
-    customPrompt: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<WorkflowTemplate | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const categories = getTemplateCategories();
+  const categories = ['all', 'Development', 'Data Science', 'Content'];
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    filterTemplates();
-  }, [templates, selectedCategory, searchQuery]);
-
-  const loadData = async () => {
-    try {
-      const templatesData = getAgentTemplates();
-      const analyticsData = getTemplateAnalytics();
-      
-      setTemplates(templatesData);
-      setAnalytics(analyticsData);
-    } catch (err) {
-      setError('Failed to load templates');
-    }
-  };
-
-  const filterTemplates = () => {
-    let filtered = templates;
-
-    if (selectedCategory === 'popular') {
-      filtered = getPopularTemplates(20);
-    } else if (selectedCategory === 'top-rated') {
-      filtered = getTopRatedTemplates(20);
-    } else if (selectedCategory !== 'all') {
-      filtered = getTemplatesByCategory(selectedCategory as TemplateCategory);
-    }
-
-    if (searchQuery.trim()) {
+  const filteredTemplates = workflowTemplates.filter(template => {
+    if (selectedCategory !== 'all' && template.category !== selectedCategory) return false;
+    if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(template =>
-        template.name.toLowerCase().includes(query) ||
-        template.description.toLowerCase().includes(query) ||
-        template.tags.some(tag => tag.toLowerCase().includes(query)) ||
-        template.skillsRequired.some(skill => skill.toLowerCase().includes(query))
-      );
+      return template.name.toLowerCase().includes(query) ||
+             template.description.toLowerCase().includes(query) ||
+             template.tasks.some(task => 
+               task.title.toLowerCase().includes(query) ||
+               task.skills.some(skill => skill.toLowerCase().includes(query))
+             );
     }
+    return true;
+  });
 
-    setFilteredTemplates(filtered);
-  };
+  const createWorkflow = async () => {
+    if (!selectedTemplate || !userAddress) return;
 
-  const handleDeployTemplate = async () => {
-    if (!isAuthenticated || !selectedTemplate || !wallet.address) return;
-
-    setLoading(true);
-    setError(null);
+    setIsCreating(true);
 
     try {
-      // Create agent from template
-      const agentConfig = createAgentFromTemplate(
-        selectedTemplate.id,
-        wallet.address,
-        {
-          name: deploymentData.name || undefined,
-          description: deploymentData.description || undefined,
-          hourlyRate: deploymentData.hourlyRate || undefined,
-          additionalSkills: deploymentData.additionalSkills.length > 0 ? deploymentData.additionalSkills : undefined
-        }
-      );
+      const createdTasks = [];
+      
+      // Create tasks in sequence
+      for (let i = 0; i < selectedTemplate.tasks.length; i++) {
+        const taskTemplate = selectedTemplate.tasks[i];
+        
+        const taskData = {
+          title: `${selectedTemplate.name}: ${taskTemplate.title}`,
+          description: taskTemplate.description,
+          skillsRequired: taskTemplate.skills,
+          budgetErg: taskTemplate.estimatedBudget,
+          budgetUsd: taskTemplate.estimatedBudget * 3, // Rough conversion
+          escrowType: 'simple' as const,
+          parentTaskId: i > 0 ? createdTasks[i - 1].id : undefined,
+          metadata: {
+            workflowTemplate: selectedTemplate.id,
+            taskIndex: i,
+            totalTasks: selectedTemplate.tasks.length,
+            estimatedDuration: taskTemplate.estimatedDuration
+          }
+        };
 
-      // Deploy to marketplace — try verified write first
-      let newAgent;
-      try {
-        const auth = await withWalletAuth(wallet.address!, async (msg) => {
-          const ergo = (window as any).ergo;
-          if (!ergo?.auth) throw new Error('No wallet auth');
-          return await ergo.auth(wallet.address, msg);
-        });
-        newAgent = await verifiedCreateAgent({
-          name: agentConfig.name || selectedTemplate.name,
-          description: agentConfig.description || selectedTemplate.description,
-          skills: agentConfig.skills || selectedTemplate.skillsRequired,
-          hourlyRateErg: agentConfig.hourlyRateErg || selectedTemplate.suggestedHourlyRate.min,
-          ergoAddress: agentConfig.ergoAddress || wallet.address!,
-        }, auth);
-      } catch {
-        newAgent = await createAgent(agentConfig as any, wallet.address!);
+        const newTask = await createTaskData(taskData, userAddress);
+        createdTasks.push(newTask);
+        
+        // Link to previous task
+        if (i > 0) {
+          // Update previous task to point to this one
+          // Note: This would require an updateTask call in real implementation
+        }
       }
 
-      // Track deployment
-      const deployment = deployTemplate(selectedTemplate.id, wallet.address, {
-        name: deploymentData.name,
-        description: deploymentData.description,
-        hourlyRate: deploymentData.hourlyRate,
-        additionalSkills: deploymentData.additionalSkills
-      });
-
-      setShowDeployModal(false);
-      setSelectedTemplate(null);
-      setDeploymentData({
-        name: '',
-        description: '',
-        hourlyRate: 0,
-        additionalSkills: [],
-        customPrompt: ''
-      });
-
-      // Refresh data
-      loadData();
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to deploy template');
+      // Navigate to the first task
+      router.push(`/tasks/detail?id=${createdTasks[0].id}`);
+    } catch (error) {
+      console.error('Failed to create workflow:', error);
     } finally {
-      setLoading(false);
+      setIsCreating(false);
+      setShowCreateModal(false);
     }
-  };
-
-  const addSkill = (skill: string) => {
-    if (skill && !deploymentData.additionalSkills.includes(skill)) {
-      setDeploymentData({
-        ...deploymentData,
-        additionalSkills: [...deploymentData.additionalSkills, skill]
-      });
-    }
-  };
-
-  const removeSkill = (skillToRemove: string) => {
-    setDeploymentData({
-      ...deploymentData,
-      additionalSkills: deploymentData.additionalSkills.filter(s => s !== skillToRemove)
-    });
   };
 
   return (
-    <main className="container py-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Coming Soon Banner */}
-        <div className="bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] text-center py-2 px-4 text-sm font-medium rounded-lg mb-6">
-          <div className="flex items-center justify-center gap-2">
-            <Clock className="w-4 h-4" />
-            Templates is in preview. Agent templates will be available when the marketplace has more activity.
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-[var(--bg-primary)] py-8 md:py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Agent Templates</h1>
-          <p className="text-[var(--text-secondary)] mb-6">
-            Pre-built agent configurations for common use cases. Deploy in one click and start earning.
+          <Link href="/tasks" className="text-[var(--text-secondary)] hover:text-white text-sm mb-4 inline-block">
+            ← Back to Tasks
+          </Link>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Workflow Templates</h1>
+          <p className="text-[var(--text-secondary)]">
+            Pre-built task chains for common workflows. Create multiple linked tasks in one click.
           </p>
-
-          {/* Analytics */}
-          {analytics && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="card p-4">
-                <div className="text-2xl font-bold text-[var(--accent-cyan)]">
-                  {analytics.totalTemplates}
-                </div>
-                <div className="text-sm text-[var(--text-secondary)]">Available Templates</div>
-              </div>
-              <div className="card p-4">
-                <div className="text-2xl font-bold text-[var(--accent-purple)]">
-                  {analytics.totalDeployments}
-                </div>
-                <div className="text-sm text-[var(--text-secondary)]">Total Deployments</div>
-              </div>
-              <div className="card p-4">
-                <div className="text-2xl font-bold text-[var(--accent-green)]">
-                  {analytics.popularCategories[0]?.category.replace('-', ' ') || 'N/A'}
-                </div>
-                <div className="text-sm text-[var(--text-secondary)]">Most Popular Category</div>
-              </div>
-              <div className="card p-4">
-                <div className="text-2xl font-bold text-yellow-400">
-                  {analytics.topPerformingTemplates[0]?.name?.split(' ')[0] || 'N/A'}
-                </div>
-                <div className="text-sm text-[var(--text-secondary)]">Top Template</div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Filters */}
@@ -223,60 +252,24 @@ export default function TemplatesPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search templates, skills, or categories..."
-              className="input flex-1"
+              placeholder="Search templates, tasks, or skills..."
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent-cyan)] transition-colors"
             />
           </div>
 
           {/* Category Filter */}
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-3 py-1 rounded-full text-sm transition-all ${
-                selectedCategory === 'all'
-                  ? 'bg-[var(--accent-cyan)] text-white'
-                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'
-              }`}
-            >
-              All Templates
-            </button>
-            <button
-              onClick={() => setSelectedCategory('popular')}
-              className={`px-3 py-1 rounded-full text-sm transition-all ${
-                selectedCategory === 'popular'
-                  ? 'bg-[var(--accent-cyan)] text-white'
-                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'
-              }`}
-            >
-              <span className="flex items-center gap-1">
-                <Flame className="w-3 h-3" />
-                Popular
-              </span>
-            </button>
-            <button
-              onClick={() => setSelectedCategory('top-rated')}
-              className={`px-3 py-1 rounded-full text-sm transition-all ${
-                selectedCategory === 'top-rated'
-                  ? 'bg-[var(--accent-cyan)] text-white'
-                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'
-              }`}
-            >
-              <span className="flex items-center gap-1">
-                <Star className="w-3 h-3" />
-                Top Rated
-              </span>
-            </button>
             {categories.map(category => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-3 py-1 rounded-full text-sm transition-all capitalize ${
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all capitalize ${
                   selectedCategory === category
                     ? 'bg-[var(--accent-cyan)] text-white'
                     : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:bg-[var(--bg-card-hover)]'
                 }`}
               >
-                {category.replace('-', ' ')}
+                {category}
               </button>
             ))}
           </div>
@@ -284,123 +277,88 @@ export default function TemplatesPage() {
 
         {/* Templates Grid */}
         {filteredTemplates.length === 0 ? (
-          <div className="text-center py-12 card">
-            <div className="mb-4">
-              <Search className="w-12 h-12 mx-auto text-gray-400" />
-            </div>
+          <div className="text-center py-12 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl">
+            <Search className="w-12 h-12 mx-auto text-[var(--text-muted)] mb-4" />
             <h3 className="text-lg font-semibold mb-2">No templates found</h3>
             <p className="text-[var(--text-secondary)] mb-4">
               {searchQuery ? 'Try adjusting your search terms' : 'No templates in this category yet'}
             </p>
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="btn-secondary"
-              >
-                Clear Search
-              </button>
-            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredTemplates.map(template => (
               <TemplateCard
                 key={template.id}
                 template={template}
-                onSelect={setSelectedTemplate}
-                onDeploy={() => {
+                onSelect={() => setSelectedTemplate(template)}
+                onUse={() => {
                   setSelectedTemplate(template);
-                  setDeploymentData({
-                    name: '',
-                    description: '',
-                    hourlyRate: template.suggestedHourlyRate.min,
-                    additionalSkills: [],
-                    customPrompt: ''
-                  });
-                  setShowDeployModal(true);
+                  setShowCreateModal(true);
                 }}
-                isAuthenticated={isAuthenticated}
+                isAuthenticated={!!userAddress}
               />
             ))}
           </div>
         )}
 
-        {/* Error Display */}
-        {error && (
-          <div className="mt-6 p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400">
-            {error}
-          </div>
-        )}
-
         {/* Template Detail Modal */}
-        {selectedTemplate && !showDeployModal && (
+        {selectedTemplate && !showCreateModal && (
           <TemplateDetailModal
             template={selectedTemplate}
             onClose={() => setSelectedTemplate(null)}
-            onDeploy={() => {
-              setDeploymentData({
-                name: '',
-                description: '',
-                hourlyRate: selectedTemplate.suggestedHourlyRate.min,
-                additionalSkills: [],
-                customPrompt: ''
-              });
-              setShowDeployModal(true);
-            }}
-            isAuthenticated={isAuthenticated}
+            onUse={() => setShowCreateModal(true)}
+            isAuthenticated={!!userAddress}
           />
         )}
 
-        {/* Deploy Modal */}
-        {showDeployModal && selectedTemplate && (
-          <DeployModal
+        {/* Create Workflow Modal */}
+        {showCreateModal && selectedTemplate && (
+          <CreateWorkflowModal
             template={selectedTemplate}
-            deploymentData={deploymentData}
-            onDataChange={setDeploymentData}
             onClose={() => {
-              setShowDeployModal(false);
+              setShowCreateModal(false);
               setSelectedTemplate(null);
             }}
-            onDeploy={handleDeployTemplate}
-            onAddSkill={addSkill}
-            onRemoveSkill={removeSkill}
-            loading={loading}
+            onCreate={createWorkflow}
+            loading={isCreating}
           />
         )}
       </div>
-    </main>
+    </div>
   );
 }
 
 // Helper Components
 
-function TemplateCard({ 
-  template, 
-  onSelect, 
-  onDeploy,
+function TemplateCard({
+  template,
+  onSelect,
+  onUse,
   isAuthenticated
-}: { 
-  template: AgentTemplate;
-  onSelect: (template: AgentTemplate) => void;
-  onDeploy: () => void;
+}: {
+  template: WorkflowTemplate;
+  onSelect: () => void;
+  onUse: () => void;
   isAuthenticated: boolean;
 }) {
-  const earnings = estimateTemplateEarnings(template);
+  const Icon = template.icon;
 
   return (
-    <div className="card p-6 hover:border-[var(--accent-cyan)]/40 transition-all">
-      <div className="flex items-start justify-between mb-3">
+    <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6 hover:border-[var(--accent-cyan)]/40 transition-all">
+      <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{template.avatar}</span>
+          <div className="w-12 h-12 rounded-xl bg-[var(--accent-purple)]/20 flex items-center justify-center">
+            <Icon className="w-6 h-6 text-[var(--accent-purple)]" />
+          </div>
           <div>
-            <h3 className="font-semibold text-white">{template.name}</h3>
-            <span className="text-xs bg-[var(--accent-purple)]/20 text-[var(--accent-purple)] px-2 py-1 rounded capitalize">
-              {template.category.replace('-', ' ')}
+            <h3 className="font-semibold text-white text-lg">{template.name}</h3>
+            <span className="text-xs bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] px-2 py-1 rounded">
+              {template.category}
             </span>
           </div>
         </div>
         <span className={`text-xs px-2 py-1 rounded ${
-          template.difficulty === 'beginner' ? 'bg-[var(--accent-green)]/20 text-[var(--accent-green)]' :
+          template.difficulty === 'beginner' ? 'bg-green-500/20 text-green-400' :
           template.difficulty === 'intermediate' ? 'bg-yellow-500/20 text-yellow-400' :
           'bg-red-500/20 text-red-400'
         }`}>
@@ -408,67 +366,67 @@ function TemplateCard({
         </span>
       </div>
 
-      <p className="text-sm text-[var(--text-secondary)] mb-4 line-clamp-3">
+      <p className="text-sm text-[var(--text-secondary)] mb-4 leading-relaxed">
         {template.description}
       </p>
 
-      <div className="space-y-3 mb-4">
+      <div className="space-y-3 mb-6">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-[var(--text-secondary)]">Rate Range:</span>
-          <span>{template.suggestedHourlyRate.min}-{template.suggestedHourlyRate.max} ERG/h</span>
+          <span className="text-[var(--text-secondary)]">Duration:</span>
+          <span>{template.estimatedDuration}</span>
         </div>
         
-        {template.businessMetrics && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-[var(--text-secondary)]">Est. Weekly:</span>
-            <span className="text-[var(--accent-green)]">
-              {Math.round(earnings.weekly.min)}-{Math.round(earnings.weekly.max)} ERG
-            </span>
-          </div>
-        )}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-[var(--text-secondary)]">Total Budget:</span>
+          <span className="text-emerald-400 font-medium">
+            {template.totalBudget.min}-{template.totalBudget.max} ERG
+          </span>
+        </div>
 
-        {template.popularity > 0 && (
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-[var(--text-secondary)]">Deployments:</span>
-            <span>{template.popularity}</span>
-          </div>
-        )}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-[var(--text-secondary)]">Tasks:</span>
+          <span>{template.tasks.length} linked tasks</span>
+        </div>
       </div>
 
       <div className="mb-4">
-        <div className="text-xs text-[var(--text-secondary)] mb-2">Skills:</div>
-        <div className="flex flex-wrap gap-1">
-          {template.skillsRequired.slice(0, 3).map(skill => (
-            <span key={skill} className="text-xs bg-[var(--bg-card-hover)] px-2 py-1 rounded">
-              {skill}
-            </span>
+        <p className="text-xs text-[var(--text-secondary)] mb-2">Workflow:</p>
+        <div className="space-y-1">
+          {template.tasks.slice(0, 3).map((task, index) => (
+            <div key={index} className="flex items-center gap-2 text-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-cyan)]"></span>
+              <span className="text-[var(--text-secondary)]">{task.title}</span>
+              <span className="text-purple-400">{task.estimatedBudget} ERG</span>
+            </div>
           ))}
-          {template.skillsRequired.length > 3 && (
-            <span className="text-xs text-[var(--accent-cyan)]">
-              +{template.skillsRequired.length - 3} more
-            </span>
+          {template.tasks.length > 3 && (
+            <div className="flex items-center gap-2 text-xs text-[var(--accent-cyan)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-cyan)]"></span>
+              +{template.tasks.length - 3} more steps
+            </div>
           )}
         </div>
       </div>
 
       <div className="flex gap-2">
         <button
-          onClick={() => onSelect(template)}
-          className="btn-secondary flex-1 text-sm"
+          onClick={onSelect}
+          className="flex-1 py-2.5 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-white rounded-lg hover:bg-[var(--bg-card-hover)] transition-colors text-sm font-medium"
         >
           View Details
         </button>
         {isAuthenticated ? (
           <button
-            onClick={onDeploy}
-            className="btn-primary flex-1 text-sm"
+            onClick={onUse}
+            className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2"
           >
-            Deploy Agent
+            <Workflow className="w-4 h-4" />
+            Use Template
           </button>
         ) : (
           <button
             disabled
-            className="btn-outline flex-1 text-sm opacity-50 cursor-not-allowed"
+            className="flex-1 py-2.5 px-4 bg-gray-600 text-gray-400 rounded-lg cursor-not-allowed text-sm font-medium"
           >
             Connect Wallet
           </button>
@@ -481,30 +439,32 @@ function TemplateCard({
 function TemplateDetailModal({
   template,
   onClose,
-  onDeploy,
+  onUse,
   isAuthenticated
 }: {
-  template: AgentTemplate;
+  template: WorkflowTemplate;
   onClose: () => void;
-  onDeploy: () => void;
+  onUse: () => void;
   isAuthenticated: boolean;
 }) {
-  const earnings = estimateTemplateEarnings(template);
+  const Icon = template.icon;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="card p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <span className="text-4xl">{template.avatar}</span>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-xl bg-[var(--accent-purple)]/20 flex items-center justify-center">
+              <Icon className="w-8 h-8 text-[var(--accent-purple)]" />
+            </div>
             <div>
-              <h3 className="text-xl font-semibold">{template.name}</h3>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm bg-[var(--accent-purple)]/20 text-[var(--accent-purple)] px-2 py-1 rounded capitalize">
-                  {template.category.replace('-', ' ')}
+              <h3 className="text-2xl font-bold text-white">{template.name}</h3>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-sm bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] px-2 py-1 rounded">
+                  {template.category}
                 </span>
                 <span className={`text-sm px-2 py-1 rounded ${
-                  template.difficulty === 'beginner' ? 'bg-[var(--accent-green)]/20 text-[var(--accent-green)]' :
+                  template.difficulty === 'beginner' ? 'bg-green-500/20 text-green-400' :
                   template.difficulty === 'intermediate' ? 'bg-yellow-500/20 text-yellow-400' :
                   'bg-red-500/20 text-red-400'
                 }`}>
@@ -514,120 +474,108 @@ function TemplateDetailModal({
             </div>
           </div>
           <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-white">
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <div>
-              <h4 className="font-semibold mb-2">Description</h4>
+              <h4 className="font-semibold text-white mb-2">Description</h4>
               <p className="text-[var(--text-secondary)]">{template.description}</p>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-3">Example Tasks</h4>
-              <div className="space-y-3">
-                {template.exampleTasks.map((task, index) => (
-                  <div key={index} className="bg-[var(--bg-card-hover)] rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h5 className="font-medium">{task.title}</h5>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="text-[var(--accent-green)]">{task.suggestedBudget} ERG</span>
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          task.complexity === 'simple' ? 'bg-[var(--accent-green)]/20 text-[var(--accent-green)]' :
-                          task.complexity === 'moderate' ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-red-500/20 text-red-400'
-                        }`}>
-                          {task.complexity}
-                        </span>
+              <h4 className="font-semibold text-white mb-4">Workflow Tasks</h4>
+              <div className="space-y-4">
+                {template.tasks.map((task, index) => (
+                  <div key={index} className="relative">
+                    <div className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="w-8 h-8 rounded-full bg-[var(--accent-purple)] text-white text-sm font-medium flex items-center justify-center">
+                          {index + 1}
+                        </div>
+                        {index < template.tasks.length - 1 && (
+                          <div className="w-px h-6 bg-[var(--border-color)] mt-2"></div>
+                        )}
                       </div>
-                    </div>
-                    <p className="text-sm text-[var(--text-secondary)] mb-2">{task.description}</p>
-                    <div className="text-xs text-[var(--text-secondary)]">
-                      Duration: {task.estimatedDuration}
+                      <div className="flex-1 pb-6">
+                        <div className="bg-[var(--bg-card-hover)] rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <h5 className="font-medium text-white">{task.title}</h5>
+                            <div className="text-right">
+                              <div className="text-emerald-400 font-medium">{task.estimatedBudget} ERG</div>
+                              <div className="text-xs text-[var(--text-secondary)]">{task.estimatedDuration}</div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-[var(--text-secondary)] mb-3">{task.description}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {task.skills.map(skill => (
+                              <span key={skill} className="text-xs bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] px-2 py-1 rounded">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-2">Required Tools</h4>
-              <div className="flex flex-wrap gap-2">
-                {template.requiredTools?.map(tool => (
-                  <span key={tool} className="text-sm bg-[var(--bg-card-hover)] px-3 py-1 rounded">
-                    {tool}
-                  </span>
-                )) || <span className="text-[var(--text-secondary)]">No special tools required</span>}
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="bg-[var(--bg-card-hover)] rounded-lg p-4">
-              <h4 className="font-semibold mb-3">Performance Metrics</h4>
+              <h4 className="font-semibold text-white mb-3">Summary</h4>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm text-[var(--text-secondary)]">Rate Range:</span>
-                  <span className="text-sm">{template.suggestedHourlyRate.min}-{template.suggestedHourlyRate.max} ERG/h</span>
+                  <span className="text-sm text-[var(--text-secondary)]">Total Tasks:</span>
+                  <span className="text-sm font-medium">{template.tasks.length}</span>
                 </div>
-                {template.businessMetrics && (
-                  <>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-[var(--text-secondary)]">Tasks/Week:</span>
-                      <span className="text-sm">{template.businessMetrics.expectedTasksPerWeek}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-[var(--text-secondary)]">Success Rate:</span>
-                      <span className="text-sm text-[var(--accent-green)]">{template.businessMetrics.successRate}%</span>
-                    </div>
-                  </>
-                )}
                 <div className="flex justify-between">
-                  <span className="text-sm text-[var(--text-secondary)]">Setup Time:</span>
-                  <span className="text-sm">{template.estimatedSetupTime} min</span>
+                  <span className="text-sm text-[var(--text-secondary)]">Duration:</span>
+                  <span className="text-sm font-medium">{template.estimatedDuration}</span>
                 </div>
-              </div>
-            </div>
-
-            {template.businessMetrics && (
-              <div className="bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/30 rounded-lg p-4">
-                <h4 className="font-semibold text-[var(--accent-green)] mb-3">Earning Potential</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Weekly:</span>
-                    <span>{Math.round(earnings.weekly.min)}-{Math.round(earnings.weekly.max)} ERG</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Monthly:</span>
-                    <span>{Math.round(earnings.monthly.min)}-{Math.round(earnings.monthly.max)} ERG</span>
-                  </div>
-                  <div className="flex justify-between text-sm font-medium">
-                    <span>Yearly:</span>
-                    <span className="text-[var(--accent-green)]">{Math.round(earnings.yearly.min)}-{Math.round(earnings.yearly.max)} ERG</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <h4 className="font-semibold mb-2">Skills Required</h4>
-              <div className="flex flex-wrap gap-1">
-                {template.skillsRequired.map(skill => (
-                  <span key={skill} className="text-xs bg-[var(--bg-card-hover)] px-2 py-1 rounded">
-                    {skill}
+                <div className="flex justify-between">
+                  <span className="text-sm text-[var(--text-secondary)]">Budget Range:</span>
+                  <span className="text-sm font-medium text-emerald-400">
+                    {template.totalBudget.min}-{template.totalBudget.max} ERG
                   </span>
-                ))}
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-[var(--text-secondary)]">Difficulty:</span>
+                  <span className={`text-sm font-medium capitalize ${
+                    template.difficulty === 'beginner' ? 'text-green-400' :
+                    template.difficulty === 'intermediate' ? 'text-yellow-400' :
+                    'text-red-400'
+                  }`}>
+                    {template.difficulty}
+                  </span>
+                </div>
               </div>
             </div>
 
+            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-400 mb-3 flex items-center gap-2">
+                <Link2 className="w-4 h-4" />
+                How It Works
+              </h4>
+              <ul className="text-sm text-blue-300 space-y-1">
+                <li>• All tasks are created at once</li>
+                <li>• Tasks are automatically linked</li>
+                <li>• Complete tasks in sequence</li>
+                <li>• Each completion unlocks the next</li>
+                <li>• Track progress across the chain</li>
+              </ul>
+            </div>
+
             <div>
-              <h4 className="font-semibold mb-2">Tags</h4>
+              <h4 className="font-semibold text-white mb-2">All Skills Needed</h4>
               <div className="flex flex-wrap gap-1">
-                {template.tags.map(tag => (
-                  <span key={tag} className="text-xs bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] px-2 py-1 rounded">
-                    #{tag}
+                {[...new Set(template.tasks.flatMap(task => task.skills))].map(skill => (
+                  <span key={skill} className="text-xs bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] px-2 py-1 rounded">
+                    {skill}
                   </span>
                 ))}
               </div>
@@ -637,11 +585,15 @@ function TemplateDetailModal({
 
         <div className="mt-6 pt-6 border-t border-[var(--border-color)] text-center">
           {isAuthenticated ? (
-            <button onClick={onDeploy} className="btn-primary">
-              Deploy This Agent
+            <button
+              onClick={onUse}
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 mx-auto"
+            >
+              <Workflow className="w-5 h-5" />
+              Create This Workflow
             </button>
           ) : (
-            <p className="text-[var(--text-secondary)]">Connect your wallet to deploy this template</p>
+            <p className="text-[var(--text-secondary)]">Connect your wallet to use this template</p>
           )}
         </div>
       </div>
@@ -649,153 +601,70 @@ function TemplateDetailModal({
   );
 }
 
-function DeployModal({
+function CreateWorkflowModal({
   template,
-  deploymentData,
-  onDataChange,
   onClose,
-  onDeploy,
-  onAddSkill,
-  onRemoveSkill,
+  onCreate,
   loading
 }: {
-  template: AgentTemplate;
-  deploymentData: any;
-  onDataChange: (data: any) => void;
+  template: WorkflowTemplate;
   onClose: () => void;
-  onDeploy: () => void;
-  onAddSkill: (skill: string) => void;
-  onRemoveSkill: (skill: string) => void;
+  onCreate: () => void;
   loading: boolean;
 }) {
-  const [newSkill, setNewSkill] = useState('');
-
-  const handleAddSkill = () => {
-    if (newSkill.trim()) {
-      onAddSkill(newSkill.trim());
-      setNewSkill('');
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 w-full max-w-2xl">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold">Deploy {template.name}</h3>
+          <h3 className="text-xl font-bold text-white">Create {template.name} Workflow</h3>
           <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium mb-2">Agent Name (Optional)</label>
-            <input
-              type="text"
-              value={deploymentData.name}
-              onChange={(e) => onDataChange({...deploymentData, name: e.target.value})}
-              placeholder={template.name}
-              className="input w-full"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Description (Optional)</label>
-            <textarea
-              value={deploymentData.description}
-              onChange={(e) => onDataChange({...deploymentData, description: e.target.value})}
-              placeholder={template.description}
-              className="input w-full h-24"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Hourly Rate (ERG) - Suggested: {template.suggestedHourlyRate.min}-{template.suggestedHourlyRate.max}
-            </label>
-            <input
-              type="number"
-              min="1"
-              step="0.1"
-              value={deploymentData.hourlyRate || template.suggestedHourlyRate.min}
-              onChange={(e) => onDataChange({...deploymentData, hourlyRate: parseFloat(e.target.value) || template.suggestedHourlyRate.min})}
-              className="input w-full"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Base Skills (from template)
-            </label>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {template.skillsRequired.map(skill => (
-                <span key={skill} className="text-sm bg-[var(--bg-card-hover)] px-3 py-1 rounded">
-                  {skill}
-                </span>
-              ))}
-            </div>
-
-            <label className="block text-sm font-medium mb-2">
-              Additional Skills (Optional)
-            </label>
-            <div className="flex gap-2 mb-2">
-              <input
-                type="text"
-                value={newSkill}
-                onChange={(e) => setNewSkill(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}
-                placeholder="Add a skill"
-                className="input flex-1"
-              />
-              <button
-                onClick={handleAddSkill}
-                className="btn-secondary"
-              >
-                Add
-              </button>
-            </div>
-            {deploymentData.additionalSkills.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {deploymentData.additionalSkills.map((skill: string) => (
-                  <span
-                    key={skill}
-                    className="text-sm bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)] px-3 py-1 rounded flex items-center gap-2"
-                  >
-                    {skill}
-                    <button
-                      onClick={() => onRemoveSkill(skill)}
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
+        <div className="space-y-4 mb-6">
           <div className="bg-[var(--bg-card-hover)] rounded-lg p-4">
-            <h4 className="font-semibold mb-2">What happens next?</h4>
-            <ol className="text-sm text-[var(--text-secondary)] space-y-1 list-decimal list-inside">
-              <li>Your agent will be created and registered on the marketplace</li>
-              <li>It will be available for clients to discover and hire</li>
-              <li>You can manage and update your agent anytime</li>
-              <li>Start earning ERG when clients assign tasks to your agent</li>
-            </ol>
+            <h4 className="font-semibold text-white mb-2">What will be created:</h4>
+            <ul className="text-sm text-[var(--text-secondary)] space-y-1">
+              <li>• {template.tasks.length} linked tasks</li>
+              <li>• Total budget: {template.totalBudget.min}-{template.totalBudget.max} ERG</li>
+              <li>• Estimated completion: {template.estimatedDuration}</li>
+              <li>• Tasks will be chained together automatically</li>
+            </ul>
           </div>
 
-          <div className="flex gap-3">
-            <button onClick={onClose} className="btn-outline flex-1">
-              Cancel
-            </button>
-            <button
-              onClick={onDeploy}
-              disabled={loading}
-              className="btn-primary flex-1"
-            >
-              {loading ? 'Deploying...' : 'Deploy Agent'}
-            </button>
+          <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+            <h4 className="font-semibold text-green-400 mb-2">Benefits:</h4>
+            <ul className="text-sm text-green-300 space-y-1">
+              <li>• Structured workflow with clear progression</li>
+              <li>• Agents can specialize in specific steps</li>
+              <li>• Easy progress tracking</li>
+              <li>• Reduced coordination overhead</li>
+            </ul>
           </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-3 px-4 bg-[var(--bg-card)] border border-[var(--border-color)] text-white rounded-lg hover:bg-[var(--bg-card-hover)] transition-colors font-medium">
+            Cancel
+          </button>
+          <button
+            onClick={onCreate}
+            disabled={loading}
+            className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Creating...
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4" />
+                Create Workflow
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

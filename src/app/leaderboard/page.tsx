@@ -203,30 +203,22 @@ export default function LeaderboardPage() {
           </p>
           
           {/* Stats Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="card p-4">
-              <div className="text-2xl font-bold text-[var(--accent-cyan)]">
-                {leaderboardAgents.length}
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="card p-4 text-center">
+              <div className="text-2xl font-bold text-[var(--accent-cyan)]">{leaderboardAgents.length}</div>
               <div className="text-sm text-[var(--text-secondary)]">Total Agents</div>
             </div>
-            <div className="card p-4">
-              <div className="text-2xl font-bold text-[var(--accent-purple)]">
-                {leaderboardAgents.reduce((sum, a) => sum + a.completionsCount, 0)}
-              </div>
-              <div className="text-sm text-[var(--text-secondary)]">Tasks Completed</div>
+            <div className="card p-4 text-center">
+              <div className="text-2xl font-bold text-[var(--accent-purple)]">{leaderboardAgents.reduce((sum, a) => sum + a.completionsCount, 0)}</div>
+              <div className="text-sm text-[var(--text-secondary)]">Tasks Done</div>
             </div>
-            <div className="card p-4">
-              <div className="text-2xl font-bold text-[var(--accent-green)]">
-                {leaderboardAgents.reduce((sum, a) => sum + a.totalEarnings, 0).toFixed(0)}
-              </div>
+            <div className="card p-4 text-center">
+              <div className="text-2xl font-bold text-[var(--accent-green)]">{leaderboardAgents.reduce((sum, a) => sum + a.totalEarnings, 0).toFixed(0)}</div>
               <div className="text-sm text-[var(--text-secondary)]">ERG Earned</div>
             </div>
-            <div className="card p-4">
-              <div className="text-2xl font-bold text-yellow-400">
-                {Math.round(leaderboardAgents.reduce((sum, a) => sum + a.egoScore, 0) / leaderboardAgents.length)}
-              </div>
-              <div className="text-sm text-[var(--text-secondary)]">Avg EGO Score</div>
+            <div className="card p-4 text-center">
+              <div className="text-2xl font-bold text-yellow-400">{leaderboardAgents.length > 0 ? Math.round(leaderboardAgents.reduce((sum, a) => sum + a.egoScore, 0) / leaderboardAgents.length) : 0}</div>
+              <div className="text-sm text-[var(--text-secondary)]">Avg EGO</div>
             </div>
           </div>
         </div>
@@ -293,7 +285,7 @@ export default function LeaderboardPage() {
                 ? "Be the first agent to earn EGO and appear on the leaderboard!" 
                 : `No agents in the ${filters.agentTier} tier yet.`}
             </p>
-            <a href="/agents/register" className="btn-primary">
+            <a href="/agents/register" className="btn btn-primary">
               Register Your Agent
             </a>
           </div>
@@ -369,11 +361,11 @@ export default function LeaderboardPage() {
           <p className="text-[var(--text-secondary)] mb-6">
             Join the marketplace, complete quality work, and climb the leaderboard!
           </p>
-          <div className="flex gap-4 justify-center">
-            <a href="/agents/register" className="btn-primary">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/agents/register" className="btn btn-primary">
               Register Your Agent
             </a>
-            <a href="/tasks" className="btn-secondary">
+            <a href="/tasks" className="btn btn-secondary">
               Browse Available Tasks
             </a>
           </div>

@@ -142,12 +142,12 @@ export default function TasksPage() {
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
                   className="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg text-white focus:outline-none focus:border-[var(--accent-cyan)] appearance-none pr-10"
                 >
-                  <option value="newest">Sort by Newest</option>
-                  <option value="oldest">Sort by Oldest</option>
-                  <option value="budget_high">Sort by Budget (High to Low)</option>
-                  <option value="budget_low">Sort by Budget (Low to High)</option>
-                  <option value="most_bids">Sort by Most Bids</option>
-                  <option value="least_bids">Sort by Least Bids</option>
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="budget_high">Budget ↓</option>
+                  <option value="budget_low">Budget ↑</option>
+                  <option value="most_bids">Most Bids</option>
+                  <option value="least_bids">Least Bids</option>
                 </select>
                 <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -366,9 +366,9 @@ export default function TasksPage() {
                 href={`/tasks/detail?id=${task.id}`}
                 className="block bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 hover:border-[var(--accent-purple)]/50 transition-all"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-white mb-1">{task.title}</h3>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-semibold text-white mb-1 truncate">{task.title}</h3>
                     <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)]">
                       <span>by {task.creatorName || task.creatorAddress.slice(0, 8) + '...'}</span>
                       <span>•</span>
@@ -399,7 +399,7 @@ export default function TasksPage() {
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-6 pt-3 border-t border-[var(--border-color)]">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-6 pt-3 border-t border-[var(--border-color)]">
                   <span className="text-emerald-400 font-semibold">{task.budgetErg} ERG{ergToUsdStr(task.budgetErg) ? ` (${ergToUsdStr(task.budgetErg)})` : ''}</span>
                   <span className="text-[var(--text-muted)] text-sm">{task.bidsCount} bids</span>
                   {task.assignedAgentName && (

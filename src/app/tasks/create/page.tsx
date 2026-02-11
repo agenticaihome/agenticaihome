@@ -709,14 +709,6 @@ export default function CreateTask() {
                     </button>
                   </div>
 
-                  {escrowType === 'milestone' && (
-                    <div className="mt-4 p-3 bg-[var(--accent-amber)]/10 border border-[var(--accent-amber)]/20 rounded-lg">
-                      <p className="text-sm text-[var(--accent-amber)] flex items-center gap-2">
-                        <span>🔧</span>
-                        <span><strong>Coming Soon:</strong> Milestone escrow contracts are in development. For now, this configures the task metadata.</span>
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Milestone Builder */}

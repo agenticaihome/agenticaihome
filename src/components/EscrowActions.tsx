@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { createEscrowTx, releaseEscrowTx, refundEscrowTx } from '@/lib/ergo/escrow';
+import { fundMultiSigEscrow } from '@/lib/ergo/multisig-escrow';
+import { getAvailableMediators } from '@/lib/mediators';
 import { mintEgoAfterRelease } from '@/lib/ergo/ego-token';
 import { notifyPaymentReleased } from '@/lib/notifications';
 import { logEscrowFunded, logEscrowReleased, logEscrowRefunded, logEgoMinted } from '@/lib/taskEvents';
@@ -29,7 +31,7 @@ interface EscrowActionsProps {
   /** Current escrow status */
   escrowStatus?: 'unfunded' | 'funded' | 'released' | 'refunded';
   /** Callback after successful fund */
-  onFunded?: (txId: string, boxId: string) => void;
+  onFunded?: (txId: string, boxId: string, escrowType?: string) => void;
   /** Callback after successful release */
   onReleased?: (txId: string) => void;
   /** Callback after successful refund */
@@ -67,6 +69,11 @@ export default function EscrowActions({
   
   // Polling for ErgoPay transactions
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  
+  // Multi-sig escrow option
+  const [useMultiSig, setUseMultiSig] = useState(false);
+  const amountErgNum = parseFloat(amountErg);
+  const isHighValue = amountErgNum >= 10;
 
   const handleFund = useCallback(async (walletType?: WalletType) => {
     setError(null);
@@ -116,17 +123,41 @@ export default function EscrowActions({
 
       const deadline = deadlineHeight || height + 720; // ~1 day default
 
-      const unsignedTx = await createEscrowTx(
-        {
-          clientAddress: changeAddress,
-          agentAddress,
+      let unsignedTx: any;
+      let escrowType = 'simple';
+
+      if (useMultiSig) {
+        // Get available mediators and use the first one (platform mediator)
+        const mediators = await getAvailableMediators();
+        const mediator = mediators[0];
+        if (!mediator) {
+          throw new Error('No mediators available for multi-sig escrow');
+        }
+
+        unsignedTx = await fundMultiSigEscrow(
+          changeAddress, // client
+          agentAddress,  // agent
+          mediator.address, // mediator
           amountNanoErg,
-          deadlineHeight: deadline,
+          deadline,
           taskId,
-        },
-        utxos,
-        changeAddress,
-      );
+          utxos,
+          changeAddress
+        );
+        escrowType = 'multisig';
+      } else {
+        unsignedTx = await createEscrowTx(
+          {
+            clientAddress: changeAddress,
+            agentAddress,
+            amountNanoErg,
+            deadlineHeight: deadline,
+            taskId,
+          },
+          utxos,
+          changeAddress,
+        );
+      }
 
       // Handle ErgoPay flow
       if (walletType === 'ergopay') {
@@ -181,7 +212,7 @@ export default function EscrowActions({
         // Could not get box ID from tx, using txId:0 fallback
       }
       if (!boxId) boxId = `${id}:0`; // last resort fallback
-      onFunded?.(id, boxId);
+      onFunded?.(id, boxId, escrowType);
       logEscrowFunded(taskId, changeAddress, id, parseFloat(amountErg)).catch(() => {});
     } catch (err: any) {
       console.error('Fund escrow failed:', err);
@@ -646,6 +677,34 @@ export default function EscrowActions({
           className="flex items-center gap-1 text-xs text-[var(--accent-cyan)] hover:underline">
           View on explorer: <span className="font-mono">{txId.slice(0, 10)}…{txId.slice(-6)}</span> ↗
         </a>
+      )}
+
+      {/* Multi-sig option for high-value tasks */}
+      {escrowStatus === 'unfunded' && txState !== 'ergopay_qr' && (isHighValue || useMultiSig) && (
+        <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={useMultiSig}
+              onChange={(e) => setUseMultiSig(e.target.checked)}
+              className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <div>
+              <div className="text-sm font-medium text-white">
+                Use Multi-Sig Escrow
+                {isHighValue && (
+                  <span className="ml-2 px-2 py-1 text-xs bg-blue-500/20 text-blue-300 rounded">
+                    Recommended for ≥10 ERG
+                  </span>
+                )}
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                Requires 2-of-3 signatures (client + agent + mediator) for dispute resolution. 
+                Provides enhanced security for high-value tasks.
+              </div>
+            </div>
+          </label>
+        </div>
       )}
 
       {/* Action buttons */}

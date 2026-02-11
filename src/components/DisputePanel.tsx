@@ -5,6 +5,10 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { uploadTaskFile, sendSystemMessage } from '@/lib/supabaseStore';
 import { supabase } from '@/lib/supabase';
+import { resolveMultiSigDispute } from '@/lib/ergo/multisig-escrow';
+import { getMediatorForTask, getMediatorByAddress } from '@/lib/mediators';
+import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
+import { PLATFORM_FEE_ADDRESS } from '@/lib/ergo/constants';
 
 interface DisputeEvidence {
   id: string;
@@ -31,6 +35,8 @@ interface DisputePanelProps {
   taskCreatorAddress: string;
   taskAgentAddress: string;
   userRole: 'creator' | 'agent';
+  escrowBoxId?: string;
+  escrowType?: 'simple' | 'multisig';
   className?: string;
 }
 
@@ -39,6 +45,8 @@ export default function DisputePanel({
   taskCreatorAddress,
   taskAgentAddress,
   userRole,
+  escrowBoxId,
+  escrowType = 'simple',
   className = ''
 }: DisputePanelProps) {
   const { userAddress, isAuthenticated } = useWallet();
@@ -47,6 +55,11 @@ export default function DisputePanel({
   const [disputeStatus, setDisputeStatus] = useState<DisputeStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Multi-sig resolution state
+  const [mediatorAddress, setMediatorAddress] = useState<string | null>(null);
+  const [isMediator, setIsMediator] = useState(false);
+  const [resolutionInProgress, setResolutionInProgress] = useState(false);
   
   // Form state
   const [evidenceText, setEvidenceText] = useState('');
@@ -126,6 +139,21 @@ export default function DisputePanel({
             createdAt: newStatus.created_at,
             updatedAt: newStatus.updated_at,
           });
+        }
+      }
+      // Load mediator info for multi-sig disputes
+      if (escrowType === 'multisig') {
+        try {
+          const taskMediatorAddress = await getMediatorForTask(taskId);
+          if (taskMediatorAddress) {
+            setMediatorAddress(taskMediatorAddress);
+            // Check if current user is the mediator
+            if (userAddress && userAddress === taskMediatorAddress) {
+              setIsMediator(true);
+            }
+          }
+        } catch (error) {
+          console.error('Error loading mediator info:', error);
         }
       }
     } catch (error) {
@@ -229,6 +257,62 @@ export default function DisputePanel({
   const formatDateTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleString();
+  };
+
+  // Handle multi-sig dispute resolution
+  const handleResolution = async (resolution: 'agent' | 'client') => {
+    if (!isMediator || !escrowBoxId || !mediatorAddress) {
+      showError('Only the mediator can resolve multi-sig disputes');
+      return;
+    }
+
+    setResolutionInProgress(true);
+    try {
+      // Connect mediator wallet
+      const walletState = await connectWallet('nautilus');
+      const [utxos, changeAddress] = await Promise.all([
+        getUtxos(),
+        getAddress()
+      ]);
+
+      // Create resolution transaction
+      const unsignedTx = await resolveMultiSigDispute(
+        escrowBoxId,
+        resolution,
+        mediatorAddress,
+        utxos,
+        changeAddress
+      );
+
+      // Sign and submit transaction
+      const signedTx = await signTransaction(unsignedTx);
+      const txId = await submitTransaction(signedTx);
+
+      // Update dispute status
+      await supabase
+        .from('dispute_status')
+        .update({
+          status: 'resolved',
+          resolved_in_favor_of: resolution === 'agent' ? 'agent' : 'creator',
+          resolution_notes: `Multi-sig dispute resolved in favor of ${resolution === 'agent' ? 'agent' : 'client'} via mediator signature. Transaction: ${txId}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('task_id', taskId);
+
+      // Send system message
+      await sendSystemMessage(
+        taskId,
+        `Dispute resolved in favor of ${resolution === 'agent' ? 'agent' : 'client'} via multi-sig mediation`
+      );
+
+      showSuccess(`Dispute resolved in favor of ${resolution === 'agent' ? 'agent' : 'client'}`);
+      await loadDisputeData();
+    } catch (error) {
+      console.error('Error resolving dispute:', error);
+      showError('Failed to resolve dispute');
+    } finally {
+      setResolutionInProgress(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -357,6 +441,74 @@ export default function DisputePanel({
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Sig Resolution Options for Mediator */}
+      {escrowType === 'multisig' && isMediator && disputeStatus?.status === 'under_review' && (
+        <div className="p-6 border-b border-gray-800">
+          <h4 className="text-yellow-400 font-semibold mb-4 flex items-center gap-2">
+            <span className="text-xl">👨‍⚖️</span>
+            Mediator Resolution Options
+          </h4>
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
+            <p className="text-yellow-200 text-sm mb-3">
+              As the assigned mediator, you can resolve this dispute by choosing one of the following options. 
+              Your signature combined with either the client or agent will complete the resolution.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => handleResolution('agent')}
+              disabled={resolutionInProgress}
+              className="p-4 bg-green-500/20 border border-green-500/30 rounded-lg hover:bg-green-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="text-green-400 font-semibold mb-2">Release to Agent</div>
+              <div className="text-sm text-gray-300">
+                Agent successfully completed the task. Release escrow funds to agent.
+              </div>
+            </button>
+            
+            <button
+              onClick={() => handleResolution('client')}
+              disabled={resolutionInProgress}
+              className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="text-red-400 font-semibold mb-2">Refund to Client</div>
+              <div className="text-sm text-gray-300">
+                Task was not completed satisfactorily. Refund escrow to client.
+              </div>
+            </button>
+          </div>
+          
+          {resolutionInProgress && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-yellow-400">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
+              Processing resolution transaction...
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Mediator Information */}
+      {escrowType === 'multisig' && mediatorAddress && (
+        <div className="p-6 border-b border-gray-800">
+          <h4 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
+            <span className="text-lg">🛡️</span>
+            Multi-Sig Escrow
+          </h4>
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+            <div className="text-gray-300 text-sm space-y-1">
+              <div><strong>Mediator:</strong> {mediatorAddress === PLATFORM_FEE_ADDRESS ? 'AgenticAiHome Platform' : mediatorAddress}</div>
+              <div><strong>Resolution:</strong> Requires 2-of-3 signatures (client + agent + mediator)</div>
+              {isMediator && (
+                <div className="mt-2 px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded text-xs">
+                  You are the assigned mediator for this dispute
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

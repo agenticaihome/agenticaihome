@@ -12,6 +12,8 @@ import { logEvent } from '@/lib/events';
 import { createDeliverable, updateDeliverableStatus, getDeliverablesForTask, updateAgentStats, updateTaskMetadata, updateTaskEscrow, withWalletAuth, verifiedCreateBid, verifiedCreateDeliverable, submitRating, getRatingForTask } from '@/lib/supabaseStore';
 import { notifyWorkApproved, notifyRevisionRequested, notifyDisputeOpened, notifyRatingReceived, notifyBidReceived, notifyBidAccepted, notifyDeliverableSubmitted } from '@/lib/notifications';
 import EscrowActions from '@/components/EscrowActions';
+import MilestoneEscrowActions from '@/components/MilestoneEscrowActions';
+import MilestoneProgress from '@/components/MilestoneProgress';
 import RatingForm from '@/components/RatingForm';
 import TaskChat from '@/components/TaskChat';
 import DeliverableSubmit from '@/components/DeliverableSubmit';
@@ -19,6 +21,7 @@ import DisputePanel from '@/components/DisputePanel';
 import TaskTimeline from '@/components/TaskTimeline';
 import TaskActionBar from '@/components/TaskActionBar';
 import type { Task, Bid, Agent } from '@/lib/types';
+import type { Milestone } from '@/lib/ergo/milestone-escrow';
 import { formatDate, formatDateTime } from '@/lib/dateUtils';
 
 interface Deliverable {
@@ -82,6 +85,16 @@ function TaskDetailInner() {
   const [escrowStatus, setEscrowStatus] = useState<'unfunded' | 'funded' | 'released' | 'refunded'>('unfunded');
   const [escrowTxId, setEscrowTxId] = useState<string | undefined>(undefined);
   const [fetchedAgent, setFetchedAgent] = useState<Agent | null>(null);
+  
+  // Milestone escrow state
+  const [currentMilestone, setCurrentMilestone] = useState<number>(0);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [completedMilestones, setCompletedMilestones] = useState<{
+    milestoneIndex: number;
+    txId: string;
+    releasedAmount: number;
+    completedAt: string;
+  }[]>([]);
 
   const loadData = useCallback(async () => {
     if (!taskId) return;
@@ -109,6 +122,27 @@ function TaskDetailInner() {
         }
         if (t.escrowTxId) {
           setEscrowTxId(t.escrowTxId);
+        }
+        
+        // Load milestone data if this is a milestone escrow task
+        if (meta?.escrowType === 'milestone' && meta?.milestones) {
+          try {
+            const milestonesData = typeof meta.milestones === 'string' 
+              ? JSON.parse(meta.milestones) 
+              : meta.milestones;
+            setMilestones(milestonesData);
+            setCurrentMilestone(meta?.currentMilestone || 0);
+            
+            // Load completed milestones if available
+            if (meta?.completedMilestones) {
+              const completed = typeof meta.completedMilestones === 'string'
+                ? JSON.parse(meta.completedMilestones)
+                : meta.completedMilestones;
+              setCompletedMilestones(completed);
+            }
+          } catch (err) {
+            console.error('Error parsing milestone data:', err);
+          }
         }
       }
 
@@ -728,59 +762,164 @@ function TaskDetailInner() {
           {/* Escrow Actions — Only task creator can fund/release/refund */}
           {task && task.assignedAgentId && isCreator && escrowStatus !== 'released' && (
             <div className="mb-6">
-              <EscrowActions
-                taskId={task.id}
-                agentAddress={
-                  // Agent's ergo address — where funds go on release
-                  task.acceptedAgentAddress || assignedAgent?.ergoAddress || assignedAgent?.ownerAddress || ''
-                }
-                agentName={assignedAgent?.name || 'Agent'}
-                amountErg={String(
-                  // Use accepted bid rate if available, otherwise task budget
-                  bids.find(b => b.id === task.acceptedBidId)?.proposedRate || task.budgetErg || 0
-                )}
-                escrowBoxId={escrowBoxId}
-                escrowStatus={escrowStatus}
-                onFunded={async (txId, boxId) => {
-                  setEscrowBoxId(boxId);
-                  setEscrowTxId(txId);
-                  setEscrowStatus('funded');
-                  // Persist escrow info to Supabase via store
-                  await updateTaskEscrow(task.id, txId, { escrow_box_id: boxId, escrow_status: 'funded' });
-                  await updateTaskData(task.id, { status: 'in_progress' });
-                  logEvent({ type: 'escrow_funded', message: `Escrow funded: ${txId}`, taskId: task.id, actor: userAddress || '' });
-                  showSuccess(`Escrow funded! TX: ${txId.slice(0, 12)}...`);
-                  await loadData();
-                }}
-                onReleased={async (txId) => {
-                  setEscrowStatus('released');
-                  // Persist release status via store
-                  await updateTaskMetadata(task.id, { escrow_box_id: escrowBoxId || '', escrow_status: 'released', release_tx_id: txId });
-                  await updateTaskData(task.id, { status: 'completed', completedAt: new Date().toISOString() });
-                  
-                  // Update agent stats via store
-                  if (task.assignedAgentId && task.budgetErg) {
-                    const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0);
-                    await updateAgentStats(task.assignedAgentId, egoDelta, `Task completed with escrow release: ${task.title} (${task.budgetErg} ERG)`);
+              {/* Check if this is a milestone escrow task */}
+              {task.metadata?.escrowType === 'milestone' && milestones.length > 0 ? (
+                <MilestoneEscrowActions
+                  taskId={task.id}
+                  agentAddress={
+                    // Agent's ergo address — where funds go on release
+                    task.acceptedAgentAddress || assignedAgent?.ergoAddress || assignedAgent?.ownerAddress || ''
                   }
-                  
-                  logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId: task.id, actor: userAddress || '' });
-                  showSuccess(`💰 Payment released! 99% to agent, 1% to treasury. TX: ${txId.slice(0, 12)}...`);
-                  await loadData();
+                  agentName={assignedAgent?.name || 'Agent'}
+                  amountErg={String(
+                    // Use accepted bid rate if available, otherwise task budget
+                    bids.find(b => b.id === task.acceptedBidId)?.proposedRate || task.budgetErg || 0
+                  )}
+                  milestones={milestones}
+                  escrowBoxId={escrowBoxId}
+                  currentMilestone={currentMilestone}
+                  escrowStatus={escrowStatus}
+                  onFunded={async (txId, boxId) => {
+                    setEscrowBoxId(boxId);
+                    setEscrowTxId(txId);
+                    setEscrowStatus('funded');
+                    // Persist milestone escrow info to Supabase via store
+                    await updateTaskEscrow(task.id, txId, { 
+                      escrow_box_id: boxId, 
+                      escrow_status: 'funded',
+                      escrowType: 'milestone',
+                      currentMilestone: 0
+                    });
+                    await updateTaskData(task.id, { status: 'in_progress' });
+                    logEvent({ type: 'milestone_escrow_funded', message: `Milestone escrow funded: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    showSuccess(`Milestone escrow funded! TX: ${txId.slice(0, 12)}...`);
+                    await loadData();
+                  }}
+                  onMilestoneReleased={async (txId, milestoneIndex) => {
+                    const isFinal = milestoneIndex === milestones.length - 1;
+                    
+                    if (isFinal) {
+                      setEscrowStatus('released');
+                      await updateTaskMetadata(task.id, { 
+                        escrow_box_id: escrowBoxId || '', 
+                        escrow_status: 'released', 
+                        release_tx_id: txId,
+                        currentMilestone: milestoneIndex + 1
+                      });
+                      await updateTaskData(task.id, { status: 'completed', completedAt: new Date().toISOString() });
+                      
+                      // Update agent stats for full completion
+                      if (task.assignedAgentId && task.budgetErg) {
+                        const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0);
+                        await updateAgentStats(task.assignedAgentId, egoDelta, `Milestone task completed: ${task.title} (${task.budgetErg} ERG)`);
+                      }
+                      
+                      showSuccess(`🎉 Final milestone completed! Task finished. TX: ${txId.slice(0, 12)}...`);
+                    } else {
+                      // Just move to next milestone
+                      setCurrentMilestone(milestoneIndex + 1);
+                      const newCompleted = [...completedMilestones, {
+                        milestoneIndex,
+                        txId,
+                        releasedAmount: parseFloat(milestones[milestoneIndex]?.percentage ? 
+                          String((parseFloat(amountErg) * milestones[milestoneIndex].percentage) / 100) : '0'),
+                        completedAt: new Date().toISOString()
+                      }];
+                      setCompletedMilestones(newCompleted);
+                      
+                      await updateTaskMetadata(task.id, { 
+                        currentMilestone: milestoneIndex + 1,
+                        completedMilestones: JSON.stringify(newCompleted)
+                      });
+                      
+                      showSuccess(`✓ Milestone ${milestoneIndex + 1} completed! TX: ${txId.slice(0, 12)}...`);
+                    }
+                    
+                    logEvent({ type: 'milestone_released', message: `Milestone ${milestoneIndex + 1} released: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    await loadData();
 
-                  // Check if user should rate after completion
-                  if (userAddress) {
-                    await checkExistingRatings(task);
+                    // Check if user should rate after final completion
+                    if (isFinal && userAddress) {
+                      await checkExistingRatings(task);
+                    }
+                  }}
+                  onRefunded={async (txId) => {
+                    setEscrowStatus('refunded');
+                    await updateTaskMetadata(task.id, { escrow_box_id: escrowBoxId || '', escrow_status: 'refunded', refund_tx_id: txId });
+                    await updateTaskData(task.id, { status: 'disputed' });
+                    logEvent({ type: 'milestone_escrow_refunded', message: `Milestone escrow refunded: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    showSuccess(`Milestone escrow refunded! TX: ${txId.slice(0, 12)}...`);
+                    await loadData();
+                  }}
+                />
+              ) : (
+                // Regular escrow
+                <EscrowActions
+                  taskId={task.id}
+                  agentAddress={
+                    // Agent's ergo address — where funds go on release
+                    task.acceptedAgentAddress || assignedAgent?.ergoAddress || assignedAgent?.ownerAddress || ''
                   }
-                }}
-                onRefunded={async (txId) => {
-                  setEscrowStatus('refunded');
-                  await updateTaskMetadata(task.id, { escrow_box_id: escrowBoxId || '', escrow_status: 'refunded', refund_tx_id: txId });
-                  await updateTaskData(task.id, { status: 'disputed' });
-                  logEvent({ type: 'escrow_refunded', message: `Escrow refunded: ${txId}`, taskId: task.id, actor: userAddress || '' });
-                  showSuccess(`Escrow refunded! TX: ${txId.slice(0, 12)}...`);
-                  await loadData();
-                }}
+                  agentName={assignedAgent?.name || 'Agent'}
+                  amountErg={String(
+                    // Use accepted bid rate if available, otherwise task budget
+                    bids.find(b => b.id === task.acceptedBidId)?.proposedRate || task.budgetErg || 0
+                  )}
+                  escrowBoxId={escrowBoxId}
+                  escrowStatus={escrowStatus}
+                  onFunded={async (txId, boxId) => {
+                    setEscrowBoxId(boxId);
+                    setEscrowTxId(txId);
+                    setEscrowStatus('funded');
+                    // Persist escrow info to Supabase via store
+                    await updateTaskEscrow(task.id, txId, { escrow_box_id: boxId, escrow_status: 'funded' });
+                    await updateTaskData(task.id, { status: 'in_progress' });
+                    logEvent({ type: 'escrow_funded', message: `Escrow funded: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    showSuccess(`Escrow funded! TX: ${txId.slice(0, 12)}...`);
+                    await loadData();
+                  }}
+                  onReleased={async (txId) => {
+                    setEscrowStatus('released');
+                    // Persist release status via store
+                    await updateTaskMetadata(task.id, { escrow_box_id: escrowBoxId || '', escrow_status: 'released', release_tx_id: txId });
+                    await updateTaskData(task.id, { status: 'completed', completedAt: new Date().toISOString() });
+                    
+                    // Update agent stats via store
+                    if (task.assignedAgentId && task.budgetErg) {
+                      const egoDelta = Math.min(Math.max(task.budgetErg * 0.3, 2.0), 8.0);
+                      await updateAgentStats(task.assignedAgentId, egoDelta, `Task completed with escrow release: ${task.title} (${task.budgetErg} ERG)`);
+                    }
+                    
+                    logEvent({ type: 'escrow_released', message: `Payment released: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    showSuccess(`💰 Payment released! 99% to agent, 1% to treasury. TX: ${txId.slice(0, 12)}...`);
+                    await loadData();
+
+                    // Check if user should rate after completion
+                    if (userAddress) {
+                      await checkExistingRatings(task);
+                    }
+                  }}
+                  onRefunded={async (txId) => {
+                    setEscrowStatus('refunded');
+                    await updateTaskMetadata(task.id, { escrow_box_id: escrowBoxId || '', escrow_status: 'refunded', refund_tx_id: txId });
+                    await updateTaskData(task.id, { status: 'disputed' });
+                    logEvent({ type: 'escrow_refunded', message: `Escrow refunded: ${txId}`, taskId: task.id, actor: userAddress || '' });
+                    showSuccess(`Escrow refunded! TX: ${txId.slice(0, 12)}...`);
+                    await loadData();
+                  }}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Milestone Progress Tracker */}
+          {task && task.metadata?.escrowType === 'milestone' && milestones.length > 0 && (
+            <div className="mb-6">
+              <MilestoneProgress
+                milestones={milestones}
+                currentMilestone={currentMilestone}
+                totalAmountErg={parseFloat(amountErg)}
+                completedMilestones={completedMilestones}
               />
             </div>
           )}

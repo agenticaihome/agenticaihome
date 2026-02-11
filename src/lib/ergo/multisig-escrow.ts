@@ -478,6 +478,92 @@ export function getParticipantByAddress(
   return escrowData.participants.find(p => p.address === address) || null;
 }
 
+/**
+ * Create a multi-sig dispute resolution transaction
+ * Builds transaction for either agent payout or client refund based on mediator decision
+ */
+export async function resolveMultiSigDispute(
+  escrowBoxId: string,
+  resolution: 'agent' | 'client',
+  mediatorAddress: string,
+  signerUtxos: any[],
+  changeAddress: string
+): Promise<any> {
+  const currentHeight = await getCurrentHeight();
+  const escrowBox = await getBoxById(escrowBoxId);
+  
+  if (!escrowBox) {
+    throw new Error('Escrow box not found');
+  }
+
+  // Parse escrow data
+  const escrowData = parseMultiSigEscrowBox(escrowBox);
+  if (!escrowData) {
+    throw new Error('Invalid escrow box format');
+  }
+
+  // Calculate amounts
+  const escrowValue = BigInt(escrowBox.value);
+  const protocolFee = escrowValue / BigInt(100); // 1%
+  const txFee = RECOMMENDED_TX_FEE;
+
+  let primaryOutput: any;
+  let secondaryOutput: any;
+
+  if (resolution === 'agent') {
+    // Release to agent
+    const agentPayout = escrowValue - protocolFee - txFee;
+    primaryOutput = new OutputBuilder(agentPayout, escrowData.agentAddress);
+    secondaryOutput = new OutputBuilder(protocolFee, PLATFORM_FEE_ADDRESS);
+  } else {
+    // Refund to client (assuming first participant is client)
+    const refundAmount = escrowValue - protocolFee - txFee;
+    const clientAddress = escrowData.participants[0]?.address || changeAddress;
+    primaryOutput = new OutputBuilder(refundAmount, clientAddress);
+    secondaryOutput = new OutputBuilder(protocolFee, PLATFORM_FEE_ADDRESS);
+  }
+
+  const inputs = [escrowBox, ...signerUtxos];
+
+  const unsignedTx = new TransactionBuilder(currentHeight)
+    .from(inputs)
+    .to([primaryOutput, secondaryOutput])
+    .sendChangeTo(changeAddress)
+    .payFee(txFee)
+    .build()
+    .toEIP12Object();
+
+  return unsignedTx;
+}
+
+/**
+ * Fund multi-sig escrow (alias for createMultiSigEscrowTx for compatibility)
+ */
+export async function fundMultiSigEscrow(
+  clientAddress: string,
+  agentAddress: string,
+  mediatorAddress: string,
+  amountNanoErg: bigint,
+  deadlineHeight: number,
+  taskId: string,
+  walletUtxos: any[],
+  changeAddress: string
+): Promise<any> {
+  const participants = create2of3EscrowConfig(clientAddress, agentAddress, mediatorAddress);
+  
+  const params: MultiSigEscrowParams = {
+    participants,
+    requiredSignatures: 2,
+    agentAddress,
+    deadlineHeight,
+    amountNanoErg,
+    taskId,
+    timeoutRefundParticipant: 0, // Client can refund
+  };
+
+  return createMultiSigEscrowTx(params, walletUtxos, changeAddress);
+}
+
 // ─── Export utilities ────────────────────────────────────────────────
 
 export {

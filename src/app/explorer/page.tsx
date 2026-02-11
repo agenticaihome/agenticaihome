@@ -48,7 +48,7 @@ export default function ExplorerPage() {
       // Calculate stats
       const totalTransactions = txData?.length || 0;
       const totalVolume = txData?.reduce((sum, tx) => {
-        return sum + (parseFloat(tx.amount_erg) / 1e9);
+        return sum + (parseFloat(tx.amount_erg) || 0);
       }, 0) || 0;
 
       setStats({

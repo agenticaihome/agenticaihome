@@ -134,7 +134,7 @@ export function generateCSP(): string {
     "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
     "font-src 'self' fonts.gstatic.com",
     "img-src 'self' data: blob:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.ergoplatform.com https://node.ergo.watch https://corsproxy.io https://cloudflareinsights.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.ergoplatform.com https://node.ergo.watch https://corsproxy.io https://cloudflareinsights.com https://api.coingecko.com https://api.spectrum.fi",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'"

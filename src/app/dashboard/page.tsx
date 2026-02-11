@@ -12,6 +12,20 @@ import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet'
 import { getPendingRatingsForUser } from '@/lib/supabaseStore';
 import { isMobileDevice, createErgoPayRequest } from '@/lib/ergo/ergopay';
 import ErgoPayModal from '@/components/ErgoPayModal';
+import {
+  Trophy,
+  CheckCircle,
+  Bot,
+  Zap,
+  ClipboardList,
+  Star,
+  Scale,
+  DollarSign,
+  BarChart3,
+  FileText,
+  Users,
+  Search
+} from 'lucide-react';
 
 interface Agent {
   id: string;
@@ -90,7 +104,7 @@ export default function DashboardPage() {
     const agentId = ergoPayModal.agentId;
     await supabase.from('agents').update({ identity_token_id: txId }).eq('id', agentId);
     setAgents(prev => prev.map(a => a.id === agentId ? { ...a, identity_token_id: txId } : a));
-    setMintResult({ agentId, success: true, message: 'Identity NFT minted via ErgoPay! ✅' });
+    setMintResult({ agentId, success: true, message: 'Identity NFT minted via ErgoPay!' });
     setTimeout(() => setErgoPayModal(null), 2000);
   }, [ergoPayModal]);
 
@@ -137,7 +151,7 @@ export default function DashboardPage() {
       const tokenId = unsignedTx.inputs[0]?.boxId || txId;
       await supabase.from('agents').update({ identity_token_id: tokenId }).eq('id', agent.id);
       setAgents(prev => prev.map(a => a.id === agent.id ? { ...a, identity_token_id: tokenId } : a));
-      setMintResult({ agentId: agent.id, success: true, message: 'Identity NFT minted on-chain! ✅' });
+      setMintResult({ agentId: agent.id, success: true, message: 'Identity NFT minted on-chain!' });
     } catch (err: any) {
       setMintResult({ agentId: agent.id, success: false, message: err?.message || 'Mint failed' });
     } finally {
@@ -383,7 +397,10 @@ export default function DashboardPage() {
         {/* EGO Reputation Tokens */}
         <div className="mb-8">
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-4">🏆 EGO Reputation</h2>
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+              <Trophy className="w-6 h-6" />
+              EGO Reputation
+            </h2>
             <EgoTokenViewer address={userAddress} />
           </div>
         </div>
@@ -419,7 +436,10 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2">
                         <h3 className="text-white font-semibold">{agent.name}</h3>
                         {agent.identity_token_id ? (
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">✅ Verified</span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            Verified
+                          </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">⚠️ Unverified</span>
                         )}
@@ -453,7 +473,10 @@ export default function DashboardPage() {
                       </div>
                     )}
                     {mintResult?.agentId === agent.id && mintResult.success && agent.identity_token_id && (
-                      <p className="text-emerald-400 text-xs mb-3">✅ Identity NFT minted on-chain!</p>
+                      <p className="text-emerald-400 text-xs mb-3 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Identity NFT minted on-chain!
+                      </p>
                     )}
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-4">
@@ -476,7 +499,9 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
-                <div className="text-4xl mb-4">🤖</div>
+                <div className="mb-4">
+                  <Bot className="w-10 h-10 text-blue-400" />
+                </div>
                 <h3 className="text-lg font-semibold text-white mb-2">No Agents Yet</h3>
                 <p className="text-gray-400 mb-4">Register your first AI agent to start earning ERG</p>
                 <a
@@ -492,7 +517,10 @@ export default function DashboardPage() {
           {/* Working On (tasks assigned to my agents) */}
           {assignedTasks.length > 0 && (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-4">⚡ Working On</h2>
+              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                <Zap className="w-6 h-6" />
+                Working On
+              </h2>
               <div className="space-y-3">
                 {assignedTasks.map(task => (
                   <a key={task.id} href={`/tasks/detail?id=${task.id}`} className="block bg-slate-800/50 border border-purple-500/30 rounded-lg p-4 hover:bg-slate-700/50 transition-colors">
@@ -563,7 +591,9 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="bg-slate-800/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
-                <div className="text-4xl mb-4">📋</div>
+                <div className="mb-4">
+                  <ClipboardList className="w-10 h-10 text-purple-400" />
+                </div>
                 <h3 className="text-lg font-semibold text-white mb-2">No Tasks Yet</h3>
                 <p className="text-gray-400 mb-4">Create your first task to get started</p>
                 <a
@@ -580,7 +610,10 @@ export default function DashboardPage() {
         {/* Pending Ratings */}
         {pendingRatings.length > 0 && (
           <div className="mb-12">
-            <h2 className="text-2xl font-bold text-white mb-6">⭐ Pending Ratings</h2>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <Star className="w-6 h-6" />
+              Pending Ratings
+            </h2>
             <div className="space-y-3">
               {pendingRatings.map((rating) => (
                 <Link 
@@ -616,7 +649,10 @@ export default function DashboardPage() {
         {/* Active Disputes */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white">⚖️ Active Disputes</h2>
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Scale className="w-5 h-5" />
+              Active Disputes
+            </h2>
             <Link href="/disputes" className="text-blue-400 hover:text-blue-300 text-sm">View all →</Link>
           </div>
           <ActiveDisputesBanner userAddress={userAddress} />
@@ -645,7 +681,7 @@ export default function DashboardPage() {
                       ? 'bg-[var(--accent-cyan)]/20 text-[var(--accent-cyan)]' 
                       : 'bg-[var(--accent-green)]/20 text-[var(--accent-green)]'
                   }`}>
-                    {activity.type === 'bid' ? '💰' : '✅'}
+                    {activity.type === 'bid' ? <DollarSign className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
                   </div>
                   <div className="flex-1">
                     <p className="text-white text-sm">{activity.description}</p>
@@ -663,7 +699,9 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="bg-[var(--bg-card)]/30 border-2 border-dashed border-slate-700 rounded-lg p-8 text-center">
-              <div className="text-4xl mb-4">📊</div>
+              <div className="mb-4">
+                <BarChart3 className="w-10 h-10 text-cyan-400" />
+              </div>
               <h3 className="text-lg font-semibold text-white mb-2">No Recent Activity</h3>
               <p className="text-[var(--text-secondary)]">
                 Your recent bids and task completions will appear here
@@ -681,7 +719,7 @@ export default function DashboardPage() {
               className="flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors"
             >
               <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center text-blue-400">
-                📝
+                <FileText className="w-4 h-4" />
               </div>
               <div>
                 <p className="text-white font-medium">Post Task</p>
@@ -694,7 +732,7 @@ export default function DashboardPage() {
               className="flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors"
             >
               <div className="w-8 h-8 bg-purple-600/20 rounded-lg flex items-center justify-center text-purple-400">
-                🤖
+                <Bot className="w-4 h-4" />
               </div>
               <div>
                 <p className="text-white font-medium">Register Agent</p>
@@ -707,7 +745,7 @@ export default function DashboardPage() {
               className="flex items-center gap-3 p-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg transition-colors"
             >
               <div className="w-8 h-8 bg-emerald-600/20 rounded-lg flex items-center justify-center text-emerald-400">
-                🔍
+                <Search className="w-4 h-4" />
               </div>
               <div>
                 <p className="text-white font-medium">View Explorer</p>

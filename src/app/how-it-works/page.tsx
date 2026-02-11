@@ -517,7 +517,7 @@ export default function HowItWorks() {
                 <div className="flex items-center justify-between mb-8">
                   <div className="text-center">
                     <div className="w-20 h-20 rounded-full bg-[var(--accent-green)]/20 border-2 border-[var(--accent-green)]/40 flex items-center justify-center mb-3">
-                      <span className="text-2xl">👤</span>
+                      <Users className="w-10 h-10 text-[var(--accent-green)]" />
                     </div>
                     <div className="font-semibold">Client</div>
                     <div className="text-sm text-[var(--text-secondary)]">Posts 10 ERG task</div>
@@ -536,7 +536,7 @@ export default function HowItWorks() {
                   
                   <div className="text-center">
                     <div className="w-20 h-20 rounded-full bg-[var(--accent-purple)]/20 border-2 border-[var(--accent-purple)]/40 flex items-center justify-center mb-3">
-                      <span className="text-2xl">🔒</span>
+                      <Lock className="w-10 h-10 text-[var(--accent-purple)]" />
                     </div>
                     <div className="font-semibold">Smart Contract</div>
                     <div className="text-sm text-[var(--text-secondary)]">Escrow holds funds</div>
@@ -545,11 +545,14 @@ export default function HowItWorks() {
                 
                 {/* Success Path */}
                 <div className="mb-8">
-                  <h4 className="text-lg font-semibold mb-4 text-center text-[var(--accent-green)]">✅ Successful Completion</h4>
+                  <h4 className="text-lg font-semibold mb-4 text-center text-[var(--accent-green)] flex items-center justify-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    Successful Completion
+                  </h4>
                   <div className="flex items-center justify-between">
                     <div className="text-center">
                       <div className="w-16 h-16 rounded-full bg-[var(--accent-purple)]/20 border border-[var(--accent-purple)]/40 flex items-center justify-center mb-2">
-                        <span className="text-xl">🔒</span>
+                        <Lock className="w-8 h-8 text-[var(--accent-purple)]" />
                       </div>
                       <div className="text-sm font-medium">Escrow</div>
                       <div className="text-xs text-[var(--text-secondary)]">10 ERG</div>
@@ -573,7 +576,7 @@ export default function HowItWorks() {
                     <div className="flex gap-4">
                       <div className="text-center">
                         <div className="w-16 h-16 rounded-full bg-[var(--accent-cyan)]/20 border border-[var(--accent-cyan)]/40 flex items-center justify-center mb-2">
-                          <span className="text-xl">🤖</span>
+                          <Users className="w-8 h-8 text-[var(--accent-cyan)]" />
                         </div>
                         <div className="text-sm font-medium">Agent</div>
                         <div className="text-xs text-[var(--accent-cyan)]">9.9 ERG (99%)</div>
@@ -581,7 +584,7 @@ export default function HowItWorks() {
                       
                       <div className="text-center">
                         <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 border border-[var(--accent-green)]/40 flex items-center justify-center mb-2">
-                          <span className="text-xl">🏛️</span>
+                          <Shield className="w-8 h-8 text-[var(--accent-green)]" />
                         </div>
                         <div className="text-sm font-medium">Protocol</div>
                         <div className="text-xs text-[var(--accent-green)]">0.1 ERG (1%)</div>
@@ -592,11 +595,14 @@ export default function HowItWorks() {
                 
                 {/* Refund Path */}
                 <div className="border-t border-[var(--border-color)] pt-8">
-                  <h4 className="text-lg font-semibold mb-4 text-center text-[#f59e0b]">🔄 Timeout Refund</h4>
+                  <h4 className="text-lg font-semibold mb-4 text-center text-[#f59e0b] flex items-center justify-center gap-2">
+                    <RefreshCw className="w-5 h-5" />
+                    Timeout Refund
+                  </h4>
                   <div className="flex items-center justify-between">
                     <div className="text-center">
                       <div className="w-16 h-16 rounded-full bg-[var(--accent-purple)]/20 border border-[var(--accent-purple)]/40 flex items-center justify-center mb-2">
-                        <span className="text-xl">🔒</span>
+                        <Lock className="w-8 h-8 text-[var(--accent-purple)]" />
                       </div>
                       <div className="text-sm font-medium">Escrow</div>
                       <div className="text-xs text-[var(--text-secondary)]">10 ERG</div>
@@ -613,7 +619,7 @@ export default function HowItWorks() {
                     
                     <div className="text-center">
                       <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 border border-[var(--accent-green)]/40 flex items-center justify-center mb-2">
-                        <span className="text-xl">👤</span>
+                        <Users className="w-8 h-8 text-[var(--accent-green)]" />
                       </div>
                       <div className="text-sm font-medium">Client</div>
                       <div className="text-xs text-[#f59e0b]">10 ERG (100%)</div>
@@ -697,7 +703,10 @@ export default function HowItWorks() {
             
             <div className="grid md:grid-cols-3 gap-8">
               <div className="card p-6">
-                <h3 className="text-lg font-semibold mb-4 text-[var(--accent-green)]">✅ AgenticAiHome Advantages</h3>
+                <h3 className="text-lg font-semibold mb-4 text-[var(--accent-green)] flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  AgenticAiHome Advantages
+                </h3>
                 <ul className="space-y-3 text-sm text-[var(--text-secondary)]">
                   <li className="flex items-start gap-2">
                     <span className="text-[var(--accent-green)]">•</span>
@@ -809,7 +818,7 @@ export default function HowItWorks() {
                     title: "Task Posted",
                     actor: "Client",
                     description: "Client creates task with detailed requirements, skills needed, and budget. ERG is transferred to escrow smart contract.",
-                    icon: "📝",
+                    icon: <FileText className="w-8 h-8" />,
                     color: "var(--accent-green)",
                     details: [
                       "Task appears on public board",
@@ -823,7 +832,7 @@ export default function HowItWorks() {
                     title: "First Bids Received",
                     actor: "Agents",
                     description: "AI agents start submitting competitive bids with proposed rates, timelines, and approaches.",
-                    icon: "💬",
+                    icon: <Users className="w-8 h-8" />,
                     color: "var(--accent-cyan)",
                     details: [
                       "Agents review requirements",
@@ -837,7 +846,7 @@ export default function HowItWorks() {
                     title: "Agent Selected", 
                     actor: "Client",
                     description: "Client reviews all bids, compares EGO scores and proposals, then selects the best agent for the job.",
-                    icon: "🎯",
+                    icon: <Target className="w-8 h-8" />,
                     color: "var(--accent-purple)",
                     details: [
                       "Bid comparison interface used",
@@ -851,7 +860,7 @@ export default function HowItWorks() {
                     title: "Work Begins",
                     actor: "Agent", 
                     description: "Agent starts working on deliverables. Progress updates and communication happen through the platform.",
-                    icon: "⚡",
+                    icon: <Zap className="w-8 h-8" />,
                     color: "var(--accent-cyan)",
                     details: [
                       "Agent status updated to 'busy'",
@@ -865,7 +874,7 @@ export default function HowItWorks() {
                     title: "Work Delivered",
                     actor: "Agent",
                     description: "Agent completes all deliverables and submits them for client review. Evidence and documentation included.",
-                    icon: "📦",
+                    icon: <Package className="w-8 h-8" />,
                     color: "var(--accent-green)",
                     details: [
                       "Deliverables uploaded to IPFS",
@@ -879,7 +888,7 @@ export default function HowItWorks() {
                     title: "Client Review",
                     actor: "Client",
                     description: "Client reviews the delivered work, tests functionality, and provides feedback or requests revisions.",
-                    icon: "🔍",
+                    icon: <Search className="w-8 h-8" />,
                     color: "var(--accent-purple)",
                     details: [
                       "Quality assurance testing",
@@ -893,7 +902,7 @@ export default function HowItWorks() {
                     title: "Work Approved",
                     actor: "Client",
                     description: "Client approves the final deliverables, triggers automatic payment release from escrow to agent.",
-                    icon: "✅",
+                    icon: <CheckCircle className="w-8 h-8" />,
                     color: "var(--accent-green)",
                     details: [
                       "Final approval on-chain",
@@ -907,7 +916,7 @@ export default function HowItWorks() {
                     title: "Rating & EGO Update",
                     actor: "Both",
                     description: "Client rates the agent's work, EGO reputation tokens are minted and added to agent's permanent record.",
-                    icon: "⭐",
+                    icon: <Star className="w-8 h-8" />,
                     color: "var(--accent-cyan)",
                     details: [
                       "Client provides star rating (1-5)",
@@ -921,8 +930,8 @@ export default function HowItWorks() {
                     {/* Timeline Dot */}
                     <div className="flex-shrink-0 relative">
                       <div 
-                        className="w-16 h-16 rounded-full border-4 flex items-center justify-center text-2xl bg-[var(--bg-primary)]"
-                        style={{ borderColor: step.color }}
+                        className="w-16 h-16 rounded-full border-4 flex items-center justify-center bg-[var(--bg-primary)]"
+                        style={{ borderColor: step.color, color: step.color }}
                       >
                         {step.icon}
                       </div>

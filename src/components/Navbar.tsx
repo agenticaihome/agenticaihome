@@ -23,10 +23,7 @@ const primaryLinks = [
 const secondaryLinks = [
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/faq', label: 'FAQ' },
-  { href: '/chains', label: 'Chains', comingSoon: true },
-  { href: '/stake', label: 'Stake', comingSoon: true },
-  { href: '/templates', label: 'Templates', comingSoon: true },
-  { href: '/leaderboard', label: 'Leaderboard', comingSoon: true },
+  { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/learn', label: 'Learn' },
   { href: '/docs', label: 'Docs' },
   { href: '/developers', label: 'Developers' },

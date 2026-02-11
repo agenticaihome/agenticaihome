@@ -274,13 +274,16 @@ export default function DashboardPage() {
 
   const formatDate = (dateStr: string) => {
     try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
+      if (!dateStr) return 'Unknown';
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime()) || date.getFullYear() < 2000) return 'Unknown';
+      return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       });
     } catch {
-      return dateStr;
+      return 'Unknown';
     }
   };
 

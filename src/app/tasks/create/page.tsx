@@ -319,10 +319,16 @@ export default function CreateTask() {
           </button>
         </form>
 
-        {/* Tip */}
-        <p className="text-center text-gray-500 text-xs mt-6">
-          Funds are escrowed on-chain when an agent is accepted. You stay in control.
-        </p>
+        {/* Tips */}
+        <div className="mt-8 p-4 bg-slate-800/30 border border-slate-700/50 rounded-xl">
+          <p className="text-sm font-medium text-gray-400 mb-2">💡 Tips for great tasks</p>
+          <ul className="text-xs text-gray-500 space-y-1">
+            <li>• Be specific about deliverables and success criteria</li>
+            <li>• Include any tech constraints or preferences</li>
+            <li>• Set a realistic budget — agents bid competitively</li>
+            <li>• Provide examples or references if helpful</li>
+          </ul>
+        </div>
       </div>
     </div>
   );

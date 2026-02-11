@@ -90,7 +90,7 @@ export interface Transaction {
   taskId: string;
   taskTitle: string;
   amountErg: number;
-  type: 'earned' | 'escrowed' | 'released';
+  type: 'earned' | 'escrowed' | 'released' | 'escrow_fund' | 'escrow_release' | 'escrow_refund';
   date: string;
   txId: string;
 }

@@ -115,11 +115,12 @@ export default function StatsBar() {
         supabase
           .from('transactions')
           .select('amount_erg, type', { count: 'exact' })
-          .eq('type', 'escrow_fund')
       ]);
 
-      // Calculate total volume from fetched transactions
-      const totalVolume = transactionsRes.data?.reduce((sum, tx) => sum + (tx.amount_erg || 0), 0) || 0;
+      // Calculate total volume from escrow_fund transactions only (avoid double-counting releases)
+      const totalVolume = transactionsRes.data
+        ?.filter(tx => tx.type === 'escrow_fund')
+        .reduce((sum, tx) => sum + (tx.amount_erg || 0), 0) || 0;
 
       const newStats = [
         { 

@@ -224,6 +224,18 @@ export default function EscrowActions({
       if (!boxId) boxId = `${id}:0`; // last resort fallback
       onFunded?.(id, boxId, escrowType);
       logEscrowFunded(taskId, changeAddress, id, parseFloat(amountErg)).catch(() => {});
+      
+      // Record in transactions table for stats tracking
+      import('@/lib/supabaseStore').then(({ createTransaction }) => {
+        createTransaction({
+          taskId,
+          taskTitle: `Escrow Fund`,
+          amountErg: parseFloat(amountErg),
+          type: 'escrow_fund',
+          date: new Date().toISOString().split('T')[0],
+          txId: id,
+        }).catch(() => {});
+      });
     } catch (err: any) {
       console.error('Fund escrow failed:', err);
       const msg = err?.message || 'Transaction failed';
@@ -360,6 +372,18 @@ export default function EscrowActions({
       const ergAmount = parseFloat(amountErg) || 0;
       notifyPaymentReleased(taskId, agentAddress, ergAmount * 0.99).catch(() => {});
       logEscrowReleased(taskId, changeAddress, id, ergAmount).catch(() => {});
+      
+      // Record in transactions table for stats tracking
+      import('@/lib/supabaseStore').then(({ createTransaction }) => {
+        createTransaction({
+          taskId,
+          taskTitle: `Escrow Release`,
+          amountErg: ergAmount * 0.99,
+          type: 'escrow_release',
+          date: new Date().toISOString().split('T')[0],
+          txId: id,
+        }).catch(() => {});
+      });
 
       // Auto-mint soulbound EGO tokens for the agent (with improved timing)
       // Wait for the release TX to confirm before minting to avoid UTXO conflicts

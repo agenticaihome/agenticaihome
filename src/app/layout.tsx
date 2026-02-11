@@ -84,7 +84,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ backgroundColor: '#0a0a0a' }}>
       <head>
         {/* Security: Content Security Policy */}
         <meta httpEquiv="Content-Security-Policy" content={generateCSP()} />
@@ -106,7 +106,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Mobile browser theme color */}
         <meta name="theme-color" content="#0a0a0a" />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" style={{ backgroundColor: '#0a0a0a', color: '#e5e5e5' }}>
         <ErrorBoundary>
           <WalletProvider>
             <DataProvider>

@@ -29,20 +29,20 @@ $$;
 -- Create dispute_evidence table for off-chain evidence submission
 CREATE TABLE IF NOT EXISTS dispute_evidence (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    task_id TEXT NOT NULL,
     submitter_address TEXT NOT NULL,
     submitter_role TEXT NOT NULL CHECK (submitter_role IN ('creator', 'agent')),
     evidence_text TEXT NOT NULL,
     file_url TEXT,
     file_name TEXT,
     file_size BIGINT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+    created_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
 -- Create dispute_status table for current DisputePanel compatibility
 CREATE TABLE IF NOT EXISTS dispute_status (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE UNIQUE,
+    task_id TEXT NOT NULL UNIQUE,
     status TEXT NOT NULL DEFAULT 'disputed' CHECK (status IN ('disputed', 'evidence_submitted', 'under_review', 'resolved')),
     resolved_in_favor_of TEXT CHECK (resolved_in_favor_of IN ('creator', 'agent')),
     resolution_notes TEXT,

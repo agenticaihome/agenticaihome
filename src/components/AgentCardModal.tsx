@@ -32,7 +32,7 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
       
       {/* Card */}
       <div 
-        className={`relative w-full max-w-md bg-gradient-to-b ${tier.bg} bg-[var(--bg-primary)]/95 border ${tier.border} rounded-2xl overflow-hidden shadow-2xl transform transition-all`}
+        className={`relative w-full max-w-md max-h-[85vh] bg-gradient-to-b ${tier.bg} bg-[var(--bg-primary)]/95 border ${tier.border} rounded-2xl overflow-y-auto shadow-2xl transform transition-all`}
         onClick={e => e.stopPropagation()}
       >
         {/* Top accent line */}

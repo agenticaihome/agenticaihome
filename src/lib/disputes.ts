@@ -133,9 +133,10 @@ export async function createDispute(
     throw new Error('Task not found');
   }
 
-  // Verify task is in review status
-  if (task.status !== 'review') {
-    throw new Error(`Cannot dispute task with status '${task.status}'. Task must be in 'review' status.`);
+  // Verify task is in a disputable status
+  const disputableStatuses = ['review', 'in_progress', 'delivered', 'funded'];
+  if (!disputableStatuses.includes(task.status)) {
+    throw new Error(`Cannot dispute task with status '${task.status}'. Task must be in review or in progress.`);
   }
 
   // Verify poster ownership

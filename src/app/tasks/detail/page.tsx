@@ -429,9 +429,31 @@ function TaskDetailInner() {
     setReviewing(true);
     setError('');
     try {
-      await updateTaskData(taskId, { status: 'disputed' });
       logEvent({ type: 'work_disputed', message: `Task disputed`, taskId, actor: userAddress || '' });
-      showSuccess('Task disputed.');
+      
+      // Create dispute record with mediator assignment (before status change, since createDispute checks for 'review')
+      if (task) {
+        const { createDispute } = await import('@/lib/disputes');
+        const { assignMediator } = await import('@/lib/mediators');
+        try {
+          await createDispute(
+            taskId,
+            'Dispute opened by task poster',
+            task.creatorAddress,
+            task.acceptedAgentAddress,
+            task.budgetErg ? task.budgetErg * 1e9 : undefined
+          );
+          await assignMediator(taskId);
+        } catch (disputeErr) {
+          console.error('Error creating dispute record:', disputeErr);
+          // Non-fatal: task status already updated
+        }
+      }
+      
+      // Now update task status to disputed
+      await updateTaskData(taskId, { status: 'disputed' });
+      
+      showSuccess('Task disputed. A mediator has been assigned.');
       
       // Send notification to both parties
       if (task?.acceptedAgentAddress) {
@@ -600,7 +622,13 @@ function TaskDetailInner() {
                 taskCreatorAddress={task.creatorAddress}
                 taskAgentAddress={task.acceptedAgentAddress || ''}
                 userRole={isCreator ? 'creator' : 'agent'}
+                escrowType={(task as any).escrowType === 'multisig' ? 'multisig' : 'simple'}
               />
+              <div className="mt-3 text-center">
+                <Link href={`/disputes`} className="text-blue-400 hover:text-blue-300 text-sm">
+                  View in Dispute Resolution Center →
+                </Link>
+              </div>
             </div>
           )}
 

@@ -177,7 +177,7 @@ export default function DisputesPage() {
             {filtered.map(d => {
               const badge = STATUS_BADGES[d.status] || STATUS_BADGES.open;
               return (
-                <Link key={d.id} href={`/disputes/${d.id}`}
+                <Link key={d.id} href={`/disputes/detail?id=${d.id}`}
                   className="block border border-gray-800 rounded-lg p-5 bg-gray-900/50 hover:bg-gray-900 hover:border-gray-700 transition-all">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">

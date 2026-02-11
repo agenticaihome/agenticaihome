@@ -613,6 +613,15 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Active Disputes */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">⚖️ Active Disputes</h2>
+            <Link href="/disputes" className="text-blue-400 hover:text-blue-300 text-sm">View all →</Link>
+          </div>
+          <ActiveDisputesBanner userAddress={userAddress} />
+        </div>
+
         {/* Recent Activity */}
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-white mb-6">Recent Activity</h2>
@@ -719,6 +728,43 @@ export default function DashboardPage() {
           message={`Sign the transaction in your Terminus wallet`}
         />
       )}
+    </div>
+  );
+}
+
+function ActiveDisputesBanner({ userAddress }: { userAddress: string | null }) {
+  const [disputes, setDisputes] = useState<any[]>([]);
+  useEffect(() => {
+    if (!userAddress) return;
+    supabase
+      .from('disputes')
+      .select('id, task_id, status, original_amount, created_at')
+      .or(`poster_address.eq.${userAddress},agent_address.eq.${userAddress},mediator_address.eq.${userAddress}`)
+      .in('status', ['open', 'mediation'])
+      .order('created_at', { ascending: false })
+      .limit(5)
+      .then(({ data }) => { if (data) setDisputes(data); });
+  }, [userAddress]);
+
+  if (disputes.length === 0) {
+    return <p className="text-gray-500 text-sm">No active disputes</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {disputes.map(d => (
+        <Link key={d.id} href={`/disputes/detail?id=${d.id}`}
+          className="flex items-center justify-between p-3 bg-red-900/10 border border-red-800/30 rounded-lg hover:bg-red-900/20 transition-colors">
+          <div className="flex items-center gap-2">
+            <span className={d.status === 'open' ? 'text-red-400' : 'text-yellow-400'}>
+              {d.status === 'open' ? '🔴' : '🟡'}
+            </span>
+            <span className="text-white text-sm">Dispute on task</span>
+            <span className="text-gray-400 text-xs font-mono">{d.task_id?.slice(0, 8)}</span>
+          </div>
+          <div className="text-gray-400 text-sm">{(d.original_amount / 1e9).toFixed(2)} ERG</div>
+        </Link>
+      ))}
     </div>
   );
 }

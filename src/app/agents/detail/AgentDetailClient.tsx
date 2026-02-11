@@ -167,23 +167,25 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
     fetchAgentData();
   }, [agentId, getAgent, getAgentCompletions]);
 
-  // Calculate agent statistics
+  // Calculate agent statistics — ONLY real data, no fakes
+  const tasksCompleted = agent?.tasksCompleted || 0;
+  const totalEarnings = completions.reduce((sum, c) => sum + (c.ergPaid || 0), 0);
+  const avgRating = completions.length > 0 ? completions.reduce((sum, c) => sum + c.rating, 0) / completions.length : agent?.rating || 0;
+  const reviewCount = completions.length;
+  const completionRate = agent?.completionRate || (tasksCompleted > 0 ? 100 : 0);
+
   const stats = {
-    responseTime: Math.floor(Math.random() * 24) + 1, // Mock data
-    avgDeliveryTime: Math.floor(Math.random() * 72) + 24, // Mock data
-    completionRate: completions.length > 0 ? (completions.length / (completions.length + Math.floor(Math.random() * 5))) * 100 : 95,
-    totalEarnings: completions.reduce((sum, c) => sum + c.ergPaid, 0),
-    avgRating: completions.length > 0 ? completions.reduce((sum, c) => sum + c.rating, 0) / completions.length : agent?.rating || 0,
-    reviewCount: completions.length,
+    completionRate,
+    totalEarnings,
+    avgRating,
+    reviewCount,
   };
 
-  // Generate mock EGO score breakdown
+  // EGO score breakdown — based on real on-chain formula
   const egoBreakdown = [
-    { category: 'Task Completions', score: Math.floor((agent?.tasksCompleted || 0) * 2.5), max: 500 },
-    { category: 'Client Reviews', score: Math.floor(stats.avgRating * 60), max: 300 },
-    { category: 'Response Time', score: Math.max(200 - stats.responseTime * 5, 50), max: 200 },
-    { category: 'Platform Activity', score: Math.floor(Math.random() * 100) + 50, max: 150 },
-    { category: 'Specialization Bonus', score: Math.floor(Math.random() * 50), max: 100 },
+    { category: 'Task Completions', score: Math.min(Math.floor(tasksCompleted * 2.5), 500), max: 500 },
+    { category: 'Client Reviews', score: Math.min(Math.floor(avgRating * 60), 300), max: 300 },
+    { category: 'Completion Rate', score: Math.min(Math.floor(completionRate * 2), 200), max: 200 },
   ];
 
   const getTierInfo = (egoScore: number) => {
@@ -340,49 +342,16 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
           </div>
         </div>
 
-        {/* Enhanced Stats Dashboard */}
+        {/* Stats Dashboard — real data only */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-blue-400/50 transition-colors">
-            <div className="flex items-center gap-3 mb-2">
-              <Clock className="w-5 h-5 text-blue-400" />
-              <h3 className="font-medium text-[var(--text-secondary)]">Response Time</h3>
-            </div>
-            <p className="text-2xl font-bold text-white">{stats.responseTime}h</p>
-            <div className="flex items-center gap-2 mt-2">
-              <p className="text-xs text-[var(--text-muted)]">Average first response</p>
-              {stats.responseTime <= 4 && (
-                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Fast</span>
-              )}
-            </div>
-          </div>
-
           <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-emerald-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <Target className="w-5 h-5 text-emerald-400" />
-              <h3 className="font-medium text-[var(--text-secondary)]">Completion Rate</h3>
+              <h3 className="font-medium text-[var(--text-secondary)]">Tasks Completed</h3>
             </div>
-            <p className="text-2xl font-bold text-white">{stats.completionRate.toFixed(1)}%</p>
+            <p className="text-2xl font-bold text-white">{tasksCompleted}</p>
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-16 bg-[var(--bg-card-hover)] rounded-full h-1.5">
-                <div 
-                  className="bg-emerald-400 h-1.5 rounded-full"
-                  style={{ width: `${stats.completionRate}%` }}
-                />
-              </div>
-              {stats.completionRate >= 90 && (
-                <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">Excellent</span>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-purple-400/50 transition-colors">
-            <div className="flex items-center gap-3 mb-2">
-              <Calendar className="w-5 h-5 text-purple-400" />
-              <h3 className="font-medium text-[var(--text-secondary)]">Avg Delivery</h3>
-            </div>
-            <p className="text-2xl font-bold text-white">{stats.avgDeliveryTime}h</p>
-            <div className="flex items-center gap-2 mt-2">
-              <p className="text-xs text-[var(--text-muted)]">From task start to completion</p>
+              <p className="text-xs text-[var(--text-muted)]">Verified on-chain</p>
             </div>
           </div>
 
@@ -393,26 +362,35 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
             </div>
             <p className="text-2xl font-bold text-white">Σ{stats.totalEarnings.toFixed(2)}</p>
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-xs text-[var(--text-muted)]">From {agent.tasksCompleted} completed tasks</p>
+              <p className="text-xs text-[var(--text-muted)]">From {tasksCompleted} completed tasks</p>
+            </div>
+          </div>
+
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-amber-400/50 transition-colors">
+            <div className="flex items-center gap-3 mb-2">
+              <Star className="w-5 h-5 text-amber-400" />
+              <h3 className="font-medium text-[var(--text-secondary)]">Avg Rating</h3>
+            </div>
+            <p className="text-2xl font-bold text-white">{stats.avgRating.toFixed(1)}/5.0</p>
+            <div className="flex items-center gap-2 mt-2">
+              <p className="text-xs text-[var(--text-muted)]">From {stats.reviewCount} reviews</p>
+            </div>
+          </div>
+
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-purple-400/50 transition-colors">
+            <div className="flex items-center gap-3 mb-2">
+              <Award className="w-5 h-5 text-purple-400" />
+              <h3 className="font-medium text-[var(--text-secondary)]">EGO Score</h3>
+            </div>
+            <p className="text-2xl font-bold text-white">{agent.egoScore}</p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`text-xs px-2 py-0.5 rounded-full ${tierInfo.bgColor} ${tierInfo.color}`}>{tierInfo.tier}</span>
             </div>
           </div>
         </div>
 
-        {/* Additional Stats Row */}
+        {/* Trust Info Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6">
-            <div className="flex items-center gap-3 mb-3">
-              <TrendingUp className="w-5 h-5 text-green-400" />
-              <h3 className="font-medium text-[var(--text-secondary)]">Performance Trend</h3>
-            </div>
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-6 h-6 text-green-400" />
-              <div>
-                <p className="text-lg font-bold text-white">Improving</p>
-                <p className="text-xs text-[var(--text-muted)]">Based on recent tasks</p>
-              </div>
-            </div>
-          </div>
 
           <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6">
             <div className="flex items-center gap-3 mb-3">

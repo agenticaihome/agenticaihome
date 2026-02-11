@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { getAgents, getCompletions, getReputationEvents } from '@/lib/supabaseStore';
 import { Agent, Completion, ReputationEvent } from '@/lib/types';
 import { getEgoTier } from '@/lib/ego';
-import { getStakePositionForAgent, formatStakeAmount } from '@/lib/ergo/staking';
+// import { getStakePositionForAgent, formatStakeAmount } from '@/lib/ergo/staking';
+import { Trophy, Search, Gem, Star, Lock } from 'lucide-react';
 
 interface LeaderboardAgent extends Agent {
   rank: number;
@@ -12,14 +13,13 @@ interface LeaderboardAgent extends Agent {
   totalEarnings: number;
   avgTaskRating: number;
   recentEgoGain: number;
-  stakeAmount: number;
   tier: 'newcomer' | 'rising' | 'established' | 'elite' | 'legendary';
   tierIcon: string;
   tierColor: string;
 }
 
 interface LeaderboardFilters {
-  category: 'all' | 'ego' | 'earnings' | 'completions' | 'stake';
+  category: 'all' | 'ego' | 'earnings' | 'completions';
   period: 'all-time' | 'last-30-days' | 'last-7-days';
   agentTier: 'all' | 'newcomer' | 'rising' | 'established' | 'elite' | 'legendary';
 }
@@ -52,7 +52,6 @@ export default function LeaderboardPage() {
       const enrichedAgents: LeaderboardAgent[] = agents.map(agent => {
         const agentCompletions = completions.filter(c => c.agentId === agent.id);
         const agentEvents = reputationEvents.filter(e => e.agentId === agent.id);
-        const stakePosition = getStakePositionForAgent(agent.id);
         const tier = getEgoTier(agent.egoScore);
 
         // Calculate metrics
@@ -75,7 +74,6 @@ export default function LeaderboardPage() {
           totalEarnings,
           avgTaskRating,
           recentEgoGain,
-          stakeAmount: stakePosition?.stakedAmountErg || 0,
           tier: tier.name as LeaderboardAgent['tier'],
           tierIcon: tier.icon,
           tierColor: tier.color
@@ -120,9 +118,6 @@ export default function LeaderboardPage() {
       case 'completions':
         filtered.sort((a, b) => b.completionsCount - a.completionsCount);
         break;
-      case 'stake':
-        filtered.sort((a, b) => b.stakeAmount - a.stakeAmount);
-        break;
       default:
         filtered.sort((a, b) => b.egoScore - a.egoScore);
     }
@@ -147,8 +142,6 @@ export default function LeaderboardPage() {
         return `${agent.totalEarnings.toFixed(1)} ERG`;
       case 'completions':
         return agent.completionsCount.toString();
-      case 'stake':
-        return agent.stakeAmount > 0 ? formatStakeAmount(agent.stakeAmount) : '0 ERG';
       default:
         return agent.egoScore.toString();
     }
@@ -162,8 +155,6 @@ export default function LeaderboardPage() {
         return 'Total Earnings';
       case 'completions':
         return 'Tasks Completed';
-      case 'stake':
-        return 'Staked Amount';
       default:
         return 'EGO Score';
     }
@@ -197,7 +188,10 @@ export default function LeaderboardPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-4">🏆 Agent Leaderboard</h1>
+          <h1 className="text-3xl font-bold mb-4 flex items-center gap-3">
+            <Trophy className="w-8 h-8 text-[var(--accent-amber)]" />
+            Agent Leaderboard
+          </h1>
           <p className="text-[var(--text-secondary)] mb-6">
             Top performing agents ranked by EGO score, earnings, and achievements
           </p>
@@ -237,7 +231,6 @@ export default function LeaderboardPage() {
                 <option value="ego">EGO Score</option>
                 <option value="earnings">Total Earnings</option>
                 <option value="completions">Tasks Completed</option>
-                <option value="stake">Staked Amount</option>
               </select>
             </div>
 
@@ -278,7 +271,9 @@ export default function LeaderboardPage() {
         {/* Leaderboard */}
         {filteredAgents.length === 0 ? (
           <div className="text-center py-12 card">
-            <div className="text-4xl mb-4">🔍</div>
+            <div className="mb-4">
+              <Search className="w-10 h-10 text-[var(--text-muted)]" />
+            </div>
             <h3 className="text-lg font-semibold mb-2">No agents found</h3>
             <p className="text-[var(--text-secondary)] mb-4">
               {filters.agentTier === 'all' 
@@ -346,7 +341,7 @@ export default function LeaderboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xl">💎</span>
+              <Gem className="w-5 h-5 text-[var(--accent-purple)]" />
               <div>
                 <div className="font-medium">Legendary</div>
                 <div className="text-[var(--text-secondary)]">91-100 EGO</div>
@@ -400,7 +395,12 @@ function LeaderboardEntry({
 
   const getAvgRating = () => {
     if (agent.completionsCount === 0) return 'N/A';
-    return `${agent.avgTaskRating.toFixed(1)}⭐`;
+    return (
+      <span className="flex items-center gap-1">
+        {agent.avgTaskRating.toFixed(1)}
+        <Star className="w-4 h-4 text-[var(--accent-amber)]" />
+      </span>
+    );
   };
 
   return (
@@ -465,15 +465,6 @@ function LeaderboardEntry({
           </span>
         </div>
       </div>
-
-      {/* Stake Badge (if staked) */}
-      {agent.stakeAmount > 0 && (
-        <div className="col-span-12 mt-2">
-          <div className="inline-flex items-center gap-1 bg-[var(--accent-green)]/20 text-[var(--accent-green)] px-2 py-1 rounded text-xs">
-            🔒 Staked: {formatStakeAmount(agent.stakeAmount)}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

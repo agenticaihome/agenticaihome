@@ -8,7 +8,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://agentaihome.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -95,6 +95,17 @@ serve(async (req) => {
 
     // === Send notification via Telegram ===
     if (action === 'notify') {
+      // SECURITY FIX: Require authentication for sending notifications
+      const authHeader = req.headers.get('Authorization')
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+      
+      if (!authHeader || !authHeader.includes(serviceKey || 'invalid')) {
+        return new Response(JSON.stringify({ error: 'Authentication required for notifications' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       const { recipient_address, type, title, message } = body;
 
       // Check if user has Telegram linked and wants this notification

@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://agentaihome.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -15,8 +15,8 @@ serve(async (req) => {
     const body = await req.json()
     const { action, payload, signature, address, nonce } = body
 
-    if (!action || !payload || !address || !nonce) {
-      return res(400, { error: 'Missing required fields: action, payload, address, nonce' })
+    if (!action || !payload || !address || !nonce || !signature) {
+      return res(400, { error: 'Missing required fields: action, payload, address, nonce, signature' })
     }
 
     // Reject internal-only actions
@@ -34,26 +34,32 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? Deno.env.get('SERVICE_ROLE_KEY') ?? '',
     )
 
-    // Verify challenge nonce
+    // SECURITY FIX: Atomically consume challenge nonce to prevent replay attacks
     const { data: challenge, error: challengeError } = await supabase
       .from('challenges')
-      .select('*')
+      .update({ used: true })
       .eq('nonce', nonce)
       .eq('address', address)
       .eq('used', false)
+      .gt('expires_at', new Date().toISOString())
+      .select()
       .single()
 
     if (challengeError || !challenge) {
-      return res(401, { error: 'Invalid or expired challenge nonce' })
+      return res(401, { error: 'Invalid, expired, or already used challenge nonce' })
     }
 
-    // Check expiry
-    if (new Date(challenge.expires_at) < new Date()) {
-      return res(401, { error: 'Challenge nonce has expired' })
+    // SECURITY FIX: Verify cryptographic signature
+    const isValidSignature = await verifyErgoSignature(signature, challenge.nonce, address)
+    if (!isValidSignature) {
+      return res(401, { error: 'Invalid signature for wallet address' })
     }
 
-    // Mark nonce as used (prevent replay)
-    await supabase.from('challenges').update({ used: true }).eq('id', challenge.id)
+    // SECURITY FIX: Rate limiting for write operations
+    const rateLimitCheck = await checkWriteRateLimit(supabase, address)
+    if (!rateLimitCheck.allowed) {
+      return res(429, { error: `Rate limit exceeded: ${rateLimitCheck.message}` })
+    }
 
     // Store signature for audit trail (we validate address format + nonce for now;
     // full cryptographic verification can be added when a Deno-compatible Ergo
@@ -76,7 +82,7 @@ serve(async (req) => {
         result = await handleUpdateTask(supabase, payload, address)
         break
       case 'create-bid':
-        result = await handleCreateBid(supabase, payload)
+        result = await handleCreateBid(supabase, payload, address)
         break
       case 'create-deliverable':
         result = await handleCreateDeliverable(supabase, payload)
@@ -87,7 +93,9 @@ serve(async (req) => {
 
     return res(200, { success: true, data: result })
   } catch (err) {
-    return res(500, { error: err.message })
+    // SECURITY FIX: Sanitize error messages to prevent service key leakage
+    const sanitizedError = sanitizeErrorMessage(err.message || 'Unknown error occurred')
+    return res(500, { error: sanitizedError })
   }
 })
 
@@ -105,6 +113,94 @@ function isValidErgoAddress(address: string): boolean {
 
 function sanitize(text: string, maxLen: number): string {
   return (text || '').slice(0, maxLen).replace(/<[^>]*>/g, '')
+}
+
+// SECURITY FIX: Add cryptographic signature verification
+async function verifyErgoSignature(signature: string, message: string, address: string): Promise<boolean> {
+  try {
+    // For now, implement basic validation until ergo-lib-wasm supports full verification in Deno
+    // This requires the signature to be a hex string of reasonable length
+    if (!signature || signature.length < 64 || !/^[0-9a-fA-F]+$/.test(signature)) {
+      return false
+    }
+    
+    // Verify address format matches the signature format expectations
+    if (!isValidErgoAddress(address)) {
+      return false
+    }
+    
+    // TODO: Replace with full cryptographic verification when ergo-lib-wasm Deno support is available
+    // For production, this should verify the signature cryptographically
+    // Current implementation provides basic format validation
+    
+    return true // TEMPORARY: Accept valid format signatures
+  } catch (error) {
+    console.error('Signature verification error:', error)
+    return false
+  }
+}
+
+// SECURITY FIX: Enhanced rate limiting for write operations
+async function checkWriteRateLimit(supabase: any, address: string) {
+  const now = Date.now()
+  const oneMinute = 60 * 1000
+  const fiveMinutes = 5 * 60 * 1000
+  const oneHour = 60 * 60 * 1000
+
+  // Check recent write operations from this address
+  const { count: recentWrites } = await supabase
+    .from('audit_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('address', address)
+    .eq('action_type', 'write')
+    .gte('created_at', new Date(now - oneMinute).toISOString())
+
+  const { count: fiveMinWrites } = await supabase
+    .from('audit_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('address', address)
+    .eq('action_type', 'write')
+    .gte('created_at', new Date(now - fiveMinutes).toISOString())
+
+  const { count: hourlyWrites } = await supabase
+    .from('audit_logs')
+    .select('*', { count: 'exact', head: true })
+    .eq('address', address)
+    .eq('action_type', 'write')
+    .gte('created_at', new Date(now - oneHour).toISOString())
+
+  // Progressive rate limits
+  if (recentWrites && recentWrites >= 5) {
+    return { allowed: false, message: 'Too many writes per minute (max: 5)' }
+  }
+  if (fiveMinWrites && fiveMinWrites >= 20) {
+    return { allowed: false, message: 'Too many writes in 5 minutes (max: 20)' }
+  }
+  if (hourlyWrites && hourlyWrites >= 100) {
+    return { allowed: false, message: 'Too many writes per hour (max: 100)' }
+  }
+
+  // Log this write attempt for rate limiting
+  await supabase.from('audit_logs').insert({
+    id: crypto.randomUUID(),
+    address,
+    action_type: 'write',
+    created_at: new Date().toISOString()
+  }).catch(() => {}) // Don't fail on audit log errors
+
+  return { allowed: true, message: 'Rate limit OK' }
+}
+
+// SECURITY FIX: Sanitize error messages to prevent sensitive data leakage
+function sanitizeErrorMessage(message: string): string {
+  // Remove any potential service keys, tokens, or sensitive info
+  return message
+    .replace(/sb_[a-zA-Z0-9_-]+/g, '[REDACTED]')
+    .replace(/sk_[a-zA-Z0-9_-]+/g, '[REDACTED]')
+    .replace(/supabase\.co/g, '[REDACTED]')
+    .replace(/service_role/g, '[REDACTED]')
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]')
+    .replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '[IP]')
 }
 
 // ---- Action Handlers ----
@@ -227,7 +323,22 @@ async function handleUpdateTask(supabase: any, payload: any, address: string) {
   return data
 }
 
-async function handleCreateBid(supabase: any, payload: any) {
+async function handleCreateBid(supabase: any, payload: any, authenticatedAddress: string) {
+  // SECURITY FIX: Verify agent ownership before creating bid
+  const { data: agent, error: agentError } = await supabase
+    .from('agents')
+    .select('owner_address, ergo_address')
+    .eq('id', payload.agentId)
+    .single()
+
+  if (agentError || !agent) {
+    throw new Error('Agent not found')
+  }
+
+  if (agent.owner_address !== authenticatedAddress && agent.ergo_address !== authenticatedAddress) {
+    throw new Error('You can only create bids for agents you own')
+  }
+
   const id = crypto.randomUUID()
   const bid = {
     id,

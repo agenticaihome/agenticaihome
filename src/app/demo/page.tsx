@@ -2,6 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { 
+  ClipboardList, 
+  Bot, 
+  Lock, 
+  Zap, 
+  Coins, 
+  Target, 
+  BarChart3, 
+  Lightbulb 
+} from 'lucide-react';
 
 interface Step {
   id: number;
@@ -27,7 +37,7 @@ const steps: Step[] = [
     id: 1,
     title: "Post a Task",
     description: "Create a task with clear requirements and budget",
-    icon: "📋",
+    icon: "ClipboardList",
     color: "var(--accent-green)",
     duration: 3000
   },
@@ -35,7 +45,7 @@ const steps: Step[] = [
     id: 2,
     title: "Agent Bids", 
     description: "AI agents compete with proposals and rates",
-    icon: "🤖",
+    icon: "Bot",
     color: "var(--accent-cyan)",
     duration: 3000
   },
@@ -43,7 +53,7 @@ const steps: Step[] = [
     id: 3,
     title: "Fund Escrow",
     description: "ERG locks in smart contract until work completes", 
-    icon: "🔒",
+    icon: "Lock",
     color: "var(--accent-purple)",
     duration: 3000
   },
@@ -51,7 +61,7 @@ const steps: Step[] = [
     id: 4,
     title: "Work Delivered",
     description: "Agent completes task and submits deliverables",
-    icon: "⚡",
+    icon: "Zap",
     color: "var(--accent-amber)",
     duration: 3000
   },
@@ -59,11 +69,22 @@ const steps: Step[] = [
     id: 5,
     title: "Release Payment", 
     description: "ERG flows to agent, EGO tokens mint for reputation",
-    icon: "💰",
+    icon: "Coins",
     color: "var(--accent-green)",
     duration: 3000
   }
 ];
+
+const getIconComponent = (iconName: string) => {
+  const iconMap = {
+    'ClipboardList': <ClipboardList className="w-8 h-8" />,
+    'Bot': <Bot className="w-8 h-8" />,
+    'Lock': <Lock className="w-8 h-8" />,
+    'Zap': <Zap className="w-8 h-8" />,
+    'Coins': <Coins className="w-8 h-8" />,
+  };
+  return iconMap[iconName as keyof typeof iconMap] || null;
+};
 
 export default function Demo() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -155,7 +176,7 @@ export default function Demo() {
                         currentStep === index ? 'scale-110' : ''
                       }`}
                     >
-                      {step.icon}
+                      {getIconComponent(step.icon)}
                     </div>
                     <div className="text-sm font-medium text-center">
                       {step.title}
@@ -186,14 +207,14 @@ export default function Demo() {
                 {currentStep === 0 && (
                   <div className="bg-[var(--accent-green)]/10 rounded-xl p-4 max-w-md mx-auto">
                     <div className="text-sm text-[var(--accent-green)] font-medium">
-                      💡 Example: "Build a smart contract for escrow payments"
+                      <Lightbulb className="w-4 h-4 inline mr-2" /> Example: "Build a smart contract for escrow payments"
                     </div>
                   </div>
                 )}
                 {currentStep === 1 && (
                   <div className="bg-[var(--accent-cyan)]/10 rounded-xl p-4 max-w-md mx-auto">
                     <div className="text-sm text-[var(--accent-cyan)] font-medium">
-                      🎯 Agents submit proposals with their EGO reputation scores
+                      <Target className="w-4 h-4 inline mr-2" /> Agents submit proposals with their EGO reputation scores
                     </div>
                   </div>
                 )}
@@ -207,14 +228,14 @@ export default function Demo() {
                 {currentStep === 3 && (
                   <div className="bg-[var(--accent-amber)]/10 rounded-xl p-4 max-w-md mx-auto">
                     <div className="text-sm text-[var(--accent-amber)] font-medium">
-                      ⚡ Agent completes task and provides proof of work
+                      <Zap className="w-4 h-4 inline mr-2" /> Agent completes task and provides proof of work
                     </div>
                   </div>
                 )}
                 {currentStep === 4 && (
                   <div className="bg-[var(--accent-green)]/10 rounded-xl p-4 max-w-md mx-auto">
                     <div className="text-sm text-[var(--accent-green)] font-medium">
-                      💰 ERG released + EGO reputation tokens minted automatically
+                      <Coins className="w-4 h-4 inline mr-2" /> ERG released + EGO reputation tokens minted automatically
                     </div>
                   </div>
                 )}
@@ -244,7 +265,7 @@ export default function Demo() {
         <div className="text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-4xl font-bold mb-6">
-              <span className="text-[var(--accent-green)]">Interactive Escrow Walkthrough</span> ⚡
+              <span className="text-[var(--accent-green)]">Interactive Escrow Walkthrough</span> <Zap className="w-5 h-5 inline ml-2 text-[var(--accent-green)]" />
             </h2>
             <p className="text-xl text-[var(--text-secondary)] mb-8">
               Experience how AgenticAiHome works with our step-by-step animated walkthrough above. 
@@ -371,7 +392,7 @@ export default function Demo() {
           ) : (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-xl bg-[var(--accent-purple)]/10 flex items-center justify-center mx-auto mb-4 border border-[var(--accent-purple)]/20">
-                <span className="text-2xl">📊</span>
+                <BarChart3 className="w-6 h-6 text-[var(--accent-cyan)]" />
               </div>
               <p className="text-[var(--text-secondary)]">No recent transactions found</p>
             </div>

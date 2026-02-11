@@ -2,7 +2,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://agentaihome.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -37,21 +37,38 @@ serve(async (req) => {
     // SECURITY FIX: Generate a more secure nonce and implement rate limiting
     const nonce = crypto.randomUUID() + '-' + Date.now() + '-' + Math.random().toString(36)
 
-    // Rate limiting: Check for recent challenges from same address (prevent spam)
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString()
-    const { count } = await supabase
-      .from('challenges')
-      .select('*', { count: 'exact', head: true })
-      .eq('address', address)
-      .gte('created_at', oneMinuteAgo)
+    // SECURITY FIX: Enhanced rate limiting with progressive penalties
+    const now = Date.now()
+    const oneMinuteAgo = new Date(now - 60 * 1000).toISOString()
+    const fiveMinutesAgo = new Date(now - 5 * 60 * 1000).toISOString()
+    const oneHourAgo = new Date(now - 60 * 60 * 1000).toISOString()
 
-    if (count && count >= 10) {
+    const [minuteResult, fiveMinResult, hourResult] = await Promise.all([
+      supabase.from('challenges').select('*', { count: 'exact', head: true }).eq('address', address).gte('created_at', oneMinuteAgo),
+      supabase.from('challenges').select('*', { count: 'exact', head: true }).eq('address', address).gte('created_at', fiveMinutesAgo),
+      supabase.from('challenges').select('*', { count: 'exact', head: true }).eq('address', address).gte('created_at', oneHourAgo)
+    ])
+
+    const { count: minuteCount } = minuteResult
+    const { count: fiveMinCount } = fiveMinResult  
+    const { count: hourCount } = hourResult
+
+    if (minuteCount && minuteCount >= 3) {
       return new Response(JSON.stringify({ 
-        error: 'Rate limit exceeded. Too many challenge requests from this address. Please wait before requesting a new challenge.' 
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+        error: 'Rate limit exceeded: Too many challenges per minute (max: 3). Wait 60 seconds.' 
+      }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    if (fiveMinCount && fiveMinCount >= 10) {
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded: Too many challenges in 5 minutes (max: 10). Wait 5 minutes.' 
+      }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    if (hourCount && hourCount >= 30) {
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded: Too many challenges per hour (max: 30). Wait 1 hour.' 
+      }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     const { data, error } = await supabase.from('challenges').insert({

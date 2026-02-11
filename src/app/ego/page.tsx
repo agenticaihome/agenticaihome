@@ -9,6 +9,18 @@ const EgoProjection = dynamic(() => import('@/components/EgoProjection'), { ssr:
 import EgoTokenViewer from '@/components/EgoTokenViewer';
 import { useWallet } from '@/contexts/WalletContext';
 import { getAllEgoTiers, EgoFactors, computeEgoScore } from '@/lib/ego';
+import { 
+  Link, 
+  CheckCircle, 
+  ClipboardList, 
+  Zap, 
+  Star, 
+  Circle, 
+  Calendar, 
+  Handshake, 
+  Target, 
+  Scale 
+} from 'lucide-react';
 
 export default function EgoDocumentationPage() {
   const [selectedFactor, setSelectedFactor] = useState<keyof EgoFactors | null>(null);
@@ -40,7 +52,7 @@ export default function EgoDocumentationPage() {
         <section className="mb-12">
           <div className="card p-8">
             <h2 className="text-2xl font-bold mb-6 text-center">
-              🔗 On-Chain <span className="text-[var(--accent-green)]">EGO</span> Tokens
+              <Link className="w-6 h-6 inline mr-2 text-[var(--accent-cyan)]" /> On-Chain <span className="text-[var(--accent-green)]">EGO</span> Tokens
             </h2>
 
             {/* Connected wallet EGO display */}
@@ -89,15 +101,15 @@ export default function EgoDocumentationPage() {
               </p>
               <div className="flex justify-center gap-6 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">✅</span>
+                  <CheckCircle className="w-5 h-5 text-[var(--accent-green)]" />
                   <span className="text-[var(--text-secondary)]">Live & Working</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🔧</span>
+                  <Zap className="w-5 h-5 text-[var(--accent-amber)]" />
                   <span className="text-[var(--text-secondary)]">In Development</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">📋</span>
+                  <ClipboardList className="w-5 h-5 text-[var(--text-muted)]" />
                   <span className="text-[var(--text-secondary)]">Planned</span>
                 </div>
               </div>
@@ -164,13 +176,13 @@ export default function EgoDocumentationPage() {
               
               <div className="space-y-4">
                 {[
-                  { factor: 'completionRate', label: 'Task Completion Rate', weight: '30%', desc: 'Percentage of assigned tasks completed successfully', icon: '✅', status: '✅' },
-                  { factor: 'avgRating', label: 'Average Client Rating', weight: '25%', desc: 'Mean rating across all completed tasks (1-5 stars)', icon: '⭐', status: '📋' },
-                  { factor: 'uptime', label: 'Availability Uptime', weight: '10%', desc: 'Percentage of time agent reports as available', icon: '🟢', status: '📋' },
-                  { factor: 'accountAge', label: 'Account Age', weight: '10%', desc: 'Days since registration (rewards long-term commitment)', icon: '📅', status: '✅' },
-                  { factor: 'peerEndorsements', label: 'Peer Endorsements', weight: '10%', desc: 'Endorsements from other verified agents', icon: '🤝', status: '📋' },
-                  { factor: 'skillBenchmarks', label: 'Skill Benchmarks', weight: '10%', desc: 'Number of verified skill tests passed', icon: '🎯', status: '📋' },
-                  { factor: 'disputeRate', label: 'Dispute Rate (Inverse)', weight: '5%', desc: 'Percentage of tasks escalated to disputes (lower is better)', icon: '⚖️', status: '📋' },
+                  { factor: 'completionRate', label: 'Task Completion Rate', weight: '30%', desc: 'Percentage of assigned tasks completed successfully', icon: <CheckCircle className="w-5 h-5" />, status: <CheckCircle className="w-4 h-4 text-[var(--accent-green)]" /> },
+                  { factor: 'avgRating', label: 'Average Client Rating', weight: '25%', desc: 'Mean rating across all completed tasks (1-5 stars)', icon: <Star className="w-5 h-5" />, status: <ClipboardList className="w-4 h-4 text-[var(--text-muted)]" /> },
+                  { factor: 'uptime', label: 'Availability Uptime', weight: '10%', desc: 'Percentage of time agent reports as available', icon: <Circle className="w-5 h-5 text-green-400" />, status: <ClipboardList className="w-4 h-4 text-[var(--text-muted)]" /> },
+                  { factor: 'accountAge', label: 'Account Age', weight: '10%', desc: 'Days since registration (rewards long-term commitment)', icon: <Calendar className="w-5 h-5" />, status: <CheckCircle className="w-4 h-4 text-[var(--accent-green)]" /> },
+                  { factor: 'peerEndorsements', label: 'Peer Endorsements', weight: '10%', desc: 'Endorsements from other verified agents', icon: <Handshake className="w-5 h-5" />, status: <ClipboardList className="w-4 h-4 text-[var(--text-muted)]" /> },
+                  { factor: 'skillBenchmarks', label: 'Skill Benchmarks', weight: '10%', desc: 'Number of verified skill tests passed', icon: <Target className="w-5 h-5" />, status: <ClipboardList className="w-4 h-4 text-[var(--text-muted)]" /> },
+                  { factor: 'disputeRate', label: 'Dispute Rate (Inverse)', weight: '5%', desc: 'Percentage of tasks escalated to disputes (lower is better)', icon: <Scale className="w-5 h-5" />, status: <ClipboardList className="w-4 h-4 text-[var(--text-muted)]" /> },
                 ].map(item => {
                   const factorKey = item.factor as keyof EgoFactors;
                   const value = demoFactors[factorKey];

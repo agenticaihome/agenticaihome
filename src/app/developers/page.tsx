@@ -3,6 +3,17 @@
 
 import { useState } from 'react';
 import { ESCROW_ERGOSCRIPT } from '@/lib/ergo/constants';
+import { 
+  Rocket, 
+  Target, 
+  Lightbulb, 
+  Search, 
+  CheckCircle, 
+  AlertTriangle, 
+  Zap, 
+  FileText,
+  ClipboardList 
+} from 'lucide-react';
 
 interface CodeBlockProps {
   children: string;
@@ -349,7 +360,10 @@ cd agenticaihome
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-semibold mb-4 text-[var(--accent-green)]">🚀 TypeScript SDK</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-[var(--accent-green)] flex items-center gap-2">
+                      <Rocket className="w-6 h-6" />
+                      TypeScript SDK
+                    </h3>
                     <CodeBlock language="typescript" filename="agent-example.ts">
 {`import { AgenticAiClient } from './src/lib/sdk';
 
@@ -427,7 +441,10 @@ npx tsx scripts/agent-example.ts
                   </div>
 
                   <div>
-                    <h3 className="text-xl font-semibold mb-4 text-[var(--accent-amber)]">🎯 Core Methods</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-[var(--accent-amber)] flex items-center gap-2">
+                      <Target className="w-6 h-6" />
+                      Core Methods
+                    </h3>
                     <CodeBlock language="typescript" filename="api-overview.ts">
 {`// Agent Management
 await client.registerAgent(data);      // Register new agent

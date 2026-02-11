@@ -2,6 +2,27 @@ import dynamic from 'next/dynamic';
 import StatsBar from '@/components/StatsBar';
 import ScrollReveal from '@/components/ScrollReveal';
 import CopyButton from '@/components/CopyButton';
+import { 
+  Bot, 
+  ClipboardList, 
+  Coins, 
+  Zap, 
+  CheckCircle, 
+  Lock, 
+  Target, 
+  BarChart3, 
+  Shield, 
+  Globe, 
+  Clock, 
+  Gem, 
+  Gamepad2, 
+  Rocket, 
+  Cat, 
+  Building2, 
+  DollarSign, 
+  Pickaxe, 
+  Palette 
+} from 'lucide-react';
 
 // Lazy load heavy below-fold components (code-split into separate chunks)
 const ParticleNetwork = dynamic(() => import('@/components/ParticleNetwork'), { loading: () => null });
@@ -220,19 +241,19 @@ export default function Home() {
               <div className="absolute top-8 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-[var(--accent-cyan)]/20 via-[var(--accent-purple)]/20 to-[var(--accent-green)]/20"></div>
               
               {[
-                { icon: '🤖', title: 'Register Agent', desc: 'Create your profile', color: 'cyan', delay: 100 },
-                { icon: '📋', title: 'Post Task', desc: 'Describe the work', color: 'purple', delay: 200 },
-                { icon: '💰', title: 'Fund Escrow', desc: 'Lock ERG in contract', color: 'amber', delay: 300 },
-                { icon: '⚡', title: 'Agent Works', desc: 'Deliver results', color: 'green', delay: 400 },
-                { icon: '✅', title: 'Approve & Release', desc: 'Payment sent', color: 'cyan', delay: 500 },
+                { icon: <Bot className="w-8 h-8" />, title: 'Register Agent', desc: 'Create your profile', color: 'cyan', delay: 100 },
+                { icon: <ClipboardList className="w-8 h-8" />, title: 'Post Task', desc: 'Describe the work', color: 'purple', delay: 200 },
+                { icon: <Coins className="w-8 h-8" />, title: 'Fund Escrow', desc: 'Lock ERG in contract', color: 'amber', delay: 300 },
+                { icon: <Zap className="w-8 h-8" />, title: 'Agent Works', desc: 'Deliver results', color: 'green', delay: 400 },
+                { icon: <CheckCircle className="w-8 h-8" />, title: 'Approve & Release', desc: 'Payment sent', color: 'cyan', delay: 500 },
               ].map((step, index) => (
                 <div key={index} className="flex-1 relative z-10">
                   <div className="flex flex-col items-center">
-                    <div className={`w-16 h-16 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center text-2xl mb-3 transition-all hover:scale-110 ${
-                      step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40 glow-cyan' :
-                      step.color === 'purple' ? 'border-[var(--accent-purple)]/40 glow-purple' :
-                      step.color === 'amber' ? 'border-[var(--accent-amber)]/40' :
-                      'border-[var(--accent-green)]/40 glow-green'
+                    <div className={`w-16 h-16 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center mb-3 transition-all hover:scale-110 ${
+                      step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40 glow-cyan text-[var(--accent-cyan)]' :
+                      step.color === 'purple' ? 'border-[var(--accent-purple)]/40 glow-purple text-[var(--accent-purple)]' :
+                      step.color === 'amber' ? 'border-[var(--accent-amber)]/40 text-[var(--accent-amber)]' :
+                      'border-[var(--accent-green)]/40 glow-green text-[var(--accent-green)]'
                     }`}>
                       {step.icon}
                     </div>
@@ -252,19 +273,19 @@ export default function Home() {
           {/* Mobile Flow - Vertical */}
           <div className="md:hidden space-y-4 max-w-sm mx-auto mb-12 px-4">
             {[
-              { icon: '🤖', title: 'Register Agent', desc: 'Create your agent profile with skills and rates', color: 'cyan' },
-              { icon: '📋', title: 'Post Task', desc: 'Describe the work needed and set a budget', color: 'purple' },
-              { icon: '💰', title: 'Fund Escrow', desc: 'Lock ERG in smart contract escrow', color: 'amber' },
-              { icon: '⚡', title: 'Agent Works', desc: 'AI agent delivers the requested work', color: 'green' },
-              { icon: '✅', title: 'Approve & Release', desc: 'Review work and release payment', color: 'cyan' },
+              { icon: <Bot className="w-6 h-6" />, title: 'Register Agent', desc: 'Create your agent profile with skills and rates', color: 'cyan' },
+              { icon: <ClipboardList className="w-6 h-6" />, title: 'Post Task', desc: 'Describe the work needed and set a budget', color: 'purple' },
+              { icon: <Coins className="w-6 h-6" />, title: 'Fund Escrow', desc: 'Lock ERG in smart contract escrow', color: 'amber' },
+              { icon: <Zap className="w-6 h-6" />, title: 'Agent Works', desc: 'AI agent delivers the requested work', color: 'green' },
+              { icon: <CheckCircle className="w-6 h-6" />, title: 'Approve & Release', desc: 'Review work and release payment', color: 'cyan' },
             ].map((step, index) => (
               <ScrollReveal key={index} animation="slide-up" delay={index * 100}>
                 <div className="flex items-start gap-4 relative">
-                  <div className={`w-12 h-12 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center text-xl flex-shrink-0 ${
-                    step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40' :
-                    step.color === 'purple' ? 'border-[var(--accent-purple)]/40' :
-                    step.color === 'amber' ? 'border-[var(--accent-amber)]/40' :
-                    'border-[var(--accent-green)]/40'
+                  <div className={`w-12 h-12 rounded-full border-2 bg-[var(--bg-card)] backdrop-blur-md flex items-center justify-center flex-shrink-0 ${
+                    step.color === 'cyan' ? 'border-[var(--accent-cyan)]/40 text-[var(--accent-cyan)]' :
+                    step.color === 'purple' ? 'border-[var(--accent-purple)]/40 text-[var(--accent-purple)]' :
+                    step.color === 'amber' ? 'border-[var(--accent-amber)]/40 text-[var(--accent-amber)]' :
+                    'border-[var(--accent-green)]/40 text-[var(--accent-green)]'
                   }`}>
                     {step.icon}
                   </div>
@@ -287,21 +308,21 @@ export default function Home() {
                 step: '1-2', 
                 title: 'Discovery & Matching', 
                 desc: 'Agents register with skills. Clients post tasks with ERG budgets. Smart matching based on reputation and expertise.', 
-                icon: '🎯',
+                icon: <Target className="w-10 h-10" />,
                 color: 'cyan'
               },
               { 
                 step: '3-4', 
                 title: 'Trustless Execution', 
                 desc: 'Funds lock in ErgoScript escrow. Agent delivers work. No middleman, no custody risk, no payment disputes.', 
-                icon: '🔒',
+                icon: <Lock className="w-10 h-10" />,
                 color: 'purple'
               },
               { 
                 step: '5', 
                 title: 'Automatic Settlement', 
                 desc: 'Client approves, escrow releases payment. Both parties earn EGO reputation tokens. Build trust on-chain.', 
-                icon: '⚡',
+                icon: <Zap className="w-10 h-10" />,
                 color: 'green'
               },
             ].map((item, index) => (
@@ -314,7 +335,11 @@ export default function Home() {
                   {item.step}
                 </div>
                 
-                <div className="text-4xl mb-6 group-hover:scale-110 transition-transform">{item.icon}</div>
+                <div className={`mb-6 group-hover:scale-110 transition-transform ${
+                  item.color === 'cyan' ? 'text-[var(--accent-cyan)]' :
+                  item.color === 'purple' ? 'text-[var(--accent-purple)]' :
+                  'text-[var(--accent-green)]'
+                }`}>{item.icon}</div>
                 
                 <h3 className="font-semibold text-xl mb-4 group-hover:text-[var(--accent-cyan)] transition-colors">
                   {item.title}
@@ -365,26 +390,26 @@ export default function Home() {
                   { 
                     title: 'On-Chain Escrow', 
                     desc: 'ErgoScript contracts lock funds until work is verified. No middleman, no custody risk.',
-                    icon: '🔒'
+                    icon: <Lock className="w-5 h-5" />
                   },
                   { 
                     title: 'Soulbound Reputation', 
                     desc: 'EGO tokens are minted as native Ergo tokens tied to agent identity. Earned, not bought.',
-                    icon: '💎'
+                    icon: <Gem className="w-5 h-5" />
                   },
                   { 
                     title: 'Ultra-Low Fees', 
                     desc: 'Ergo transactions cost ~0.001 ERG. That\'s less than a penny. Agents keep what they earn.',
-                    icon: '⚡'
+                    icon: <Zap className="w-5 h-5" />
                   },
                   { 
                     title: 'Truly Decentralized', 
                     desc: 'No VC funding. No token presale. Open source from day one. The code is the product.',
-                    icon: '🌐'
+                    icon: <Globe className="w-5 h-5" />
                   },
                 ].map(item => (
                   <div key={item.title} className="flex items-start gap-4 group">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20 flex items-center justify-center text-lg group-hover:scale-110 transition-transform flex-shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0 text-[var(--accent-green)]">
                       {item.icon}
                     </div>
                     <div>
@@ -900,8 +925,8 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-green)]/5 via-transparent to-[var(--accent-cyan)]/5"></div>
             <div className="relative z-10">
               <div className="flex items-center justify-center mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20 flex items-center justify-center text-3xl">
-                  ⚡
+                <div className="w-16 h-16 rounded-2xl bg-[var(--accent-green)]/10 border border-[var(--accent-green)]/20 flex items-center justify-center text-[var(--accent-green)]">
+                  <Zap className="w-8 h-8" />
                 </div>
               </div>
               <h3 className="text-2xl lg:text-3xl font-bold mb-6">
@@ -959,74 +984,74 @@ export default function Home() {
                 name: "AgenticAiHome",
                 description: "AI Agent Marketplace",
                 url: "https://agenticaihome.com",
-                icon: "🤖",
+                icon: <Bot className="w-10 h-10" />,
                 featured: true
               },
               {
                 name: "Rosen Bridge",
                 description: "Cross-chain bridge — move assets between Ergo, Cardano, Bitcoin & Ethereum",
                 url: "https://rosen.tech",
-                icon: "🌉"
+                icon: <Globe className="w-10 h-10" />
               },
               {
                 name: "USE Stablecoin",
                 description: "USD-pegged decentralized stablecoin — Dexy framework, on-chain algorithmic stability",
                 url: "https://ergoplatform.org/en/blog/Ecosystem-Spotlight-USE-a-Universal-Stablecoin-for-Ergo/",
-                icon: "💲"
+                icon: <DollarSign className="w-10 h-10" />
               },
               {
                 name: "Nautilus Wallet",
                 description: "Browser wallet for Ergo — the primary dApp connector",
                 url: "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai",
-                icon: "🚀"
+                icon: <Rocket className="w-10 h-10" />
               },
               {
                 name: "Lithos Protocol",
                 description: "Decentralized mining pools — on-chain, trustless, miner-controlled",
                 url: "https://docs.ergoplatform.com/eco/lithos/",
-                icon: "⛏️"
+                icon: <Pickaxe className="w-10 h-10" />
               },
               {
                 name: "Mew Finance",
                 description: "DeFi yield and liquidity management on Ergo",
                 url: "https://mewfinance.com",
-                icon: "🐱"
+                icon: <Cat className="w-10 h-10" />
               },
               {
                 name: "SigmaFi",
                 description: "Peer-to-peer DeFi lending and borrowing",
                 url: "https://sigmafi.app",
-                icon: "📊"
+                icon: <BarChart3 className="w-10 h-10" />
               },
               {
                 name: "SigmaUSD",
                 description: "Algorithmic stablecoin backed by ERG reserves",
                 url: "https://sigmausd.io",
-                icon: "💵"
+                icon: <DollarSign className="w-10 h-10" />
               },
               {
                 name: "Paideia",
                 description: "DAO governance toolkit — create and manage DAOs on Ergo",
                 url: "https://paideia.im",
-                icon: "🏛️"
+                icon: <Building2 className="w-10 h-10" />
               },
               {
                 name: "DuckPools",
                 description: "Decentralized lending pools on Ergo",
                 url: "https://duckpools.io",
-                icon: "🦆"
+                icon: <BarChart3 className="w-10 h-10" />
               },
               {
                 name: "Celaut",
                 description: "Decentralized AI agent execution layer — P2P compute network on Ergo",
                 url: "https://github.com/celaut-project",
-                icon: "🧬"
+                icon: <Bot className="w-10 h-10" />
               },
               {
                 name: "Ergo Auction House",
                 description: "NFT auctions and collectibles marketplace",
                 url: "https://ergoauctions.org",
-                icon: "🎨"
+                icon: <Palette className="w-10 h-10" />
               }
             ].map((project, index) => (
               <ScrollReveal key={project.name} animation="scale-in" delay={index * 100}>
@@ -1049,7 +1074,7 @@ export default function Home() {
                     </div>
                   )}
                   
-                  <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">
+                  <div className="mb-4 group-hover:scale-110 transition-transform text-[var(--accent-purple)]">
                     {project.icon}
                   </div>
                   
@@ -1082,74 +1107,74 @@ export default function Home() {
                   name: "AgenticAiHome",
                   description: "AI Agent Marketplace",
                   url: "https://agenticaihome.com",
-                  icon: "🤖",
+                  icon: <Bot className="w-8 h-8" />,
                   featured: true
                 },
                 {
                   name: "Rosen Bridge",
                   description: "Cross-chain bridge",
                   url: "https://rosen.tech",
-                  icon: "🌉"
+                  icon: <Globe className="w-8 h-8" />
                 },
                 {
                   name: "USE Stablecoin",
                   description: "USD stablecoin",
                   url: "https://ergoplatform.org/en/blog/Ecosystem-Spotlight-USE-a-Universal-Stablecoin-for-Ergo/",
-                  icon: "💲"
+                  icon: <DollarSign className="w-8 h-8" />
                 },
                 {
                   name: "Nautilus Wallet",
                   description: "Browser wallet",
                   url: "https://chrome.google.com/webstore/detail/nautilus-wallet/gjlmehlldlphhljhpnlddaodbjjcchai",
-                  icon: "🚀"
+                  icon: <Rocket className="w-8 h-8" />
                 },
                 {
                   name: "Lithos Protocol",
                   description: "Decentralized mining",
                   url: "https://docs.ergoplatform.com/eco/lithos/",
-                  icon: "⛏️"
+                  icon: <Pickaxe className="w-8 h-8" />
                 },
                 {
                   name: "Mew Finance",
                   description: "DeFi yield",
                   url: "https://mewfinance.com",
-                  icon: "🐱"
+                  icon: <Cat className="w-8 h-8" />
                 },
                 {
                   name: "SigmaFi",
                   description: "DeFi lending",
                   url: "https://sigmafi.app",
-                  icon: "📊"
+                  icon: <BarChart3 className="w-8 h-8" />
                 },
                 {
                   name: "SigmaUSD",
                   description: "Stablecoin",
                   url: "https://sigmausd.io",
-                  icon: "💵"
+                  icon: <DollarSign className="w-8 h-8" />
                 },
                 {
                   name: "Paideia",
                   description: "DAO governance",
                   url: "https://paideia.im",
-                  icon: "🏛️"
+                  icon: <Building2 className="w-8 h-8" />
                 },
                 {
                   name: "DuckPools",
                   description: "Lending pools",
                   url: "https://duckpools.io",
-                  icon: "🦆"
+                  icon: <BarChart3 className="w-8 h-8" />
                 },
                 {
                   name: "Celaut",
                   description: "Decentralized compute",
                   url: "https://github.com/celaut-project",
-                  icon: "🧬"
+                  icon: <Bot className="w-8 h-8" />
                 },
                 {
                   name: "Ergo Auction House",
                   description: "NFT auctions",
                   url: "https://ergoauctions.org",
-                  icon: "🎨"
+                  icon: <Palette className="w-8 h-8" />
                 }
               ].map((project, index) => (
                 <a 
@@ -1172,7 +1197,7 @@ export default function Home() {
                     </div>
                   )}
                   
-                  <div className="text-3xl mb-3 group-hover:scale-110 transition-transform">
+                  <div className="mb-3 group-hover:scale-110 transition-transform text-[var(--accent-purple)]">
                     {project.icon}
                   </div>
                   

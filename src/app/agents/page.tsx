@@ -246,9 +246,17 @@ export default function AgentsPage() {
                   <AgentAvatar address={agent.ownerAddress || agent.ergoAddress || agent.id} size={48} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-semibold text-white truncate">{agent.name}</h3>
-                      <EgoScore score={agent.egoScore} />
-                      <AgentIdentityBadge identityTokenId={agent.identityTokenId} compact />
+                      <h3 className="text-lg font-semibold text-white min-w-0 flex-1" style={{ 
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        wordBreak: 'break-word'
+                      }}>{agent.name}</h3>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <EgoScore score={agent.egoScore} />
+                        <AgentIdentityBadge identityTokenId={agent.identityTokenId} compact />
+                      </div>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
                       <span>{agent.hourlyRateErg} ERG/hr</span>

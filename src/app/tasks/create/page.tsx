@@ -577,6 +577,27 @@ export default function CreateTask() {
             {/* Form */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8">
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Wallet Warning Banner */}
+                {!userAddress && (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <span className="text-amber-400 text-lg">⚠️</span>
+                      <div className="flex-1">
+                        <div className="text-amber-200 font-medium mb-2">
+                          You'll need an Ergo wallet to create tasks. Connect your wallet first or continue to preview the form.
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => window.location.href = '/wallet'}
+                          className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-medium transition-colors text-sm"
+                        >
+                          Connect Wallet
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Task Title */}
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">

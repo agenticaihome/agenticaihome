@@ -56,25 +56,36 @@ export function createAgentAPI(paymentContracts: CelautGasPrice[] = []): CelautS
 function createDefaultErgoPayment(): CelautGasPrice {
   return {
     contract: createErgoContract(),
-    gasAmount: { n: GAS_DEFAULTS.ERG_TO_GAS_RATIO },
+    gasAmount: { n: String(GAS_DEFAULTS.GAS_PER_ERG) },
   };
 }
 
-/** Creates a Celaut Contract referencing the Ergo ledger */
-export function createErgoContract(tokenId?: string): CelautContract {
+/**
+ * Creates a Celaut Contract referencing the Ergo ledger.
+ *
+ * Mirrors celaut-nodo's init():
+ * ```python
+ * Contract(ledger=ergo_ledger, token_id="ERG",
+ *          script=sender_addr.encode("utf-8"),
+ *          template=ScriptTemplate(prose="", formal=CONTRACT.encode("utf-8")))
+ * ```
+ *
+ * @param nodeAuxAddress - The Celaut node's auxiliar receiving address.
+ *   Pass empty string if not yet known (e.g. for service spec packaging).
+ */
+export function createErgoContract(nodeAuxAddress: string = ''): CelautContract {
+  const encoder = new TextEncoder();
   return {
     template: {
-      tags: ['ergo', 'escrow', 'aih'],
-      prose: 'AgenticAiHome escrow payment contract on Ergo',
+      tags: [],
+      prose: '',
+      formal: encoder.encode(ERGO_LEDGER.CONTRACT_TEMPLATE),
     },
-    // Script bytes would be the compiled ErgoScript escrow contract
-    // TODO: set actual compiled contract bytes after escrow contract is finalized
-    script: new Uint8Array(0),
-    tokenId: tokenId ?? ERGO_LEDGER.TOKEN_ID_ERG,
+    script: encoder.encode(nodeAuxAddress),
+    tokenId: ERGO_LEDGER.TOKEN_ID_ERG,
     ledger: {
       tags: [...ERGO_LEDGER.TAGS],
       prose: ERGO_LEDGER.PROSE,
-      formal: hexToBytes(ERGO_LEDGER.FORMAL_HEX),
     },
   };
 }
@@ -99,8 +110,6 @@ export function packageAgent(agent: Agent): CelautService {
         tags: [...AIH_AGENT_CONTAINER.ARCHITECTURE_TAGS],
         prose: 'x86_64 Linux container',
       },
-      // Filesystem is the serialized base image — referenced by hash in practice
-      // The actual bytes would be fetched from the Celaut network via GetService
       filesystem: new Uint8Array(0), // Placeholder — resolved at deploy time
       entrypoint: [...AIH_AGENT_CONTAINER.ENTRYPOINT],
       resources: {
@@ -157,14 +166,4 @@ export function createAgentConfiguration(
     specSlot: [AIH_AGENT_CONTAINER.GRPC_PORT],
     initialGasAmount: initialGas ?? { n: GAS_DEFAULTS.DEFAULT_INITIAL_GAS },
   };
-}
-
-// ─── Utilities ──────────────────────────────────────────────
-
-function hexToBytes(hex: string): Uint8Array {
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
-  }
-  return bytes;
 }

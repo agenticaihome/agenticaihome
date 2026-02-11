@@ -4,10 +4,18 @@ export { CelautClient, CelautError } from './client';
 export type { CelautClientOptions } from './client';
 export { packageAgent, createAgentAPI, createAgentConfiguration, createErgoContract } from './agent-packager';
 export {
-  createCelautPaymentContract,
-  bridgeEscrowToGas,
+  CELAUT_ERGO_SCRIPT_TEMPLATE,
+  ERGO_LEDGER_TAG,
+  ERG_TOKEN_ID,
+  ERGO_TX_FEE,
+  createCelautErgoContract,
   gasToNanoErg,
+  nanoErgToGas,
+  extractGasPerErg,
   formatGasAsErg,
-  createUnifiedPaymentTx,
+  buildPayableMessage,
+  calculatePaymentAmounts,
+  prepareCelautDepositTx,
+  bridgeEscrowToGas,
 } from './ergo-bridge';
-export type { UnifiedPaymentParams } from './ergo-bridge';
+export type { CelautErgoPaymentParams, CelautErgoTxParams } from './ergo-bridge';

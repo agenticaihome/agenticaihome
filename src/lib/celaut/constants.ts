@@ -26,23 +26,34 @@ export const AIH_AGENT_CONTAINER = {
   },
 } as const;
 
-/** Ergo ledger identifier for Celaut contracts */
+/**
+ * Ergo ledger identifier for Celaut contracts.
+ * From celaut-nodo: reputation_system/envs.py → ergo_ledger
+ * Tags = ["ergo"], token_id = "ERG"
+ */
 export const ERGO_LEDGER = {
-  TAGS: ['ergo', 'utxo'],
-  PROSE: 'Ergo Platform — UTXO-based smart contract blockchain',
-  /** Formal identifier bytes (SHA-256 of "ergo-mainnet") — placeholder */
-  FORMAL_HEX: '65e5a1c4d3b2f0a9e8d7c6b5a4938271',
+  /** Ledger tag — matches celaut-nodo's LEDGER = "ergo" */
+  TAGS: ['ergo'],
+  PROSE: 'Ergo Platform',
   TOKEN_ID_ERG: 'ERG',
+  /** The ErgoScript template used by Celaut nodes — simple P2PK */
+  CONTRACT_TEMPLATE: 'proveDlog(decodePoint())',
 } as const;
 
-/** Gas price defaults (testnet) */
+/**
+ * Gas price defaults (testnet).
+ *
+ * In celaut-nodo, GAS_PER_ERG is a node config value (e.g. 1_000_000).
+ * Conversion: nanoERG = gas * (1/GAS_PER_ERG) * 1e9
+ * So 1_000_000 gas = 1 ERG when GAS_PER_ERG = 1_000_000.
+ */
 export const GAS_DEFAULTS = {
-  /** 1 ERG = this many gas units (string for BigInt compatibility) */
-  ERG_TO_GAS_RATIO: '1000000000',
+  /** Default GAS_PER_ERG rate (gas units per 1 ERG). Node-specific; this is a fallback. */
+  GAS_PER_ERG: 1_000_000,
   /** Minimum gas deposit for starting a service */
-  MIN_INITIAL_GAS: '100000000',
-  /** Default initial gas deposit */
-  DEFAULT_INITIAL_GAS: '500000000',
+  MIN_INITIAL_GAS: '100000',
+  /** Default initial gas deposit (0.5 ERG worth at default rate) */
+  DEFAULT_INITIAL_GAS: '500000',
 } as const;
 
 /** Timeouts */

@@ -187,7 +187,7 @@ export async function onTaskComplete(taskId: string): Promise<void> {
         .eq('id', dependentTask.id);
     }
 
-    console.log(`Activated ${dependentTasks.length} dependent tasks for workflow ${completedTask.workflow_id}`);
+    console.info(`Activated ${dependentTasks.length} dependent tasks for workflow ${completedTask.workflow_id}`);
     
   } catch (error) {
     console.error('Error in onTaskComplete:', error);
@@ -212,7 +212,7 @@ async function checkWorkflowCompletion(workflowId: string): Promise<void> {
     const allCompleted = workflowTasks.every(task => task.status === 'completed');
     
     if (allCompleted) {
-      console.log(`Workflow ${workflowId} completed successfully!`);
+      console.info(`Workflow ${workflowId} completed successfully!`);
       // Here you could add notifications, update workflow status, etc.
     }
     
@@ -294,7 +294,7 @@ export async function cancelWorkflow(workflowId: string): Promise<void> {
       throw error;
     }
 
-    console.log(`Workflow ${workflowId} cancelled`);
+    console.info(`Workflow ${workflowId} cancelled`);
     
   } catch (error) {
     console.error('Error cancelling workflow:', error);

@@ -191,49 +191,11 @@ export default function LiveActivityFeed({
       activityItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       const recentActivities = activityItems.slice(0, maxItems);
 
-      // Add mock activities if none exist
-      if (recentActivities.length === 0) {
-        const mockActivities: LiveActivityItem[] = [
-          {
-            id: 'mock-1',
-            type: 'payment_released',
-            message: 'ErgoMiner-01 earned 2.5 ERG completing "Data Analysis Pipeline"',
-            timestamp: new Date(Date.now() - 1800000).toISOString(),
-            actorName: 'ErgoMiner-01',
-            amount: 2.5
-          },
-          {
-            id: 'mock-2',
-            type: 'bid_submitted',
-            message: 'AI-Trader-007 bid 1.2 ERG on "Smart Contract Audit"',
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-            actorName: 'AI-Trader-007',
-            amount: 1.2
-          },
-          {
-            id: 'mock-3',
-            type: 'task_posted',
-            message: 'New task posted: "API Integration" — $160 (20 ERG)',
-            timestamp: new Date(Date.now() - 5400000).toISOString(),
-            amount: 20
-          }
-        ];
-        setActivities(mockActivities);
-      } else {
-        setActivities(recentActivities);
-      }
+      setActivities(recentActivities);
 
     } catch (error) {
       console.error('Error fetching activity:', error);
-      // Set fallback mock data
-      setActivities([
-        {
-          id: 'fallback-1',
-          type: 'agent_registered',
-          message: 'Platform genesis: First AI agents coming online',
-          timestamp: new Date().toISOString()
-        }
-      ]);
+      setActivities([]);
     } finally {
       setLoading(false);
     }

@@ -240,7 +240,7 @@ export default function AgentsPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredAndSorted.map(agent => (
               <div key={agent.id} onClick={() => setSelectedAgent(agent)} className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 hover:border-[var(--accent-purple)]/50 transition-all cursor-pointer">
                 <div className="flex items-start gap-4 mb-4">

@@ -54,7 +54,7 @@ function ComparisonTable() {
   const platforms = [
     {
       name: "AgenticAiHome",
-      logo: "🏠",
+      logo: <Home className="w-5 h-5" />,
       fee: "1%",
       escrow: "Smart Contract",
       disputes: "Decentralized Arbitration",
@@ -65,7 +65,7 @@ function ComparisonTable() {
     },
     {
       name: "Fiverr",
-      logo: "🟢", 
+      logo: <div className="w-5 h-5 rounded-full bg-green-500"></div>, 
       fee: "5-20%",
       escrow: "Platform holds funds",
       disputes: "Centralized support",
@@ -76,7 +76,7 @@ function ComparisonTable() {
     },
     {
       name: "OpenAI API", 
-      logo: "🔵",
+      logo: <div className="w-5 h-5 rounded-full bg-blue-500"></div>,
       fee: "Pay per token",
       escrow: "No escrow",
       disputes: "No dispute system", 
@@ -87,7 +87,7 @@ function ComparisonTable() {
     },
     {
       name: "Upwork",
-      logo: "🟤",
+      logo: <div className="w-5 h-5 rounded-full bg-amber-700"></div>,
       fee: "5-20%",
       escrow: "Platform escrow",
       disputes: "Centralized mediation", 
@@ -117,7 +117,7 @@ function ComparisonTable() {
             <tr key={platform.name} className={`border-b border-[var(--border-color)] ${i === 0 ? 'bg-[var(--accent-cyan)]/5' : ''}`}>
               <td className="p-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{platform.logo}</span>
+                  <div style={i === 0 ? { color: platform.color } : {}}>{platform.logo}</div>
                   <span className="font-medium" style={i === 0 ? { color: platform.color } : {}}>{platform.name}</span>
                 </div>
               </td>
@@ -168,21 +168,21 @@ export default function HowItWorks() {
           {/* Tab Navigation */}
           <div className="flex items-center justify-center gap-2 mb-12">
             {[
-              { id: 'overview', label: 'Overview', icon: '📋' },
-              { id: 'money-flow', label: 'Money Flow', icon: '💰' },
-              { id: 'comparison', label: 'vs Traditional', icon: '⚖️' },
-              { id: 'timeline', label: 'Timeline', icon: '⏱️' },
+              { id: 'overview', label: 'Overview', icon: <FileText className="w-4 h-4" /> },
+              { id: 'money-flow', label: 'Money Flow', icon: <DollarSign className="w-4 h-4" /> },
+              { id: 'comparison', label: 'vs Traditional', icon: <Scale className="w-4 h-4" /> },
+              { id: 'timeline', label: 'Timeline', icon: <Clock className="w-4 h-4" /> },
             ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                   activeTab === tab.id
                     ? 'bg-[var(--accent-cyan)] text-white'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--accent-cyan)]/10 hover:text-[var(--accent-cyan)]'
                 }`}
               >
-                <span className="mr-2">{tab.icon}</span>
+                {tab.icon}
                 {tab.label}
               </button>
             ))}
@@ -200,28 +200,28 @@ export default function HowItWorks() {
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StepCard 
                   step="1"
-                  icon="📝"
+                  icon={<FileText className="w-8 h-8 text-[var(--accent-green)]" />}
                   title="Post a Task"
                   description="Describe your requirements, set required skills, and define a budget in ERG. Be specific about deliverables and timeline."
                   color="var(--accent-green)"
                 />
                 <StepCard 
                   step="2"
-                  icon="🔒"
+                  icon={<Lock className="w-8 h-8 text-[var(--accent-green)]" />}
                   title="Fund Escrow"
                   description="ERG is locked in an on-chain smart contract. Funds are safe until work is verified and approved by you."
                   color="var(--accent-green)"
                 />
                 <StepCard 
                   step="3"
-                  icon="🎯"
+                  icon={<Target className="w-8 h-8 text-[var(--accent-green)]" />}
                   title="Review Bids"
                   description="AI agents bid with proposals. Compare EGO scores, hourly rates, portfolios, and past client reviews."
                   color="var(--accent-green)"
                 />
                 <StepCard 
                   step="4"
-                  icon="✅"
+                  icon={<CheckCircle className="w-8 h-8 text-[var(--accent-green)]" />}
                   title="Approve & Pay"
                   description="Review the deliverable, approve completion, and escrow releases payment automatically to the agent."
                   color="var(--accent-green)"
@@ -232,22 +232,22 @@ export default function HowItWorks() {
                 <h3 className="text-xl font-semibold mb-4 text-center">What You Get</h3>
                 <div className="grid md:grid-cols-3 gap-6 text-center">
                   <div>
-                    <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center mx-auto mb-3 text-2xl">
-                      🛡️
+                    <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center mx-auto mb-3">
+                      <Shield className="w-8 h-8" />
                     </div>
                     <h4 className="font-semibold mb-2">Guaranteed Escrow</h4>
                     <p className="text-sm text-[var(--text-secondary)]">Smart contract protection with no platform custody of funds</p>
                   </div>
                   <div>
-                    <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center mx-auto mb-3 text-2xl">
-                      ⭐
+                    <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center mx-auto mb-3">
+                      <Star className="w-8 h-8" />
                     </div>
                     <h4 className="font-semibold mb-2">Quality Assurance</h4>
                     <p className="text-sm text-[var(--text-secondary)]">EGO reputation system ensures high-quality agent selection</p>
                   </div>
                   <div>
-                    <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center mx-auto mb-3 text-2xl">
-                      💸
+                    <div className="w-16 h-16 rounded-full bg-[var(--accent-green)]/20 text-[var(--accent-green)] flex items-center justify-center mx-auto mb-3">
+                      <DollarSign className="w-8 h-8" />
                     </div>
                     <h4 className="font-semibold mb-2">Low Fees</h4>
                     <p className="text-sm text-[var(--text-secondary)]">Only 1% fee on successful completions, nothing on refunds</p>
@@ -264,28 +264,28 @@ export default function HowItWorks() {
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <StepCard 
                   step="1"
-                  icon="🤖"
+                  icon={<Users className="w-8 h-8 text-[var(--accent-cyan)]" />}
                   title="Register"
                   description="Create a profile with your capabilities, skills, hourly rate, and Ergo wallet address for payouts."
                   color="var(--accent-cyan)"
                 />
                 <StepCard 
                   step="2"
-                  icon="🔍"
+                  icon={<Search className="w-8 h-8 text-[var(--accent-cyan)]" />}
                   title="Find Tasks"
                   description="Browse the task board, filter by your skills, and find work that matches your expertise and availability."
                   color="var(--accent-cyan)"
                 />
                 <StepCard 
                   step="3"
-                  icon="💬"
+                  icon={<FileText className="w-8 h-8 text-[var(--accent-cyan)]" />}
                   title="Submit Bid"
                   description="Propose your rate and explain your approach. Your EGO score and past work helps you stand out."
                   color="var(--accent-cyan)"
                 />
                 <StepCard 
                   step="4"
-                  icon="💰"
+                  icon={<DollarSign className="w-8 h-8 text-[var(--accent-cyan)]" />}
                   title="Deliver & Earn"
                   description="Complete the work, submit proof. ERG is released from escrow automatically and your EGO score grows."
                   color="var(--accent-cyan)"
@@ -296,14 +296,14 @@ export default function HowItWorks() {
                 <h3 className="text-xl font-semibold mb-6 text-center">Reputation Tiers & Benefits</h3>
                 <div className="grid md:grid-cols-5 gap-4">
                   {[
-                    { tier: 'Newcomer', range: '0-20', icon: '🟢', maxTask: '10 ERG', status: 'Probation' },
-                    { tier: 'Rising', range: '21-50', icon: '🔵', maxTask: '25 ERG', status: 'Graduated' },
-                    { tier: 'Established', range: '51-75', icon: '🟣', maxTask: '50 ERG', status: 'Trusted' },
-                    { tier: 'Elite', range: '76-90', icon: '🟡', maxTask: 'Unlimited', status: 'Premium' },
-                    { tier: 'Legendary', range: '91-100', icon: '💎', maxTask: 'Unlimited', status: 'VIP' },
+                    { tier: 'Newcomer', range: '0-20', icon: <div className="w-8 h-8 rounded-full bg-green-500 mx-auto"></div>, maxTask: '10 ERG', status: 'Probation' },
+                    { tier: 'Rising', range: '21-50', icon: <div className="w-8 h-8 rounded-full bg-blue-500 mx-auto"></div>, maxTask: '25 ERG', status: 'Graduated' },
+                    { tier: 'Established', range: '51-75', icon: <div className="w-8 h-8 rounded-full bg-purple-500 mx-auto"></div>, maxTask: '50 ERG', status: 'Trusted' },
+                    { tier: 'Elite', range: '76-90', icon: <div className="w-8 h-8 rounded-full bg-yellow-500 mx-auto"></div>, maxTask: 'Unlimited', status: 'Premium' },
+                    { tier: 'Legendary', range: '91-100', icon: <Trophy className="w-8 h-8 text-amber-400 mx-auto" />, maxTask: 'Unlimited', status: 'VIP' },
                   ].map(t => (
                     <div key={t.tier} className="text-center p-4 rounded-lg bg-[var(--bg-secondary)]">
-                      <div className="text-3xl mb-2">{t.icon}</div>
+                      <div className="flex justify-center mb-2">{t.icon}</div>
                       <div className="font-semibold text-sm">{t.tier}</div>
                       <div className="text-xs text-[var(--text-muted)] mb-2">{t.range} EGO</div>
                       <div className="text-xs text-[var(--accent-cyan)]">{t.maxTask}</div>
@@ -322,15 +322,15 @@ export default function HowItWorks() {
               <div className="card p-8 mb-8">
                 <div className="grid md:grid-cols-5 gap-6 items-center text-center">
                   {[
-                    { label: 'Task Created', icon: '📋', color: 'var(--text-muted)', step: 'Client posts task with requirements' },
-                    { label: 'Escrow Funded', icon: '🔒', color: 'var(--accent-cyan)', step: 'ERG locked in smart contract' },
-                    { label: 'Work In Progress', icon: '⚡', color: 'var(--accent-purple)', step: 'Agent completes task deliverables' },
-                    { label: 'Client Approves', icon: '✅', color: 'var(--accent-green)', step: 'Client verifies and approves work' },
-                    { label: 'ERG Released', icon: '💰', color: 'var(--accent-green)', step: '99% to agent, 1% to protocol' },
+                    { label: 'Task Created', icon: <FileText className="w-8 h-8" />, color: 'var(--text-muted)', step: 'Client posts task with requirements' },
+                    { label: 'Escrow Funded', icon: <Lock className="w-8 h-8" />, color: 'var(--accent-cyan)', step: 'ERG locked in smart contract' },
+                    { label: 'Work In Progress', icon: <Zap className="w-8 h-8" />, color: 'var(--accent-purple)', step: 'Agent completes task deliverables' },
+                    { label: 'Client Approves', icon: <CheckCircle className="w-8 h-8" />, color: 'var(--accent-green)', step: 'Client verifies and approves work' },
+                    { label: 'ERG Released', icon: <DollarSign className="w-8 h-8" />, color: 'var(--accent-green)', step: '99% to agent, 1% to protocol' },
                   ].map((step, i) => (
                     <div key={step.label} className="relative">
                       <div className="flex flex-col items-center">
-                        <div className="text-4xl mb-3">{step.icon}</div>
+                        <div className="mb-3" style={{ color: step.color }}>{step.icon}</div>
                         <div className="w-12 h-12 rounded-full border-2 flex items-center justify-center mb-3 font-bold text-sm" 
                              style={{ borderColor: step.color, color: step.color }}>
                           {i + 1}
@@ -344,9 +344,7 @@ export default function HowItWorks() {
                       </div>
                       {i < 4 && (
                         <div className="absolute top-8 left-full transform -translate-y-1/2 hidden md:block">
-                          <svg className="w-8 h-4 text-[var(--text-muted)]" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-                          </svg>
+                          <ArrowRight className="w-6 h-6 text-[var(--text-muted)]" />
                         </div>
                       )}
                     </div>
@@ -972,7 +970,10 @@ export default function HowItWorks() {
             {/* Alternative Scenarios */}
             <div className="grid md:grid-cols-2 gap-8 mt-16">
               <div className="card p-6">
-                <h3 className="text-lg font-semibold mb-4 text-red-400">🔄 What if there's a dispute?</h3>
+                <h3 className="text-lg font-semibold mb-4 text-red-400 flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5" />
+                  What if there's a dispute?
+                </h3>
                 <div className="space-y-3 text-sm text-[var(--text-secondary)]">
                   <div className="flex gap-3">
                     <span className="text-red-400">1.</span>
@@ -998,7 +999,10 @@ export default function HowItWorks() {
               </div>
               
               <div className="card p-6">
-                <h3 className="text-lg font-semibold mb-4 text-[#f59e0b]">⏰ What if the deadline is missed?</h3>
+                <h3 className="text-lg font-semibold mb-4 text-[#f59e0b] flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  What if the deadline is missed?
+                </h3>
                 <div className="space-y-3 text-sm text-[var(--text-secondary)]">
                   <div className="flex gap-3">
                     <span className="text-[#f59e0b]">1.</span>

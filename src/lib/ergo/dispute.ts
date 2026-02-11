@@ -18,8 +18,8 @@ import {
 } from './constants';
 import { pubkeyFromAddress, propositionBytesFromAddress } from './address-utils';
 
-// Platform fee address hash for ErgoScript (replace with actual hash)
-const PLATFORM_FEE_ADDRESS_HASH = "5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z"; // TODO: Replace with actual hash
+// Blake2b256 hash of PLATFORM_FEE_ADDRESS ergoTree (0008cd0341c1153459357f38737dea30f191facb68ea88b4cd634499a6eacc6b7d8ea889)
+const PLATFORM_FEE_ADDRESS_HASH = "e994b21ac4eff8b9eb67e44999a39986005a8b7db7bd38dbeacbe32834060f11";
 import { compileErgoScript } from './compiler';
 
 // ─── Types ───────────────────────────────────────────────────────────

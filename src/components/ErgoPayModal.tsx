@@ -85,7 +85,7 @@ export default function ErgoPayModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 relative shadow-2xl">
+      <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-2xl max-w-md w-full p-6 relative shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -115,7 +115,7 @@ export default function ErgoPayModal({
                 </button>
                 <button
                   onClick={handleOpenInWallet}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 border border-slate-600"
+                  className="w-full bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-slate-200 font-medium py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 border border-[var(--border-color)]"
                 >
                   Open in Ergo Wallet
                 </button>
@@ -158,7 +158,7 @@ export default function ErgoPayModal({
             <p className="text-green-400 font-semibold text-lg">Transaction Signed!</p>
             {txId && (
               <div className="space-y-2">
-                <p className="text-slate-400 text-xs font-mono break-all bg-slate-800 p-2 rounded-lg">{txId}</p>
+                <p className="text-slate-400 text-xs font-mono break-all bg-[var(--bg-card)] p-2 rounded-lg">{txId}</p>
                 <a
                   href={txExplorerUrl(txId)}
                   target="_blank"
@@ -193,7 +193,7 @@ export default function ErgoPayModal({
               </button>
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-sm font-medium transition-colors"
+                className="px-4 py-2 bg-[var(--bg-card-hover)] hover:bg-slate-600 text-slate-200 rounded-lg text-sm font-medium transition-colors"
               >
                 Close
               </button>

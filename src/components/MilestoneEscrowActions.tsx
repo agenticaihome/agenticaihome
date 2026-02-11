@@ -343,7 +343,7 @@ export default function MilestoneEscrowActions({
       <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Milestone Escrow</h3>
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-[var(--text-secondary)]">
             Total: {amountErg} ERG
           </div>
         </div>
@@ -352,23 +352,23 @@ export default function MilestoneEscrowActions({
         {escrowStatus === 'funded' && (
           <div className="mb-4 p-3 bg-[var(--bg-tertiary)] rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-300">
+              <span className="text-sm font-medium text-[var(--text-secondary)]">
                 Current: Milestone {currentMilestone + 1} of {milestones.length}
               </span>
               <span className="text-sm text-[var(--accent-cyan)]">
                 {currentMilestoneData?.percentage}% ({nanoErgToErg(((totalAmountNanoErg * BigInt(currentMilestoneData?.percentage || 0)) / BigInt(10000)))} ERG)
               </span>
             </div>
-            <div className="text-sm text-gray-400 mb-2">
+            <div className="text-sm text-[var(--text-secondary)] mb-2">
               {currentMilestoneData?.name}: {currentMilestoneData?.description}
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-[var(--bg-card-hover)] rounded-full h-2">
               <div 
                 className="bg-[var(--accent-cyan)] h-2 rounded-full transition-all duration-300"
                 style={{ width: `${((currentMilestone) / milestones.length) * 100}%` }}
               />
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-[var(--text-muted)] mt-1">
               {progressData.progress}% of total value released
             </div>
           </div>
@@ -464,7 +464,7 @@ export default function MilestoneEscrowActions({
                 )}
                 <button 
                   onClick={resetState}
-                  className="mt-2 text-sm text-gray-400 hover:text-white"
+                  className="mt-2 text-sm text-[var(--text-secondary)] hover:text-white"
                 >
                   ← Back
                 </button>
@@ -480,10 +480,10 @@ export default function MilestoneEscrowActions({
               <span className="text-[var(--accent-red)] text-xl">⚠</span>
               <div>
                 <p className="text-[var(--accent-red)] font-medium">Transaction Failed</p>
-                <p className="text-sm text-gray-400 mt-1">{error}</p>
+                <p className="text-sm text-[var(--text-secondary)] mt-1">{error}</p>
                 <button 
                   onClick={resetState}
-                  className="mt-2 text-sm text-gray-400 hover:text-white"
+                  className="mt-2 text-sm text-[var(--text-secondary)] hover:text-white"
                 >
                   ← Try Again
                 </button>

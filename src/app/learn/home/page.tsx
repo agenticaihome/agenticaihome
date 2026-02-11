@@ -24,8 +24,8 @@ const CopyPrompt = ({ prompt, title }: { prompt: string; title: string }) => {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between p-4 bg-slate-800 border-b border-slate-700">
+    <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
         <span className="text-sm font-medium text-slate-300">📋 {title}</span>
         <button
           onClick={handleCopy}
@@ -198,7 +198,7 @@ Start by asking me question #1.`}
           <p className="mt-2 text-amber-300 font-medium">Pro tip: Say "Remember this for next time" so the AI saves your preferences.</p>
         </TryThis>
 
-        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+        <div className="bg-[var(--bg-card)]/50 rounded-xl p-4 border border-[var(--border-color)]">
           <h4 className="font-semibold text-white mb-2 flex items-center gap-2">
             <Bell size={16} className="text-amber-400" />
             Important: Enable Notifications
@@ -464,7 +464,7 @@ Start by asking what bills and maintenance I want to track.`}
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <h4 className="font-semibold text-white">💡 Maintenance Scheduler</h4>
-              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+              <div className="bg-[var(--bg-card)]/50 rounded-xl p-4 border border-[var(--border-color)]">
                 <p className="text-slate-300 text-sm mb-3">Common maintenance your agent should track:</p>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -749,15 +749,15 @@ This week's schedule and priorities:`}
             <div className="space-y-4">
               <h4 className="font-semibold text-white">⚡ Automation Triggers</h4>
               <div className="space-y-3 text-sm">
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Weather-Based</div>
                   <div className="text-slate-300">Rain → Indoor activities, comfort food, no outdoor chores</div>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Calendar-Based</div>
                   <div className="text-slate-300">Busy week → Simple meals, prep ahead, minimal new tasks</div>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Seasonal</div>
                   <div className="text-slate-300">Fall → Back to school routines, winter prep, seasonal foods</div>
                 </div>
@@ -767,15 +767,15 @@ This week's schedule and priorities:`}
             <div className="space-y-4">
               <h4 className="font-semibold text-white">🔧 Integration Tools</h4>
               <div className="space-y-3 text-sm">
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Shared Memory</div>
                   <div className="text-slate-300">Use ChatGPT Projects to share context between agents</div>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Zapier/IFTTT</div>
                   <div className="text-slate-300">Connect to calendars, shopping apps, smart home devices</div>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Regular Check-ins</div>
                   <div className="text-slate-300">Sunday planning, Wednesday check-in, Friday wrap-up</div>
                 </div>

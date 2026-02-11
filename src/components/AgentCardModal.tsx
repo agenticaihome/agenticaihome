@@ -19,7 +19,7 @@ function getTierInfo(egoScore: number) {
   if (egoScore >= 750) return { tier: 'Elite', color: 'text-purple-400', bg: 'from-purple-500/20 to-pink-500/20', border: 'border-purple-500/40' };
   if (egoScore >= 500) return { tier: 'Established', color: 'text-blue-400', bg: 'from-blue-500/20 to-cyan-500/20', border: 'border-blue-500/40' };
   if (egoScore >= 250) return { tier: 'Rising', color: 'text-emerald-400', bg: 'from-emerald-500/20 to-green-500/20', border: 'border-emerald-500/40' };
-  return { tier: 'Newcomer', color: 'text-gray-400', bg: 'from-gray-500/20 to-slate-500/20', border: 'border-gray-500/40' };
+  return { tier: 'Newcomer', color: 'text-[var(--text-secondary)]', bg: 'from-gray-500/20 to-slate-500/20', border: 'border-gray-500/40' };
 }
 
 export default function AgentCardModal({ agent, isOwner, onClose, onHire }: AgentCardModalProps) {
@@ -32,7 +32,7 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
       
       {/* Card */}
       <div 
-        className={`relative w-full max-w-md bg-gradient-to-b ${tier.bg} bg-slate-900/95 border ${tier.border} rounded-2xl overflow-hidden shadow-2xl transform transition-all`}
+        className={`relative w-full max-w-md bg-gradient-to-b ${tier.bg} bg-[var(--bg-primary)]/95 border ${tier.border} rounded-2xl overflow-hidden shadow-2xl transform transition-all`}
         onClick={e => e.stopPropagation()}
       >
         {/* Top accent line */}
@@ -45,7 +45,7 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
         }`} />
 
         {/* Close button */}
-        <button onClick={onClose} className="absolute top-4 right-4 p-1 text-gray-400 hover:text-white transition-colors z-10">
+        <button onClick={onClose} className="absolute top-4 right-4 p-1 text-[var(--text-secondary)] hover:text-white transition-colors z-10">
           <X className="w-5 h-5" />
         </button>
 
@@ -72,32 +72,32 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-px bg-slate-700/30 mx-6 rounded-lg overflow-hidden mb-4">
-          <div className="bg-slate-800/80 p-3 text-center">
+        <div className="grid grid-cols-3 gap-px bg-[var(--bg-card-hover)]/30 mx-6 rounded-lg overflow-hidden mb-4">
+          <div className="bg-[var(--bg-card)]/80 p-3 text-center">
             <div className="text-lg font-bold text-white">{agent.tasksCompleted}</div>
-            <div className="text-xs text-gray-400">Tasks Done</div>
+            <div className="text-xs text-[var(--text-secondary)]">Tasks Done</div>
           </div>
-          <div className="bg-slate-800/80 p-3 text-center">
+          <div className="bg-[var(--bg-card)]/80 p-3 text-center">
             <div className="text-lg font-bold text-emerald-400">Σ{agent.hourlyRateErg}</div>
-            <div className="text-xs text-gray-400">ERG/hr</div>
+            <div className="text-xs text-[var(--text-secondary)]">ERG/hr</div>
           </div>
-          <div className="bg-slate-800/80 p-3 text-center">
+          <div className="bg-[var(--bg-card)]/80 p-3 text-center">
             <div className="text-lg font-bold text-yellow-400">{agent.rating.toFixed(1)}</div>
-            <div className="text-xs text-gray-400">Rating</div>
+            <div className="text-xs text-[var(--text-secondary)]">Rating</div>
           </div>
         </div>
 
         {/* Description */}
         <div className="px-6 mb-4">
-          <p className="text-gray-300 text-sm leading-relaxed">{agent.description}</p>
+          <p className="text-[var(--text-secondary)] text-sm leading-relaxed">{agent.description}</p>
         </div>
 
         {/* Skills */}
         <div className="px-6 mb-4">
-          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Skills</h4>
+          <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide mb-2">Skills</h4>
           <div className="flex flex-wrap gap-1.5">
             {agent.skills.map(skill => (
-              <span key={skill} className="px-2.5 py-1 bg-slate-700/50 text-gray-300 text-xs rounded-full border border-slate-600/50">
+              <span key={skill} className="px-2.5 py-1 bg-[var(--bg-card-hover)]/50 text-[var(--text-secondary)] text-xs rounded-full border border-[var(--border-color)]/50">
                 {skill}
               </span>
             ))}
@@ -106,12 +106,12 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
 
         {/* Address */}
         <div className="px-6 mb-4">
-          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Wallet</h4>
-          <code className="text-xs text-gray-400 break-all">{agent.ownerAddress}</code>
+          <h4 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide mb-1">Wallet</h4>
+          <code className="text-xs text-[var(--text-secondary)] break-all">{agent.ownerAddress}</code>
         </div>
 
         {/* Actions */}
-        <div className="p-6 pt-4 border-t border-slate-700/50 flex gap-3">
+        <div className="p-6 pt-4 border-t border-[var(--border-color)]/50 flex gap-3">
           {!isOwner && onHire ? (
             <button
               onClick={onHire}
@@ -123,14 +123,14 @@ export default function AgentCardModal({ agent, isOwner, onClose, onHire }: Agen
           ) : isOwner ? (
             <a
               href="/dashboard"
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[var(--bg-card-hover)] hover:bg-slate-600 text-white rounded-lg font-medium transition-all"
             >
               Manage Agent
             </a>
           ) : null}
           <a
             href={`/agents/${agent.id}`}
-            className="flex items-center gap-2 px-4 py-3 border border-slate-600 hover:border-slate-500 text-gray-300 rounded-lg transition-all"
+            className="flex items-center gap-2 px-4 py-3 border border-[var(--border-color)] hover:border-slate-500 text-[var(--text-secondary)] rounded-lg transition-all"
           >
             <ExternalLink className="w-4 h-4" />
           </a>

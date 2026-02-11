@@ -36,7 +36,7 @@ function StarDisplay({ rating, size = 'md' }: { rating: number; size?: 'sm' | 'm
           }`}
         />
       ))}
-      <span className="ml-1 text-sm text-gray-400 font-medium">
+      <span className="ml-1 text-sm text-[var(--text-secondary)] font-medium">
         {rating.toFixed(1)}
       </span>
     </div>
@@ -61,10 +61,10 @@ function ScoreBar({ label, score, color = 'purple' }: {
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-sm">
-        <span className="text-gray-300">{label}</span>
+        <span className="text-[var(--text-secondary)]">{label}</span>
         <span className="text-white font-medium">{score.toFixed(1)}</span>
       </div>
-      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-2 bg-[var(--bg-card-hover)] rounded-full overflow-hidden">
         <div 
           className={`h-full ${colors[color]} rounded-full transition-all duration-500`}
           style={{ width: `${percentage}%` }}
@@ -132,13 +132,13 @@ function CommentWithTransparency({ comment }: {
   };
 
   return (
-    <div className="p-3 bg-slate-700/30 rounded-lg">
+    <div className="p-3 bg-[var(--bg-card-hover)]/30 rounded-lg">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <StarDisplay rating={comment.score} size="sm" />
           {getRaterBadge()}
         </div>
-        <div className="text-xs text-gray-400" title={getRaterTooltip()}>
+        <div className="text-xs text-[var(--text-secondary)]" title={getRaterTooltip()}>
           {comment.raterRole === 'creator' ? 'Task Creator' : 'Agent'} • {new Date(comment.createdAt).toLocaleDateString()}
           {raterInfo && (
             <span className="ml-1 opacity-70">
@@ -147,8 +147,8 @@ function CommentWithTransparency({ comment }: {
           )}
         </div>
       </div>
-      <p className="text-gray-300 text-sm leading-relaxed">
-        {comment.comment || <em className="text-gray-500">No comment provided</em>}
+      <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
+        {comment.comment || <em className="text-[var(--text-muted)]">No comment provided</em>}
       </p>
     </div>
   );
@@ -187,10 +187,10 @@ export default function RatingDisplay({
 
   if (loading) {
     return (
-      <div className={`bg-slate-800/50 border border-slate-700 rounded-lg p-4 ${className}`}>
+      <div className={`bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-4 ${className}`}>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-700 rounded w-1/3 mb-2"></div>
-          <div className="h-3 bg-gray-700 rounded w-1/4"></div>
+          <div className="h-4 bg-[var(--bg-card-hover)] rounded w-1/3 mb-2"></div>
+          <div className="h-3 bg-[var(--bg-card-hover)] rounded w-1/4"></div>
         </div>
       </div>
     );
@@ -198,7 +198,7 @@ export default function RatingDisplay({
 
   if (error) {
     return (
-      <div className={`bg-slate-800/50 border border-slate-700 rounded-lg p-4 ${className}`}>
+      <div className={`bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-4 ${className}`}>
         <p className="text-red-400 text-sm">{error}</p>
       </div>
     );
@@ -206,8 +206,8 @@ export default function RatingDisplay({
 
   if (!summary || summary.totalRatings === 0) {
     return (
-      <div className={`bg-slate-800/50 border border-slate-700 rounded-lg p-4 ${className}`}>
-        <div className="text-center text-gray-400 py-4">
+      <div className={`bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-4 ${className}`}>
+        <div className="text-center text-[var(--text-secondary)] py-4">
           <Award className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">No ratings yet</p>
           <p className="text-xs mt-1">Complete tasks to earn ratings</p>
@@ -221,7 +221,7 @@ export default function RatingDisplay({
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <StarDisplay rating={summary.averageScore} size="sm" />
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-[var(--text-secondary)]">
           ({summary.totalRatings} review{summary.totalRatings !== 1 ? 's' : ''})
         </span>
       </div>
@@ -237,7 +237,7 @@ export default function RatingDisplay({
   };
 
   return (
-    <div className={`bg-slate-800/50 border border-slate-700 rounded-2xl p-6 ${className}`}>
+    <div className={`bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -246,7 +246,7 @@ export default function RatingDisplay({
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Ratings & Reviews</h3>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
               <Users className="w-4 h-4" />
               <span>{summary.totalRatings} review{summary.totalRatings !== 1 ? 's' : ''}</span>
             </div>
@@ -271,14 +271,14 @@ export default function RatingDisplay({
                 const percentage = summary.totalRatings > 0 ? (count / summary.totalRatings) * 100 : 0;
                 return (
                   <div key={stars} className="flex items-center gap-2 text-xs">
-                    <span className="text-gray-400 w-8">{stars}★</span>
-                    <div className="flex-1 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <span className="text-[var(--text-secondary)] w-8">{stars}★</span>
+                    <div className="flex-1 h-1.5 bg-[var(--bg-card-hover)] rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-yellow-400 rounded-full transition-all duration-300"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
-                    <span className="text-gray-400 w-8 text-right">{count}</span>
+                    <span className="text-[var(--text-secondary)] w-8 text-right">{count}</span>
                   </div>
                 );
               })}
@@ -297,7 +297,7 @@ export default function RatingDisplay({
           <div className="space-y-3">
             {summary.criteriaAverages.agent_criteria && (
               <>
-                <div className="text-sm text-gray-400 mb-2">As an Agent:</div>
+                <div className="text-sm text-[var(--text-secondary)] mb-2">As an Agent:</div>
                 <ScoreBar 
                   label="Communication" 
                   score={summary.criteriaAverages.agent_criteria.communication} 
@@ -318,7 +318,7 @@ export default function RatingDisplay({
             {summary.criteriaAverages.creator_criteria && (
               <>
                 {summary.criteriaAverages.agent_criteria && <div className="h-4" />}
-                <div className="text-sm text-gray-400 mb-2">As a Task Creator:</div>
+                <div className="text-sm text-[var(--text-secondary)] mb-2">As a Task Creator:</div>
                 <ScoreBar 
                   label="Task Clarity" 
                   score={summary.criteriaAverages.creator_criteria.clarity} 

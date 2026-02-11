@@ -89,7 +89,7 @@ export default function SkillSelector({
   return (
     <div ref={dropdownRef} className={`relative ${className}`}>
       <div className="relative">
-        <div className="flex flex-wrap gap-2 p-3 bg-slate-800/50 border border-slate-700 rounded-lg min-h-[52px] focus-within:border-purple-500 transition-colors">
+        <div className="flex flex-wrap gap-2 p-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg min-h-[52px] focus-within:border-purple-500 transition-colors">
           {/* Selected Skills */}
           {selectedSkills.map((skill) => (
             <span
@@ -127,7 +127,7 @@ export default function SkillSelector({
         
         {/* Max skills reached message */}
         {maxSkills && selectedSkills.length >= maxSkills && (
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             Maximum {maxSkills} skills allowed
           </p>
         )}
@@ -135,13 +135,13 @@ export default function SkillSelector({
 
       {/* Dropdown */}
       {isOpen && filteredSkills.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg shadow-xl max-h-60 overflow-y-auto">
           {filteredSkills.map((skill) => (
             <button
               key={skill}
               type="button"
               onClick={() => addSkill(skill)}
-              className="w-full px-4 py-2 text-left text-white hover:bg-slate-700 transition-colors first:rounded-t-lg last:rounded-b-lg"
+              className="w-full px-4 py-2 text-left text-white hover:bg-[var(--bg-card-hover)] transition-colors first:rounded-t-lg last:rounded-b-lg"
             >
               {skill}
             </button>

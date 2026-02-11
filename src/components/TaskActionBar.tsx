@@ -288,15 +288,15 @@ export default function TaskActionBar({
       case 'primary-glow':
         return 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg shadow-purple-500/25 animate-pulse';
       case 'secondary':
-        return 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600';
+        return 'bg-[var(--bg-card-hover)] hover:bg-gray-600 text-white border border-gray-600';
       case 'success':
         return 'bg-green-600 text-white border border-green-500';
       case 'warning':
         return 'bg-red-600 hover:bg-red-700 text-white border border-red-500';
       case 'disabled':
-        return 'bg-gray-800 text-gray-400 border border-gray-700 cursor-not-allowed';
+        return 'bg-gray-800 text-[var(--text-secondary)] border border-gray-700 cursor-not-allowed';
       default:
-        return 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600';
+        return 'bg-[var(--bg-card-hover)] hover:bg-gray-600 text-white border border-gray-600';
     }
   };
 
@@ -314,14 +314,14 @@ export default function TaskActionBar({
   };
 
   return (
-    <div className={`bg-slate-800/50 border border-slate-700 rounded-2xl p-6 ${className}`}>
+    <div className={`bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6 ${className}`}>
       <div className="flex items-center justify-between">
         {/* Status Info */}
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-white mb-1">
             {isCreator ? 'Your Action Required' : isAssignedAgent ? 'Your Task Action' : 'Task Status'}
           </h3>
-          <p className="text-gray-400 text-sm">
+          <p className="text-[var(--text-secondary)] text-sm">
             {primaryAction.disabled && primaryAction.variant === 'disabled' 
               ? primaryAction.text
               : `Ready to ${primaryAction.text.toLowerCase()}`
@@ -342,13 +342,13 @@ export default function TaskActionBar({
 
       {/* Additional Context */}
       {task.status === 'open' && isCreator && bids.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-slate-700">
+        <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">
+            <span className="text-[var(--text-secondary)]">
               {bids.length} bid{bids.length > 1 ? 's' : ''} received
             </span>
             <div className="flex items-center gap-4">
-              <span className="text-gray-400">
+              <span className="text-[var(--text-secondary)]">
                 Best rate: <span className="text-emerald-400 font-semibold">
                   {Math.min(...bids.map(b => b.proposedRate))} ERG
                 </span>
@@ -360,10 +360,10 @@ export default function TaskActionBar({
 
       {/* Escrow Status */}
       {hasEscrowBox && (
-        <div className="mt-4 pt-4 border-t border-slate-700">
+        <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-lg">🔒</span>
-            <span className="text-gray-400">
+            <span className="text-[var(--text-secondary)]">
               Escrow: <span className={`font-semibold ${
                 escrowStatus === 'funded' ? 'text-green-400' :
                 escrowStatus === 'released' ? 'text-blue-400' :

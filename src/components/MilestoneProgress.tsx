@@ -37,12 +37,12 @@ function MilestoneDetailModal({ milestone, milestoneIndex, status, completedInfo
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             {status === 'completed' && <span className="text-[var(--accent-emerald)]">✓</span>}
             {status === 'current' && <span className="text-[var(--accent-cyan)]">⏳</span>}
-            {status === 'upcoming' && <span className="text-gray-500">○</span>}
+            {status === 'upcoming' && <span className="text-[var(--text-muted)]">○</span>}
             Milestone {milestoneIndex + 1}
           </h3>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-white"
+            className="text-[var(--text-secondary)] hover:text-white"
           >
             ✕
           </button>
@@ -51,20 +51,20 @@ function MilestoneDetailModal({ milestone, milestoneIndex, status, completedInfo
         <div className="space-y-4">
           <div>
             <h4 className="font-medium text-white">{milestone.name}</h4>
-            <p className="text-sm text-gray-400 mt-1">{milestone.description}</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">{milestone.description}</p>
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-400">Payment Percentage:</span>
+            <span className="text-[var(--text-secondary)]">Payment Percentage:</span>
             <span className="text-[var(--accent-cyan)] font-medium">{milestone.percentage}%</span>
           </div>
 
           {milestone.deliverables && milestone.deliverables.length > 0 && (
             <div>
-              <h5 className="text-sm font-medium text-gray-300 mb-2">Deliverables:</h5>
+              <h5 className="text-sm font-medium text-[var(--text-secondary)] mb-2">Deliverables:</h5>
               <ul className="space-y-1">
                 {milestone.deliverables.map((deliverable, index) => (
-                  <li key={index} className="text-sm text-gray-400 flex items-start gap-2">
+                  <li key={index} className="text-sm text-[var(--text-secondary)] flex items-start gap-2">
                     <span className="text-[var(--accent-cyan)] mt-1">•</span>
                     {deliverable}
                   </li>
@@ -77,10 +77,10 @@ function MilestoneDetailModal({ milestone, milestoneIndex, status, completedInfo
             <div className="mt-4 p-3 bg-[var(--accent-emerald)]/10 border border-[var(--accent-emerald)]/20 rounded-lg">
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-[var(--accent-emerald)] font-medium">Completed</span>
-                <span className="text-gray-400">{new Date(completedInfo.completedAt).toLocaleDateString()}</span>
+                <span className="text-[var(--text-secondary)]">{new Date(completedInfo.completedAt).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-gray-400">Released Amount:</span>
+                <span className="text-[var(--text-secondary)]">Released Amount:</span>
                 <span className="text-white font-medium">{completedInfo.releasedAmount} ERG</span>
               </div>
               <a 
@@ -97,14 +97,14 @@ function MilestoneDetailModal({ milestone, milestoneIndex, status, completedInfo
           {status === 'current' && (
             <div className="mt-4 p-3 bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 rounded-lg">
               <p className="text-sm text-[var(--accent-cyan)] font-medium">Current Milestone</p>
-              <p className="text-xs text-gray-400 mt-1">Ready for approval once work is completed</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-1">Ready for approval once work is completed</p>
             </div>
           )}
 
           {status === 'upcoming' && (
-            <div className="mt-4 p-3 bg-gray-700/30 border border-gray-600/20 rounded-lg">
-              <p className="text-sm text-gray-400 font-medium">Upcoming Milestone</p>
-              <p className="text-xs text-gray-500 mt-1">Will be available after previous milestones are completed</p>
+            <div className="mt-4 p-3 bg-[var(--bg-card-hover)]/30 border border-gray-600/20 rounded-lg">
+              <p className="text-sm text-[var(--text-secondary)] font-medium">Upcoming Milestone</p>
+              <p className="text-xs text-[var(--text-muted)] mt-1">Will be available after previous milestones are completed</p>
             </div>
           )}
         </div>
@@ -140,18 +140,18 @@ export default function MilestoneProgress({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">Milestone Progress</h3>
           <div className="text-right">
-            <div className="text-sm text-gray-400">Released: {totalCompleted.toFixed(3)} / {totalAmountErg} ERG</div>
-            <div className="text-xs text-gray-500">{milestones.length} milestones total</div>
+            <div className="text-sm text-[var(--text-secondary)]">Released: {totalCompleted.toFixed(3)} / {totalAmountErg} ERG</div>
+            <div className="text-xs text-[var(--text-muted)]">{milestones.length} milestones total</div>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-gray-400">Overall Progress</span>
+            <span className="text-[var(--text-secondary)]">Overall Progress</span>
             <span className="text-[var(--accent-cyan)]">{Math.round(totalReleased)}%</span>
           </div>
-          <div className="w-full bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-[var(--bg-card-hover)] rounded-full h-2">
             <div 
               className="bg-[var(--accent-cyan)] h-2 rounded-full transition-all duration-500"
               style={{ width: `${totalReleased}%` }}
@@ -175,7 +175,7 @@ export default function MilestoneProgress({
                     ? 'bg-[var(--accent-emerald)]/10 border border-[var(--accent-emerald)]/20 hover:bg-[var(--accent-emerald)]/15' 
                     : status === 'current'
                     ? 'bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20 hover:bg-[var(--accent-cyan)]/15'
-                    : 'bg-gray-700/20 border border-gray-600/20 hover:bg-gray-700/30'
+                    : 'bg-[var(--bg-card-hover)]/20 border border-gray-600/20 hover:bg-[var(--bg-card-hover)]/30'
                   }
                 `}
                 onClick={() => setSelectedMilestone(index)}
@@ -187,7 +187,7 @@ export default function MilestoneProgress({
                     ? 'bg-[var(--accent-emerald)] text-[var(--bg-primary)]'
                     : status === 'current'
                     ? 'bg-[var(--accent-cyan)] text-[var(--bg-primary)]'
-                    : 'bg-gray-600 text-gray-400'
+                    : 'bg-gray-600 text-[var(--text-secondary)]'
                   }
                 `}>
                   {status === 'completed' ? '✓' : index + 1}
@@ -197,7 +197,7 @@ export default function MilestoneProgress({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <h4 className={`font-medium truncate ${
-                      status === 'upcoming' ? 'text-gray-400' : 'text-white'
+                      status === 'upcoming' ? 'text-[var(--text-secondary)]' : 'text-white'
                     }`}>
                       {milestone.name}
                     </h4>
@@ -205,18 +205,18 @@ export default function MilestoneProgress({
                       <div className={`font-medium ${
                         status === 'completed' ? 'text-[var(--accent-emerald)]' :
                         status === 'current' ? 'text-[var(--accent-cyan)]' :
-                        'text-gray-400'
+                        'text-[var(--text-secondary)]'
                       }`}>
                         {milestone.percentage}%
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-[var(--text-muted)]">
                         {milestoneAmount.toFixed(3)} ERG
                       </div>
                     </div>
                   </div>
                   
                   <p className={`text-sm mt-1 truncate ${
-                    status === 'upcoming' ? 'text-gray-500' : 'text-gray-400'
+                    status === 'upcoming' ? 'text-[var(--text-muted)]' : 'text-[var(--text-secondary)]'
                   }`}>
                     {milestone.description}
                   </p>
@@ -227,7 +227,7 @@ export default function MilestoneProgress({
                       <span className="text-xs text-[var(--accent-emerald)]">
                         Released {completedInfo.releasedAmount} ERG
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-[var(--text-muted)]">
                         {new Date(completedInfo.completedAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -235,7 +235,7 @@ export default function MilestoneProgress({
                 </div>
 
                 {/* Arrow */}
-                <div className="text-gray-400">
+                <div className="text-[var(--text-secondary)]">
                   →
                 </div>
               </div>
@@ -249,19 +249,19 @@ export default function MilestoneProgress({
             <div className="text-lg font-semibold text-[var(--accent-emerald)]">
               {completedMilestones.length}
             </div>
-            <div className="text-xs text-gray-400">Completed</div>
+            <div className="text-xs text-[var(--text-secondary)]">Completed</div>
           </div>
           <div>
             <div className="text-lg font-semibold text-[var(--accent-cyan)]">
               {currentMilestone < milestones.length ? 1 : 0}
             </div>
-            <div className="text-xs text-gray-400">Current</div>
+            <div className="text-xs text-[var(--text-secondary)]">Current</div>
           </div>
           <div>
-            <div className="text-lg font-semibold text-gray-400">
+            <div className="text-lg font-semibold text-[var(--text-secondary)]">
               {milestones.length - currentMilestone - (currentMilestone < milestones.length ? 1 : 0)}
             </div>
-            <div className="text-xs text-gray-400">Remaining</div>
+            <div className="text-xs text-[var(--text-secondary)]">Remaining</div>
           </div>
         </div>
       </div>

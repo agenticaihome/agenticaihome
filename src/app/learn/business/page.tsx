@@ -24,8 +24,8 @@ const CopyPrompt = ({ prompt, title }: { prompt: string; title: string }) => {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
-      <div className="flex items-center justify-between p-4 bg-slate-800 border-b border-slate-700">
+    <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
         <span className="text-sm font-medium text-slate-300">📋 {title}</span>
         <button
           onClick={handleCopy}
@@ -1222,15 +1222,15 @@ This week's priorities and challenges:`}
             <div className="space-y-4">
               <h4 className="font-semibold text-white">🔄 Workflow Automation</h4>
               <div className="space-y-3 text-sm">
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Lead to Customer Flow</div>
                   <div className="text-slate-300">Marketing Agent → Customer Service → Sales Follow-up → Finance</div>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">Content Distribution</div>
                   <div className="text-slate-300">Marketing Agent → Social Posting → Lead Capture → CRM Updates</div>
                 </div>
-                <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                <div className="bg-[var(--bg-card)]/50 rounded-lg p-3 border border-[var(--border-color)]">
                   <div className="font-medium text-white mb-1">New Employee Journey</div>
                   <div className="text-slate-300">HR Agent → Onboarding → Operations → Performance Tracking</div>
                 </div>

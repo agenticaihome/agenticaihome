@@ -39,7 +39,7 @@ interface Deliverable {
 
 export default function TaskDetailPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500" /></div>}>
       <TaskDetailInner />
     </Suspense>
   );
@@ -448,7 +448,7 @@ function TaskDetailInner() {
 
   if (!taskId) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">No Task Selected</h1>
           <Link href="/tasks" className="text-purple-400 hover:text-purple-300">← Back to Tasks</Link>
@@ -459,7 +459,7 @@ function TaskDetailInner() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     );
@@ -467,7 +467,7 @@ function TaskDetailInner() {
 
   if (!task) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Task Not Found</h1>
           <Link href="/tasks" className="text-purple-400 hover:text-purple-300">← Back to Tasks</Link>
@@ -477,7 +477,7 @@ function TaskDetailInner() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 py-12">
+    <div className="min-h-screen bg-[var(--bg-primary)] py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Back link */}
           <Link href="/tasks" className="text-purple-400 hover:text-purple-300 text-sm mb-6 inline-block">← Back to Tasks</Link>
@@ -495,11 +495,11 @@ function TaskDetailInner() {
           )}
 
           {/* Task Header */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 mb-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-8 mb-6">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-white mb-2">{task.title}</h1>
-                <div className="flex items-center gap-4 text-sm text-gray-400">
+                <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)]">
                   <span>by {task.creatorName || task.creatorAddress.slice(0, 8) + '...'}</span>
                   <span>•</span>
                   <span>{formatDate(task.createdAt)}</span>
@@ -508,7 +508,7 @@ function TaskDetailInner() {
               <StatusBadge status={task.status} type="task" />
             </div>
 
-            <p className="text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">{task.description}</p>
+            <p className="text-[var(--text-secondary)] mb-6 leading-relaxed whitespace-pre-wrap break-words overflow-hidden">{task.description}</p>
 
             <div className="flex flex-wrap gap-2 mb-4">
               {task.skillsRequired.map(skill => (
@@ -518,9 +518,9 @@ function TaskDetailInner() {
               ))}
             </div>
 
-            <div className="flex items-center gap-6 pt-4 border-t border-slate-700">
+            <div className="flex items-center gap-6 pt-4 border-t border-[var(--border-color)]">
               <span className="text-emerald-400 font-semibold text-lg">{task.budgetErg} ERG</span>
-              <span className="text-gray-500">{task.bidsCount} bids</span>
+              <span className="text-[var(--text-muted)]">{task.bidsCount} bids</span>
               {task.assignedAgentName && (
                 <span className="text-purple-400">Assigned: {task.assignedAgentName}</span>
               )}
@@ -617,7 +617,7 @@ function TaskDetailInner() {
 
           {/* Place Bid Section */}
           {canBid && (
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
+            <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6 mb-6">
               {!showBidForm ? (
                 <button
                   onClick={() => setShowBidForm(true)}
@@ -630,11 +630,11 @@ function TaskDetailInner() {
                   <h3 className="text-lg font-semibold text-white">Place Your Bid</h3>
                   {userAgents.length > 1 && (
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">Select Agent</label>
+                      <label className="block text-sm text-[var(--text-secondary)] mb-1">Select Agent</label>
                       <select
                         value={bidAgentId}
                         onChange={e => setBidAgentId(e.target.value)}
-                        className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white"
+                        className="w-full px-4 py-2 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-lg text-white"
                       >
                         {userAgents.map(a => (
                           <option key={a.id} value={a.id}>{a.name}</option>
@@ -643,7 +643,7 @@ function TaskDetailInner() {
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Proposed Rate (ERG)</label>
+                    <label className="block text-sm text-[var(--text-secondary)] mb-1">Proposed Rate (ERG)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -651,18 +651,18 @@ function TaskDetailInner() {
                       required
                       value={bidRate}
                       onChange={e => setBidRate(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white"
+                      className="w-full px-4 py-2 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-lg text-white"
                       placeholder="50.00"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Proposal Message</label>
+                    <label className="block text-sm text-[var(--text-secondary)] mb-1">Proposal Message</label>
                     <textarea
                       required
                       rows={3}
                       value={bidMessage}
                       onChange={e => setBidMessage(e.target.value)}
-                      className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-white resize-none"
+                      className="w-full px-4 py-2 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-lg text-white resize-none"
                       placeholder="Why are you the best fit for this task?"
                     />
                   </div>
@@ -670,14 +670,14 @@ function TaskDetailInner() {
                     <button
                       type="submit"
                       disabled={submittingBid}
-                      className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white rounded-lg font-medium transition-all"
+                      className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-[var(--bg-card)] text-white rounded-lg font-medium transition-all"
                     >
                       {submittingBid ? 'Submitting...' : 'Submit Bid'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowBidForm(false)}
-                      className="px-6 py-2 border border-slate-600 text-gray-300 rounded-lg hover:bg-slate-700"
+                      className="px-6 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-card-hover)]"
                     >
                       Cancel
                     </button>
@@ -691,11 +691,11 @@ function TaskDetailInner() {
 
           {/* Bids Section */}
           {bids.length > 0 && (
-            <div id="bids-section" className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
+            <div id="bids-section" className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6 mb-6">
               <h2 className="text-xl font-bold text-white mb-4">Bids ({bids.length})</h2>
               <div className="space-y-4">
                 {bids.map(bid => (
-                  <div key={bid.id} className="border border-slate-600 rounded-lg p-4">
+                  <div key={bid.id} className="border border-[var(--border-color)] rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <span className="text-white font-medium">{bid.agentName}</span>
@@ -703,14 +703,14 @@ function TaskDetailInner() {
                       </div>
                       <span className="text-emerald-400 font-semibold">{bid.proposedRate} ERG</span>
                     </div>
-                    <p className="text-gray-300 text-sm mb-3">{bid.message}</p>
+                    <p className="text-[var(--text-secondary)] text-sm mb-3">{bid.message}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-500 text-xs">{formatDateTime(bid.createdAt)}</span>
+                      <span className="text-[var(--text-muted)] text-xs">{formatDateTime(bid.createdAt)}</span>
                       {isCreator && task.status === 'open' && (
                         <button
                           onClick={() => handleAcceptBid(bid)}
                           disabled={accepting === bid.id}
-                          className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white text-sm rounded-lg font-medium transition-all"
+                          className="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-[var(--bg-card)] text-white text-sm rounded-lg font-medium transition-all"
                         >
                           {accepting === bid.id ? 'Accepting...' : 'Accept Bid'}
                         </button>
@@ -739,13 +739,13 @@ function TaskDetailInner() {
 
           {/* Deliverables Section */}
           {deliverables.length > 0 && (
-            <div id="deliverables-section" className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mb-6">
+            <div id="deliverables-section" className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6 mb-6">
               <h2 className="text-xl font-bold text-white mb-4">Deliverables</h2>
               <div className="space-y-4">
                 {deliverables.map(d => (
-                  <div key={d.id} className="border border-slate-600 rounded-lg p-4">
+                  <div key={d.id} className="border border-[var(--border-color)] rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-gray-400 text-sm">Revision #{d.revisionNumber}</span>
+                      <span className="text-[var(--text-secondary)] text-sm">Revision #{d.revisionNumber}</span>
                       <span className={`text-xs px-2 py-1 rounded-full ${
                         d.status === 'approved' ? 'bg-green-500/20 text-green-400' :
                         d.status === 'revision_requested' ? 'bg-orange-500/20 text-orange-400' :
@@ -754,7 +754,7 @@ function TaskDetailInner() {
                         {d.status === 'revision_requested' ? 'Revision Requested' : d.status}
                       </span>
                     </div>
-                    <p className="text-gray-300 mb-2 whitespace-pre-wrap">{d.content}</p>
+                    <p className="text-[var(--text-secondary)] mb-2 whitespace-pre-wrap break-words overflow-hidden">{d.content}</p>
                     {d.deliverableUrl && (
                       <a href={d.deliverableUrl} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 text-sm">
                         🔗 {d.deliverableUrl}
@@ -763,37 +763,37 @@ function TaskDetailInner() {
                     {d.reviewNotes && d.status === 'revision_requested' && (
                       <div className="mt-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
                         <p className="text-xs text-orange-400 font-medium mb-1">Revision feedback:</p>
-                        <p className="text-sm text-orange-300 whitespace-pre-wrap">{d.reviewNotes}</p>
+                        <p className="text-sm text-orange-300 whitespace-pre-wrap break-words overflow-hidden">{d.reviewNotes}</p>
                       </div>
                     )}
-                    <p className="text-gray-500 text-xs mt-2">{formatDateTime(d.createdAt)}</p>
+                    <p className="text-[var(--text-muted)] text-xs mt-2">{formatDateTime(d.createdAt)}</p>
                   </div>
                 ))}
               </div>
 
               {/* Review Actions */}
               {canReview && (
-                <div className="mt-6 pt-4 border-t border-slate-700 space-y-3">
+                <div className="mt-6 pt-4 border-t border-[var(--border-color)] space-y-3">
                   {!showRevisionInput ? (
                     <div className="flex gap-3">
                       <button
                         onClick={handleApprove}
                         disabled={reviewing}
-                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors"
+                        className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-[var(--bg-card)] text-white rounded-xl font-medium transition-colors"
                       >
                         {reviewing ? 'Processing...' : '✅ Looks Good — Approve'}
                       </button>
                       <button
                         onClick={() => setShowRevisionInput(true)}
                         disabled={reviewing}
-                        className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 text-white rounded-xl font-medium transition-colors"
+                        className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-[var(--bg-card)] text-white rounded-xl font-medium transition-colors"
                       >
                         🔄 Needs Changes
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <label className="block text-sm font-medium text-gray-300">
+                      <label className="block text-sm font-medium text-[var(--text-secondary)]">
                         What needs to change?
                       </label>
                       <textarea
@@ -801,20 +801,20 @@ function TaskDetailInner() {
                         onChange={e => setRevisionNotes(e.target.value)}
                         placeholder="Be specific — what should the agent fix or improve?"
                         rows={3}
-                        className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 transition-colors resize-none"
+                        className="w-full px-4 py-3 bg-[var(--bg-primary)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-orange-500 transition-colors resize-none"
                         autoFocus
                       />
                       <div className="flex gap-3">
                         <button
                           onClick={handleRequestRevision}
                           disabled={reviewing || !revisionNotes.trim()}
-                          className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
+                          className="flex-1 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-[var(--bg-card)] disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
                         >
                           {reviewing ? 'Sending...' : 'Send Revision Request'}
                         </button>
                         <button
                           onClick={() => { setShowRevisionInput(false); setRevisionNotes(''); }}
-                          className="px-4 py-3 border border-slate-600 text-gray-400 hover:text-white rounded-xl transition-colors"
+                          className="px-4 py-3 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white rounded-xl transition-colors"
                         >
                           Cancel
                         </button>

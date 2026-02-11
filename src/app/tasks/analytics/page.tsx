@@ -162,17 +162,17 @@ export default function TaskAnalytics() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 py-12">
+    <div className="min-h-screen bg-[var(--bg-primary)] py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Platform Analytics</h1>
-          <p className="text-gray-400">Real-time insights into AgenticAiHome platform performance and health</p>
+          <p className="text-[var(--text-secondary)]">Real-time insights into AgenticAiHome platform performance and health</p>
         </div>
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-blue-600/20 flex items-center justify-center">
                 <Target className="w-6 h-6 text-blue-400" />
@@ -180,13 +180,13 @@ export default function TaskAnalytics() {
               <TrendingUp className="w-5 h-5 text-emerald-400" />
             </div>
             <h3 className="text-2xl font-bold text-white">{platformStats.totalTasks.toLocaleString()}</h3>
-            <p className="text-gray-400 text-sm">Total Tasks Posted</p>
+            <p className="text-[var(--text-secondary)] text-sm">Total Tasks Posted</p>
             <div className="mt-2 text-xs text-emerald-400">
               +{Math.floor(Math.random() * 20) + 5}% this week
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-emerald-600/20 flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-emerald-400" />
@@ -194,13 +194,13 @@ export default function TaskAnalytics() {
               <TrendingUp className="w-5 h-5 text-emerald-400" />
             </div>
             <h3 className="text-2xl font-bold text-white">{platformStats.completedTasks.toLocaleString()}</h3>
-            <p className="text-gray-400 text-sm">Completed Successfully</p>
+            <p className="text-[var(--text-secondary)] text-sm">Completed Successfully</p>
             <div className="mt-2 text-xs text-emerald-400">
               {platformStats.successRate.toFixed(1)}% success rate
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-purple-600/20 flex items-center justify-center">
                 <Activity className="w-6 h-6 text-purple-400" />
@@ -208,13 +208,13 @@ export default function TaskAnalytics() {
               <Zap className="w-5 h-5 text-yellow-400" />
             </div>
             <h3 className="text-2xl font-bold text-white">{platformStats.inProgressTasks}</h3>
-            <p className="text-gray-400 text-sm">Currently Active</p>
+            <p className="text-[var(--text-secondary)] text-sm">Currently Active</p>
             <div className="mt-2 text-xs text-purple-400">
               {agents.filter(a => a.status === 'available').length} agents available
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 rounded-lg bg-cyan-600/20 flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-cyan-400" />
@@ -222,7 +222,7 @@ export default function TaskAnalytics() {
               <TrendingUp className="w-5 h-5 text-emerald-400" />
             </div>
             <h3 className="text-2xl font-bold text-white">Σ{platformStats.avgBudget.toFixed(1)}</h3>
-            <p className="text-gray-400 text-sm">Average Task Value</p>
+            <p className="text-[var(--text-secondary)] text-sm">Average Task Value</p>
             <div className="mt-2 text-xs text-cyan-400">
               Σ{platformStats.totalValue.toFixed(0)} total value
             </div>
@@ -239,7 +239,7 @@ export default function TaskAnalytics() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   selectedTimeRange === option.value
                     ? 'bg-cyan-600 text-white'
-                    : 'bg-slate-800 text-gray-300 hover:text-white'
+                    : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white'
                 }`}
               >
                 {option.label}
@@ -251,7 +251,7 @@ export default function TaskAnalytics() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Task Creation Trends */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
             <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-blue-400" />
               Task Activity Trends
@@ -297,7 +297,7 @@ export default function TaskAnalytics() {
           </div>
 
           {/* Task Status Distribution */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
             <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
               <Target className="w-5 h-5 text-emerald-400" />
               Task Status Distribution
@@ -340,7 +340,7 @@ export default function TaskAnalytics() {
         {/* Category Breakdown and Performance */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           {/* Top Categories */}
-          <div className="lg:col-span-2 bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="lg:col-span-2 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
             <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
               <Award className="w-5 h-5 text-yellow-400" />
               Most Active Categories
@@ -378,7 +378,7 @@ export default function TaskAnalytics() {
           {/* Quick Stats */}
           <div className="space-y-6">
             {/* Platform Health */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <Activity className="w-5 h-5 text-emerald-400" />
                 Platform Health
@@ -386,7 +386,7 @@ export default function TaskAnalytics() {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-300">Success Rate</span>
+                    <span className="text-[var(--text-secondary)]">Success Rate</span>
                     <span className="text-emerald-400 font-medium">{platformStats.successRate.toFixed(1)}%</span>
                   </div>
                   <div className="w-full bg-slate-700 rounded-full h-2">
@@ -399,7 +399,7 @@ export default function TaskAnalytics() {
                 
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-300">Agent Availability</span>
+                    <span className="text-[var(--text-secondary)]">Agent Availability</span>
                     <span className="text-blue-400 font-medium">
                       {agents.filter(a => a.status === 'available').length}/{agents.length}
                     </span>
@@ -412,11 +412,11 @@ export default function TaskAnalytics() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-700">
+                <div className="pt-4 border-t border-[var(--border-color)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-yellow-400" />
-                      <span className="text-gray-300 text-sm">Avg Completion</span>
+                      <span className="text-[var(--text-secondary)] text-sm">Avg Completion</span>
                     </div>
                     <span className="text-yellow-400 font-medium">{platformStats.avgCompletionTime}h</span>
                   </div>
@@ -425,7 +425,7 @@ export default function TaskAnalytics() {
             </div>
 
             {/* Budget Ranges */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-cyan-400" />
                 Budget Distribution
@@ -433,7 +433,7 @@ export default function TaskAnalytics() {
               <div className="space-y-3">
                 {budgetRanges.map((range, index) => (
                   <div key={index} className="flex justify-between items-center">
-                    <span className="text-gray-300 text-sm">{range.range}</span>
+                    <span className="text-[var(--text-secondary)] text-sm">{range.range}</span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 bg-slate-700 rounded-full h-2">
                         <div 
@@ -452,30 +452,30 @@ export default function TaskAnalytics() {
 
         {/* Bottom Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 text-center">
             <Users className="w-8 h-8 text-purple-400 mx-auto mb-3" />
             <h3 className="text-2xl font-bold text-white">{agents.length}</h3>
-            <p className="text-gray-400">Registered Agents</p>
+            <p className="text-[var(--text-secondary)]">Registered Agents</p>
             <div className="mt-2 text-xs text-purple-400">
               {agents.filter(a => a.status === 'available').length} currently active
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 text-center">
             <Calendar className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
             <h3 className="text-2xl font-bold text-white">{platformStats.avgCompletionTime}h</h3>
-            <p className="text-gray-400">Average Completion Time</p>
+            <p className="text-[var(--text-secondary)]">Average Completion Time</p>
             <div className="mt-2 text-xs text-emerald-400">
               23% faster than last month
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6 text-center">
             <AlertTriangle className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
             <h3 className="text-2xl font-bold text-white">
               {tasks.filter(t => t.status === 'disputed').length}
             </h3>
-            <p className="text-gray-400">Disputed Tasks</p>
+            <p className="text-[var(--text-secondary)]">Disputed Tasks</p>
             <div className="mt-2 text-xs text-yellow-400">
               {tasks.length > 0 ? ((tasks.filter(t => t.status === 'disputed').length / tasks.length) * 100).toFixed(2) : '0'}% dispute rate
             </div>

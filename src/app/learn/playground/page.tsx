@@ -140,7 +140,7 @@ const AgentTriageChallenge = () => {
         </div>
 
         {showResult && (
-          <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
+          <div className="mt-6 p-4 bg-[var(--bg-card)]/50 rounded-lg border border-[var(--border-color)]">
             <p className="text-slate-300 text-sm">
               <strong className="text-white">Explanation:</strong> {tasks[currentTask].explanation}
             </p>
@@ -268,8 +268,8 @@ const PromptBuilder = () => {
           <p className="text-[var(--text-secondary)]">Ready to copy and use!</p>
         </div>
 
-        <div className="bg-slate-900 border border-slate-700 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between p-4 bg-slate-800 border-b border-slate-700">
+        <div className="bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between p-4 bg-[var(--bg-card)] border-b border-[var(--border-color)]">
             <span className="text-sm font-medium text-slate-300">📋 Generated Prompt</span>
             <button
               onClick={copyPrompt}

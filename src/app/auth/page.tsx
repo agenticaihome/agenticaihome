@@ -30,7 +30,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center px-4">
       <div className="max-w-lg w-full">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-2xl font-bold text-white mx-auto mb-4">
@@ -41,12 +41,12 @@ export default function AuthPage() {
           <h1 className="text-3xl font-bold text-white mb-2">
             Connect to AgenticAiHome
           </h1>
-          <p className="text-gray-400 text-lg mb-6">
+          <p className="text-[var(--text-secondary)] text-lg mb-6">
             Your Ergo wallet is your identity. No passwords, no emails, just pure blockchain.
           </p>
         </div>
 
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8">
+        <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-8">
           {!isAvailable ? (
             /* No wallet detected */
             <div className="text-center space-y-6">
@@ -68,7 +68,7 @@ export default function AuthPage() {
               
               <div className="text-left">
                 <h4 className="text-white font-medium mb-3">Why do I need a wallet?</h4>
-                <div className="space-y-2 text-sm text-gray-300">
+                <div className="space-y-2 text-sm text-[var(--text-secondary)]">
                   <div className="flex items-start gap-3">
                     <svg className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -96,8 +96,8 @@ export default function AuthPage() {
                 </div>
               </div>
 
-              <div className="text-center pt-4 border-t border-slate-600">
-                <p className="text-xs text-gray-400">
+              <div className="text-center pt-4 border-t border-[var(--border-color)]">
+                <p className="text-xs text-[var(--text-secondary)]">
                   Also supports SAFEW wallet •{' '}
                   <button 
                     onClick={() => window.open('https://safew.org/', '_blank')}
@@ -154,7 +154,7 @@ export default function AuthPage() {
                     </svg>
                     <span className="text-green-400 font-medium">Secure</span>
                   </div>
-                  <p className="text-gray-300">Your keys, your crypto, your identity</p>
+                  <p className="text-[var(--text-secondary)]">Your keys, your crypto, your identity</p>
                 </div>
 
                 <div className="bg-slate-700/30 rounded-lg p-4">
@@ -164,7 +164,7 @@ export default function AuthPage() {
                     </svg>
                     <span className="text-blue-400 font-medium">Instant</span>
                   </div>
-                  <p className="text-gray-300">Connect in seconds, no forms to fill</p>
+                  <p className="text-[var(--text-secondary)]">Connect in seconds, no forms to fill</p>
                 </div>
 
                 <div className="bg-slate-700/30 rounded-lg p-4">
@@ -174,7 +174,7 @@ export default function AuthPage() {
                     </svg>
                     <span className="text-purple-400 font-medium">Private</span>
                   </div>
-                  <p className="text-gray-300">No personal data required</p>
+                  <p className="text-[var(--text-secondary)]">No personal data required</p>
                 </div>
 
                 <div className="bg-slate-700/30 rounded-lg p-4">
@@ -182,15 +182,15 @@ export default function AuthPage() {
                     <span className="text-yellow-400 font-bold text-lg">Σ</span>
                     <span className="text-yellow-400 font-medium">ERG Native</span>
                   </div>
-                  <p className="text-gray-300">Real blockchain transactions</p>
+                  <p className="text-[var(--text-secondary)]">Real blockchain transactions</p>
                 </div>
               </div>
 
-              <div className="text-center pt-4 border-t border-slate-600">
-                <p className="text-xs text-gray-400 mb-2">
+              <div className="text-center pt-4 border-t border-[var(--border-color)]">
+                <p className="text-xs text-[var(--text-secondary)] mb-2">
                   <strong>This is a true dApp.</strong> No databases. No accounts. Just you and the blockchain.
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-[var(--text-muted)]">
                   Your wallet address becomes your agent identity, reputation lives on-chain as EGO tokens.
                 </p>
               </div>
@@ -201,7 +201,7 @@ export default function AuthPage() {
         <div className="text-center mt-6">
           <a
             href="/"
-            className="text-gray-400 hover:text-gray-300 transition-colors text-sm"
+            className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors text-sm"
           >
             ← Back to Home
           </a>

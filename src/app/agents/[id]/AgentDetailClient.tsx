@@ -195,16 +195,16 @@ export default function AgentDetailClient() {
     if (egoScore >= 750) return { tier: 'elite', color: 'text-purple-400', bgColor: 'bg-purple-400/20' };
     if (egoScore >= 500) return { tier: 'established', color: 'text-blue-400', bgColor: 'bg-blue-400/20' };
     if (egoScore >= 250) return { tier: 'rising', color: 'text-emerald-400', bgColor: 'bg-emerald-400/20' };
-    return { tier: 'newcomer', color: 'text-gray-400', bgColor: 'bg-gray-400/20' };
+    return { tier: 'newcomer', color: 'text-[var(--text-secondary)]', bgColor: 'bg-gray-400/20' };
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 py-12">
+      <div className="min-h-screen bg-[var(--bg-primary)] py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full"></div>
-            <span className="ml-3 text-gray-400">Loading agent profile...</span>
+            <span className="ml-3 text-[var(--text-secondary)]">Loading agent profile...</span>
           </div>
         </div>
       </div>
@@ -213,11 +213,11 @@ export default function AgentDetailClient() {
 
   if (error || !agent) {
     return (
-      <div className="min-h-screen bg-slate-900 py-12">
+      <div className="min-h-screen bg-[var(--bg-primary)] py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-20">
             <h1 className="text-2xl font-bold text-white mb-4">Agent Not Found</h1>
-            <p className="text-gray-400 mb-6">{error || 'The agent you\'re looking for doesn\'t exist.'}</p>
+            <p className="text-[var(--text-secondary)] mb-6">{error || 'The agent you\'re looking for doesn\'t exist.'}</p>
             <button
               onClick={() => router.push('/agents')}
               className="px-6 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg"
@@ -233,10 +233,10 @@ export default function AgentDetailClient() {
   const tierInfo = getTierInfo(agent.egoScore);
 
   return (
-    <div className="min-h-screen bg-slate-900 py-12">
+    <div className="min-h-screen bg-[var(--bg-primary)] py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Agent Profile Header */}
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-8 mb-8">
+        <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-8 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
             {/* Avatar */}
             <AgentAvatar address={agent.ownerAddress || agent.ergoAddress || agent.id} size={96} />
@@ -255,34 +255,34 @@ export default function AgentDetailClient() {
                 </div>
               </div>
               
-              <p className="text-gray-400 text-lg mb-4 leading-relaxed">{agent.description}</p>
+              <p className="text-[var(--text-secondary)] text-lg mb-4 leading-relaxed">{agent.description}</p>
               
               {/* Key Stats */}
               <div className="flex flex-wrap gap-6 text-sm">
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-yellow-400" />
                   <span className="text-white font-medium">{stats.avgRating.toFixed(1)}</span>
-                  <span className="text-gray-500">({stats.reviewCount} reviews)</span>
+                  <span className="text-[var(--text-muted)]">({stats.reviewCount} reviews)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Award className="w-4 h-4 text-purple-400" />
                   <span className="text-purple-400 font-medium">{agent.egoScore}</span>
-                  <span className="text-gray-500">EGO</span>
+                  <span className="text-[var(--text-muted)]">EGO</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Briefcase className="w-4 h-4 text-emerald-400" />
                   <span className="text-emerald-400 font-medium">{agent.tasksCompleted}</span>
-                  <span className="text-gray-500">completed</span>
+                  <span className="text-[var(--text-muted)]">completed</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-cyan-400" />
                   <span className="text-cyan-400 font-medium">Σ{agent.hourlyRateErg}</span>
-                  <span className="text-gray-500">per hour</span>
+                  <span className="text-[var(--text-muted)]">per hour</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <Calendar className="w-4 h-4 text-[var(--text-secondary)]" />
                   <span className="text-white font-medium">Member since</span>
-                  <span className="text-gray-500">{new Date(agent.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                  <span className="text-[var(--text-muted)]">{new Date(agent.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
                 </div>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function AgentDetailClient() {
                     <User className="w-4 h-4" />
                     Hire This Agent
                   </button>
-                  <button className="flex items-center gap-2 px-4 py-2 border border-slate-600 hover:border-slate-500 text-gray-300 rounded-lg transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2 border border-[var(--border-color)] hover:border-slate-500 text-[var(--text-secondary)] rounded-lg transition-colors">
                     <MessageSquare className="w-4 h-4" />
                     Message
                   </button>
@@ -332,11 +332,11 @@ export default function AgentDetailClient() {
           </div>
 
           {/* Skills */}
-          <div className="mt-6 pt-6 border-t border-slate-700">
+          <div className="mt-6 pt-6 border-t border-[var(--border-color)]">
             <h3 className="text-white font-medium mb-3">Capabilities</h3>
             <div className="flex flex-wrap gap-2">
               {agent.skills.map((skill, index) => (
-                <span key={index} className="px-3 py-1 bg-slate-700 text-gray-300 rounded-full text-sm">
+                <span key={index} className="px-3 py-1 bg-slate-700 text-[var(--text-secondary)] rounded-full text-sm">
                   {skill}
                 </span>
               ))}
@@ -346,24 +346,24 @@ export default function AgentDetailClient() {
 
         {/* Enhanced Stats Dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-blue-400/50 transition-colors">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-blue-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <Clock className="w-5 h-5 text-blue-400" />
-              <h3 className="font-medium text-gray-300">Response Time</h3>
+              <h3 className="font-medium text-[var(--text-secondary)]">Response Time</h3>
             </div>
             <p className="text-2xl font-bold text-white">{stats.responseTime}h</p>
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-xs text-gray-500">Average first response</p>
+              <p className="text-xs text-[var(--text-muted)]">Average first response</p>
               {stats.responseTime <= 4 && (
                 <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">Fast</span>
               )}
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-emerald-400/50 transition-colors">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-emerald-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <Target className="w-5 h-5 text-emerald-400" />
-              <h3 className="font-medium text-gray-300">Completion Rate</h3>
+              <h3 className="font-medium text-[var(--text-secondary)]">Completion Rate</h3>
             </div>
             <p className="text-2xl font-bold text-white">{stats.completionRate.toFixed(1)}%</p>
             <div className="flex items-center gap-2 mt-2">
@@ -379,69 +379,69 @@ export default function AgentDetailClient() {
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-purple-400/50 transition-colors">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-purple-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <Calendar className="w-5 h-5 text-purple-400" />
-              <h3 className="font-medium text-gray-300">Avg Delivery</h3>
+              <h3 className="font-medium text-[var(--text-secondary)]">Avg Delivery</h3>
             </div>
             <p className="text-2xl font-bold text-white">{stats.avgDeliveryTime}h</p>
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-xs text-gray-500">From task start to completion</p>
+              <p className="text-xs text-[var(--text-muted)]">From task start to completion</p>
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:border-cyan-400/50 transition-colors">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6 hover:border-cyan-400/50 transition-colors">
             <div className="flex items-center gap-3 mb-2">
               <DollarSign className="w-5 h-5 text-cyan-400" />
-              <h3 className="font-medium text-gray-300">Total Earned</h3>
+              <h3 className="font-medium text-[var(--text-secondary)]">Total Earned</h3>
             </div>
             <p className="text-2xl font-bold text-white">Σ{stats.totalEarnings.toFixed(2)}</p>
             <div className="flex items-center gap-2 mt-2">
-              <p className="text-xs text-gray-500">From {agent.tasksCompleted} completed tasks</p>
+              <p className="text-xs text-[var(--text-muted)]">From {agent.tasksCompleted} completed tasks</p>
             </div>
           </div>
         </div>
 
         {/* Additional Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6">
             <div className="flex items-center gap-3 mb-3">
               <TrendingUp className="w-5 h-5 text-green-400" />
-              <h3 className="font-medium text-gray-300">Performance Trend</h3>
+              <h3 className="font-medium text-[var(--text-secondary)]">Performance Trend</h3>
             </div>
             <div className="flex items-center gap-3">
               <TrendingUp className="w-6 h-6 text-green-400" />
               <div>
                 <p className="text-lg font-bold text-white">Improving</p>
-                <p className="text-xs text-gray-500">Based on recent tasks</p>
+                <p className="text-xs text-[var(--text-muted)]">Based on recent tasks</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6">
             <div className="flex items-center gap-3 mb-3">
               <Shield className="w-5 h-5 text-purple-400" />
-              <h3 className="font-medium text-gray-300">Trust Level</h3>
+              <h3 className="font-medium text-[var(--text-secondary)]">Trust Level</h3>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-2xl">🛡️</div>
               <div>
                 <p className="text-lg font-bold text-white capitalize">{tierInfo.tier}</p>
-                <p className="text-xs text-gray-500">Based on EGO score & history</p>
+                <p className="text-xs text-[var(--text-muted)]">Based on EGO score & history</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6">
+          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-lg p-6">
             <div className="flex items-center gap-3 mb-3">
               <User className="w-5 h-5 text-blue-400" />
-              <h3 className="font-medium text-gray-300">Client Satisfaction</h3>
+              <h3 className="font-medium text-[var(--text-secondary)]">Client Satisfaction</h3>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-2xl">⭐</div>
               <div>
                 <p className="text-lg font-bold text-white">{stats.avgRating.toFixed(1)}/5.0</p>
-                <p className="text-xs text-gray-500">Average from {stats.reviewCount} reviews</p>
+                <p className="text-xs text-[var(--text-muted)]">Average from {stats.reviewCount} reviews</p>
               </div>
             </div>
           </div>
@@ -450,7 +450,7 @@ export default function AgentDetailClient() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* EGO Score Breakdown */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
               <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-purple-400" />
                 EGO Score Breakdown
@@ -459,7 +459,7 @@ export default function AgentDetailClient() {
                 {egoBreakdown.map((item, index) => (
                   <div key={index} className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-300">{item.category}</span>
+                      <span className="text-[var(--text-secondary)]">{item.category}</span>
                       <span className="text-white font-medium">{item.score}/{item.max}</span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-2">
@@ -471,16 +471,16 @@ export default function AgentDetailClient() {
                   </div>
                 ))}
               </div>
-              <div className="mt-6 pt-6 border-t border-slate-700">
+              <div className="mt-6 pt-6 border-t border-[var(--border-color)]">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-medium text-gray-300">Total EGO Score</span>
+                  <span className="text-lg font-medium text-[var(--text-secondary)]">Total EGO Score</span>
                   <span className="text-2xl font-bold text-purple-400">{agent.egoScore}</span>
                 </div>
               </div>
             </div>
 
             {/* Task History */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
               <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-emerald-400" />
                 Recent Completions
@@ -490,7 +490,7 @@ export default function AgentDetailClient() {
                   {completions.slice(0, 5).map((completion, index) => (
                     <div key={index} className="border-l-2 border-emerald-400 pl-4 py-2">
                       <h4 className="font-medium text-white">{completion.taskTitle}</h4>
-                      <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
+                      <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)] mt-1">
                         <div className="flex items-center gap-1">
                           <Star className="w-3 h-3 text-yellow-400" />
                           <span>{completion.rating}/5</span>
@@ -499,15 +499,15 @@ export default function AgentDetailClient() {
                         <span>{new Date(completion.completedAt).toLocaleDateString()}</span>
                       </div>
                       {completion.review && (
-                        <p className="text-gray-300 text-sm mt-2 italic">"{completion.review}"</p>
+                        <p className="text-[var(--text-secondary)] text-sm mt-2 italic">"{completion.review}"</p>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Briefcase className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                  <p className="text-gray-400">No completed tasks yet</p>
+                  <Briefcase className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-3" />
+                  <p className="text-[var(--text-secondary)]">No completed tasks yet</p>
                 </div>
               )}
             </div>
@@ -523,7 +523,7 @@ export default function AgentDetailClient() {
 
           {/* Completed Work Section */}
           <div className="lg:col-span-3">
-            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+            <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl p-6">
               <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-cyan-400" />
                 Completed Work Portfolio
@@ -534,17 +534,17 @@ export default function AgentDetailClient() {
                     // Find matching completion data for this task
                     const taskCompletion = completions.find(c => c.taskId === task.id);
                     return (
-                      <div key={index} className="bg-slate-700/50 border border-slate-600 rounded-lg p-4 hover:border-cyan-400/50 transition-colors">
+                      <div key={index} className="bg-slate-700/50 border border-[var(--border-color)] rounded-lg p-4 hover:border-cyan-400/50 transition-colors">
                         <h4 className="font-medium text-white mb-2">{task.title}</h4>
-                        <p className="text-sm text-gray-400 mb-3 line-clamp-2">{task.description}</p>
+                        <p className="text-sm text-[var(--text-secondary)] mb-3 line-clamp-2">{task.description}</p>
                         <div className="flex flex-wrap gap-2 mb-3">
                           {task.skillsRequired.slice(0, 3).map(skill => (
-                            <span key={skill} className="px-2 py-0.5 bg-slate-600 text-gray-300 rounded-full text-xs">
+                            <span key={skill} className="px-2 py-0.5 bg-slate-600 text-[var(--text-secondary)] rounded-full text-xs">
                               {skill}
                             </span>
                           ))}
                           {task.skillsRequired.length > 3 && (
-                            <span className="text-xs text-gray-500">+{task.skillsRequired.length - 3} more</span>
+                            <span className="text-xs text-[var(--text-muted)]">+{task.skillsRequired.length - 3} more</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between text-sm">
@@ -557,14 +557,14 @@ export default function AgentDetailClient() {
                               </div>
                             )}
                           </div>
-                          <span className="text-gray-500">
+                          <span className="text-[var(--text-muted)]">
                             {task.completedAt ? new Date(task.completedAt).toLocaleDateString() : 'Completed'}
                           </span>
                         </div>
                         {taskCompletion?.review && (
-                          <div className="mt-3 pt-3 border-t border-slate-600">
-                            <p className="text-gray-300 text-sm italic">"{taskCompletion.review}"</p>
-                            <p className="text-gray-500 text-xs mt-1">- {taskCompletion.reviewerName}</p>
+                          <div className="mt-3 pt-3 border-t border-[var(--border-color)]">
+                            <p className="text-[var(--text-secondary)] text-sm italic">"{taskCompletion.review}"</p>
+                            <p className="text-[var(--text-muted)] text-xs mt-1">- {taskCompletion.reviewerName}</p>
                           </div>
                         )}
                       </div>
@@ -573,9 +573,9 @@ export default function AgentDetailClient() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Briefcase className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                  <p className="text-gray-400 mb-2">No completed tasks yet</p>
-                  <p className="text-gray-500 text-sm">This agent hasn't completed any tasks on the platform yet.</p>
+                  <Briefcase className="w-12 h-12 text-[var(--text-muted)] mx-auto mb-3" />
+                  <p className="text-[var(--text-secondary)] mb-2">No completed tasks yet</p>
+                  <p className="text-[var(--text-muted)] text-sm">This agent hasn't completed any tasks on the platform yet.</p>
                 </div>
               )}
             </div>

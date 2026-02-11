@@ -58,7 +58,7 @@ function StarRating({
             className={`w-full h-full ${
               star <= (hover || value)
                 ? 'text-yellow-400 fill-yellow-400'
-                : 'text-gray-500 hover:text-gray-400'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
             }`}
           />
         </button>
@@ -79,7 +79,7 @@ function CriteriaRating({
 }) {
   return (
     <div className="flex items-center justify-between py-2">
-      <span className="text-gray-300 text-sm font-medium">{label}</span>
+      <span className="text-[var(--text-secondary)] text-sm font-medium">{label}</span>
       <StarRating value={value} onChange={onChange} size="sm" />
     </div>
   );
@@ -162,12 +162,12 @@ export default function RatingForm({
 
   if (existingRating) {
     return (
-      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+      <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6">
         <div className="flex items-center gap-3 text-emerald-400">
           <CheckCircle className="w-5 h-5" />
           <span className="font-medium">You've already rated this task</span>
         </div>
-        <p className="text-gray-400 mt-2">
+        <p className="text-[var(--text-secondary)] mt-2">
           Thank you for providing feedback for this task.
         </p>
       </div>
@@ -179,7 +179,7 @@ export default function RatingForm({
     : { clarity: 'Task Clarity', responsiveness: 'Responsiveness', fairness: 'Fairness' };
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+    <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6">
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
         <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -189,7 +189,7 @@ export default function RatingForm({
           <h3 className="text-lg font-semibold text-white mb-1">
             Rate {raterRole === 'creator' ? 'Agent' : 'Task Creator'}
           </h3>
-          <div className="flex items-center gap-2 text-gray-400 text-sm">
+          <div className="flex items-center gap-2 text-[var(--text-secondary)] text-sm">
             <User className="w-4 h-4" />
             <span>{rateeName}</span>
           </div>
@@ -204,7 +204,7 @@ export default function RatingForm({
         <div className="flex items-center gap-3">
           <StarRating value={score} onChange={setScore} size="lg" />
           {score > 0 && (
-            <span className="text-sm font-medium text-gray-300">
+            <span className="text-sm font-medium text-[var(--text-secondary)]">
               {score === 5 ? 'Excellent' : 
                score === 4 ? 'Very Good' : 
                score === 3 ? 'Good' : 
@@ -219,7 +219,7 @@ export default function RatingForm({
         <label className="block text-white font-medium mb-3">
           Rate by Category
         </label>
-        <div className="bg-slate-700/30 rounded-lg p-4 space-y-1">
+        <div className="bg-[var(--bg-card-hover)]/30 rounded-lg p-4 space-y-1">
           {Object.entries(criteriaLabels).map(([key, label]) => (
             <CriteriaRating
               key={key}
@@ -241,10 +241,10 @@ export default function RatingForm({
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           placeholder={`Share your experience working with this ${raterRole === 'creator' ? 'agent' : 'task creator'}...`}
-          className="w-full bg-slate-700/50 border border-slate-600 rounded-lg p-3 text-white placeholder-gray-400 min-h-[100px] resize-none focus:border-purple-500 focus:outline-none transition-colors"
+          className="w-full bg-[var(--bg-card-hover)]/50 border border-[var(--border-color)] rounded-lg p-3 text-white placeholder-gray-400 min-h-[100px] resize-none focus:border-purple-500 focus:outline-none transition-colors"
           maxLength={500}
         />
-        <div className="text-xs text-gray-400 mt-1 text-right">
+        <div className="text-xs text-[var(--text-secondary)] mt-1 text-right">
           {comment.length}/500
         </div>
       </div>
@@ -266,7 +266,7 @@ export default function RatingForm({
       </button>
 
       {/* Note */}
-      <p className="text-xs text-gray-500 mt-4 text-center">
+      <p className="text-xs text-[var(--text-muted)] mt-4 text-center">
         Ratings are permanent and cannot be changed once submitted
       </p>
     </div>

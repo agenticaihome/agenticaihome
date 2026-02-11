@@ -136,15 +136,15 @@ export default function CreateTask() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8 md:py-12">
+    <div className="min-h-screen bg-[var(--bg-primary)] py-8 md:py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/tasks" className="text-gray-400 hover:text-white text-sm mb-4 inline-block">
+          <Link href="/tasks" className="text-[var(--text-secondary)] hover:text-white text-sm mb-4 inline-block">
             ← Back to Tasks
           </Link>
           <h1 className="text-3xl font-bold text-white">Post a Task</h1>
-          <p className="text-gray-400 mt-1">Describe what you need — agents will bid on it.</p>
+          <p className="text-[var(--text-secondary)] mt-1">Describe what you need — agents will bid on it.</p>
         </div>
 
         {/* Wallet Banner */}
@@ -166,7 +166,7 @@ export default function CreateTask() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Title */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="title" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Title
             </label>
             <input
@@ -175,13 +175,13 @@ export default function CreateTask() {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="e.g., Analyze Ergo network health metrics"
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               What do you need?
             </label>
             <textarea
@@ -190,14 +190,14 @@ export default function CreateTask() {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe the deliverables, success criteria, and any constraints..."
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors resize-none"
             />
-            <p className="mt-1 text-xs text-gray-500">{description.length}/50 min</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">{description.length}/50 min</p>
           </div>
 
           {/* Skills */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Required Skills
             </label>
             <SkillSelector
@@ -211,7 +211,7 @@ export default function CreateTask() {
           {/* Budget + Deadline — side by side */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="budget" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="budget" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                 Budget (ERG)
               </label>
               <input
@@ -222,12 +222,12 @@ export default function CreateTask() {
                 value={budget}
                 onChange={e => setBudget(e.target.value)}
                 placeholder="10.00"
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
             <div>
-              <label htmlFor="deadline" className="block text-sm font-medium text-gray-300 mb-2">
-                Deadline <span className="text-gray-500">(optional)</span>
+              <label htmlFor="deadline" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                Deadline <span className="text-[var(--text-muted)]">(optional)</span>
               </label>
               <input
                 id="deadline"
@@ -235,14 +235,14 @@ export default function CreateTask() {
                 value={deadline}
                 onChange={e => setDeadline(e.target.value)}
                 min={getMinDate()}
-                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+                className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
               />
             </div>
           </div>
 
           {/* Payment Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">
               Payment
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -252,11 +252,11 @@ export default function CreateTask() {
                 className={`p-3 rounded-xl border-2 transition-all text-left ${
                   escrowType === 'simple'
                     ? 'border-purple-500 bg-purple-500/10'
-                    : 'border-slate-600 hover:border-slate-500'
+                    : 'border-[var(--border-color)] hover:border-[var(--text-muted)]'
                 }`}
               >
                 <div className="font-medium text-white text-sm">All at once</div>
-                <div className="text-xs text-gray-400 mt-0.5">Pay when work is done</div>
+                <div className="text-xs text-[var(--text-secondary)] mt-0.5">Pay when work is done</div>
               </button>
               <button
                 type="button"
@@ -264,18 +264,18 @@ export default function CreateTask() {
                 className={`p-3 rounded-xl border-2 transition-all text-left ${
                   escrowType === 'milestone'
                     ? 'border-purple-500 bg-purple-500/10'
-                    : 'border-slate-600 hover:border-slate-500'
+                    : 'border-[var(--border-color)] hover:border-[var(--text-muted)]'
                 }`}
               >
                 <div className="font-medium text-white text-sm">Milestones</div>
-                <div className="text-xs text-gray-400 mt-0.5">Split into staged payments</div>
+                <div className="text-xs text-[var(--text-secondary)] mt-0.5">Split into staged payments</div>
               </button>
             </div>
 
             {/* Milestone count selector */}
             {escrowType === 'milestone' && (
               <div className="mt-3 flex items-center gap-3">
-                <span className="text-sm text-gray-400">Split into</span>
+                <span className="text-sm text-[var(--text-secondary)]">Split into</span>
                 {([2, 3, 4] as const).map(n => (
                   <button
                     key={n}
@@ -284,13 +284,13 @@ export default function CreateTask() {
                     className={`w-10 h-10 rounded-lg font-medium transition-all ${
                       milestoneSplit === n
                         ? 'bg-purple-600 text-white'
-                        : 'bg-slate-800 text-gray-400 hover:text-white border border-slate-600'
+                        : 'bg-[var(--bg-card)] text-[var(--text-secondary)] hover:text-white border border-[var(--border-color)]'
                     }`}
                   >
                     {n}
                   </button>
                 ))}
-                <span className="text-sm text-gray-400">equal payments</span>
+                <span className="text-sm text-[var(--text-secondary)]">equal payments</span>
                 {budget && Number(budget) > 0 && (
                   <span className="text-sm text-purple-400 ml-auto">
                     {(Number(budget) / milestoneSplit).toFixed(2)} ERG each
@@ -311,7 +311,7 @@ export default function CreateTask() {
           <button
             type="submit"
             disabled={isSubmitting || !userAddress}
-            className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 text-lg"
+            className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-[var(--bg-card)] disabled:to-[var(--bg-card)] disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 text-lg"
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
@@ -331,14 +331,14 @@ export default function CreateTask() {
           {/* Live Preview */}
           <div>
             <h2 className="text-xl font-bold text-white mb-4">Preview</h2>
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-2xl p-6">
               <div className="flex items-start justify-between mb-3">
                 <h3 className="text-lg font-semibold text-white">
                   {title || 'Your Task Title'}
                 </h3>
                 <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 font-medium">Open</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-gray-400 mb-4">
+              <div className="flex items-center gap-3 text-sm text-[var(--text-secondary)] mb-4">
                 <span>by {profile?.displayName || 'You'}</span>
                 <span>•</span>
                 <span>{formatDate(new Date().toISOString())}</span>
@@ -352,7 +352,7 @@ export default function CreateTask() {
                 )}
               </div>
 
-              <p className="text-gray-300 mb-4 leading-relaxed text-sm">
+              <p className="text-[var(--text-secondary)] mb-4 leading-relaxed text-sm">
                 {description || 'Your task description will appear here...'}
               </p>
 
@@ -362,23 +362,23 @@ export default function CreateTask() {
                     {skill}
                   </span>
                 )) : (
-                  <span className="text-gray-500 text-sm italic">No skills yet</span>
+                  <span className="text-[var(--text-muted)] text-sm italic">No skills yet</span>
                 )}
               </div>
 
               {escrowType === 'milestone' && budget && Number(budget) > 0 && (
-                <div className="mb-4 p-3 bg-slate-700/30 rounded-lg">
-                  <p className="text-xs text-gray-400 font-medium mb-2">Payment Schedule</p>
+                <div className="mb-4 p-3 bg-[var(--bg-card)]/30 rounded-lg">
+                  <p className="text-xs text-[var(--text-secondary)] font-medium mb-2">Payment Schedule</p>
                   {Array.from({ length: milestoneSplit }, (_, i) => (
                     <div key={i} className="flex justify-between text-sm py-1">
-                      <span className="text-gray-400">Milestone {i + 1}</span>
+                      <span className="text-[var(--text-secondary)]">Milestone {i + 1}</span>
                       <span className="text-purple-400 font-medium">{(Number(budget) / milestoneSplit).toFixed(2)} ERG</span>
                     </div>
                   ))}
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-3 border-t border-slate-700">
+              <div className="flex items-center justify-between pt-3 border-t border-[var(--border-color)]">
                 <span className="text-emerald-400 font-semibold">
                   {Number(budget) || 0} ERG
                 </span>

@@ -122,11 +122,11 @@ export default function RegisterAgent() {
   // Success state
   if (done) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center py-12">
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center py-12">
         <div className="max-w-md mx-auto px-4 text-center">
           <div className="text-6xl mb-6">🤖</div>
           <h1 className="text-3xl font-bold text-white mb-3">Agent Registered!</h1>
-          <p className="text-gray-400 mb-6">
+          <p className="text-[var(--text-secondary)] mb-6">
             {done.tokenId
               ? 'Your agent is live with an on-chain identity NFT.'
               : 'Your agent is live. You can mint an identity NFT later from the dashboard.'}
@@ -150,7 +150,7 @@ export default function RegisterAgent() {
             </button>
             <button
               onClick={() => router.push('/tasks')}
-              className="flex-1 py-3 border border-slate-600 text-gray-300 hover:text-white rounded-xl font-semibold transition-colors"
+              className="flex-1 py-3 border border-[var(--border-color)] text-[var(--text-secondary)] hover:text-white rounded-xl font-semibold transition-colors"
             >
               Browse Tasks
             </button>
@@ -161,15 +161,15 @@ export default function RegisterAgent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8 md:py-12">
+    <div className="min-h-screen bg-[var(--bg-primary)] py-8 md:py-12">
       <div className="max-w-2xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/agents" className="text-gray-400 hover:text-white text-sm mb-4 inline-block">
+          <Link href="/agents" className="text-[var(--text-secondary)] hover:text-white text-sm mb-4 inline-block">
             ← Back to Agents
           </Link>
           <h1 className="text-3xl font-bold text-white">Register an Agent</h1>
-          <p className="text-gray-400 mt-1">Add your AI agent to the marketplace and start earning ERG.</p>
+          <p className="text-[var(--text-secondary)] mt-1">Add your AI agent to the marketplace and start earning ERG.</p>
         </div>
 
         {/* Wallet Banner */}
@@ -190,7 +190,7 @@ export default function RegisterAgent() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Agent Name
             </label>
             <input
@@ -199,13 +199,13 @@ export default function RegisterAgent() {
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="e.g., CodeForge, DataPulse, PixelMind"
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               What does your agent do?
             </label>
             <textarea
@@ -214,14 +214,14 @@ export default function RegisterAgent() {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe capabilities, specializations, and what makes it unique..."
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors resize-none"
             />
-            <p className="mt-1 text-xs text-gray-500">{description.length}/20 min</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">{description.length}/20 min</p>
           </div>
 
           {/* Skills */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Skills
             </label>
             <SkillSelector
@@ -234,7 +234,7 @@ export default function RegisterAgent() {
 
           {/* Rate */}
           <div>
-            <label htmlFor="rate" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="rate" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
               Hourly Rate (ERG)
             </label>
             <input
@@ -245,15 +245,15 @@ export default function RegisterAgent() {
               value={rate}
               onChange={e => setRate(e.target.value)}
               placeholder="25.00"
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+              className="w-full px-4 py-3 bg-[var(--bg-card)]/50 border border-[var(--border-color)] rounded-xl text-white placeholder-[var(--text-muted)] focus:outline-none focus:border-purple-500 transition-colors"
             />
           </div>
 
           {/* Wallet address (auto) */}
           {userAddress && (
-            <div className="px-4 py-3 bg-slate-800/30 border border-slate-700 rounded-xl">
-              <p className="text-xs text-gray-500 mb-1">Linked Wallet</p>
-              <p className="text-gray-400 text-sm font-mono truncate">{userAddress}</p>
+            <div className="px-4 py-3 bg-[var(--bg-card)]/30 border border-[var(--border-color)] rounded-xl">
+              <p className="text-xs text-[var(--text-muted)] mb-1">Linked Wallet</p>
+              <p className="text-[var(--text-secondary)] text-sm font-mono truncate">{userAddress}</p>
             </div>
           )}
 
@@ -268,7 +268,7 @@ export default function RegisterAgent() {
           <button
             type="submit"
             disabled={isSubmitting || !userAddress}
-            className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 text-lg"
+            className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-[var(--bg-card)] disabled:to-[var(--bg-card)] disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all duration-200 text-lg"
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center gap-2">
@@ -283,7 +283,7 @@ export default function RegisterAgent() {
           </button>
         </form>
 
-        <p className="text-center text-gray-500 text-xs mt-6">
+        <p className="text-center text-[var(--text-muted)] text-xs mt-6">
           An identity NFT will be minted on Ergo to verify your agent on-chain.
         </p>
       </div>

@@ -18,10 +18,10 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-300">Checking wallet connection...</p>
+          <p className="text-[var(--text-secondary)]">Checking wallet connection...</p>
         </div>
       </div>
     );
@@ -29,7 +29,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-2xl font-bold text-white mx-auto mb-4">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
@@ -37,7 +37,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Connect Your Wallet</h1>
-          <p className="text-gray-400 mb-6">
+          <p className="text-[var(--text-secondary)] mb-6">
             {isMobile 
               ? 'Connect your mobile Ergo wallet to continue' 
               : 'You need to connect your Ergo wallet to continue'}
@@ -51,7 +51,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
               >
                 Connect via ErgoPay →
               </a>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[var(--text-muted)]">
                 Use Terminus (iOS) or Ergo Wallet (Android) to connect
               </p>
             </div>
@@ -80,7 +80,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
           )}
           
           <div className="mt-6">
-            <a href="/" className="text-gray-400 hover:text-gray-300 transition-colors text-sm">
+            <a href="/" className="text-[var(--text-secondary)] hover:text-[var(--text-secondary)] transition-colors text-sm">
               ← Back to Home
             </a>
           </div>

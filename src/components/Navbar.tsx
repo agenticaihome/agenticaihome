@@ -21,6 +21,7 @@ const primaryLinks = [
 
 // Secondary navigation - grouped in "More" dropdown on mobile
 const secondaryLinks = [
+  { href: '/blog', label: 'Blog' },
   { href: '/workflows', label: 'Workflows' },
   { href: '/how-it-works', label: 'How It Works' },
   { href: '/faq', label: 'FAQ' },

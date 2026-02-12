@@ -272,17 +272,17 @@ export async function buildEgoMintTx(params: EgoMintParams): Promise<any> {
   // Extract agent's public key for R4
   const agentPubkey = pubkeyFromAddress(agentAddress);
 
-  // Build output: token goes to SOULBOUND CONTRACT, not agent's wallet
-  // R4 = agent's SigmaProp (only they can interact with this box)
-  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_CONTRACT_ADDRESS)
+  // EIP-4 token metadata (name, desc, decimals) lives in R4/R5/R6 of the minting output.
+  // Our soulbound contract needs R4 for the agent SigmaProp, which conflicts with EIP-4.
+  // Solution: mint to minter's address first (proper EIP-4 metadata gets indexed by explorer),
+  // then transfer to soulbound contract in a separate step.
+  // This ensures the token shows its name on the Ergo explorer.
+  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, minterAddress)
     .mintToken({
       amount: BigInt(amount).toString(),
       name: tokenName,
       decimals: 0,
       description: tokenDescription,
-    })
-    .setAdditionalRegisters({
-      R4: SConstant(SSigmaProp(SGroupElement(agentPubkey))),
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)
@@ -339,6 +339,49 @@ export async function mintEgoAfterRelease(params: {
     minterUtxos,
     currentHeight,
   });
+}
+
+/**
+ * Transfer EGO tokens from minter's address to the soulbound contract.
+ * Step 2 of the mint flow — after minting with EIP-4 metadata to minter's address,
+ * this locks the tokens into the soulbound contract with the agent's pubkey in R4.
+ */
+export async function buildLockToSoulboundTx(params: {
+  tokenId: string;
+  tokenAmount: number;
+  agentAddress: string;
+  senderAddress: string;
+  senderUtxos: any[];
+  currentHeight: number;
+}): Promise<any> {
+  const { tokenId, tokenAmount, agentAddress, senderAddress, senderUtxos, currentHeight } = params;
+
+  const agentPubkey = pubkeyFromAddress(agentAddress);
+
+  // Find UTXOs that contain the token
+  const tokenUtxos = senderUtxos.filter((utxo: any) =>
+    utxo.assets?.some((a: any) => a.tokenId === tokenId)
+  );
+
+  if (tokenUtxos.length === 0) {
+    throw new Error('No UTXOs found containing the EGO token. Wait for mint TX to confirm.');
+  }
+
+  const soulboundOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_CONTRACT_ADDRESS)
+    .addTokens([{ tokenId, amount: BigInt(tokenAmount).toString() }])
+    .setAdditionalRegisters({
+      R4: SConstant(SSigmaProp(SGroupElement(agentPubkey))),
+    });
+
+  const unsignedTx = new TransactionBuilder(currentHeight)
+    .from(senderUtxos)
+    .to([soulboundOutput])
+    .sendChangeTo(senderAddress)
+    .payFee(RECOMMENDED_TX_FEE)
+    .build()
+    .toEIP12Object();
+
+  return unsignedTx;
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────

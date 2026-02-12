@@ -164,7 +164,7 @@ export default function NotificationCenter({ className = '' }: NotificationCente
                 </p>
                 <p className="text-[var(--text-tertiary)] text-xs mt-1">
                   {filter === 'unread' 
-                    ? 'All caught up! <PartyPopper className="w-4 h-4 text-yellow-400 inline" />' 
+                    ? 'All caught up!' 
                     : 'You\'ll see updates about your tasks and agents here'
                   }
                 </p>

@@ -150,7 +150,7 @@ export default function EscrowVisualizer() {
                     {animationPhase === 'working' && 'AI agent working...'}
                     {animationPhase === 'releasing' && 'Releasing payment...'}
                     {animationPhase === 'minting' && 'Minting EGO reputation token...'}
-                    {animationPhase === 'pause' && 'Cycle complete <Check className="w-4 h-4 text-emerald-400 inline" />'}
+                    {animationPhase === 'pause' && 'Cycle complete ✓'}
                   </span>
                 </div>
               </div>

@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import EgoTokenViewer from '@/components/EgoTokenViewer';
 import NotificationSettings from '@/components/NotificationSettings';
 import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
-import { buildEgoMintTx, buildLockToSoulboundTx } from '@/lib/ergo/ego-token';
+// EGO minting now handled automatically via escrow release flow
 import { getCurrentHeight } from '@/lib/ergo/explorer';
 import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
 import { getPendingRatingsForUser } from '@/lib/supabaseStore';
@@ -257,74 +257,7 @@ export default function DashboardPage() {
     }
   };
 
-  const [remintingAgentId, setRemintingAgentId] = useState<string | null>(null);
-  const [remintResult, setRemintResult] = useState<{ agentId: string; success: boolean; message: string } | null>(null);
-
-  const handleRemintEgo = async (agent: Agent) => {
-    if (!userAddress) return;
-    setRemintingAgentId(agent.id);
-    setRemintResult(null);
-    try {
-      // Step 1: Mint with EIP-4 metadata to minter's address
-      setRemintResult({ agentId: agent.id, success: true, message: 'Step 1/2: Minting with metadata...' });
-      const [utxos, height] = await Promise.all([getUtxos(userAddress), getCurrentHeight()]);
-      const mintTx = await buildEgoMintTx({
-        agentAddress: agent.owner_address,
-        agentName: agent.name,
-        amount: 10,
-        completionNumber: 1,
-        minterAddress: userAddress,
-        minterUtxos: utxos,
-        currentHeight: height,
-      });
-
-      if (isMobileDevice() || !window.ergoConnector?.nautilus) {
-        const ergoPayData = await createErgoPayRequest(
-          mintTx,
-          userAddress,
-          `Mint EGO tokens for ${agent.name} (Step 1/2)`,
-          utxos
-        );
-        setErgoPayModal({
-          isOpen: true,
-          ergoPayUrl: ergoPayData.ergoPayUrl,
-          qrCode: ergoPayData.qrCode,
-          requestId: ergoPayData.requestId,
-          agentId: agent.id,
-        });
-        if (isMobileDevice()) window.location.href = ergoPayData.ergoPayUrl;
-        return;
-      }
-
-      const signedMintTx = await signTransaction(mintTx);
-      const mintTxId = await submitTransaction(signedMintTx);
-      const tokenId = mintTx.inputs[0]?.boxId || mintTxId;
-
-      // Wait for confirmation before step 2
-      setRemintResult({ agentId: agent.id, success: true, message: `Step 1 done! TX: ${mintTxId.slice(0, 10)}... Waiting 30s for confirmation...` });
-      await new Promise(resolve => setTimeout(resolve, 30000));
-
-      // Step 2: Lock to soulbound contract
-      setRemintResult({ agentId: agent.id, success: true, message: 'Step 2/2: Locking to soulbound contract...' });
-      const [utxos2, height2] = await Promise.all([getUtxos(userAddress), getCurrentHeight()]);
-      const lockTx = await buildLockToSoulboundTx({
-        tokenId,
-        tokenAmount: 10,
-        agentAddress: agent.owner_address,
-        senderAddress: userAddress,
-        senderUtxos: utxos2,
-        currentHeight: height2,
-      });
-
-      const signedLockTx = await signTransaction(lockTx);
-      const lockTxId = await submitTransaction(signedLockTx);
-      setRemintResult({ agentId: agent.id, success: true, message: `Done! Minted & locked. TX: ${lockTxId.slice(0, 12)}...` });
-    } catch (err: any) {
-      setRemintResult({ agentId: agent.id, success: false, message: err?.message || 'Remint failed' });
-    } finally {
-      setRemintingAgentId(null);
-    }
-  };
+  // Manual EGO mint removed — tokens now auto-mint via escrow release (two-step: mint with metadata → lock to soulbound)
 
   useEffect(() => {
     if (userAddress) {

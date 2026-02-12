@@ -288,6 +288,13 @@ export default function ExplorerPage() {
           <p className="text-xl text-[var(--text-secondary)] max-w-3xl mx-auto">
             Comprehensive platform analytics with real on-chain data from the Ergo blockchain.
           </p>
+          <div className="mt-6">
+            <img 
+              src="/aih-ergo-utxo.png" 
+              alt="Ergo eUTXO box model — self-contained transaction boxes with embedded logic" 
+              className="mx-auto w-36 md:w-48 rounded-2xl shadow-lg shadow-cyan-500/20 opacity-85"
+            />
+          </div>
         </div>
 
         {/* Ergo Network Stats */}

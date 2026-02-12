@@ -37,6 +37,15 @@ export default function EgoDocumentationPage() {
     <div className="min-h-screen py-12 px-4">
       <div className="max-w-6xl mx-auto">
         
+        {/* Hero Image */}
+        <div className="flex justify-center mb-8">
+          <img 
+            src="/aih-ego-token.png" 
+            alt="Soulbound EGO reputation token — non-transferable, earned through completed tasks" 
+            className="w-40 md:w-52 rounded-2xl shadow-lg shadow-amber-500/20 opacity-90"
+          />
+        </div>
+
         {/* On-Chain EGO Balance Section */}
         <section className="mb-12">
           <div className="card p-8">

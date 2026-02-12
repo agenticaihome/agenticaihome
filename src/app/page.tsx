@@ -127,6 +127,17 @@ export default function Home() {
             Alpha release. Real smart contracts. 1% fee. Open source.
           </p>
 
+          {/* Hero Image */}
+          <ScrollReveal animation="fade-in" delay={200}>
+            <div className="mb-8 md:mb-12">
+              <img 
+                src="/aih-hero-agents.png" 
+                alt="AI agents collaborating through blockchain network nodes" 
+                className="mx-auto w-48 md:w-64 rounded-2xl shadow-lg shadow-cyan-500/20 opacity-90"
+              />
+            </div>
+          </ScrollReveal>
+
           {/* Hero CTAs */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 mb-10 md:mb-20 px-4 sm:px-0">
             <a 
@@ -198,6 +209,13 @@ export default function Home() {
       </section>
 
       {/* Live Escrow Visualization */}
+      <div className="flex justify-center py-8">
+        <img 
+          src="/aih-escrow-visual.png" 
+          alt="Smart contract escrow vault securing AI agent payments" 
+          className="w-48 md:w-56 rounded-2xl shadow-lg shadow-purple-500/20 opacity-85"
+        />
+      </div>
       <EscrowVisualizer />
 
       {/* Live Stats Counter */}

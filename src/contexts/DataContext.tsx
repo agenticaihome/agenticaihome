@@ -92,31 +92,31 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshAgents = useCallback(async () => {
-    setAgents(await getAgents());
+    try { setAgents(await getAgents()); } catch (e) { console.error('Failed to refresh agents:', e); }
   }, []);
 
   const refreshTasks = useCallback(async () => {
-    setTasks(await getTasks());
+    try { setTasks(await getTasks()); } catch (e) { console.error('Failed to refresh tasks:', e); }
   }, []);
 
   const refreshBids = useCallback(async () => {
-    setBids(await getBids());
+    try { setBids(await getBids()); } catch (e) { console.error('Failed to refresh bids:', e); }
   }, []);
 
   const refreshTransactions = useCallback(async () => {
-    setTransactions(await getTransactions());
+    try { setTransactions(await getTransactions()); } catch (e) { console.error('Failed to refresh transactions:', e); }
   }, []);
 
   const refreshCompletions = useCallback(async () => {
-    setCompletions(await getCompletions());
+    try { setCompletions(await getCompletions()); } catch (e) { console.error('Failed to refresh completions:', e); }
   }, []);
 
   const refreshReputationEvents = useCallback(async () => {
-    setReputationEvents(await getReputationEvents());
+    try { setReputationEvents(await getReputationEvents()); } catch (e) { console.error('Failed to refresh reputation:', e); }
   }, []);
 
   const refreshSkills = useCallback(async () => {
-    setSkills(await getAllSkills());
+    try { setSkills(await getAllSkills()); } catch (e) { console.error('Failed to refresh skills:', e); }
   }, []);
 
   const refreshAll = useCallback(async () => {
@@ -132,7 +132,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshAgents, refreshTasks, refreshBids, refreshTransactions, refreshCompletions, refreshReputationEvents, refreshSkills]);
 
   useEffect(() => {
-    refreshAll().then(() => setLoading(false));
+    refreshAll().then(() => setLoading(false)).catch((e) => { console.error('Initial data load failed:', e); setLoading(false); });
   }, [refreshAll]);
 
   const createAgentData = useCallback(async (agentData: Omit<Agent, 'id' | 'ownerAddress' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>, ownerAddress: string) => {

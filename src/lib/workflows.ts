@@ -1,11 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { Task } from './types';
 import { createTask } from './supabaseStore';
+import { supabaseUrl, supabaseAnonKey } from './supabase';
 
-const supabase = createClient(
-  'https://thjialaevqwyiyyhbdxk.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoamlhbGFldnF3eWl5eWhiZHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg4Njk5MjEsImV4cCI6MjA1NDQ0NTkyMX0.gJaS3LMgfLOPLR7Gq0aIjbpNg4KGSKk4CbpWbqoR1Hk'
-);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface WorkflowStep {
   title: string;

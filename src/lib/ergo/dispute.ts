@@ -69,50 +69,92 @@ export interface DisputeBox {
  * 2. After deadline: poster can refund alone (protective default)
  * 3. Split validation: posterPercent + agentPercent == 100
  */
+/**
+ * Dispute Contract V2 — Hardened after external audit (Feb 11, 2026)
+ *
+ * Audit findings addressed:
+ *   1. CRITICAL: `o.value >= X` allows ERG siphoning → fixed with total output sum check
+ *   2. HIGH: Token preservation missing → added token forwarding constraint
+ *   3. MEDIUM: No output count constraint → capped OUTPUTS.size to prevent dust attacks
+ *   4. LOW: Magic numbers → named constants
+ *
+ * Security model:
+ *   - Mutual resolution requires BOTH signatures (poster + agent) — no single-party exploit
+ *   - Timeout refund requires only poster signature — protective default after deadline
+ *   - Total ERG conservation enforced: all outputs + miner fee must equal SELF.value
+ *   - Any tokens in the dispute box MUST be forwarded to the poster (no token loss)
+ *   - Output count capped at 4 (poster + agent + platform + miner fee) to prevent dust
+ */
 const DISPUTE_ERGOSCRIPT = `{
-  // Extract registers
+  // ─── Constants ───
+  val MIN_BOX_VAL = 1000000L
+  val PLATFORM_FEE_BPS = 50L  // 0.5% = 50 basis points
+
+  // ─── Registers ───
   val posterPubKey = SELF.R4[SigmaProp].get
   val agentPubKey = SELF.R5[SigmaProp].get
   val deadline = SELF.R6[Int].get
   val posterPercent = SELF.R7[Int].get
   val agentPercent = SELF.R8[Int].get
-  
-  // Validate percentages always sum to 100 and are non-negative
-  val validPercentages = (posterPercent + agentPercent) == 100 && 
+
+  // ─── Percentage validation ───
+  val validPercentages = (posterPercent + agentPercent) == 100 &&
                         posterPercent >= 0 && posterPercent <= 100 &&
                         agentPercent >= 0 && agentPercent <= 100
-  
-  // Platform fee (0.5% = 50 basis points)
-  val platformFeeNanoErg = (SELF.value * 50L) / 10000L
+
+  // ─── Fee calculation ───
+  val platformFeeNanoErg = (SELF.value * PLATFORM_FEE_BPS) / 10000L
   val amountAfterFee = SELF.value - platformFeeNanoErg
-  
-  // Calculate expected amounts for each party
+
+  // ─── Output count cap (prevent dust attacks) ───
+  val outputCountValid = OUTPUTS.size <= 4
+
+  // ─── Token preservation ───
+  // Any tokens held by the dispute box must be forwarded to poster (no token loss)
+  val tokensPreserved = if (SELF.tokens.size > 0) {
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == posterPubKey.propBytes &&
+      SELF.tokens.forall { (t: (Coll[Byte], Long)) =>
+        o.tokens.exists { (ot: (Coll[Byte], Long)) =>
+          ot._1 == t._1 && ot._2 == t._2
+        }
+      }
+    }
+  } else true
+
+  // ─── ERG conservation ───
+  // Total output value + miner fee must equal SELF.value (no ERG lost or created)
+  // Miner fee = SELF.value - sum(OUTPUTS.value)
+  val totalOutputValue = OUTPUTS.fold(0L, { (acc: Long, o: Box) => acc + o.value })
+  val minerFee = SELF.value - totalOutputValue
+  val ergConserved = minerFee > 0L && minerFee <= 2000000L  // max 0.002 ERG miner fee
+
+  // ─── Mutual resolution: both sign + valid split ───
   val posterExpectedAmount = (amountAfterFee * posterPercent) / 100L
-  val agentExpectedAmount = (amountAfterFee * agentPercent) / 100L
-  
-  // Find outputs to poster and agent (only if they get > 0%)
+  val agentExpectedAmount = amountAfterFee - posterExpectedAmount  // remainder to agent (no dust)
+
   val posterOutputValid = if (posterPercent > 0) {
     OUTPUTS.exists { (o: Box) =>
       o.propositionBytes == posterPubKey.propBytes &&
-      o.value >= posterExpectedAmount
+      o.value >= posterExpectedAmount &&
+      o.value <= posterExpectedAmount + MIN_BOX_VAL  // tight upper bound
     }
   } else true
-  
+
   val agentOutputValid = if (agentPercent > 0) {
     OUTPUTS.exists { (o: Box) =>
       o.propositionBytes == agentPubKey.propBytes &&
-      o.value >= agentExpectedAmount
+      o.value >= agentExpectedAmount &&
+      o.value <= agentExpectedAmount + MIN_BOX_VAL
     }
   } else true
-  
-  // Platform fee output - check by direct proposition bytes comparison  
+
   val platformFeeOutputExists = OUTPUTS.exists { (o: Box) =>
-    o.propositionBytes == fromBase64("${PLATFORM_FEE_ADDRESS_HASH}") &&
-    o.value >= platformFeeNanoErg
+    o.propositionBytes == fromBase64("\${PLATFORM_FEE_ADDRESS_HASH}") &&
+    o.value >= platformFeeNanoErg &&
+    o.value <= platformFeeNanoErg + MIN_BOX_VAL
   }
-  
-  // Resolution paths:
-  // 1. Mutual agreement during mediation: both parties sign + valid split
+
   val mutualResolution = HEIGHT <= deadline &&
                         posterPubKey &&
                         agentPubKey &&
@@ -120,17 +162,23 @@ const DISPUTE_ERGOSCRIPT = `{
                         posterOutputValid &&
                         agentOutputValid &&
                         platformFeeOutputExists
-  
-  // 2. Timeout refund: poster gets everything after deadline (>= not >)
+
+  // ─── Timeout refund: poster gets everything after deadline ───
   val timeoutRefund = HEIGHT >= deadline &&
                      posterPubKey &&
                      OUTPUTS.exists { (o: Box) =>
                        o.propositionBytes == posterPubKey.propBytes &&
-                       o.value >= amountAfterFee  // poster gets all after fee
+                       o.value >= amountAfterFee - 2000000L &&  // allow miner fee deduction
+                       o.value <= amountAfterFee
                      } &&
                      platformFeeOutputExists
-  
-  mutualResolution || timeoutRefund
+
+  sigmaProp(
+    outputCountValid &&
+    ergConserved &&
+    tokensPreserved &&
+    (mutualResolution || timeoutRefund)
+  )
 }`;
 
 // ─── Contract compilation ────────────────────────────────────────────

@@ -26,19 +26,69 @@ import { pubkeyFromAddress } from './address-utils';
  *
  * This enables atomic single-TX minting with proper on-chain metadata.
  */
+/**
+ * Soulbound EGO Token Contract V2 — Hardened after external audit (Feb 11, 2026)
+ *
+ * Audit findings addressed:
+ *   1. CRITICAL: OUTPUTS(0) soulbound bypass → already using OUTPUTS.filter (V2 was clean)
+ *   2. HIGH: Token amount not enforced → added exact amount preservation
+ *   3. MEDIUM: Register state not preserved → R4-R6 (EIP-4 metadata) + R7 (agent) all enforced
+ *   4. MEDIUM: Value preservation missing → min box value enforced on output
+ *   5. LOW: Creation height window → not used (correct, no expiry)
+ *
+ * Invariants:
+ *   - Token goes to exactly 1 output box
+ *   - Output must be at same contract address (propositionBytes match)
+ *   - Agent pubkey (R7) must be preserved (soulbound)
+ *   - Token amount must be exactly preserved (no partial burn)
+ *   - EIP-4 metadata registers (R4/R5/R6) must be preserved (immutable name/desc)
+ *   - Output must maintain minimum ERG value
+ *   - Agent must sign the transaction
+ */
 export const SOULBOUND_ERGOSCRIPT_V2 = `{
   val agentPk = SELF.R7[SigmaProp].get
   val egoTokenId = SELF.tokens(0)._1
+  val egoTokenAmt = SELF.tokens(0)._2
+  val minBoxVal = 1000000L
+
   val tokenOutputs = OUTPUTS.filter { (box: Box) =>
     box.tokens.exists { (t: (Coll[Byte], Long)) => t._1 == egoTokenId }
   }
-  val soulbound = tokenOutputs.size == 1 &&
-    tokenOutputs(0).propositionBytes == SELF.propositionBytes &&
-    tokenOutputs(0).R7[SigmaProp].get == agentPk
-  agentPk && sigmaProp(soulbound)
+
+  // Exactly one output receives the token
+  val singleOutput = tokenOutputs.size == 1
+  val out = tokenOutputs(0)
+
+  // Soulbound: stays at same contract, same agent
+  val soulbound = out.propositionBytes == SELF.propositionBytes &&
+    out.R7[SigmaProp].get == agentPk
+
+  // Token amount exactly preserved (no partial burn)
+  val tokenPreserved = out.tokens.exists { (t: (Coll[Byte], Long)) =>
+    t._1 == egoTokenId && t._2 == egoTokenAmt
+  }
+
+  // EIP-4 metadata registers preserved (immutable name, description, decimals)
+  val metadataPreserved =
+    out.R4[Coll[Byte]].get == SELF.R4[Coll[Byte]].get &&
+    out.R5[Coll[Byte]].get == SELF.R5[Coll[Byte]].get &&
+    out.R6[Coll[Byte]].get == SELF.R6[Coll[Byte]].get
+
+  // Minimum ERG value maintained
+  val valueOk = out.value >= minBoxVal
+
+  agentPk && sigmaProp(
+    singleOutput &&
+    soulbound &&
+    tokenPreserved &&
+    metadataPreserved &&
+    valueOk
+  )
 }`;
 
-// V1 contract (R4 = agent pubkey) — kept for reference, old tokens live here
+// V1 contract (R4 = agent pubkey) — kept for reference only, old tokens live here
+// NOTE: V1 is NOT re-deployed. This source is preserved for documentation.
+// Old tokens at V1 address remain readable but V1 has weaker protections.
 export const SOULBOUND_ERGOSCRIPT_V1 = `{
   val agentPk = SELF.R4[SigmaProp].get
   val egoTokenId = SELF.tokens(0)._1
@@ -56,7 +106,16 @@ export const SOULBOUND_ERGOSCRIPT_V1 = `{
  * V2 uses R7 for agent pubkey, keeping R4-R6 free for EIP-4 token metadata.
  * Compiled via node.ergo.watch on 2026-02-11.
  */
+/**
+ * V2.1 contract address — hardened with metadata preservation + token amount enforcement.
+ * Compiled via node.ergo.watch on 2026-02-11.
+ * V2.0 address preserved below for backward compatibility (tokens already minted there).
+ */
 export const SOULBOUND_CONTRACT_ADDRESS =
+  '5N4W9T1RrFxzSMTxVPoygg4xY5gNbcdKrz8x5fCLeV7iSjXnAo4cwud5oe4rEShqMfmmsRsFt8AFbj9BbkfRUcU6kDrgqzMU2keydQso4vLc6BmWpTgjikSBQSurTAqwJv1q2Q6cwoh1P5wLq8ZRPA8jKgur1sQyVy4Kt9CFCC2kq9crbdcVCoexbbyZ2MSW3D9iDm1VWdf4Hygg9ettxdXUGeQqBhcz8zgVnyFScwMLvbwhhFfv';
+
+/** V2.0 contract address — first version with R7=agentPk. No metadata/amount preservation. */
+export const SOULBOUND_CONTRACT_ADDRESS_V2_0 =
   '49AoNXDVGUF3Y1XVFRjUa22LFbYEHB7XGEJqmRZ7BDVRsGgCasqPkxhpzNQfx9ACgJizWaBNHNZiKsjU4Lzm8eUPUvsMJsnb6mzdeKVkDTCLFNo65Qk6vszw6jFijLFs';
 
 /** V1 contract address (R4 = agent pubkey) — old tokens live here, still valid */
@@ -173,16 +232,18 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
       agentPubkeyHex = agentErgoTree.slice(6);
     } catch { return []; }
 
-    // Fetch boxes from both V1 and V2 contracts
-    const [v1Response, v2Response] = await Promise.all([
+    // Fetch boxes from V1, V2.0, and V2.1 contracts
+    const [v1Response, v20Response, v21Response] = await Promise.all([
       fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V1}?limit=100`).catch(() => null),
+      fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V2_0}?limit=100`).catch(() => null),
       fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`).catch(() => null),
     ]);
 
     const v1Data = v1Response?.ok ? await v1Response.json() : { items: [] };
-    const v2Data = v2Response?.ok ? await v2Response.json() : { items: [] };
+    const v20Data = v20Response?.ok ? await v20Response.json() : { items: [] };
+    const v21Data = v21Response?.ok ? await v21Response.json() : { items: [] };
     const v1Boxes = v1Data.items || v1Data || [];
-    const v2Boxes = v2Data.items || v2Data || [];
+    const v2Boxes = [...(v20Data.items || v20Data || []), ...(v21Data.items || v21Data || [])];
 
     const matchesPubkey = (registerValue: any) => {
       if (!registerValue) return false;

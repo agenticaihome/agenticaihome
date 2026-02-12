@@ -10,7 +10,7 @@ import {
 } from '@fleet-sdk/core';
 import { getCurrentHeight, getAddressBalance, getTokenInfo } from './explorer';
 import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, ERGO_EXPLORER_API, ERGO_EXPLORER_UI } from './constants';
-import { SOULBOUND_CONTRACT_ADDRESS, SOULBOUND_CONTRACT_ADDRESS_V1 } from './ego-token';
+import { SOULBOUND_CONTRACT_ADDRESS, SOULBOUND_CONTRACT_ADDRESS_V1, SOULBOUND_CONTRACT_ADDRESS_V2_0 } from './ego-token';
 import { pubkeyFromAddress } from './address-utils';
 
 // ─── Constants ───────────────────────────────────────────────────────
@@ -146,14 +146,18 @@ async function getContractIdentityToken(agentAddress: string): Promise<AgentIden
     const pubkeyHex = agentErgoTree.startsWith('0008cd') ? agentErgoTree.slice(6) : '';
     if (!pubkeyHex) return null;
 
-    // Check both V1 (R4=pubkey) and V2 (R7=pubkey) contract addresses
-    const [v1Response, v2Response] = await Promise.all([
+    // Check V1 (R4=pubkey), V2.0 (R7=pubkey), and V2.1 (R7=pubkey, hardened) contract addresses
+    const [v1Response, v20Response, v21Response] = await Promise.all([
       fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V1}?limit=100`).catch(() => null),
+      fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V2_0}?limit=100`).catch(() => null),
       fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`).catch(() => null),
     ]);
 
     const v1Data = v1Response?.ok ? await v1Response.json() : { items: [] };
-    const v2Data = v2Response?.ok ? await v2Response.json() : { items: [] };
+    const v20Data = v20Response?.ok ? await v20Response.json() : { items: [] };
+    const v21Data = v21Response?.ok ? await v21Response.json() : { items: [] };
+    // Merge V2.0 and V2.1 boxes — both use R7 for agent pubkey
+    const v2Data = { items: [...(v20Data.items || v20Data || []), ...(v21Data.items || v21Data || [])] };
 
     const checkBoxes = (boxes: any[], registerKey: string) => {
       for (const box of (boxes || [])) {

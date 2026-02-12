@@ -160,6 +160,7 @@ export const SOULBOUND_ERGOSCRIPT_V1 = `{
  * Compiled via node.ergo.watch on 2026-02-11.
  * V2.0 address preserved below for backward compatibility (tokens already minted there).
  */
+// V3 MIGRATION (Feb 12, 2026): Use V3 as primary for new mints, keep old versions for reading existing tokens
 export const SOULBOUND_CONTRACT_ADDRESS =
   '5N4W9T1RrFxzSMTxVPoygg4xY5gNbcdKrz8x5fCLeV7iSjXnAo4cwud5oe4rEShqMfmmsRsFt8AFbj9BbkfRUcU6kDrgqzMU2keydQso4vLc6BmWpTgjikSBQSurTAqwJv1q2Q6cwoh1P5wLq8ZRPA8jKgur1sQyVy4Kt9CFCC2kq9crbdcVCoexbbyZ2MSW3D9iDm1VWdf4Hygg9ettxdXUGeQqBhcz8zgVnyFScwMLvbwhhFfv';
 
@@ -174,6 +175,9 @@ export const SOULBOUND_CONTRACT_ADDRESS_V1 =
 /** V3 contract address — Ultra-hardened with strict token position enforcement (compiled Feb 12, 2026) */
 export const SOULBOUND_CONTRACT_ADDRESS_V3 =
   '4rpBVtyT3mwAqMYSGvUUQyuyJvn1Whxpc4k4E5gefnfBGK7dqHnqehe9Nxyubho4NJ4rn5qaFvXwGK7uRTF6VNyqECeeVAVkkyyt5W65MZShFdrt41DB32hYs9me9MuwUf8jGvfK4BvjNghg15QLNdmNaicAqiL8VYbXFzt8VnMrAg67iSXEL9NssQZRE3Ca936z71poiZmbBNMMkTZSj15zrBgo1b3Sz7529FcocTRtZiM6jJGkPaZqVQdhWxH8N46BiYgFp3W31KrVUssARg4HreXr7';
+
+/** V3 Ultra-hardened address — PRIMARY for new EGO token mints */
+export const ACTIVE_SOULBOUND_ADDRESS = SOULBOUND_CONTRACT_ADDRESS_V3;
 
 // ─── Constants ───────────────────────────────────────────────────────
 
@@ -285,18 +289,21 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
       agentPubkeyHex = agentErgoTree.slice(6);
     } catch { return []; }
 
-    // Fetch boxes from V1, V2.0, and V2.1 contracts
-    const [v1Response, v20Response, v21Response] = await Promise.all([
+    // Fetch boxes from V1, V2.0, V2.1, and V3 contracts for backward compatibility
+    const [v1Response, v20Response, v21Response, v3Response] = await Promise.all([
       fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V1}?limit=100`).catch(() => null),
       fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V2_0}?limit=100`).catch(() => null),
       fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`).catch(() => null),
+      fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V3}?limit=100`).catch(() => null),
     ]);
 
     const v1Data = v1Response?.ok ? await v1Response.json() : { items: [] };
     const v20Data = v20Response?.ok ? await v20Response.json() : { items: [] };
     const v21Data = v21Response?.ok ? await v21Response.json() : { items: [] };
+    const v3Data = v3Response?.ok ? await v3Response.json() : { items: [] };
     const v1Boxes = v1Data.items || v1Data || [];
     const v2Boxes = [...(v20Data.items || v20Data || []), ...(v21Data.items || v21Data || [])];
+    const v3Boxes = v3Data.items || v3Data || [];
 
     const matchesPubkey = (registerValue: any) => {
       if (!registerValue) return false;
@@ -316,7 +323,12 @@ async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
       try { return matchesPubkey(box.additionalRegisters?.R7); } catch { return false; }
     });
 
-    return [...v1Matches, ...v2Matches];
+    // V3 boxes: agent pubkey in R7 (same as V2)
+    const v3Matches = v3Boxes.filter((box: any) => {
+      try { return matchesPubkey(box.additionalRegisters?.R7); } catch { return false; }
+    });
+
+    return [...v1Matches, ...v2Matches, ...v3Matches];
   } catch (error) {
     console.error('Error fetching contract boxes for agent:', error);
     return [];
@@ -400,7 +412,8 @@ export async function buildEgoMintTx(params: EgoMintParams): Promise<any> {
   const descBytes = new TextEncoder().encode(tokenDescription);
   const decimalsBytes = new TextEncoder().encode('0');
 
-  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_CONTRACT_ADDRESS)
+  // Use V3 ultra-hardened contract for new token mints
+  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, ACTIVE_SOULBOUND_ADDRESS)
     .mintToken({
       amount: BigInt(amount).toString(),
       name: tokenName,

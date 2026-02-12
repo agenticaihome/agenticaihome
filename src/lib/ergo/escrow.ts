@@ -16,7 +16,9 @@ import {
   PLATFORM_FEE_PERCENT,
   PLATFORM_FEE_ADDRESS,
   ESCROW_ERGOSCRIPT,
+  ESCROW_ERGOSCRIPT_V2,
   ESCROW_CONTRACT_ADDRESS,
+  ESCROW_CONTRACT_ADDRESS_V2,
   txExplorerUrl,
 } from './constants';
 import { compileErgoScript } from './compiler';
@@ -96,10 +98,20 @@ let _compiledAddress: string | null = null;
 
 /**
  * Get or compile the escrow contract P2S address.
- * Uses pre-compiled address as primary, falls back to live compilation.
+ * Uses V2 (hardened) address as primary for NEW escrows. V1 kept for reading existing on-chain boxes.
+ * 
+ * V2 MIGRATION (Feb 12, 2026):
+ * - NEW escrows use V2 contract (security hardened with exact equality)
+ * - V1 escrows remain readable for backward compatibility
+ * - V1 contract is IMMUTABLE on mainnet — cannot be changed
  */
 export async function getEscrowContractAddress(): Promise<string> {
-  // Use pre-compiled address if available
+  // Use V2 hardened address for new escrows
+  if (ESCROW_CONTRACT_ADDRESS_V2) {
+    return ESCROW_CONTRACT_ADDRESS_V2;
+  }
+
+  // Fallback: V1 address if V2 not available
   if (ESCROW_CONTRACT_ADDRESS) {
     return ESCROW_CONTRACT_ADDRESS;
   }
@@ -107,7 +119,8 @@ export async function getEscrowContractAddress(): Promise<string> {
   if (_compiledAddress) return _compiledAddress;
 
   try {
-    const result = await compileErgoScript(ESCROW_ERGOSCRIPT);
+    // Use V2 script for new compilations
+    const result = await compileErgoScript(ESCROW_ERGOSCRIPT_V2);
     _compiledAddress = result.address;
     return _compiledAddress;
   } catch (err) {
@@ -386,9 +399,17 @@ export function parseEscrowBox(box: any): EscrowBox | null {
 
 export async function getActiveEscrowsByAddress(address: string): Promise<EscrowBox[]> {
   try {
-    const contractAddress = await getEscrowContractAddress();
-    const boxes = await getBoxesByAddress(contractAddress);
-    return boxes
+    // Check BOTH V1 (legacy) and V2 (current) contract addresses for backward compatibility
+    // V1: Legacy read-only for existing on-chain boxes
+    // V2: Primary address for new escrows
+    const [v1Boxes, v2Boxes] = await Promise.all([
+      getBoxesByAddress(ESCROW_CONTRACT_ADDRESS).catch(() => []),
+      getBoxesByAddress(ESCROW_CONTRACT_ADDRESS_V2).catch(() => [])
+    ]);
+
+    const allBoxes = [...v1Boxes, ...v2Boxes];
+    
+    return allBoxes
       .filter((box: any) => {
         const regs = (box.additionalRegisters || {}) as Record<string, unknown>;
         return regs.R4 && regs.R5 && regs.R6;

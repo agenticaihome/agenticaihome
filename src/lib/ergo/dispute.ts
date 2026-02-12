@@ -297,10 +297,17 @@ const DISPUTE_CONTRACT_ADDRESS_V3 =
 
 /**
  * Get the dispute contract P2S address.
- * Returns pinned pre-compiled address. Falls back to runtime compilation if needed.
+ * Returns V3 (ultra-hardened) address as primary. V2 kept for reading existing disputes.
+ * 
+ * V3 MIGRATION (Feb 12, 2026):
+ * - NEW disputes use V3 contract (exact value enforcement, no MEV opportunities)
+ * - V2 disputes remain readable for backward compatibility
  */
 export async function getDisputeContractAddress(): Promise<string> {
-  // Use pinned address — no runtime compilation dependency
+  // Use V3 ultra-hardened address for new disputes
+  if (DISPUTE_CONTRACT_ADDRESS_V3) return DISPUTE_CONTRACT_ADDRESS_V3;
+  
+  // Fallback: V2 address if V3 not available
   if (DISPUTE_CONTRACT_ADDRESS) return DISPUTE_CONTRACT_ADDRESS;
 
   // Fallback: runtime compilation (kept for development/testing)
@@ -690,9 +697,17 @@ export function parseDisputeBox(box: any): DisputeBox | null {
 
 export async function getActiveDisputesByAddress(address: string): Promise<DisputeBox[]> {
   try {
-    const contractAddress = await getDisputeContractAddress();
-    const boxes = await getBoxesByAddress(contractAddress);
-    return boxes
+    // Check BOTH V2 (legacy) and V3 (current) contract addresses for backward compatibility
+    // V2: Legacy read-only for existing on-chain disputes
+    // V3: Primary address for new disputes
+    const [v2Boxes, v3Boxes] = await Promise.all([
+      getBoxesByAddress(DISPUTE_CONTRACT_ADDRESS).catch(() => []),
+      getBoxesByAddress(DISPUTE_CONTRACT_ADDRESS_V3).catch(() => [])
+    ]);
+
+    const allBoxes = [...v2Boxes, ...v3Boxes];
+    
+    return allBoxes
       .filter((box: any) => {
         const regs = (box.additionalRegisters || {}) as Record<string, unknown>;
         return regs.R4 && regs.R5 && regs.R6 && regs.R7 && regs.R8;

@@ -176,7 +176,7 @@ export default function NotificationSettings() {
         ) : (
           <div className="space-y-3">
             <p className="text-sm text-[var(--text-secondary)]">
-              Get notifications directly in Telegram when important things happen.
+              Get notifications directly in Telegram when important things happen. (Coming soon)
             </p>
             {verifyCode ? (
               <div className="bg-[var(--bg-card-hover)] rounded-lg p-4 space-y-3">

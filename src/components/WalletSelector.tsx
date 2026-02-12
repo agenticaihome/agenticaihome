@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { isMobileDevice } from '@/lib/ergo/ergopay';
-import { isNautilusAvailable } from '@/lib/ergo/wallet';
+import { isMobileDevice, isNautilusAvailable } from '@/lib/ergo/utils-light';
 
 export type WalletType = 'nautilus' | 'ergopay' | 'safew';
 

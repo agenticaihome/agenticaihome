@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useWallet, useWalletInstallation } from '@/contexts/WalletContext';
-import { formatErgAmount, truncateAddress } from '@/lib/ergo/explorer';
-import { isValidErgoAddress } from '@/lib/ergo/wallet';
+import { formatErgAmount, truncateAddress, isValidErgoAddress } from '@/lib/ergo/utils-light';
 import { createPortal } from 'react-dom';
 import { WalletSelector, WalletType } from './WalletSelector';
 import { ClipboardList } from 'lucide-react';

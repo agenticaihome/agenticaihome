@@ -132,6 +132,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         return;
       }
 
+      // Images
+      const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
+      if (imgMatch) {
+        flushList();
+        elements.push(
+          <div key={index} className="my-8 rounded-xl overflow-hidden border border-[var(--border-color)]">
+            <img src={imgMatch[2]} alt={imgMatch[1]} className="w-full h-auto" loading="lazy" />
+            {imgMatch[1] && (
+              <p className="text-sm text-[var(--text-tertiary)] text-center py-3 px-4 bg-[var(--bg-secondary)]">{imgMatch[1]}</p>
+            )}
+          </div>
+        );
+        return;
+      }
+
       // Code blocks
       if (trimmed.startsWith('```')) {
         flushList();

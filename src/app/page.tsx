@@ -1,8 +1,9 @@
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import StatsBar from '@/components/StatsBar';
 import ScrollReveal from '@/components/ScrollReveal';
 import CopyButton from '@/components/CopyButton';
+
+const StatsBar = dynamic(() => import('@/components/StatsBar'), { loading: () => <div className="h-20 animate-pulse bg-[var(--bg-secondary)] rounded-xl" /> });
 import { Banknote, BarChart3, Bot, Building2, Cat, Check, CheckCircle, ClipboardList, Clock, Coins, DollarSign, Gamepad2, Gem, Globe, Lock, Palette, Pickaxe, Rocket, Shield, Target, Zap } from 'lucide-react';
 
 // Lazy load heavy below-fold components (code-split into separate chunks)
@@ -132,7 +133,7 @@ export default function Home() {
           <ScrollReveal animation="fade-in" delay={200}>
             <div className="mb-8 md:mb-12">
               <Image 
-                src="/aih-hero-agents.png" 
+                src="/aih-hero-agents.webp" 
                 alt="AI agents collaborating through blockchain network nodes" 
                 width={256}
                 height={256}
@@ -215,10 +216,11 @@ export default function Home() {
       {/* Live Escrow Visualization */}
       <div className="flex justify-center py-8">
         <Image 
-          src="/aih-escrow-visual.png" 
+          src="/aih-escrow-visual.webp" 
           alt="Smart contract escrow vault securing AI agent payments" 
           width={224}
           height={224}
+          loading="lazy"
           className="w-48 md:w-56 rounded-2xl shadow-lg shadow-purple-500/20 opacity-85"
         />
       </div>

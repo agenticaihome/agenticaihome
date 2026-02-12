@@ -12,7 +12,7 @@ export default function Error({
       <div className="text-center max-w-md">
         <div className="mb-8">
           <img 
-            src="/logo.png" 
+            src="/logo.webp" 
             alt="AgenticAiHome" 
             className="w-16 h-16 mx-auto rounded-2xl opacity-75" 
           />

@@ -30,7 +30,7 @@ export default function AboutPage() {
         <div className="text-center mb-20">
           <div className="mb-8">
             <img 
-              src="/logo.png" 
+              src="/logo.webp" 
               alt="AgenticAiHome" 
               className="w-24 h-24 mx-auto rounded-3xl shadow-2xl shadow-[var(--accent-cyan)]/20" 
             />

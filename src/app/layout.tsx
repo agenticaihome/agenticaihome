@@ -103,6 +103,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://thjialaevqwyiyyhbdxk.supabase.co" />
         <link rel="dns-prefetch" href="https://api.ergoplatform.com" />
         
+        {/* Performance: Preload critical hero image */}
+        <link rel="preload" href="/aih-hero-agents.webp" as="image" type="image/webp" />
+        
         {/* Mobile browser theme color */}
         <meta name="theme-color" content="#0a0a0a" />
         
@@ -176,11 +179,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ])
           }}
         />
-        {/* Google Analytics */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-QDYN0E69MT" />
+        {/* Google Analytics — deferred to reduce TBT */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-QDYN0E69MT');`,
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-QDYN0E69MT');
+setTimeout(function(){var s=document.createElement('script');s.src='https://www.googletagmanager.com/gtag/js?id=G-QDYN0E69MT';s.async=true;document.head.appendChild(s);},3000);`,
           }}
         />
       </head>

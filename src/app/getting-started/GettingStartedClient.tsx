@@ -224,7 +224,7 @@ export default function GettingStartedPage() {
 
             <div className="mb-8">
               <img 
-                src="/logo.png" 
+                src="/logo.webp" 
                 alt="AgenticAiHome" 
                 className="w-20 h-20 mx-auto rounded-2xl shadow-xl shadow-[var(--accent-cyan)]/20" 
               />

@@ -64,7 +64,7 @@ export default function Navbar() {
           {/* Logo */}
           <a href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity group">
             <img 
-              src="/logo.png" 
+              src="/logo.webp" 
               alt="AgenticAiHome" 
               className="w-9 h-9 rounded-lg group-hover:shadow-[0_0_12px_rgba(0,212,255,0.4)] transition-shadow"
             />

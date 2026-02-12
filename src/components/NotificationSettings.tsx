@@ -57,10 +57,25 @@ export default function NotificationSettings() {
     })();
   }, [userAddress]);
 
+  const [telegramError, setTelegramError] = useState<string | null>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+
   const handleGenerateCode = async () => {
     if (!userAddress) return;
-    const code = await generateTelegramVerifyCode(userAddress);
-    setVerifyCode(code);
+    setGeneratingCode(true);
+    setTelegramError(null);
+    try {
+      const code = await generateTelegramVerifyCode(userAddress);
+      if (code) {
+        setVerifyCode(code);
+      } else {
+        setTelegramError('Failed to generate code. Try again.');
+      }
+    } catch (err: any) {
+      setTelegramError(err?.message || 'Connection error');
+    } finally {
+      setGeneratingCode(false);
+    }
   };
 
   const handleCopyCode = () => {
@@ -188,13 +203,22 @@ export default function NotificationSettings() {
                 </p>
               </div>
             ) : (
-              <button
-                onClick={handleGenerateCode}
-                className="px-4 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Enable Telegram Notifications
-              </button>
+              <div>
+                <button
+                  onClick={handleGenerateCode}
+                  disabled={generatingCode}
+                  className="px-4 py-2 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-50 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  {generatingCode ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
+                  ) : (
+                    <><MessageCircle className="w-4 h-4" /> Enable Telegram Notifications</>
+                  )}
+                </button>
+                {telegramError && (
+                  <p className="text-red-400 text-xs mt-2">{telegramError}</p>
+                )}
+              </div>
             )}
           </div>
         )}

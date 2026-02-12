@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import EgoTokenViewer from '@/components/EgoTokenViewer';
 import NotificationSettings from '@/components/NotificationSettings';
 import { buildAgentIdentityMintTx } from '@/lib/ergo/agent-identity';
+import { buildEgoMintTx } from '@/lib/ergo/ego-token';
 import { getCurrentHeight } from '@/lib/ergo/explorer';
 import { getUtxos, signTransaction, submitTransaction } from '@/lib/ergo/wallet';
 import { getPendingRatingsForUser } from '@/lib/supabaseStore';
@@ -253,6 +254,53 @@ export default function DashboardPage() {
       setMintResult({ agentId: agent.id, success: false, message: err?.message || 'Mint failed' });
     } finally {
       setMintingAgentId(null);
+    }
+  };
+
+  const [remintingAgentId, setRemintingAgentId] = useState<string | null>(null);
+  const [remintResult, setRemintResult] = useState<{ agentId: string; success: boolean; message: string } | null>(null);
+
+  const handleRemintEgo = async (agent: Agent) => {
+    if (!userAddress) return;
+    setRemintingAgentId(agent.id);
+    setRemintResult(null);
+    try {
+      const [utxos, height] = await Promise.all([getUtxos(userAddress), getCurrentHeight()]);
+      const unsignedTx = await buildEgoMintTx({
+        agentAddress: agent.owner_address,
+        agentName: agent.name,
+        amount: 10,
+        completionNumber: 1,
+        minterAddress: userAddress,
+        minterUtxos: utxos,
+        currentHeight: height,
+      });
+
+      if (isMobileDevice() || !window.ergoConnector?.nautilus) {
+        const ergoPayData = await createErgoPayRequest(
+          unsignedTx,
+          userAddress,
+          `Remint EGO tokens for ${agent.name}`,
+          utxos
+        );
+        setErgoPayModal({
+          isOpen: true,
+          ergoPayUrl: ergoPayData.ergoPayUrl,
+          qrCode: ergoPayData.qrCode,
+          requestId: ergoPayData.requestId,
+          agentId: agent.id,
+        });
+        if (isMobileDevice()) window.location.href = ergoPayData.ergoPayUrl;
+        return;
+      }
+
+      const signedTx = await signTransaction(unsignedTx);
+      const txId = await submitTransaction(signedTx);
+      setRemintResult({ agentId: agent.id, success: true, message: `EGO tokens minted! TX: ${txId.slice(0, 12)}...` });
+    } catch (err: any) {
+      setRemintResult({ agentId: agent.id, success: false, message: err?.message || 'Remint failed' });
+    } finally {
+      setRemintingAgentId(null);
     }
   };
 
@@ -590,6 +638,28 @@ export default function DashboardPage() {
                         Identity NFT minted on-chain!
                       </p>
                     )}
+                    {/* Remint EGO with metadata */}
+                    <div className="mb-3">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemintEgo(agent); }}
+                        disabled={remintingAgentId === agent.id}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        {remintingAgentId === agent.id ? (
+                          <>
+                            <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>
+                            Minting...
+                          </>
+                        ) : (
+                          <><Star className="w-3 h-3" /> Mint Named EGO Tokens</>
+                        )}
+                      </button>
+                      {remintResult?.agentId === agent.id && (
+                        <p className={`text-xs mt-1 ${remintResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {remintResult.message}
+                        </p>
+                      )}
+                    </div>
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-4">
                         <span className="text-gray-500">

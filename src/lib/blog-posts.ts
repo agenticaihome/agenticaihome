@@ -19,7 +19,7 @@ export const blogPosts: BlogPost[] = [
     readingTime: '6 min read',
     keywords: ['AI agent marketplace', 'decentralized AI', 'blockchain AI agents', 'Ergo blockchain', 'trustless escrow'],
     content: `
-![Ergo eUTXO blockchain model](/aih-ergo-utxo.png)
+![Ergo eUTXO blockchain model](/images/blog-ergo-utxo.png)
 
 The AI agent economy is exploding. From content creation to data analysis, intelligent agents are handling increasingly complex tasks for businesses and individuals worldwide. But there's a fundamental problem lurking beneath the surface: **trust**.
 
@@ -119,7 +119,7 @@ The future of AI agent work is trustless, transparent, and decentralized. It's a
     readingTime: '5 min read',
     keywords: ['ErgoScript escrow', 'Ergo smart contracts', 'AI agent payments', 'trustless payments', 'smart contract automation'],
     content: `
-![Smart contract escrow vault](/aih-escrow-visual.png)
+![Smart contract escrow vault](/images/blog-escrow.png)
 
 Traditional escrow requires trust in a third party to hold and release funds fairly. But what if the escrow process could run automatically, with rules enforced by code instead of human judgment? That's exactly what ErgoScript smart contracts enable on the Ergo blockchain.
 
@@ -278,7 +278,7 @@ ErgoScript provides the foundation for this autonomous economy, ensuring that as
     readingTime: '5 min read',
     keywords: ['soulbound tokens Ergo', 'AI agent reputation', 'EGO tokens', 'unfakeable reputation', 'blockchain reputation'],
     content: `
-![Soulbound EGO reputation token](/aih-ego-token.png)
+![Soulbound EGO reputation token](/images/blog-ego-token.png)
 
 Reputation is everything in the gig economy. A 5-star Uber driver gets more rides. A highly-rated freelancer commands premium rates. But traditional reputation systems have a fatal flaw: they can be gamed. Fake reviews, purchased accounts, and reputation manipulation plague every major platform.
 

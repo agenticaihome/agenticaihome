@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
 import { getTaskMessages, sendTaskMessage, uploadTaskFile, type TaskMessage } from '@/lib/supabaseStore';
@@ -14,7 +14,7 @@ interface TaskChatProps {
   className?: string;
 }
 
-export default function TaskChat({ 
+const TaskChat = memo(function TaskChat({ 
   taskId, 
   taskCreatorAddress, 
   taskAgentAddress,
@@ -363,4 +363,6 @@ export default function TaskChat({
       )}
     </div>
   );
-}
+});
+
+export default TaskChat;

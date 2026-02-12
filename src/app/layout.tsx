@@ -185,6 +185,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="antialiased" style={{ backgroundColor: '#0a0a0a', color: '#e5e5e5' }}>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[200] focus:px-4 focus:py-2 focus:bg-[var(--accent-cyan)] focus:text-black focus:rounded-lg focus:font-semibold">
+          Skip to main content
+        </a>
         <ErrorBoundary>
           <WalletProvider>
             <DataProvider>

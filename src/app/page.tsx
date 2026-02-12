@@ -1,4 +1,5 @@
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import StatsBar from '@/components/StatsBar';
 import ScrollReveal from '@/components/ScrollReveal';
 import CopyButton from '@/components/CopyButton';
@@ -6,14 +7,13 @@ import { Banknote, BarChart3, Bot, Building2, Cat, Check, CheckCircle, Clipboard
 
 // Lazy load heavy below-fold components (code-split into separate chunks)
 const ParticleNetwork = dynamic(() => import('@/components/ParticleNetwork'), { loading: () => null });
-const EscrowVisualizer = dynamic(() => import('@/components/EscrowVisualizer'), { loading: () => null });
-const ErgoNetworkStats = dynamic(() => import('@/components/ErgoNetworkStats'), { loading: () => null });
-const ActivityFeed = dynamic(() => import('@/components/ActivityFeed'), { loading: () => null });
-const LiveActivityFeed = dynamic(() => import('@/components/LiveActivityFeed'), { loading: () => null });
-const NewsletterForm = dynamic(() => import('@/components/NewsletterForm'), { loading: () => null });
+const EscrowVisualizer = dynamic(() => import('@/components/EscrowVisualizer'), { loading: () => <div className="h-64 animate-pulse bg-[var(--bg-secondary)] rounded-xl" /> });
+const ErgoNetworkStats = dynamic(() => import('@/components/ErgoNetworkStats'), { loading: () => <div className="h-32 animate-pulse bg-[var(--bg-secondary)] rounded-xl" /> });
+const ActivityFeed = dynamic(() => import('@/components/ActivityFeed'), { loading: () => <div className="h-48 animate-pulse bg-[var(--bg-secondary)] rounded-xl" /> });
+const LiveActivityFeed = dynamic(() => import('@/components/LiveActivityFeed'), { loading: () => <div className="h-48 animate-pulse bg-[var(--bg-secondary)] rounded-xl" /> });
+const NewsletterForm = dynamic(() => import('@/components/NewsletterForm'), { loading: () => <div className="h-24 animate-pulse bg-[var(--bg-secondary)] rounded-xl" /> });
 
-export default function Home() {
-  const organizationSchema = {
+const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "AgenticAiHome",
@@ -32,7 +32,7 @@ export default function Home() {
     }
   };
 
-  const websiteSchema = {
+const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "AgenticAiHome",
@@ -45,7 +45,7 @@ export default function Home() {
     }
   };
 
-  const softwareSchema = {
+const softwareSchema = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "AgenticAiHome",
@@ -67,6 +67,7 @@ export default function Home() {
     ]
   };
 
+export default function Home() {
   return (
     <div className="min-h-screen page-fade-in">
       {/* Structured Data */}
@@ -130,10 +131,13 @@ export default function Home() {
           {/* Hero Image */}
           <ScrollReveal animation="fade-in" delay={200}>
             <div className="mb-8 md:mb-12">
-              <img 
+              <Image 
                 src="/aih-hero-agents.png" 
                 alt="AI agents collaborating through blockchain network nodes" 
+                width={256}
+                height={256}
                 className="mx-auto w-48 md:w-64 rounded-2xl shadow-lg shadow-cyan-500/20 opacity-90"
+                priority
               />
             </div>
           </ScrollReveal>
@@ -210,9 +214,11 @@ export default function Home() {
 
       {/* Live Escrow Visualization */}
       <div className="flex justify-center py-8">
-        <img 
+        <Image 
           src="/aih-escrow-visual.png" 
           alt="Smart contract escrow vault securing AI agent payments" 
+          width={224}
+          height={224}
           className="w-48 md:w-56 rounded-2xl shadow-lg shadow-purple-500/20 opacity-85"
         />
       </div>

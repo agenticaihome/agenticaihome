@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface StatsData {
   price: number | null;
@@ -8,6 +9,11 @@ interface StatsData {
   blockHeight: number | null;
   difficulty: number | null;
   lastBlockTime: number | null;
+  // Platform stats
+  totalTasks: number | null;
+  totalAgents: number | null;
+  totalEscrowErg: number | null;
+  activeTasks: number | null;
   isLoading: boolean;
 }
 
@@ -22,6 +28,10 @@ export default function ErgoNetworkStats() {
     blockHeight: null,
     difficulty: null,
     lastBlockTime: null,
+    totalTasks: null,
+    totalAgents: null,
+    totalEscrowErg: null,
+    activeTasks: null,
     isLoading: true,
   });
 
@@ -33,11 +43,12 @@ export default function ErgoNetworkStats() {
       return;
     }
 
-    // Simplified fetch - only get essential data to reduce load
+    // Fetch blockchain and platform data in parallel
     const results = await Promise.allSettled([
+      // ERG price from CoinGecko
       fetch('https://api.coingecko.com/api/v3/simple/price?ids=ergo&vs_currencies=usd&include_24hr_change=true', { 
         mode: 'cors',
-        signal: AbortSignal.timeout(5000) // 5 second timeout
+        signal: AbortSignal.timeout(5000)
       })
         .then(r => r.ok ? r.json() : Promise.reject())
         .catch(() => 
@@ -52,15 +63,19 @@ export default function ErgoNetworkStats() {
               return Promise.reject();
             })
         ),
+      // Latest block data
       fetch('https://api.ergoplatform.com/api/v1/blocks?limit=1&sortBy=height&sortDirection=desc', {
         signal: AbortSignal.timeout(5000)
       })
         .then(r => r.ok ? r.json() : Promise.reject()),
+      // Platform stats from Supabase
+      fetchPlatformStats(),
     ]);
 
-    const [priceRes, blockRes] = results;
+    const [priceRes, blockRes, platformRes] = results;
     const priceData = priceRes.status === 'fulfilled' ? priceRes.value : null;
     const blockData = blockRes.status === 'fulfilled' ? blockRes.value : null;
+    const platformData = platformRes.status === 'fulfilled' ? platformRes.value : null;
     const block = blockData?.items?.[0];
 
     const newStats: StatsData = {
@@ -69,6 +84,10 @@ export default function ErgoNetworkStats() {
       blockHeight: block?.height ?? null,
       difficulty: block?.difficulty ?? null,
       lastBlockTime: block?.timestamp ?? null,
+      totalTasks: platformData?.totalTasks ?? null,
+      totalAgents: platformData?.totalAgents ?? null,
+      totalEscrowErg: platformData?.totalEscrowErg ?? null,
+      activeTasks: platformData?.activeTasks ?? null,
       isLoading: false,
     };
 
@@ -76,11 +95,55 @@ export default function ErgoNetworkStats() {
     networkStatsCache = { data: newStats, timestamp: now };
   };
 
+  // Helper function to fetch platform stats from Supabase
+  const fetchPlatformStats = async () => {
+    try {
+      const [tasksRes, agentsRes, escrowRes] = await Promise.allSettled([
+        // Total tasks
+        supabase.from('tasks').select('id', { count: 'exact', head: true }),
+        // Total agents
+        supabase.from('agents').select('id', { count: 'exact', head: true }),
+        // Active tasks (funded, in_progress, review)
+        supabase.from('tasks')
+          .select('id, budgetErg, status')
+          .in('status', ['funded', 'in_progress', 'review']),
+      ]);
+
+      const totalTasks = tasksRes.status === 'fulfilled' ? tasksRes.value.count || 0 : 0;
+      const totalAgents = agentsRes.status === 'fulfilled' ? agentsRes.value.count || 0 : 0;
+      
+      let activeTasks = 0;
+      let totalEscrowErg = 0;
+      
+      if (escrowRes.status === 'fulfilled' && escrowRes.value.data) {
+        activeTasks = escrowRes.value.data.length;
+        totalEscrowErg = escrowRes.value.data.reduce((sum, task) => {
+          return sum + (task.budgetErg || 0);
+        }, 0);
+      }
+
+      return {
+        totalTasks,
+        totalAgents,
+        totalEscrowErg,
+        activeTasks,
+      };
+    } catch (error) {
+      console.error('Failed to fetch platform stats:', error);
+      return {
+        totalTasks: null,
+        totalAgents: null,
+        totalEscrowErg: null,
+        activeTasks: null,
+      };
+    }
+  };
+
   useEffect(() => {
     fetchData();
     
-    // Reduced polling frequency to 3 minutes
-    const interval = setInterval(fetchData, 180000);
+    // Refresh every 60 seconds as requested
+    const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -118,7 +181,7 @@ export default function ErgoNetworkStats() {
   }
 
   // Show error state if all values are null (failed to fetch)
-  if (stats.price === null && stats.blockHeight === null && stats.difficulty === null) {
+  if (stats.price === null && stats.blockHeight === null && stats.difficulty === null && stats.totalTasks === null) {
     return (
       <div className="w-full bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] py-2.5 px-4">
         <div className="container container-xl flex items-center justify-center gap-8 text-xs text-[var(--text-muted)]">
@@ -132,50 +195,100 @@ export default function ErgoNetworkStats() {
   }
 
   return (
-    <div className="w-full bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] py-2.5 px-4">
-      <div className="container container-xl flex flex-wrap items-center justify-center gap-x-8 gap-y-1 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-[var(--text-muted)]">ERG</span>
-          {stats.price !== null ? (
-            <>
-              <span className="font-semibold text-[var(--text-primary)]">${stats.price.toFixed(4)}</span>
-              {stats.priceChange24h !== null && (
-                <span className={`text-xs font-medium ${changeColor}`}>
-                  {changeArrow} {Math.abs(stats.priceChange24h).toFixed(2)}%
-                </span>
-              )}
-            </>
-          ) : (
-            <span className="font-semibold text-[var(--text-secondary)]">—</span>
-          )}
+    <div className="w-full bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] py-3 px-4">
+      <div className="container container-xl">
+        {/* Network Stats Row */}
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm mb-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">ERG</span>
+            {stats.price !== null ? (
+              <>
+                <span className="font-semibold text-[var(--text-primary)]">${stats.price.toFixed(4)}</span>
+                {stats.priceChange24h !== null && (
+                  <span className={`text-xs font-medium ${changeColor}`}>
+                    {changeArrow} {Math.abs(stats.priceChange24h).toFixed(2)}%
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="font-semibold text-[var(--text-secondary)]">—</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">Block</span>
+            {stats.blockHeight !== null ? (
+              <span className="font-semibold text-[var(--accent-cyan)]">#{stats.blockHeight.toLocaleString()}</span>
+            ) : (
+              <span className="font-semibold text-[var(--text-secondary)]">—</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">Difficulty</span>
+            {stats.difficulty !== null ? (
+              <span className="font-semibold text-[var(--accent-purple)]">{formatDifficulty(stats.difficulty)}</span>
+            ) : (
+              <span className="font-semibold text-[var(--text-secondary)]">—</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">Last Block</span>
+            {stats.lastBlockTime !== null ? (
+              <span className="font-medium text-[var(--accent-green)]">{timeAgo(stats.lastBlockTime)}</span>
+            ) : (
+              <span className="font-medium text-[var(--text-secondary)]">—</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-xs text-[var(--text-muted)]">Live</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[var(--text-muted)]">Block</span>
-          {stats.blockHeight !== null ? (
-            <span className="font-semibold text-[var(--accent-cyan)]">#{stats.blockHeight.toLocaleString()}</span>
-          ) : (
-            <span className="font-semibold text-[var(--text-secondary)]">—</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[var(--text-muted)]">Difficulty</span>
-          {stats.difficulty !== null ? (
-            <span className="font-semibold text-[var(--accent-purple)]">{formatDifficulty(stats.difficulty)}</span>
-          ) : (
-            <span className="font-semibold text-[var(--text-secondary)]">—</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[var(--text-muted)]">Last Block</span>
-          {stats.lastBlockTime !== null ? (
-            <span className="font-medium text-[var(--accent-green)]">{timeAgo(stats.lastBlockTime)}</span>
-          ) : (
-            <span className="font-medium text-[var(--text-secondary)]">—</span>
-          )}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-xs text-[var(--text-muted)]">Live</span>
+
+        {/* Platform Stats Row */}
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm border-t border-[var(--border-color)]/30 pt-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">Total Tasks</span>
+            {stats.totalTasks !== null ? (
+              <span className="font-semibold text-[var(--accent-cyan)]">{stats.totalTasks.toLocaleString()}</span>
+            ) : (
+              <span className="font-semibold text-[var(--text-secondary)]">—</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">Active Tasks</span>
+            {stats.activeTasks !== null ? (
+              <span className="font-semibold text-[var(--accent-green)]">{stats.activeTasks.toLocaleString()}</span>
+            ) : (
+              <span className="font-semibold text-[var(--text-secondary)]">—</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">Registered Agents</span>
+            {stats.totalAgents !== null ? (
+              <span className="font-semibold text-[var(--accent-purple)]">{stats.totalAgents.toLocaleString()}</span>
+            ) : (
+              <span className="font-semibold text-[var(--text-secondary)]">—</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">ERG in Escrow</span>
+            {stats.totalEscrowErg !== null ? (
+              <span className="font-semibold text-[var(--accent-amber)]">
+                {stats.totalEscrowErg.toFixed(2)} ERG
+                {stats.price && (
+                  <span className="text-xs text-[var(--text-muted)] ml-1">
+                    (${(stats.totalEscrowErg * stats.price).toFixed(0)})
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span className="font-semibold text-[var(--text-secondary)]">—</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+            <span className="text-xs text-[var(--text-muted)]">Platform</span>
+          </div>
         </div>
       </div>
     </div>

@@ -1,22 +1,15 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import {
+import type {
   WalletState,
-  connectWallet as connectErgoWallet,
-  disconnectWallet as disconnectErgoWallet,
-  getWalletState,
-  signTransaction,
-  submitTransaction,
-  autoReconnectWallet,
-  isWalletAvailable,
-  waitForWallet,
-  WalletError,
-  WalletNotFoundError,
-  WalletConnectionError,
-  WalletRejectedError,
 } from '@/lib/ergo/wallet';
-import { BALANCE_REFRESH_INTERVAL } from '@/lib/ergo/constants';
+
+// Lazy-load wallet module to keep ergo/fleet-sdk out of initial bundle
+const getWalletModule = () => import('@/lib/ergo/wallet');
+
+// Balance refresh interval (duplicated to avoid importing constants eagerly)
+const BALANCE_REFRESH_INTERVAL = 30000;
 import { WalletProfile, createOrUpdateWalletProfile, getWalletProfile } from '@/lib/supabaseStore';
 
 // Wallet context types
@@ -114,14 +107,16 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Wallet extensions inject async — poll for them
-      waitForWallet(5000).then((available) => {
-        setIsAvailable(available);
-        if (available) {
-          handleAutoReconnect();
-        } else {
-          setLoading(false);
-        }
-      });
+      getWalletModule().then(({ waitForWallet }) => 
+        waitForWallet(5000).then((available) => {
+          setIsAvailable(available);
+          if (available) {
+            handleAutoReconnect();
+          } else {
+            setLoading(false);
+          }
+        })
+      );
     } else {
       setLoading(false);
     }
@@ -133,6 +128,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     
     try {
       setConnecting(true);
+      const { autoReconnectWallet } = await getWalletModule();
       const reconnectedState = await autoReconnectWallet();
       
       if (reconnectedState && reconnectedState.address) {
@@ -159,6 +155,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     setError(null);
     
     try {
+      const { connectWallet: connectErgoWallet } = await getWalletModule();
       const walletState = await connectErgoWallet(preferredWallet, ergoPayAddress);
       setWallet(walletState);
       
@@ -182,6 +179,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
   // Disconnect wallet
   const disconnect = useCallback(async () => {
     try {
+      const { disconnectWallet: disconnectErgoWallet } = await getWalletModule();
       await disconnectErgoWallet();
       setWallet(defaultWalletState);
       setProfile(null);
@@ -204,6 +202,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     }
     
     try {
+      const { signTransaction } = await getWalletModule();
       return await signTransaction(tx);
     } catch (error) {
       const errorMessage = getErrorMessage(error);
@@ -219,6 +218,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     }
     
     try {
+      const { submitTransaction } = await getWalletModule();
       const txId = await submitTransaction(tx);
       // Refresh balance after successful transaction
       setTimeout(refreshBalance, 2000); // Wait 2 seconds for blockchain update
@@ -240,6 +240,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
     if (!wallet.connected) return;
     
     try {
+      const { getWalletState } = await getWalletModule();
       const updatedState = await getWalletState();
       setWallet(updatedState);
     } catch (error) {
@@ -338,23 +339,17 @@ export function WalletProvider({ children }: WalletProviderProps): React.JSX.Ele
 
 // Helper function to extract user-friendly error messages
 function getErrorMessage(error: unknown): string {
-  if (error instanceof WalletNotFoundError) {
-    return 'No compatible wallet found. Please install Nautilus Wallet.';
-  }
-  
-  if (error instanceof WalletRejectedError) {
-    return 'Connection was rejected. Please try again.';
-  }
-  
-  if (error instanceof WalletConnectionError) {
-    return 'Failed to connect to wallet. Please try again.';
-  }
-  
-  if (error instanceof WalletError) {
-    return error.message;
-  }
-  
   if (error instanceof Error) {
+    const name = error.constructor?.name || error.name;
+    if (name === 'WalletNotFoundError') {
+      return 'No compatible wallet found. Please install Nautilus Wallet.';
+    }
+    if (name === 'WalletRejectedError') {
+      return 'Connection was rejected. Please try again.';
+    }
+    if (name === 'WalletConnectionError') {
+      return 'Failed to connect to wallet. Please try again.';
+    }
     return error.message;
   }
   

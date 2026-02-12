@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useWallet, useWalletInstallation } from '@/contexts/WalletContext';
 import { formatErgAmount, truncateAddress } from '@/lib/ergo/explorer';
 import { isValidErgoAddress } from '@/lib/ergo/wallet';
+import { createPortal } from 'react-dom';
 import { WalletSelector, WalletType } from './WalletSelector';
 import { ClipboardList } from 'lucide-react';
 
@@ -52,7 +53,7 @@ export default function WalletConnect({ inline, onConnect }: WalletConnectProps)
   };
 
   // ErgoPay address input modal
-  const ergoPayModal = showErgoPayInput && (
+  const ergoPayModal = showErgoPayInput && typeof document !== 'undefined' && createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowErgoPayInput(false)} />
       <div className="relative bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl shadow-black/40">
@@ -98,7 +99,8 @@ export default function WalletConnect({ inline, onConnect }: WalletConnectProps)
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 
   // Inline mode (mobile menu)

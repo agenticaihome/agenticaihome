@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { isMobileDevice } from '@/lib/ergo/ergopay';
 import { isNautilusAvailable } from '@/lib/ergo/wallet';
 
@@ -43,7 +44,7 @@ export function WalletSelector({
 
   if (!isOpen) return null;
 
-  return (
+  const modal = (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div 
@@ -122,6 +123,8 @@ export function WalletSelector({
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }
 
 // Hooks

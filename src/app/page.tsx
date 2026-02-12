@@ -713,9 +713,9 @@ export default function Home() {
             {/* Key Numbers Strip */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-16">
               {[
-                { number: '0', label: 'Security Incidents', icon: '🛡', color: 'green' },
-                { number: 'MIT', label: 'Licensed', icon: '📜', color: 'cyan' },
-                { number: '100%', label: 'On-Chain Settlement', icon: '⚡', color: 'green' },
+                { number: '0', label: 'Security Incidents', icon: '⊡', color: 'green' },
+                { number: 'MIT', label: 'Licensed', icon: '§', color: 'cyan' },
+                { number: '100%', label: 'On-Chain Settlement', icon: '↯', color: 'green' },
                 { number: '< $0.01', label: 'Transaction Fee', icon: '$', color: 'cyan' },
               ].map((stat, index) => (
                 <ScrollReveal key={index} animation="scale-in" delay={index * 100}>

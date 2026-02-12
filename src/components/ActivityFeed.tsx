@@ -69,7 +69,7 @@ export default function ActivityFeed() {
           activities.push({
             id: `tx-${tx.id}`,
             type: 'escrow_funded',
-            icon: '🔒',
+            icon: '⊡',
             description: `Escrow funded: ${tx.amount_erg} ERG locked for '${tx.task_title || 'task'}'`,
             timestamp: tx.date,
             txId: tx.tx_id,
@@ -122,7 +122,7 @@ export default function ActivityFeed() {
           {
             id: 'genesis-1',
             type: 'escrow_funded' as const,
-            icon: '🔒',
+            icon: '⊡',
             description: 'Platform Genesis Fund: 1.0 ERG locked in escrow',
             timestamp: new Date(Date.now() - 3600000).toISOString(),
             txId: 'e9f4da41b5c7e3f8a2d9c6b1e4f7a3d2c5b8e1f4a7d0c3b6e9f2a5d8c1b4e7f0',

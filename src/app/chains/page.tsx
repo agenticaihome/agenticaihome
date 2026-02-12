@@ -190,8 +190,8 @@ export default function ChainsPage() {
           {[
             { key: 'browse', label: 'Browse Chains', icon: '⌕' },
             { key: 'templates', label: 'Templates', icon: '☰' },
-            ...(isAuthenticated ? [{ key: 'my-chains', label: 'My Chains', icon: '🔗' }] : []),
-            ...(isAuthenticated ? [{ key: 'create', label: 'Create New', icon: '➕' }] : [])
+            ...(isAuthenticated ? [{ key: 'my-chains', label: 'My Chains', icon: '⇋' }] : []),
+            ...(isAuthenticated ? [{ key: 'create', label: 'Create New', icon: '+' }] : [])
           ].map(tab => (
             <button
               key={tab.key}
@@ -397,7 +397,7 @@ export default function ChainsPage() {
 
           {!isAuthenticated && (activeTab === 'my-chains' || activeTab === 'create') && (
             <div className="text-center py-12 card">
-              <div className="text-4xl mb-4">🔑</div>
+              <div className="text-4xl mb-4">⊛</div>
               <h3 className="text-lg font-semibold mb-2">Connect Wallet</h3>
               <p className="text-[var(--text-secondary)] mb-4">
                 Connect your wallet to create and manage chains

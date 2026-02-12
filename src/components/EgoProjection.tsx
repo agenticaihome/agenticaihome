@@ -298,7 +298,7 @@ export default function EgoProjection({ currentScore, currentFactors, compact = 
             
             {insights.reachesElite && (
               <div className="flex items-center gap-2">
-                <span className="text-[var(--accent-cyan)]">🟡</span>
+                <span className="text-[var(--accent-cyan)]">◆</span>
                 <span className="text-sm">On track to reach Elite tier!</span>
               </div>
             )}

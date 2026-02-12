@@ -115,7 +115,7 @@ export default function DisputeEvidence({
               {item.fileUrl && (
                 <a href={item.fileUrl} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
-                  📎 {item.fileName || 'Attachment'} {item.fileSize ? `(${formatSize(item.fileSize)})` : ''}
+                  ⊕ {item.fileName || 'Attachment'} {item.fileSize ? `(${formatSize(item.fileSize)})` : ''}
                 </a>
               )}
               <div className="text-gray-500 text-xs mt-2">{formatTime(item.createdAt)}</div>
@@ -160,7 +160,7 @@ export default function DisputeEvidence({
               onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0])} />
             <button type="button" onClick={() => fileInputRef.current?.click()}
               className="px-3 py-2 text-sm border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors">
-              📎 Upload File
+              ⊕ Upload File
             </button>
           </div>
           {uploadedFile && (

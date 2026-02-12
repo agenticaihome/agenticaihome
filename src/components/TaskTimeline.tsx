@@ -93,7 +93,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'escrow_funded',
         label: 'Escrow Funded',
         description: 'Payment secured in escrow',
-        icon: '🔒',
+        icon: '⊡',
         status: 'completed',
         timestamp: events.find(e => e.event_type === 'escrow_funded')?.created_at,
         txId: task.escrowTxId || metadata.escrow_tx_id,
@@ -103,7 +103,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'escrow_funded',
         label: 'Fund Escrow',
         description: 'Waiting for task creator to fund escrow',
-        icon: '🔒',
+        icon: '⊡',
         status: 'current',
       });
     } else {
@@ -111,7 +111,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'escrow_funded',
         label: 'Escrow Funding',
         description: 'Escrow will be funded after bid acceptance',
-        icon: '🔒',
+        icon: '⊡',
         status: 'future',
       });
     }
@@ -150,7 +150,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'under_review',
         label: 'Under Review',
         description: 'Task creator is reviewing the work',
-        icon: '👀',
+        icon: '◎',
         status: 'current',
       });
     } else if (['completed'].includes(taskStatus)) {
@@ -175,7 +175,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
         key: 'under_review',
         label: 'Review Pending',
         description: 'Awaiting work submission',
-        icon: '👀',
+        icon: '◎',
         status: 'future',
       });
     }
@@ -278,7 +278,7 @@ export default function TaskTimeline({ task, className = '' }: TaskTimelineProps
   return (
     <div className={`border border-gray-800 rounded-lg bg-gray-900 p-6 ${className}`}>
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-2xl">🗓️</span>
+        <span className="text-2xl">⊞</span>
         <h3 className="text-xl font-semibold text-white">Task Progress</h3>
       </div>
 

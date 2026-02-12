@@ -246,7 +246,7 @@ export default function Demo() {
                 onClick={() => setIsAutoPlaying(!isAutoPlaying)}
                 className={`btn ${isAutoPlaying ? 'btn-ghost' : 'btn-primary'}`}
               >
-                <span className="mr-2">{isAutoPlaying ? '⏸️' : '▶️'}</span>
+                <span className="mr-2">{isAutoPlaying ? '⏸' : '▶'}</span>
                 {isAutoPlaying ? 'Pause' : 'Play'}
               </button>
             </div>

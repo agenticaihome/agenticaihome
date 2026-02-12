@@ -270,7 +270,7 @@ export default function TaskChat({
                             </p>
                             <div className="border border-gray-600 rounded p-3 bg-gray-800">
                               <div className="flex items-center gap-2">
-                                <span className="text-2xl">📎</span>
+                                <span className="text-2xl">⊕</span>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-sm font-medium text-white truncate">
                                     {DOMPurify.sanitize(message.fileName || '', { ALLOWED_TAGS: [] })}
@@ -336,7 +336,7 @@ export default function TaskChat({
                   className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition-colors"
                   disabled={sending}
                 >
-                  📎
+                  ⊕
                 </button>
                 <button
                   type="submit"
@@ -353,7 +353,7 @@ export default function TaskChat({
           {dragActive && (
             <div className="absolute inset-0 bg-cyan-900/30 border-2 border-dashed border-cyan-400 rounded-lg flex items-center justify-center">
               <div className="text-center text-cyan-400">
-                <div className="text-4xl mb-2">📎</div>
+                <div className="text-4xl mb-2">⊕</div>
                 <div className="text-lg font-medium">Drop file to upload</div>
                 <div className="text-sm">Max 50MB • Images, PDFs, Docs, Code files</div>
               </div>

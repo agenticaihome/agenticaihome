@@ -940,7 +940,7 @@ function ActiveDisputesBanner({ userAddress }: { userAddress: string | null }) {
           className="flex items-center justify-between p-3 bg-red-900/10 border border-red-800/30 rounded-lg hover:bg-red-900/20 transition-colors">
           <div className="flex items-center gap-2">
             <span className={d.status === 'open' ? 'text-red-400' : 'text-yellow-400'}>
-              {d.status === 'open' ? '●' : '🟡'}
+              {d.status === 'open' ? '●' : '◆'}
             </span>
             <span className="text-white text-sm">Dispute on task</span>
             <span className="text-gray-400 text-xs font-mono">{d.task_id?.slice(0, 8)}</span>

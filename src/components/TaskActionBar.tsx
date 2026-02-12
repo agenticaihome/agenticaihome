@@ -58,7 +58,7 @@ export default function TaskActionBar({
     if (!isAuthenticated || !userAddress) {
       return {
         text: 'Connect Wallet',
-        icon: '🔗',
+        icon: '⇋',
         action: () => {},
         variant: 'secondary',
         disabled: false,
@@ -80,7 +80,7 @@ export default function TaskActionBar({
           } else {
             return {
               text: `Review ${bids.length} Bid${bids.length > 1 ? 's' : ''}`,
-              icon: '👀',
+              icon: '◎',
               action: onReviewBids || (() => {}),
               variant: 'primary',
               disabled: false,

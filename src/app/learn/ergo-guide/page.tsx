@@ -302,7 +302,7 @@ export default function ErgoGuidePage() {
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
                   <h4 className="font-semibold text-amber-400 mb-2 flex items-center gap-2">
                     <AlertTriangle size={16} />
-                    🚨 SECURITY FIRST
+                    SECURITY FIRST
                   </h4>
                   <p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-3">
                     <strong>WRITE DOWN YOUR SEED PHRASE.</strong> It's 12-15 words that can recover your wallet if you lose access.
@@ -420,7 +420,7 @@ export default function ErgoGuidePage() {
               <div className="space-y-6">
                 {/* Exchanges */}
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-4">🏦 Centralized Exchanges (CEX)</h3>
+                  <h3 className="text-xl font-bold text-white mb-4">Centralized Exchanges (CEX)</h3>
                   <p className="text-[var(--text-secondary)] mb-4">
                     Traditional exchanges where you can buy ERG with credit card, bank transfer, or other cryptocurrencies.
                   </p>
@@ -476,7 +476,7 @@ export default function ErgoGuidePage() {
 
                 {/* Cross-Chain Bridge */}
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-4">🌉 Cross-Chain Bridge</h3>
+                  <h3 className="text-xl font-bold text-white mb-4">Cross-Chain Bridge</h3>
                   <p className="text-[var(--text-secondary)] mb-4">
                     Already have ADA (Cardano)? Bridge it to Ergo using Rosen Bridge to get rsERG, then swap for native ERG on Mew DEX.
                   </p>
@@ -494,7 +494,7 @@ export default function ErgoGuidePage() {
                 <div className="bg-[var(--bg-secondary)]/30 border border-[var(--border-color)] rounded-xl p-6">
                   <h4 className="font-semibold text-white mb-3 flex items-center gap-2">
                     <Zap size={16} />
-                    ⛏️ Mining ERG
+                    Mining ERG
                   </h4>
                   <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                     Ergo uses Autolykos v2, a GPU-friendly mining algorithm. If you have a graphics card, 

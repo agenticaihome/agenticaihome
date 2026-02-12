@@ -330,9 +330,9 @@ export default function DisputePanel({
     switch (status) {
       case 'disputed': return '⚠';
       case 'evidence_submitted': return '☰';
-      case 'under_review': return '👨‍⚖️';
+      case 'under_review': return '⚖';
       case 'resolved': return '✓';
-      default: return '❓';
+      default: return '?';
     }
   };
 
@@ -421,7 +421,7 @@ export default function DisputePanel({
                   <div className="border border-gray-600 rounded p-3 bg-gray-800">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">📎</span>
+                        <span className="text-lg">⊕</span>
                         <div>
                           <div className="text-white text-sm font-medium">{item.fileName}</div>
                           {item.fileSize && (
@@ -450,7 +450,7 @@ export default function DisputePanel({
       {escrowType === 'multisig' && isMediator && disputeStatus?.status === 'under_review' && (
         <div className="p-6 border-b border-gray-800">
           <h4 className="text-yellow-400 font-semibold mb-4 flex items-center gap-2">
-            <span className="text-xl">👨‍⚖️</span>
+            <span className="text-xl">⚖</span>
             Mediator Resolution Options
           </h4>
           <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
@@ -544,7 +544,7 @@ export default function DisputePanel({
                 <div className="border border-gray-700 rounded-lg p-4 bg-gray-800">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">📎</span>
+                      <span className="text-2xl">⊕</span>
                       <div>
                         <div className="text-white font-medium">{uploadedFile.fileName}</div>
                         <div className="text-gray-400 text-sm">{formatFileSize(uploadedFile.fileSize)}</div>
@@ -574,7 +574,7 @@ export default function DisputePanel({
                     disabled={submitting}
                     className="w-full border-2 border-dashed border-gray-700 hover:border-red-400 rounded-lg p-4 text-center transition-colors"
                   >
-                    <div className="text-2xl mb-2">📎</div>
+                    <div className="text-2xl mb-2">⊕</div>
                     <div className="text-white font-medium">Upload Supporting Evidence</div>
                     <div className="text-gray-400 text-sm">Screenshots, communications, docs, etc.</div>
                   </button>

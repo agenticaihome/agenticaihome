@@ -49,9 +49,9 @@ interface EvidenceItem {
 
 const STATUS_BADGES: Record<string, { label: string; icon: string; cls: string }> = {
   open: { label: 'Open', icon: '●', cls: 'bg-red-500/20 text-red-400 border-red-500/30' },
-  mediation: { label: 'Under Review', icon: '🟡', cls: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  resolved: { label: 'Resolved', icon: '🟢', cls: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  refunded: { label: 'Refunded', icon: '🟢', cls: 'bg-green-500/20 text-green-400 border-green-500/30' },
+  mediation: { label: 'Under Review', icon: '◆', cls: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+  resolved: { label: 'Resolved', icon: '●', cls: 'bg-green-500/20 text-green-400 border-green-500/30' },
+  refunded: { label: 'Refunded', icon: '●', cls: 'bg-green-500/20 text-green-400 border-green-500/30' },
   expired: { label: 'Dismissed', icon: '○', cls: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
 };
 
@@ -260,7 +260,7 @@ function DisputeDetailInner() {
                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${badge.cls}`}>
                   {badge.icon} {badge.label}
                 </span>
-                {isMediator && <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium">👨‍⊖️ You are the mediator</span>}
+                {isMediator && <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded text-xs font-medium">⚖ You are the mediator</span>}
               </div>
               <h1 className="text-2xl font-bold mb-1">{dispute.taskTitle}</h1>
               <p className="text-gray-400 text-sm">Dispute opened {new Date(dispute.createdAt).toLocaleDateString()}</p>
@@ -283,7 +283,7 @@ function DisputeDetailInner() {
               {isAgent && <span className="text-green-400 text-xs">(you)</span>}
             </div>
             <div className="bg-gray-800/50 rounded-lg p-3">
-              <div className="text-yellow-400 font-medium mb-1">⊖️ Mediator</div>
+              <div className="text-yellow-400 font-medium mb-1">⚖ Mediator</div>
               <div className="text-gray-300 font-mono text-xs">
                 {dispute.mediatorAddress ? (dispute.mediatorAddress === PLATFORM_FEE_ADDRESS ? 'AgenticAiHome Platform' : truncAddr(dispute.mediatorAddress)) : 'Not assigned'}
               </div>
@@ -330,7 +330,7 @@ function DisputeDetailInner() {
         {/* Mediator Actions */}
         {canResolve && (
           <div className="border border-yellow-800 rounded-lg bg-yellow-900/10 p-6 mb-6">
-            <h3 className="text-yellow-400 font-semibold text-lg mb-4">👨‍⊖️ Mediator Actions</h3>
+            <h3 className="text-yellow-400 font-semibold text-lg mb-4">Mediator Actions</h3>
             {!splitMode ? (
               <div className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -54,7 +54,7 @@ export default function LiveActivityFeed({
       case 'bid_submitted': return '◎';
       case 'task_completed': return '✓';
       case 'agent_registered': return '●';
-      case 'escrow_funded': return '🔒';
+      case 'escrow_funded': return '⊡';
       case 'payment_released': return '○';
       default: return '↑';
     }

@@ -93,10 +93,10 @@ const lessons: Lesson[] = [
             <div>
               <h3 className="text-purple-400 font-semibold mb-2">What Your Chief of Staff Does</h3>
               <div className="bg-black/40 rounded-lg p-3 text-sm space-y-1">
-                <p>🌅 <strong className="text-white">Morning Briefing:</strong> Weather, calendar, priorities, urgent emails</p>
-                <p>📧 <strong className="text-white">Email Triage:</strong> Urgent flagging, draft replies, archive recommendations</p>
+                <p><strong className="text-white">Morning Briefing:</strong> Weather, calendar, priorities, urgent emails</p>
+                <p><strong className="text-white">Email Triage:</strong> Urgent flagging, draft replies, archive recommendations</p>
                 <p><BarChart3 className="w-4 h-4 text-blue-400 inline" /> <strong className="text-white">Daily Review:</strong> What's done, what's pending, tomorrow's focus</p>
-                <p>🚨 <strong className="text-white">Crisis Mode:</strong> Emergency prioritization and rapid response</p>
+                <p><strong className="text-white">Crisis Mode:</strong> Emergency prioritization and rapid response</p>
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ const lessons: Lesson[] = [
 - Keep everything concise — I'm busy
 - Use bullet points, not paragraphs
 - If you need info, ask ONE question at a time
-- Flag things by urgency: 🔴 Urgent, 🟡 Today, 🟢 This Week
+- Flag things by urgency: [!] Urgent, [~] Today, [+] This Week
 
 **About my business:**
 [DESCRIBE YOUR BUSINESS IN 1-2 SENTENCES]
@@ -149,12 +149,12 @@ Start by asking me: What city are you in, and what does your business do?`}
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <h4 className="font-semibold text-white">📧 Email Triage Workflow</h4>
+                <h4 className="font-semibold text-white">Email Triage Workflow</h4>
                 <CopyPrompt
                   title="Email Triage Assistant"
                   prompt={`I'm going to paste emails from my inbox. For each one, tell me:
 
-1. **Priority:** 🔴 Urgent / 🟡 Today / 🟢 This Week / ⚪ Delete/Ignore
+1. **Priority:** [!] Urgent / [~] Today / [+] This Week / [ ] Delete/Ignore
 2. **Summary:** One sentence max
 3. **Action:** What I should do (Reply, Delegate, Schedule, Archive)
 4. **Draft:** If it needs a reply, write a 2-3 sentence draft
@@ -175,7 +175,7 @@ Here are the emails:
 **The Framework:**
 - <Target className="w-4 h-4 text-red-400 inline" /> **Big 3**: The 3 things that would make this week a win
 -   **Time Blocks**: When I'll do focused work vs. meetings vs. admin
-- 🚨 **Risks**: What might derail me and how to prevent it
+- **Risks**: What might derail me and how to prevent it
 - <Trophy className="w-4 h-4 text-yellow-400 inline" /> **Quick Wins**: Easy tasks I can knock out to build momentum
 
 **My context:**
@@ -264,7 +264,7 @@ Keep each post under 150 words. Make them sound human, not corporate.`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">📧 Email Campaign Creator</h4>
+              <h4 className="font-semibold text-white">Email Campaign Creator</h4>
               <CopyPrompt
                 title="Email Marketing Agent"
                 prompt={`Write a 3-email welcome sequence for new subscribers to my [BUSINESS TYPE] email list.
@@ -294,7 +294,7 @@ Keep each email under 200 words.`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">📞 Lead Follow-Up System</h4>
+              <h4 className="font-semibold text-white">Lead Follow-Up System</h4>
               <CopyPrompt
                 title="Lead Response Agent"
                 prompt={`You are my Lead Follow-Up Agent. Help me respond to potential customers quickly and professionally.
@@ -612,7 +612,7 @@ What's our most frequent customer support challenge?`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">❓ FAQ Generator</h4>
+              <h4 className="font-semibold text-white">FAQ Generator</h4>
               <CopyPrompt
                 title="FAQ Creation Agent"
                 prompt={`Create a comprehensive FAQ for my [BUSINESS TYPE] website.
@@ -677,7 +677,7 @@ Here's an upset customer message:
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">📞 Phone Support Script</h4>
+            <h4 className="font-semibold text-white">Phone Support Script</h4>
             <CopyPrompt
               title="Phone Support Agent"
               prompt={`Create phone support scripts for my [BUSINESS TYPE].
@@ -907,7 +907,7 @@ What's slowing down my current process?`}
         </TryThis>
 
         <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4">
-          <h4 className="font-semibold text-red-400 mb-2">🚨 Cash Flow Warning Signs</h4>
+          <h4 className="font-semibold text-red-400 mb-2">Cash Flow Warning Signs</h4>
           <p className="text-slate-300 text-sm mb-3">Your agent should alert you when:</p>
           <div className="space-y-1 text-sm">
             <div className="flex items-center gap-2">

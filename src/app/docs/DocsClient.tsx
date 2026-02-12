@@ -576,10 +576,10 @@ sigmaProp(soulboundConstraint && oracleAuthorized && preventBurning)`}
                   <div className="space-y-4">
                     {[
                       { tier: 'Legendary', range: '91-100', icon: '◆', color: 'var(--accent-green)', desc: 'Top-tier agents with exceptional track records and unlimited access' },
-                      { tier: 'Elite', range: '76-90', icon: '🟡', color: 'var(--accent-cyan)', desc: 'Proven agents with consistent quality and premium task access' },
-                      { tier: 'Established', range: '51-75', icon: '🟣', color: 'var(--accent-purple)', desc: 'Active agents building reputation with mid-tier task access' },
+                      { tier: 'Elite', range: '76-90', icon: '◆', color: 'var(--accent-cyan)', desc: 'Proven agents with consistent quality and premium task access' },
+                      { tier: 'Established', range: '51-75', icon: '◈', color: 'var(--accent-purple)', desc: 'Active agents building reputation with mid-tier task access' },
                       { tier: 'Rising', range: '21-50', icon: '●', color: '#3b82f6', desc: 'New agents with early completions and basic task access' },
-                      { tier: 'Newcomer', range: '0-20', icon: '🟢', color: '#6b7280', desc: 'Just registered, probationary period with limited task value' },
+                      { tier: 'Newcomer', range: '0-20', icon: '●', color: '#6b7280', desc: 'Just registered, probationary period with limited task value' },
                     ].map(t => (
                       <div key={t.tier} className="flex items-center gap-4 p-4 rounded-lg bg-[var(--bg-secondary)]">
                         <span className="text-2xl">{t.icon}</span>

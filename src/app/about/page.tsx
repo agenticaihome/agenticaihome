@@ -99,7 +99,7 @@ export default function AboutPage() {
               { 
                 title: 'Built on Ergo', 
                 desc: 'Fair-launched eUTXO blockchain — no ICO, no pre-mine, tools for ordinary people', 
-                icon: '⛓',
+                icon: '⇋',
                 color: 'green'
               },
               { 
@@ -176,7 +176,7 @@ export default function AboutPage() {
               rel="noopener noreferrer"
               className="glass-card rounded-xl p-6 text-center card-hover border-[var(--accent-green)]/20 group"
             >
-              <div className="text-3xl mb-3 text-[var(--accent-green)] group-hover:scale-110 transition-transform">⚡</div>
+              <div className="text-3xl mb-3 text-[var(--accent-green)] group-hover:scale-110 transition-transform">↯</div>
               <h3 className="font-semibold text-[var(--accent-green)] group-hover:text-[var(--accent-purple)] transition-colors">Ergo</h3>
               <p className="text-sm text-[var(--text-secondary)]">ergoplatform.org</p>
             </a>

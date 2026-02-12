@@ -80,7 +80,7 @@ const lessons: Lesson[] = [
             <div>
               <h3 className="text-teal-400 font-semibold mb-2">What You'll Wake Up To</h3>
               <div className="bg-black/40 rounded-lg p-3 text-sm space-y-1">
-                <p>☀️ <strong className="text-white">Weather:</strong> 72°F, partly cloudy. No umbrella needed!</p>
+                <p><strong className="text-white">Weather:</strong> 72°F, partly cloudy. No umbrella needed!</p>
                 <p>  <strong className="text-white">Today:</strong> Team meeting 10am, dentist 2pm, grocery pickup 5pm</p>
                 <p><Bell className="w-4 h-4 text-yellow-400 inline" /> <strong className="text-white">Reminder:</strong> Take vitamins (you forgot yesterday!)</p>
                 <p><Zap className="w-4 h-4 text-yellow-400 inline" /> <strong className="text-white">Captain's Tip:</strong> Prep tomorrow's outfit tonight</p>
@@ -146,7 +146,7 @@ const lessons: Lesson[] = [
 
 **Daily briefing (keep it under 120 words):**
 
-🌤️ **Weather** — Look up the real current weather for my city (temp + conditions) and tell me what to wear.
+***Weather** — Look up the real current weather for my city (temp + conditions) and tell me what to wear.
 
   **Top 3 Today** — If I connected my calendar, list my next 3 events. If not, ask me for my 3 main things today.
 
@@ -255,7 +255,7 @@ What's on your schedule today?`}
           </div>
 
           <div className="space-y-4">
-            <h4 className="font-semibold text-white">🌙 Evening Wind-Down</h4>
+            <h4 className="font-semibold text-white">Evening Wind-Down</h4>
             <CopyPrompt
               title="Evening Routine Agent"
               prompt={`You are my Evening Wind-Down Agent. Help me end my day peacefully and prep for tomorrow.
@@ -354,7 +354,7 @@ Ready to plan this week?`}
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">🥘 Recipe Rescue Agent</h4>
+              <h4 className="font-semibold text-white">Recipe Rescue Agent</h4>
               <CopyPrompt
                 title="Recipe Helper"
                 prompt={`You are my Recipe Rescue Agent. I'll tell you what's in my fridge and you suggest dinner.
@@ -376,7 +376,7 @@ Here's what's in my fridge and pantry:`}
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold text-white">🛒 Smart Shopping Agent</h4>
+              <h4 className="font-semibold text-white">Smart Shopping Agent</h4>
               <CopyPrompt
                 title="Shopping List Optimizer"
                 prompt={`You are my Smart Shopping Agent. Help me shop efficiently and save money.

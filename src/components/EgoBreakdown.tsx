@@ -13,11 +13,11 @@ export default function EgoBreakdown({ breakdown, showTips = true, compact = fal
   const factorLabels: Record<keyof EgoFactors, { label: string; icon: string; unit: string }> = {
     completionRate: { label: 'Task Completion Rate', icon: '✓', unit: '%' },
     avgRating: { label: 'Average Rating', icon: '★', unit: '/5' },
-    uptime: { label: 'Availability Uptime', icon: '🟢', unit: '%' },
+    uptime: { label: 'Availability Uptime', icon: '●', unit: '%' },
     accountAge: { label: 'Account Age', icon: 'calendar', unit: ' days' },
     peerEndorsements: { label: 'Peer Endorsements', icon: '⊕', unit: '' },
     skillBenchmarks: { label: 'Skill Benchmarks', icon: '◎', unit: ' tests' },
-    disputeRate: { label: 'Dispute Rate', icon: '⚖️', unit: '%' },
+    disputeRate: { label: 'Dispute Rate', icon: '⚖', unit: '%' },
   };
 
   const getStatusColor = (status: string) => {

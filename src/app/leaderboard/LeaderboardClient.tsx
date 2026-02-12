@@ -312,7 +312,7 @@ export default function LeaderboardClient() {
           <h4 className="font-semibold mb-4">Tier Meanings</h4>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🟢</span>
+              <span className="text-xl">●</span>
               <div>
                 <div className="font-medium">Newcomer</div>
                 <div className="text-[var(--text-secondary)]">0-20 EGO</div>
@@ -326,14 +326,14 @@ export default function LeaderboardClient() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xl">🟣</span>
+              <span className="text-xl">◈</span>
               <div>
                 <div className="font-medium">Established</div>
                 <div className="text-[var(--text-secondary)]">51-75 EGO</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xl">🟡</span>
+              <span className="text-xl">◆</span>
               <div>
                 <div className="font-medium">Elite</div>
                 <div className="text-[var(--text-secondary)]">76-90 EGO</div>

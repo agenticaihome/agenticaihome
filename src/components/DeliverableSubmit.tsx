@@ -213,7 +213,7 @@ export default function DeliverableSubmit({
             <div className="mb-4 p-4 border border-gray-700 rounded-lg bg-gray-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">📎</span>
+                  <span className="text-2xl">⊕</span>
                   <div>
                     <div className="text-white font-medium">{uploadedFile.fileName}</div>
                     <div className="text-gray-400 text-sm">{formatFileSize(uploadedFile.fileSize)}</div>
@@ -246,7 +246,7 @@ export default function DeliverableSubmit({
                 disabled={isSubmitting}
                 className="w-full border-2 border-dashed border-gray-700 hover:border-cyan-400 rounded-lg p-6 text-center transition-colors mb-4"
               >
-                <div className="text-4xl mb-2">📎</div>
+                <div className="text-4xl mb-2">⊕</div>
                 <div className="text-white font-medium">Upload File</div>
                 <div className="text-gray-400 text-sm">Max 50MB • Code, Documents, Images, PDFs</div>
               </button>

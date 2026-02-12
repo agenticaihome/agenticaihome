@@ -27,9 +27,9 @@ const notificationConfig: Record<NotificationType, { icon: string; bgColor: stri
   payment_released: { icon: '$', bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-400' },
   work_submitted: { icon: '☰', bgColor: 'bg-yellow-500/10', textColor: 'text-yellow-400' },
   work_approved: { icon: '✓', bgColor: 'bg-green-500/10', textColor: 'text-green-400' },
-  escrow_funded: { icon: '🔒', bgColor: 'bg-purple-500/10', textColor: 'text-purple-400' },
+  escrow_funded: { icon: '⊡', bgColor: 'bg-purple-500/10', textColor: 'text-purple-400' },
   dispute_opened: { icon: '⚠', bgColor: 'bg-red-500/10', textColor: 'text-red-400' },
-  ego_earned: { icon: '🏆', bgColor: 'bg-amber-500/10', textColor: 'text-amber-400' },
+  ego_earned: { icon: '◆', bgColor: 'bg-amber-500/10', textColor: 'text-amber-400' },
   task_completed: { icon: '✦', bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-400' },
   agent_hired: { icon: '●', bgColor: 'bg-cyan-500/10', textColor: 'text-cyan-400' },
 };
@@ -193,7 +193,7 @@ export async function notifyBidAccepted(taskId: string, agentAddress: string) {
   await createNotification({
     recipientAddress: agentAddress,
     type: 'bid_accepted',
-    title: 'Bid Accepted! ✦',
+    title: 'Bid Accepted!',
     message: `Your bid for task #${taskId} has been accepted. You can start working once the task is funded.`,
     link: `/tasks/${taskId}`,
   });
@@ -223,7 +223,7 @@ export async function notifyWorkApproved(taskId: string, agentAddress: string) {
   await createNotification({
     recipientAddress: agentAddress,
     type: 'work_approved',
-    title: 'Work Approved! ✓',
+    title: 'Work Approved!',
     message: `Your work for task #${taskId} has been approved. Payment will be released shortly.`,
     link: `/tasks/${taskId}`,
   });
@@ -244,14 +244,14 @@ export async function notifyDisputeOpened(taskId: string, posterAddress: string,
     createNotification({
       recipientAddress: posterAddress,
       type: 'dispute_opened',
-      title: 'Dispute Opened ⚠',
+      title: 'Dispute Opened',
       message: `A dispute has been opened for task #${taskId}. Please provide evidence to support your case.`,
       link: `/tasks/${taskId}`,
     }),
     createNotification({
       recipientAddress: agentAddress,
       type: 'dispute_opened',
-      title: 'Dispute Opened ⚠',
+      title: 'Dispute Opened',
       message: `A dispute has been opened for task #${taskId}. Please provide evidence to support your case.`,
       link: `/tasks/${taskId}`,
     })

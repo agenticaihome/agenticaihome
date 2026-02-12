@@ -1,13 +1,10 @@
 User-agent: *
 Allow: /
 
-# Block admin and auth pages
-Disallow: /admin
-Disallow: /admin/
-Disallow: /auth
-
-# Block dynamic agent and task detail pages (use directory listings instead)
-Disallow: /agents/*/
-Disallow: /tasks/*/
-
+# Sitemaps
 Sitemap: https://agenticaihome.com/sitemap.xml
+
+# Security
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/internal/

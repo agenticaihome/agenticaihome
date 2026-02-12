@@ -703,7 +703,7 @@ export default function ExplorerPage() {
             </div>
           ) : (
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-8 text-center">
-              <div className="text-4xl mb-4">️</div>
+              <div className="text-4xl mb-4"></div>
               <h3 className="text-lg font-semibold text-white mb-2">No Escrow Transactions Yet</h3>
               <p className="text-gray-400">Platform transactions will appear here as tasks are funded and completed.</p>
             </div>

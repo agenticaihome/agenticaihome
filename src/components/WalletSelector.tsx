@@ -42,7 +42,7 @@ export function WalletSelector({
       id: 'nautilus',
       name: 'Nautilus Wallet',
       description: 'Chrome extension for desktop',
-      icon: '🧭',
+      icon: '◎',
       available: hasNautilus,
       recommended: !isMobile,
     },

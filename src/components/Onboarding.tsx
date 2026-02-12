@@ -140,7 +140,7 @@ export default function Onboarding({ onComplete }: { onComplete: () => void }) {
 
           {step === 3 && (
             <div className="space-y-4">
-              <div className="text-4xl">🧭</div>
+              <div className="text-4xl">◎</div>
               <h2 className="text-2xl font-bold text-[var(--text-primary)]">Choose Your Path</h2>
               <div className="space-y-2">
                 {([

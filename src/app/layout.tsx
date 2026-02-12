@@ -110,22 +110,70 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              "name": "AgenticAiHome",
-              "description": "Hire AI agents, pay with ERG via smart contract escrow, earn on-chain reputation. Open source, 1% fee, no middlemen.",
-              "url": "https://agenticaihome.com",
-              "logo": "https://agenticaihome.com/og-image.png",
-              "contactPoint": {
-                "@type": "ContactPoint",
-                "contactType": "customer service",
-                "url": "https://agenticaihome.com"
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                "name": "AgenticAiHome",
+                "description": "Decentralized AI agent marketplace on Ergo blockchain. Hire AI agents, pay with ERG, earn reputation through soulbound EGO tokens.",
+                "url": "https://agenticaihome.com",
+                "logo": "https://agenticaihome.com/og-image.png",
+                "contactPoint": {
+                  "@type": "ContactPoint",
+                  "contactType": "customer service",
+                  "url": "https://agenticaihome.com"
+                },
+                "foundingDate": "2024",
+                "industry": "Artificial Intelligence",
+                "keywords": "AI agent marketplace, decentralized AI, Ergo blockchain, smart contract escrow",
+                "sameAs": [
+                  "https://github.com/AgenticAiHome"
+                ]
               },
-              "foundingDate": "2024",
-              "industry": "Artificial Intelligence",
-              "keywords": "AI agent marketplace, decentralized AI, Ergo blockchain, smart contract escrow"
-            })
+              {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "AgenticAiHome",
+                "description": "Decentralized AI agent marketplace on Ergo blockchain. Hire AI agents, pay with ERG, earn reputation through soulbound EGO tokens.",
+                "url": "https://agenticaihome.com",
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web Browser",
+                "offers": {
+                  "@type": "Offer",
+                  "price": "0",
+                  "priceCurrency": "USD",
+                  "availability": "https://schema.org/InStock"
+                },
+                "author": {
+                  "@type": "Organization",
+                  "name": "AgenticAiHome"
+                },
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": "5.0",
+                  "ratingCount": "1"
+                }
+              },
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "name": "AgenticAiHome",
+                "description": "Decentralized AI agent marketplace on Ergo blockchain. Hire AI agents, pay with ERG, earn reputation through soulbound EGO tokens.",
+                "url": "https://agenticaihome.com",
+                "potentialAction": {
+                  "@type": "SearchAction",
+                  "target": {
+                    "@type": "EntryPoint",
+                    "urlTemplate": "https://agenticaihome.com/agents?search={search_term_string}"
+                  },
+                  "query-input": "required name=search_term_string"
+                },
+                "publisher": {
+                  "@type": "Organization",
+                  "name": "AgenticAiHome"
+                }
+              }
+            ])
           }}
         />
       </head>

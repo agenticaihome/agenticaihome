@@ -181,28 +181,31 @@ const DISPUTE_ERGOSCRIPT = `{
   )
 }`;
 
-// ─── Contract compilation ────────────────────────────────────────────
-
-let _compiledDisputeAddress: string | null = null;
+// ─── Contract address ────────────────────────────────────────────────
 
 /**
- * Get or compile the dispute contract P2S address.
+ * Pre-compiled P2S address for the dispute contract V2 (mainnet).
+ * Compiled via node.ergo.watch on 2026-02-11 with treasury address baked in.
+ * Pinned to avoid runtime dependency on compiler node availability.
+ */
+const DISPUTE_CONTRACT_ADDRESS =
+  '5zEErBQ9AccKXaTnipLRCAhRQPU5knhQi7cHpgQwrYobNVPq9NvTtfKEVKkGaqHZB7ZGb1gXUPrPDnDahfBTtREeQSyPJ2Fs9qzZP7tftTaAYckTFZewJ1mire928DSaCfLjeDCiRAQT9b6AsYn5gquC2Z5w55vYi7eHj2FcgZUMVfvo6xWue7Dq8B5sD1huCpWs4vN7516EX8dMy5R8fBDjACBSLAwWMgsRrVRcEFZi35x6ngtsmLd6mYQMUGRSLAQFjaqd5zdridgWevgbMvZJnCCd5vA9DRMc9dq16USWprvJGuXMtW4Q5pgdB7Ebfr2z5DLjEyA2XrD5cySrnfdjLdixEFGTSS5YojqFXGYRzpiQAF6YHMscgo1tzptiNkg3vayVb53ZgRvEtn6f7zAfd3bNYXvmXSHHp65KNNFzTrXi6ePSE49a3m8XZ4zeSBxTQeCCAEgfzDrWAcR4WdeESwcZqJVFv5QfkUvBL57kP4jUBCk5ite8hY4hVtQZa63vDpv6deQ5yfmied27sqa5BypXB7WWX5ojDemKhDZuYvvfpMAafTAx3jSnD5FTGVytsrLNCzg6SxoFM9ahe1btBcJ1qpmUjYS62Xcaya7MuWGt91AK9H5Nt5LgSmxvFe5zHWVz8YExUfj9sq2AZXdUGU1mCpNtABvvrShxRzL48abMLtUDqSUg';
+
+/**
+ * Get the dispute contract P2S address.
+ * Returns pinned pre-compiled address. Falls back to runtime compilation if needed.
  */
 export async function getDisputeContractAddress(): Promise<string> {
-  if (_compiledDisputeAddress) return _compiledDisputeAddress;
+  // Use pinned address — no runtime compilation dependency
+  if (DISPUTE_CONTRACT_ADDRESS) return DISPUTE_CONTRACT_ADDRESS;
 
+  // Fallback: runtime compilation (kept for development/testing)
   try {
-    // Get platform fee address proposition bytes
     const platformAddr = ErgoAddress.fromBase58(PLATFORM_FEE_ADDRESS);
     const platformPropBytes = Buffer.from(platformAddr.ergoTree, 'hex').toString('base64');
-    
-    // Substitute the platform address hash in the script
     const finalScript = DISPUTE_ERGOSCRIPT.replace('${PLATFORM_FEE_ADDRESS_HASH}', platformPropBytes);
-    
     const result = await compileErgoScript(finalScript);
-    _compiledDisputeAddress = result.address;
-    // Contract address compiled and cached
-    return _compiledDisputeAddress;
+    return result.address;
   } catch (err) {
     console.error('Failed to compile dispute contract:', err);
     throw new Error('Could not compile dispute contract. Check node availability.');
@@ -602,11 +605,11 @@ export async function getActiveDisputesByAddress(address: string): Promise<Dispu
 export function validateDisputeParams(params: DisputeParams): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!params.posterAddress || params.posterAddress.length < 10) {
-    errors.push('Invalid poster address');
+  if (!params.posterAddress || params.posterAddress.length < 40 || !params.posterAddress.startsWith('9')) {
+    errors.push('Invalid poster address — must be a valid Ergo mainnet address');
   }
-  if (!params.agentAddress || params.agentAddress.length < 10) {
-    errors.push('Invalid agent address');
+  if (!params.agentAddress || params.agentAddress.length < 40 || !params.agentAddress.startsWith('9')) {
+    errors.push('Invalid agent address — must be a valid Ergo mainnet address');
   }
   if (params.amountNanoErg < MIN_BOX_VALUE) {
     errors.push(`Amount must be at least ${MIN_BOX_VALUE} nanoERG (0.001 ERG)`);

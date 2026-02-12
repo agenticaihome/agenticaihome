@@ -116,7 +116,14 @@ export const ESCROW_ERGOSCRIPT = `{
 }`;
 
 // LIVE CONTRACT ADDRESS: Task Escrow Contract (includes integer underflow protection)
-// This is the DEPLOYED mainnet contract address with real ERG transactions
+// This is the DEPLOYED mainnet contract address with real ERG transactions.
+//
+// AUDIT NOTE (Feb 11, 2026): Contract uses `o.value >= agentPayout` (not strict equality).
+// Risk is LOW because: (1) only client can trigger release (clientPk required),
+// (2) TX builder uses exact amounts, (3) no third party can craft a release TX.
+// The `>=` pattern only allows overpayment to agent, never underpayment.
+// Future escrow contract versions should use tight bounds (>= AND <=) like dispute V2.
+// This contract is IMMUTABLE on-chain — cannot be changed without new deployment.
 export const ESCROW_CONTRACT_ADDRESS = '29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh';
 
 // SOULBOUND EGO TOKEN CONTRACT - Live on mainnet

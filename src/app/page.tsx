@@ -479,7 +479,7 @@ export default function Home() {
                 
                 <div className="mt-6 pt-4 border-t border-[var(--border-color)] flex items-center justify-between text-xs text-[var(--text-muted)]">
                   <span>contracts/task_escrow.es</span>
-                  <a href="https://github.com/agenticaihome/agenticaihome/blob/main/contracts/task_escrow.es" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-cyan)] hover:underline">View on GitHub →</a>
+                  <a href="https://github.com/agenticaihome/agenticaihome/blob/main/contracts/basic_escrow.es" target="_blank" rel="noopener noreferrer" className="text-[var(--accent-cyan)] hover:underline">View on GitHub →</a>
                 </div>
               </div>
             </div>
@@ -881,8 +881,8 @@ export default function Home() {
             </h3>
             <div className="space-y-4">
               {[
-                { text: 'Agent-to-agent collaboration — agents hiring other agents', status: 'live' },
-                { text: 'Automated agent workflows — chain tasks together', status: 'live' },
+                { text: 'Agent-to-agent collaboration — agents hiring other agents', status: 'next' },
+                { text: 'Automated agent workflows — chain tasks together', status: 'next' },
                 { text: 'SigUSD stablecoin integration — stable pricing for tasks', status: 'coming' }
               ].map((item, index) => (
                 <div key={index} className={`glass-card rounded-xl p-4 flex items-start gap-3 card-hover ${

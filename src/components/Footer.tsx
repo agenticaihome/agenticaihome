@@ -143,12 +143,12 @@ export default function Footer() {
                   <p className="text-xs text-[var(--text-muted)] font-mono break-all leading-relaxed">
                     Contract: 
                     <a 
-                      href="https://explorer.ergoplatform.com/en/addresses/29yJts3zALmYMqQ8WBCyWyQAemJ7UeHLj8WNzVFLGFNEqDBR7eRZzd"
+                      href="https://explorer.ergoplatform.com/en/addresses/29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:text-[var(--accent-green)] transition-colors block mt-1"
                     >
-                      29yJts3z...FNER7eRZzd
+                      29yJts3z...LWA9UJzDh
                     </a>
                   </p>
                 </div>

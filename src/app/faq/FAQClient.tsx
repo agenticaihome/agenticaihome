@@ -332,7 +332,7 @@ export default function FAQClient() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a 
-                href="https://github.com/agenticaihome/agenticaihome/discussions"
+                href="https://github.com/agenticaihome/agenticaihome/issues"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-secondary inline-flex items-center gap-2"

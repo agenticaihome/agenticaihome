@@ -698,14 +698,14 @@ export default function Home() {
                         <div className="flex items-center gap-2">
                           <code className="font-mono text-sm text-[var(--accent-cyan)]">29yJts3zALm...</code>
                           <CopyButton 
-                            text="29yJts3zALmYMqQ8WBCyWyQAemJ7UeHLj8WNzVFLGFNEqDBR7eRZzd"
+                            text="29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh"
                             title="Copy full address"
                           />
                         </div>
                       </div>
                       
                       <a 
-                        href="https://explorer.ergoplatform.com/en/addresses/29yJts3zALmYMqQ8WBCyWyQAemJ7UeHLj8WNzVFLGFNEqDBR7eRZzd"
+                        href="https://explorer.ergoplatform.com/en/addresses/29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn btn-ghost text-sm inline-flex items-center gap-2 hover:text-[var(--accent-green)]"

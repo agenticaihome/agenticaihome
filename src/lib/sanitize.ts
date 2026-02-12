@@ -130,11 +130,11 @@ export class RateLimiter {
 export function generateCSP(): string {
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com", // Added Cloudflare analytics
+    "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
     "font-src 'self' fonts.gstatic.com",
     "img-src 'self' data: blob:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.ergoplatform.com https://node.ergo.watch https://corsproxy.io https://cloudflareinsights.com https://api.coingecko.com https://api.spectrum.fi",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.ergoplatform.com https://node.ergo.watch https://corsproxy.io https://cloudflareinsights.com https://www.google-analytics.com https://api.coingecko.com https://api.spectrum.fi",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'"

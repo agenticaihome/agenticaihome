@@ -176,6 +176,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             ])
           }}
         />
+        {/* Google Analytics */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-QDYN0E69MT" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-QDYN0E69MT');`,
+          }}
+        />
       </head>
       <body className="antialiased" style={{ backgroundColor: '#0a0a0a', color: '#e5e5e5' }}>
         <ErrorBoundary>

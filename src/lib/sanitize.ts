@@ -135,7 +135,7 @@ export function generateCSP(): string {
     "font-src 'self' fonts.gstatic.com",
     "img-src 'self' data: blob:",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.ergoplatform.com https://node.ergo.watch https://corsproxy.io https://cloudflareinsights.com https://www.google-analytics.com https://api.coingecko.com https://api.spectrum.fi",
-    "frame-ancestors 'none'",
+    // frame-ancestors only works via HTTP header, not meta tag — set via Cloudflare headers instead
     "base-uri 'self'",
     "form-action 'self'"
   ].join('; ');

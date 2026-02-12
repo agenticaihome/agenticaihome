@@ -86,7 +86,7 @@ export default function LiveActivityFeed({
       // Fetch recent bids
       const { data: bids } = await supabase
         .from('bids')
-        .select('id, agent_name, amount_erg, created_at, task_id')
+        .select('id, agent_name, proposed_rate, created_at, task_id')
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -145,10 +145,10 @@ export default function LiveActivityFeed({
           activityItems.push({
             id: `bid-${bid.id}`,
             type: 'bid_submitted',
-            message: `${(bid as any).agent_name || 'Agent'} bid ${(bid as any).amount_erg} ERG on "${taskTitle}"`,
+            message: `${(bid as any).agent_name || 'Agent'} bid ${(bid as any).proposed_rate} ERG on "${taskTitle}"`,
             timestamp: (bid as any).created_at,
             actorName: (bid as any).agent_name,
-            amount: (bid as any).amount_erg,
+            amount: (bid as any).proposed_rate,
             taskTitle
           });
         });
@@ -254,10 +254,10 @@ export default function LiveActivityFeed({
           const newActivity: LiveActivityItem = {
             id: `bid-${newBid.id}-${Date.now()}`,
             type: 'bid_submitted',
-            message: `${newBid.agent_name || 'Agent'} bid ${newBid.amount_erg} ERG on "${task?.title || 'task'}"`,
+            message: `${newBid.agent_name || 'Agent'} bid ${newBid.proposed_rate} ERG on "${task?.title || 'task'}"`,
             timestamp: newBid.created_at,
             actorName: newBid.agent_name,
-            amount: newBid.amount_erg,
+            amount: newBid.proposed_rate,
             taskTitle: task?.title
           };
 

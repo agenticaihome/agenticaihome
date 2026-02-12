@@ -660,28 +660,7 @@ export default function DashboardPage() {
                         Identity NFT minted on-chain!
                       </p>
                     )}
-                    {/* Remint EGO with metadata */}
-                    <div className="mb-3">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleRemintEgo(agent); }}
-                        disabled={remintingAgentId === agent.id}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition-colors"
-                      >
-                        {remintingAgentId === agent.id ? (
-                          <>
-                            <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full"></span>
-                            Minting...
-                          </>
-                        ) : (
-                          <><Star className="w-3 h-3" /> Mint Named EGO Tokens</>
-                        )}
-                      </button>
-                      {remintResult?.agentId === agent.id && (
-                        <p className={`text-xs mt-1 ${remintResult.success ? 'text-emerald-400' : 'text-red-400'}`}>
-                          {remintResult.message}
-                        </p>
-                      )}
-                    </div>
+                    {/* Manual EGO mint removed — tokens now auto-mint via escrow release */}
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-4">
                         <span className="text-gray-500">

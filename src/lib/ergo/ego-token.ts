@@ -114,15 +114,19 @@ export async function getAllEgoTokens(agentAddress: string): Promise<EgoToken[]>
         const name = token.name || '';
         const isEgoByName = name.startsWith(EGO_TOKEN_PREFIX);
         const isIdentityNft = name.startsWith('AIH-AGENT-');
-        // Include tokens that match EGO prefix OR are unnamed tokens with amount > 1
-        // (Explorer may not index names immediately after minting; EGO = 10, identity = 1)
-        const isLikelyEgo = !name && Number(token.amount) > 1;
-        if (isEgoByName || isLikelyEgo) {
+        // Only include tokens with proper EGO- prefix name (EIP-4 metadata)
+        // Unnamed tokens are legacy mints from before the metadata fix — skip them
+        if (isEgoByName) {
+          let description = '';
+          try {
+            const info = await getTokenInfo(token.tokenId);
+            description = info?.description || '';
+          } catch { /* ignore */ }
           egoTokens.push({
             tokenId: token.tokenId,
-            name: name || `EGO-Token`,
+            name,
             amount: BigInt(token.amount),
-            description: `Soulbound EGO token (contract-locked)`,
+            description: description || `Soulbound EGO token (contract-locked)`,
           });
         }
       }

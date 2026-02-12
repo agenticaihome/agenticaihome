@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { createEscrowTx, releaseEscrowTx, refundEscrowTx } from '@/lib/ergo/escrow';
 import { fundMultiSigEscrow } from '@/lib/ergo/multisig-escrow';
 import { getAvailableMediators } from '@/lib/mediators';
-import { mintEgoAfterRelease, buildLockToSoulboundTx, EGO_TOKENS_PER_COMPLETION } from '@/lib/ergo/ego-token';
+import { mintEgoAfterRelease } from '@/lib/ergo/ego-token';
 import { notifyPaymentReleased } from '@/lib/notifications';
 import { logEscrowFunded, logEscrowReleased, logEscrowRefunded, logEgoMinted } from '@/lib/taskEvents';
 import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction, getCurrentHeight, getCurrentWalletInfo, WalletState } from '@/lib/ergo/wallet';
@@ -405,7 +405,7 @@ export default function EscrowActions({
             return;
           }
           
-          // Step 1: Mint with EIP-4 metadata to minter's address
+          // Atomic single-TX: mints EGO with metadata directly to soulbound contract (V2)
           const egoTx = await mintEgoAfterRelease({
             agentAddress,
             agentName,
@@ -414,31 +414,8 @@ export default function EscrowActions({
           });
           const signedEgo = await signTransaction(egoTx);
           const egoTxId = await submitTransaction(signedEgo);
-          const tokenId = egoTx.inputs[0]?.boxId || egoTxId;
           
-          // Step 2: Lock to soulbound contract (wait for step 1 to confirm)
-          setEgoMintResult({ success: true, txId: egoTxId, message: 'EGO minted! Locking to soulbound...' });
-          await new Promise(resolve => setTimeout(resolve, 25000));
-          
-          try {
-            const [lockUtxos, lockHeight] = await Promise.all([getUtxos(), getCurrentHeight()]);
-            const lockTx = await buildLockToSoulboundTx({
-              tokenId,
-              tokenAmount: EGO_TOKENS_PER_COMPLETION,
-              agentAddress,
-              senderAddress: minterAddress,
-              senderUtxos: lockUtxos,
-              currentHeight: lockHeight,
-            });
-            const signedLock = await signTransaction(lockTx);
-            const lockTxId = await submitTransaction(signedLock);
-            setEgoMintResult({ success: true, txId: lockTxId, message: 'EGO minted & locked to soulbound!' });
-          } catch (lockErr: any) {
-            // Step 1 succeeded — tokens exist with metadata, just not locked yet
-            console.warn('EGO soulbound lock failed (tokens still minted):', lockErr?.message);
-            setEgoMintResult({ success: true, txId: egoTxId, message: 'EGO minted (soulbound lock pending)' });
-          }
-          
+          setEgoMintResult({ success: true, txId: egoTxId });
           logEgoMinted(taskId, agentAddress, egoTxId, 10).catch(() => {});
         } catch (egoErr: any) {
           // EGO mint failure shouldn't block the release success

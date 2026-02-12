@@ -5,10 +5,12 @@ import {
   SConstant,
   SSigmaProp,
   SGroupElement,
+  SByte,
+  SColl,
 } from '@fleet-sdk/core';
 import { getCurrentHeight, getAddressBalance, getTokenInfo } from './explorer';
 import { MIN_BOX_VALUE, RECOMMENDED_TX_FEE, ERGO_EXPLORER_API, ERGO_EXPLORER_UI } from './constants';
-import { SOULBOUND_CONTRACT_ADDRESS } from './ego-token';
+import { SOULBOUND_CONTRACT_ADDRESS, SOULBOUND_CONTRACT_ADDRESS_V1 } from './ego-token';
 import { pubkeyFromAddress } from './address-utils';
 
 // ─── Constants ───────────────────────────────────────────────────────
@@ -70,7 +72,11 @@ export async function buildAgentIdentityMintTx(params: AgentIdentityMintParams):
 
   const agentPubkey = pubkeyFromAddress(agentAddress);
 
-  // Mint to soulbound contract with agent's key in R4
+  // V2: Mint to soulbound contract with EIP-4 metadata in R4-R6, agent key in R7
+  const nameBytes = new TextEncoder().encode(tokenName);
+  const descBytes = new TextEncoder().encode(tokenDescription);
+  const decimalsBytes = new TextEncoder().encode('0');
+
   const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_CONTRACT_ADDRESS)
     .mintToken({
       amount: '1',
@@ -79,7 +85,10 @@ export async function buildAgentIdentityMintTx(params: AgentIdentityMintParams):
       description: tokenDescription,
     })
     .setAdditionalRegisters({
-      R4: SConstant(SSigmaProp(SGroupElement(agentPubkey))),
+      R4: SConstant(SColl(SByte, nameBytes)),          // EIP-4: token name
+      R5: SConstant(SColl(SByte, descBytes)),           // EIP-4: description
+      R6: SConstant(SColl(SByte, decimalsBytes)),       // EIP-4: decimals
+      R7: SConstant(SSigmaProp(SGroupElement(agentPubkey))),  // Soulbound: agent owner
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)
@@ -133,35 +142,42 @@ export async function getAgentIdentityToken(address: string): Promise<AgentIdent
  */
 async function getContractIdentityToken(agentAddress: string): Promise<AgentIdentityToken | null> {
   try {
-    const response = await fetch(
-      `${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`
-    );
-    if (!response.ok) return null;
-    const data = await response.json();
-    const boxes = data.items || data || [];
-
     const agentErgoTree = ErgoAddress.fromBase58(agentAddress).ergoTree;
     const pubkeyHex = agentErgoTree.startsWith('0008cd') ? agentErgoTree.slice(6) : '';
+    if (!pubkeyHex) return null;
 
-    for (const box of boxes) {
-      // Check R4 matches agent
-      const r4 = box.additionalRegisters?.R4;
-      if (!r4) continue;
-      if (!r4.renderedValue?.includes(pubkeyHex) && !r4.serializedValue?.includes(pubkeyHex)) continue;
+    // Check both V1 (R4=pubkey) and V2 (R7=pubkey) contract addresses
+    const [v1Response, v2Response] = await Promise.all([
+      fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V1}?limit=100`).catch(() => null),
+      fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`).catch(() => null),
+    ]);
 
-      // Check for identity token
-      for (const asset of (box.assets || [])) {
-        if (asset.name?.startsWith(AGENT_TOKEN_PREFIX)) {
-          return {
-            tokenId: asset.tokenId,
-            name: asset.name,
-            description: `Soulbound Agent Identity NFT (contract-locked)`,
-            soulbound: true,
-          };
+    const v1Data = v1Response?.ok ? await v1Response.json() : { items: [] };
+    const v2Data = v2Response?.ok ? await v2Response.json() : { items: [] };
+
+    const checkBoxes = (boxes: any[], registerKey: string) => {
+      for (const box of (boxes || [])) {
+        const reg = box.additionalRegisters?.[registerKey];
+        if (!reg) continue;
+        if (!reg.renderedValue?.includes(pubkeyHex) && !reg.serializedValue?.includes(pubkeyHex)) continue;
+        for (const asset of (box.assets || [])) {
+          if (asset.name?.startsWith(AGENT_TOKEN_PREFIX)) {
+            return {
+              tokenId: asset.tokenId,
+              name: asset.name,
+              description: `Soulbound Agent Identity NFT (contract-locked)`,
+              soulbound: true,
+            };
+          }
         }
       }
-    }
-    return null;
+      return null;
+    };
+
+    // Check V2 first (preferred), then V1
+    const v2Result = checkBoxes(v2Data.items || v2Data || [], 'R7');
+    if (v2Result) return v2Result;
+    return checkBoxes(v1Data.items || v1Data || [], 'R4');
   } catch {
     return null;
   }

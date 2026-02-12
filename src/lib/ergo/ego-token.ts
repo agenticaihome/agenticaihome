@@ -15,17 +15,31 @@ import { pubkeyFromAddress } from './address-utils';
 // ─── Soulbound Contract ──────────────────────────────────────────────
 
 /**
- * ErgoScript: Soulbound EGO Token Contract
+ * ErgoScript: Soulbound EGO Token Contract v2
  *
  * Tokens minted to this contract can NEVER be transferred to a different owner.
- * The agent's SigmaProp is stored in R4. To spend the box:
- *   1. Agent must sign (R4 SigmaProp)
+ * R4/R5/R6 are reserved for EIP-4 token metadata (name, description, decimals).
+ * The agent's SigmaProp is stored in R7. To spend the box:
+ *   1. Agent must sign (R7 SigmaProp)
  *   2. Token must go to an output with the SAME contract (propositionBytes)
- *   3. That output must have the SAME agent in R4
+ *   3. That output must have the SAME agent in R7
  *
- * This means the token is permanently bound to the agent who earned it.
+ * This enables atomic single-TX minting with proper on-chain metadata.
  */
-export const SOULBOUND_ERGOSCRIPT = `{
+export const SOULBOUND_ERGOSCRIPT_V2 = `{
+  val agentPk = SELF.R7[SigmaProp].get
+  val egoTokenId = SELF.tokens(0)._1
+  val tokenOutputs = OUTPUTS.filter { (box: Box) =>
+    box.tokens.exists { (t: (Coll[Byte], Long)) => t._1 == egoTokenId }
+  }
+  val soulbound = tokenOutputs.size == 1 &&
+    tokenOutputs(0).propositionBytes == SELF.propositionBytes &&
+    tokenOutputs(0).R7[SigmaProp].get == agentPk
+  agentPk && sigmaProp(soulbound)
+}`;
+
+// V1 contract (R4 = agent pubkey) — kept for reference, old tokens live here
+export const SOULBOUND_ERGOSCRIPT_V1 = `{
   val agentPk = SELF.R4[SigmaProp].get
   val egoTokenId = SELF.tokens(0)._1
   val tokenOutputs = OUTPUTS.filter { (box: Box) =>
@@ -38,11 +52,15 @@ export const SOULBOUND_ERGOSCRIPT = `{
 }`;
 
 /**
- * Pre-compiled P2S address for the soulbound contract (mainnet).
- * Compiled via node.ergo.watch on 2026-02-09.
- * If SOULBOUND_ERGOSCRIPT changes, this MUST be re-compiled.
+ * Pre-compiled P2S address for the soulbound contract v2 (mainnet).
+ * V2 uses R7 for agent pubkey, keeping R4-R6 free for EIP-4 token metadata.
+ * Compiled via node.ergo.watch on 2026-02-11.
  */
 export const SOULBOUND_CONTRACT_ADDRESS =
+  '49AoNXDVGUF3Y1XVFRjUa22LFbYEHB7XGEJqmRZ7BDVRsGgCasqPkxhpzNQfx9ACgJizWaBNHNZiKsjU4Lzm8eUPUvsMJsnb6mzdeKVkDTCLFNo65Qk6vszw6jFijLFs';
+
+/** V1 contract address (R4 = agent pubkey) — old tokens live here, still valid */
+export const SOULBOUND_CONTRACT_ADDRESS_V1 =
   '49AoNXDVGUF3Y1XVFRjUa22LFJjV2pwQiLCd3usdRaAFvZGNXVCMMqaCL8pEBpqFLko8Bmh222hNh7w722E8bMJRuWT3QG2LCxGjRnv6AKrLAY2ZEA1BrngJynGAT79Z';
 
 // ─── Constants ───────────────────────────────────────────────────────
@@ -140,65 +158,51 @@ export async function getAllEgoTokens(agentAddress: string): Promise<EgoToken[]>
 }
 
 /**
- * Get unspent boxes at the soulbound contract address that belong to a specific agent.
- * Checks R4 register for matching agent SigmaProp.
+ * Get unspent boxes at soulbound contract addresses that belong to a specific agent.
+ * Checks V1 (R4) and V2 (R7) contracts for matching agent SigmaProp.
  */
 async function getContractBoxesForAgent(agentAddress: string): Promise<any[]> {
   try {
-    const response = await fetch(
-      `${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`
-    );
-    if (!response.ok) {
-      // Failed to fetch soulbound contract boxes
-      return [];
-    }
-    const data = await response.json();
-    const boxes = data.items || data || [];
+    if (!agentAddress || typeof agentAddress !== 'string') return [];
 
-    // Validate agent address
-    if (!agentAddress || typeof agentAddress !== 'string') {
-      // Invalid agent address for contract box filtering
-      return [];
-    }
-
-    // Get agent's public key from address
+    // Get agent's public key hex
     let agentPubkeyHex: string;
     try {
       const agentErgoTree = ErgoAddress.fromBase58(agentAddress).ergoTree;
-      // For P2PK addresses, the pubkey hex is in the ergoTree after "0008cd"
-      if (!agentErgoTree.startsWith('0008cd') || agentErgoTree.length < 72) {
-        // Agent address is not a valid P2PK address
-        return [];
-      }
-      agentPubkeyHex = agentErgoTree.slice(6); // Remove "0008cd" prefix
-    } catch (error) {
-      console.error('Failed to parse agent address:', error);
-      return [];
-    }
+      if (!agentErgoTree.startsWith('0008cd') || agentErgoTree.length < 72) return [];
+      agentPubkeyHex = agentErgoTree.slice(6);
+    } catch { return []; }
 
-    // Filter boxes where R4 contains this agent's SigmaProp
-    const agentBoxes = boxes.filter((box: any) => {
-      try {
-        const r4 = box.additionalRegisters?.R4;
-        if (!r4) return false;
-        
-        // R4 contains serialized SigmaProp with the agent's public key
-        // Check both serializedValue and renderedValue for the pubkey
-        const serializedValue = r4.serializedValue || '';
-        const renderedValue = r4.renderedValue || '';
-        
-        // More robust matching: check if the pubkey appears in either value
-        const pubkeyFound = serializedValue.toLowerCase().includes(agentPubkeyHex.toLowerCase()) ||
-                           renderedValue.toLowerCase().includes(agentPubkeyHex.toLowerCase());
-        
-        return pubkeyFound;
-      } catch (error) {
-        // Error processing contract box R4 register
-        return false;
-      }
+    // Fetch boxes from both V1 and V2 contracts
+    const [v1Response, v2Response] = await Promise.all([
+      fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS_V1}?limit=100`).catch(() => null),
+      fetch(`${ERGO_EXPLORER_API}/boxes/unspent/byAddress/${SOULBOUND_CONTRACT_ADDRESS}?limit=100`).catch(() => null),
+    ]);
+
+    const v1Data = v1Response?.ok ? await v1Response.json() : { items: [] };
+    const v2Data = v2Response?.ok ? await v2Response.json() : { items: [] };
+    const v1Boxes = v1Data.items || v1Data || [];
+    const v2Boxes = v2Data.items || v2Data || [];
+
+    const matchesPubkey = (registerValue: any) => {
+      if (!registerValue) return false;
+      const serialized = (registerValue.serializedValue || '').toLowerCase();
+      const rendered = (registerValue.renderedValue || '').toLowerCase();
+      const pk = agentPubkeyHex.toLowerCase();
+      return serialized.includes(pk) || rendered.includes(pk);
+    };
+
+    // V1 boxes: agent pubkey in R4
+    const v1Matches = v1Boxes.filter((box: any) => {
+      try { return matchesPubkey(box.additionalRegisters?.R4); } catch { return false; }
     });
 
-    return agentBoxes;
+    // V2 boxes: agent pubkey in R7
+    const v2Matches = v2Boxes.filter((box: any) => {
+      try { return matchesPubkey(box.additionalRegisters?.R7); } catch { return false; }
+    });
+
+    return [...v1Matches, ...v2Matches];
   } catch (error) {
     console.error('Error fetching contract boxes for agent:', error);
     return [];
@@ -273,20 +277,27 @@ export async function buildEgoMintTx(params: EgoMintParams): Promise<any> {
 
   const tokenDescription = `${EGO_DESCRIPTION_PREFIX} ${agentName}. Soulbound — locked by ErgoScript contract.`;
 
-  // Extract agent's public key for R4
   const agentPubkey = pubkeyFromAddress(agentAddress);
 
-  // EIP-4 token metadata (name, desc, decimals) lives in R4/R5/R6 of the minting output.
-  // Our soulbound contract needs R4 for the agent SigmaProp, which conflicts with EIP-4.
-  // Solution: mint to minter's address first (proper EIP-4 metadata gets indexed by explorer),
-  // then transfer to soulbound contract in a separate step.
-  // This ensures the token shows its name on the Ergo explorer.
-  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, minterAddress)
+  // V2 soulbound contract: R7 = agent pubkey, R4-R6 = EIP-4 metadata.
+  // Since we set additionalRegisters, Fleet SDK won't auto-populate EIP-4 from mintToken().
+  // We must explicitly set R4 (name), R5 (description), R6 (decimals) as Coll[Byte].
+  const nameBytes = new TextEncoder().encode(tokenName);
+  const descBytes = new TextEncoder().encode(tokenDescription);
+  const decimalsBytes = new TextEncoder().encode('0');
+
+  const tokenOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_CONTRACT_ADDRESS)
     .mintToken({
       amount: BigInt(amount).toString(),
       name: tokenName,
       decimals: 0,
       description: tokenDescription,
+    })
+    .setAdditionalRegisters({
+      R4: SConstant(SColl(SByte, nameBytes)),          // EIP-4: token name
+      R5: SConstant(SColl(SByte, descBytes)),           // EIP-4: token description
+      R6: SConstant(SColl(SByte, decimalsBytes)),       // EIP-4: decimals
+      R7: SConstant(SSigmaProp(SGroupElement(agentPubkey))),  // Soulbound: agent owner
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)
@@ -346,11 +357,10 @@ export async function mintEgoAfterRelease(params: {
 }
 
 /**
- * Transfer EGO tokens from minter's address to the soulbound contract.
- * Step 2 of the mint flow — after minting with EIP-4 metadata to minter's address,
- * this locks the tokens into the soulbound contract with the agent's pubkey in R4.
+ * @deprecated V2 contract mints directly to soulbound in one TX. No step 2 needed.
+ * Kept for backward compatibility but should not be called.
  */
-export async function buildLockToSoulboundTx(params: {
+export async function buildLockToSoulboundTx(_params: {
   tokenId: string;
   tokenAmount: number;
   agentAddress: string;
@@ -358,34 +368,7 @@ export async function buildLockToSoulboundTx(params: {
   senderUtxos: any[];
   currentHeight: number;
 }): Promise<any> {
-  const { tokenId, tokenAmount, agentAddress, senderAddress, senderUtxos, currentHeight } = params;
-
-  const agentPubkey = pubkeyFromAddress(agentAddress);
-
-  // Find UTXOs that contain the token
-  const tokenUtxos = senderUtxos.filter((utxo: any) =>
-    utxo.assets?.some((a: any) => a.tokenId === tokenId)
-  );
-
-  if (tokenUtxos.length === 0) {
-    throw new Error('No UTXOs found containing the EGO token. Wait for mint TX to confirm.');
-  }
-
-  const soulboundOutput = new OutputBuilder(MIN_BOX_VALUE, SOULBOUND_CONTRACT_ADDRESS)
-    .addTokens([{ tokenId, amount: BigInt(tokenAmount).toString() }])
-    .setAdditionalRegisters({
-      R4: SConstant(SSigmaProp(SGroupElement(agentPubkey))),
-    });
-
-  const unsignedTx = new TransactionBuilder(currentHeight)
-    .from(senderUtxos)
-    .to([soulboundOutput])
-    .sendChangeTo(senderAddress)
-    .payFee(RECOMMENDED_TX_FEE)
-    .build()
-    .toEIP12Object();
-
-  return unsignedTx;
+  throw new Error('buildLockToSoulboundTx is deprecated. V2 contract mints directly to soulbound in one atomic TX.');
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────

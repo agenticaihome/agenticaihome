@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { createMilestoneEscrowTx, releaseMilestoneTx, refundMilestoneEscrowTx, parseMilestoneEscrowBox, calculateMilestoneProgress } from '@/lib/ergo/milestone-escrow';
-import { mintEgoAfterRelease, buildLockToSoulboundTx, EGO_TOKENS_PER_COMPLETION } from '@/lib/ergo/ego-token';
+import { mintEgoAfterRelease, EGO_TOKENS_PER_COMPLETION } from '@/lib/ergo/ego-token';
 import { notifyPaymentReleased } from '@/lib/notifications';
 import { logEscrowFunded, logEscrowReleased, logEscrowRefunded, logEgoMinted } from '@/lib/taskEvents';
 import { connectWallet, getUtxos, getAddress, signTransaction, submitTransaction, getCurrentHeight, getCurrentWalletInfo, WalletState } from '@/lib/ergo/wallet';
@@ -211,7 +211,7 @@ export default function MilestoneEscrowActions({
       // Calculate milestone payment amount for logging
       const milestonePayment = (totalAmountNanoErg * BigInt(milestones[currentMilestone].percentage)) / BigInt(10000);
       
-      // Try to mint EGO tokens for this milestone (two-step: mint with metadata → lock to soulbound)
+      // Atomic single-TX: mint EGO with metadata directly to soulbound contract (V2)
       try {
         const userUtxos = await getUtxos(currentUserAddress || '');
         const egoTx = await mintEgoAfterRelease({
@@ -222,29 +222,9 @@ export default function MilestoneEscrowActions({
         });
         const signedEgo = await signTransaction(egoTx);
         const egoTxId = await submitTransaction(signedEgo);
-        const tokenId = egoTx.inputs[0]?.boxId || egoTxId;
         
         await logEgoMinted(taskId, currentUserAddress || '', egoTxId, EGO_TOKENS_PER_COMPLETION);
         setEgoMintResult({ success: true, txId: egoTxId });
-        
-        // Step 2: Lock to soulbound (non-blocking, best effort)
-        setTimeout(async () => {
-          try {
-            const [lockUtxos, lockHeight] = await Promise.all([getUtxos(currentUserAddress || ''), getCurrentHeight()]);
-            const lockTx = await buildLockToSoulboundTx({
-              tokenId,
-              tokenAmount: EGO_TOKENS_PER_COMPLETION,
-              agentAddress,
-              senderAddress: currentUserAddress || '',
-              senderUtxos: lockUtxos,
-              currentHeight: lockHeight,
-            });
-            const signedLock = await signTransaction(lockTx);
-            await submitTransaction(signedLock);
-          } catch (lockErr: any) {
-            console.warn('EGO soulbound lock failed (tokens still minted):', lockErr?.message);
-          }
-        }, 25000);
       } catch (egoErr) {
         console.warn('EGO minting failed (non-critical):', egoErr);
         setEgoMintResult({ success: false, error: 'EGO minting failed' });

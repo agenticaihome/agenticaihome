@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { useCommandPalette } from "@/components/CommandPalette";
+import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { AlertTriangle } from 'lucide-react';
 
 const CommandPalette = dynamic(() => import('@/components/CommandPalette').then(m => ({ default: m.default })), { ssr: false });

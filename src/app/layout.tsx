@@ -91,9 +91,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         {/* Performance: Preconnect to external domains */}
         <link rel="preconnect" href="https://thjialaevqwyiyyhbdxk.supabase.co" />
-        <link rel="preconnect" href="https://api.ergoplatform.com" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         
         {/* Additional Security Headers */}
         <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -101,7 +98,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         
         {/* Performance: DNS Prefetch */}
         <link rel="dns-prefetch" href="https://thjialaevqwyiyyhbdxk.supabase.co" />
-        <link rel="dns-prefetch" href="https://api.ergoplatform.com" />
         
         {/* Performance: Preload critical hero image */}
         <link rel="preload" href="/aih-hero-agents.webp" as="image" type="image/webp" />

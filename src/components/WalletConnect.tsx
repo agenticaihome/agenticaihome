@@ -53,7 +53,7 @@ export default function WalletConnect({ inline, onConnect }: WalletConnectProps)
 
   // ErgoPay address input modal
   const ergoPayModal = showErgoPayInput && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowErgoPayInput(false)} />
       <div className="relative bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl shadow-black/40">
         <div className="px-6 pt-6 pb-4">

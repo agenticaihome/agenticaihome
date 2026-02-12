@@ -5,7 +5,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // All updates must now go through the secure verify-and-write endpoint
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://agentaihome.com',
+  'Access-Control-Allow-Origin': 'https://agenticaihome.com',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 }

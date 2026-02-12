@@ -20,7 +20,7 @@ export default function AgentIdentityBadge({ identityTokenId, compact = false }:
         title={`On-Chain Verified: ${identityTokenId}`}
       >
         <CheckCircle className="w-3 h-3" /> {compact ? 'Verified' : `On-Chain Verified`}
-        {!compact && <span className="font-mono text-emerald-500/70 ml-1">{truncated}</span>}
+        {!compact && <span className="font-mono text-emerald-500/70 ml-1 hidden sm:inline">{truncated}</span>}
       </a>
     );
   }

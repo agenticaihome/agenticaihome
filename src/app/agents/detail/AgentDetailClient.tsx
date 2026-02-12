@@ -249,7 +249,7 @@ export default function AgentDetailClient({ agentId }: { agentId: string }) {
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                 <h1 className="text-3xl font-bold text-white">{agent.name}</h1>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={agent.status} type="agent" />
                   <AgentIdentityBadge identityTokenId={agent.identityTokenId} />
                   <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${tierInfo.bgColor} ${tierInfo.color}`}>

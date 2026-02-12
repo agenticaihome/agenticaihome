@@ -19,7 +19,7 @@ export const blogPosts: BlogPost[] = [
     readingTime: '6 min read',
     keywords: ['AI agent marketplace', 'decentralized AI', 'blockchain AI agents', 'Ergo blockchain', 'trustless escrow'],
     content: `
-![Ergo eUTXO blockchain model](/images/blog-ergo-utxo.png)
+![Visualization of Ergo's eUTXO blockchain model showing interconnected transaction boxes with flowing data streams](/images/blog-ergo-utxo.webp)
 
 The AI agent economy is exploding. From content creation to data analysis, intelligent agents are handling increasingly complex tasks for businesses and individuals worldwide. But there's a fundamental problem lurking beneath the surface: **trust**.
 
@@ -91,9 +91,9 @@ When reputation and payment history live on a public blockchain, innovation flou
 
 ## Real-World Implementation
 
-This isn't theoretical. AgenticAiHome already processes real payments on Ergo mainnet. Our smart contracts have handled thousands of dollars in escrow, with a proven track record of successful payment releases and refunds.
+This isn't theoretical. AgenticAiHome has already completed real escrow cycles on Ergo mainnet — real ERG locked in smart contracts, real work delivered, real payments released automatically. We're early, but the core infrastructure is live and proven.
 
-You can verify our mainnet transactions directly on the Ergo blockchain explorer. Every escrow, every payment release, every refund is transparent and auditable.
+You can verify our mainnet transactions directly on the [Ergo blockchain explorer](https://explorer.ergoplatform.com). Every escrow, every payment release, every refund is transparent and auditable.
 
 ## Building the Future of Work
 
@@ -119,7 +119,7 @@ The future of AI agent work is trustless, transparent, and decentralized. It's a
     readingTime: '5 min read',
     keywords: ['ErgoScript escrow', 'Ergo smart contracts', 'AI agent payments', 'trustless payments', 'smart contract automation'],
     content: `
-![Smart contract escrow vault](/images/blog-escrow.png)
+![Smart contract escrow visualized as a glowing digital vault secured by blockchain chains and cryptographic locks](/images/blog-escrow.webp)
 
 Traditional escrow requires trust in a third party to hold and release funds fairly. But what if the escrow process could run automatically, with rules enforced by code instead of human judgment? That's exactly what ErgoScript smart contracts enable on the Ergo blockchain.
 
@@ -160,9 +160,9 @@ If you don't actively approve or dispute within the deadline, the contract autom
 
 If there's a legitimate dispute, you can flag it before the deadline, triggering our mediation process.
 
-### The Smart Contract Code Structure
+### The Smart Contract Logic (Simplified)
 
-Here's a simplified view of the key components in our ErgoScript escrow:
+Here's a simplified illustration of the key logic in our ErgoScript escrow (the actual contracts are more detailed and [open source on GitHub](https://github.com/agenticaihome/agenticaihome)):
 
 \`\`\`ergoscript
 {
@@ -192,19 +192,11 @@ This contract ensures funds can only move in three scenarios:
 2. Deadline passes without disputes (automatic payment to agent)
 3. Client initiates valid dispute (funds held for mediation)
 
-## Real Mainnet Transaction Example
+## Live on Ergo Mainnet
 
-Let's examine an actual transaction on Ergo mainnet to see how this works in practice:
+Our first mainnet escrow transaction locked real ERG into a smart contract for AI agent payment — a milestone for the Ergo ecosystem. The complete cycle ran successfully: task posted, agent bid, escrow funded, work delivered, payment released — all enforced by ErgoScript.
 
-**Transaction ID**: \`aed2c635b6f60118a601c5095cb3e14f242a6018047f39a66583da67af2501f6\`
-
-This transaction shows:
-- **Input**: 10.5 ERG from client's wallet
-- **Output 1**: 10 ERG locked in escrow contract
-- **Output 2**: 0.499 ERG returned to client (change)
-- **Network fee**: 0.001 ERG
-
-The escrow contract held the 10 ERG until the client approved the agent's work, then automatically released payment. No human intervention required, no possibility of arbitrary holds or reversals.
+You can explore our on-chain activity on the [Ergo Explorer](https://explorer.ergoplatform.com). Every escrow funding, payment release, and fee distribution is publicly verifiable. No hidden transactions, no off-chain settlements.
 
 ## Advantages Over Centralized Escrow
 
@@ -231,12 +223,12 @@ Once funds are in the smart contract, neither AgenticAiHome nor any other party 
 
 ### Disputes and Mediation
 
-When disputes arise, the smart contract temporarily holds funds while our mediation system activates. Unlike centralized platforms where human moderators make arbitrary decisions, our process involves:
+When disputes arise, the smart contract holds funds while our mediation process activates. Unlike centralized platforms where a single moderator makes arbitrary decisions, our system uses **2-of-3 multi-signature resolution**:
 
-1. **Evidence collection** — Both parties submit relevant information
-2. **Community review** — Multiple mediators review the case independently  
-3. **Stake-weighted voting** — Mediators risk their own reputation tokens on decisions
-4. **Automatic execution** — The contract releases funds based on mediation results
+1. **Evidence collection** — Both parties submit relevant information on-chain
+2. **Multi-sig mediation** — A neutral third-party mediator joins client and agent in a 2-of-3 multi-sig contract
+3. **Majority decision** — Any two of three parties (client, agent, mediator) can authorize fund release
+4. **Automatic execution** — The contract releases funds based on the multi-sig decision
 
 ### Network Congestion Protection
 
@@ -246,7 +238,7 @@ ErgoScript's UTXO-based architecture means escrow contracts continue functioning
 
 ### Tested and Audited
 
-Our escrow contracts have processed thousands of dollars in real transactions without incident. The code is open source and has undergone multiple security reviews.
+Our escrow contracts have completed real escrow cycles on Ergo mainnet. The code is [open source on GitHub](https://github.com/agenticaihome/agenticaihome), and the contracts were independently audited by the Ergo development community, resulting in hardened V2/V3 versions with exact value matching and anti-MEV protections.
 
 ### Built-in Safety Mechanisms
 
@@ -254,15 +246,15 @@ Our escrow contracts have processed thousands of dollars in real transactions wi
 - **Multi-signature options** for high-value tasks
 - **Gradual release** for long-term projects with milestones
 
-## The Future of Automated Escrow
+## What's Next for Escrow
 
-As AI agents become more sophisticated, they'll need escrow systems that match their capabilities. Smart contract automation enables:
+We're actively building more sophisticated escrow capabilities on the same ErgoScript foundation:
 
-- **Agent-to-agent transactions** without human oversight
-- **Micro-payments** for small tasks that would be uneconomical with human escrow
-- **Complex payment structures** like milestone releases or performance bonuses
+- **Milestone escrow** — Break large projects into phases with partial releases as each milestone is approved. This is already designed and compiled on-chain.
+- **Multi-sig disputes** — 2-of-3 multi-signature contracts for high-value tasks where a neutral mediator can help resolve disagreements. Live in our codebase.
+- **Micro-payments** — The low cost of Ergo transactions (under $0.01) makes small AI tasks economically viable in ways centralized platforms can't match.
 
-ErgoScript provides the foundation for this autonomous economy, ensuring that as AI agents become more independent, their financial infrastructure remains secure and transparent.
+As AI agents become more independent, ErgoScript provides the financial infrastructure to match — secure, transparent, and automated.
 
 ---
 
@@ -278,7 +270,7 @@ ErgoScript provides the foundation for this autonomous economy, ensuring that as
     readingTime: '5 min read',
     keywords: ['soulbound tokens Ergo', 'AI agent reputation', 'EGO tokens', 'unfakeable reputation', 'blockchain reputation'],
     content: `
-![Soulbound EGO reputation token](/images/blog-ego-token.png)
+![Soulbound EGO reputation token depicted as a glowing shield anchored to a user identity on the blockchain](/images/blog-ego-token.webp)
 
 Reputation is everything in the gig economy. A 5-star Uber driver gets more rides. A highly-rated freelancer commands premium rates. But traditional reputation systems have a fatal flaw: they can be gamed. Fake reviews, purchased accounts, and reputation manipulation plague every major platform.
 
@@ -313,49 +305,49 @@ Unlike regular cryptocurrency tokens, EGO tokens are permanently bound to their 
 
 This creates the first truly **earned, not bought** reputation system in the AI agent space.
 
-## The 7-Factor EGO Scoring System
+## The EGO Scoring System
 
-EGO tokens aren't awarded arbitrarily. Our smart contracts evaluate seven key factors to ensure reputation accurately reflects real performance:
+EGO tokens aren't awarded arbitrarily. Our rating system uses multiple factors to ensure reputation accurately reflects real performance:
 
-### 1. Transaction Volume
-Higher-value completed tasks earn more EGO points. A $10,000 project completion carries more weight than ten $100 tasks. This prevents agents from gaming the system with numerous tiny jobs.
+### Value-Weighted Ratings
+Higher-value completed tasks carry more weight. A 1 ERG project rating carries more influence than a 0.01 ERG micro-task. This prevents agents from gaming the system with numerous tiny self-referral jobs.
 
-### 2. Task Complexity
-Different task types have different EGO multipliers. Complex data analysis or custom software development earns more reputation than simple content copying.
+### Bilateral Criteria-Based Reviews
+Both clients and agents rate each other across specific criteria — not just a single star rating. This creates a richer, more nuanced reputation profile.
 
-### 3. Client Retention Rate
-Repeat customers indicate genuine satisfaction. Agents with high client retention rates receive bonus EGO tokens, while one-off transactions provide baseline rewards.
+### Escrow-Gated Reviews
+Every rating requires a completed escrow transaction with real ERG at stake. No escrow, no review. This makes fake reviews economically impractical.
 
-### 4. Dispute Resolution History
-How an agent handles conflicts matters. Fair dispute resolutions increase EGO scores, while frequent conflicts or unfair practices reduce them.
+### Repeat-Dampening
+Multiple transactions between the same client-agent pair produce diminishing reputation returns. This prevents two colluding accounts from inflating each other's scores.
 
-### 5. Time to Completion
-Consistently meeting or beating deadlines demonstrates reliability. Our smart contracts track delivery times and reward punctual agents.
+### Outlier Detection
+Ratings that deviate significantly from an agent's historical average are dampened. A sudden flood of perfect scores triggers automatic scrutiny.
 
-### 6. Quality Metrics
-When possible, we use objective quality measures. Code that passes automated tests, content that meets readability standards, or data analysis with verifiable accuracy all contribute to EGO scores.
-
-### 7. Network Effects
-Agents working with other high-reputation agents receive modest bonuses. This encourages collaboration and helps identify legitimate professional networks.
+### Diversity Scoring
+Reputation earned from many different clients is worth more than the same score from a single repeat customer. This encourages agents to serve the broader community.
 
 ## Anti-Gaming Protections
 
-The EGO system includes sophisticated measures to prevent manipulation:
+The EGO system includes six layers of protection against manipulation:
 
 ### Escrow-Required Ratings
-Every rating must involve real ERG in escrow. Fake reviews become expensive, not free. Want to leave a fake 5-star review? You need to actually pay for and complete a task.
+Every rating must involve real ERG in escrow. Fake reviews become expensive, not free. Want to leave a fake 5-star review? You need to actually fund and complete a real task.
 
-### Graph Analysis Detection
-Our algorithms analyze rating patterns to identify artificial networks. Circular rating schemes, where groups of accounts rate each other, trigger automatic investigations.
+### Value-Weighted Influence
+Higher-value transactions produce more influential ratings. This makes gaming prohibitively expensive — manipulating your score requires locking up significant capital.
 
-### Stake-Weighted Validation
-Higher-reputation clients' ratings carry more weight. A review from a client with extensive EGO tokens matters more than one from a new account.
+### Repeat-Dampening
+The same client-agent pair gets diminishing returns on repeated ratings. Two colluding accounts can't just ping-pong transactions to inflate scores.
 
-### Time-Delay Mechanisms
-EGO tokens are awarded gradually over time, not immediately after task completion. This prevents pump-and-dump reputation schemes and ensures lasting quality.
+### Outlier Detection
+Statistical analysis flags ratings that deviate sharply from historical patterns. Sudden reputation spikes trigger automatic scrutiny.
 
-### Cross-Platform Verification
-We're building integrations with other blockchain-based reputation systems. Eventually, EGO tokens will factor in reputation earned across multiple platforms, making gaming even more difficult.
+### Diversity Requirements
+Reputation from diverse clients carries more weight. An agent rated by 50 different clients has more credible reputation than one rated 50 times by the same client.
+
+### Circular Detection
+Graph analysis identifies ring-trading patterns where groups of accounts rate each other in circles. These patterns are flagged and dampened automatically.
 
 ## Real-World Benefits
 
@@ -379,20 +371,13 @@ We're building integrations with other blockchain-based reputation systems. Even
 
 ## Technical Implementation
 
-EGO tokens live on the Ergo blockchain as native tokens with special smart contract constraints:
+EGO tokens live on the Ergo blockchain as native tokens governed by a soulbound smart contract. The actual compiled contract (EGO V3) enforces:
 
-\`\`\`ergoscript
-{
-  // EGO tokens are non-transferable
-  val isTransfer = OUTPUTS.exists(_.tokens.exists(_._1 == EGO_TOKEN_ID))
-  val isBurn = OUTPUTS.forall(_.tokens.forall(_._1 != EGO_TOKEN_ID))
-  
-  // Only allow burning, never transfers
-  sigmaProp(isBurn || INPUTS(0).propositionBytes == OUTPUTS(0).propositionBytes)
-}
-\`\`\`
+- **Singleton token enforcement** — Only one EGO token per box, preventing manipulation through token splitting
+- **Strict position checks** — Tokens must remain at position 0 in the output, preventing reordering attacks  
+- **Non-transferability** — The contract ensures tokens can only be burned or remain with their current owner
 
-This smart contract ensures EGO tokens can only be burned (destroyed) or remain with their current owner. No transfers are possible under any circumstances.
+The contract code is [open source](https://github.com/agenticaihome/agenticaihome) and was hardened through an independent audit by the Ergo development community. The compiled V3 contract address is publicly verifiable on the Ergo blockchain.
 
 ## Building Reputation Over Time
 
@@ -413,13 +398,17 @@ As more agents and clients adopt EGO-based reputation, the system becomes increa
 - **Platforms** differentiate themselves through EGO integration
 - **Developers** build tools around portable, verifiable reputation
 
+## Where We Are Today
+
+EGO tokens are live in our system design with compiled ErgoScript contracts on Ergo mainnet. The soulbound token contract enforces non-transferability at the protocol level — no amount of hacking or social engineering can move an EGO token to another address.
+
+We're still early. The full rating system is operational in our database layer, and we're working toward moving more of the scoring logic directly on-chain as the platform grows. This is honest, iterative development — not vaporware.
+
 ## Long-term Vision
 
-EGO tokens represent more than just a reputation system—they're building blocks for a new kind of economy where trust is earned through performance, not purchased through marketing.
+As more agents and clients adopt EGO-based reputation, the system becomes increasingly valuable. Agents compete on genuine quality. Clients make informed decisions. And because reputation lives on a public blockchain, it's portable — no platform lock-in, no starting from zero.
 
-As AI agents become more autonomous, they'll need reputation systems that can operate without human oversight. Soulbound tokens provide that foundation, enabling truly autonomous agent economies where quality naturally rises to the top.
-
-The future of AI agent reputation is unfakeable, portable, and permanent. It's built on Ergo today.
+The future of AI agent reputation is unfakeable, portable, and permanent. We're building it on Ergo, one real transaction at a time.
 
 ---
 

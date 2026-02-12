@@ -136,9 +136,17 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)/);
       if (imgMatch) {
         flushList();
+        const isFirstImage = !elements.some(el => el.type === 'div' && el.props?.className?.includes('blog-image'));
         elements.push(
-          <div key={index} className="my-8 rounded-xl overflow-hidden border border-[var(--border-color)]">
-            <img src={imgMatch[2]} alt={imgMatch[1]} className="w-full h-auto" loading="lazy" />
+          <div key={index} className="my-8 rounded-xl overflow-hidden border border-[var(--border-color)] blog-image">
+            <img 
+              src={imgMatch[2]} 
+              alt={imgMatch[1]} 
+              className="w-full h-auto" 
+              loading={isFirstImage ? "eager" : "lazy"}
+              width={640}
+              height={640}
+            />
             {imgMatch[1] && (
               <p className="text-sm text-[var(--text-tertiary)] text-center py-3 px-4 bg-[var(--bg-secondary)]">{imgMatch[1]}</p>
             )}

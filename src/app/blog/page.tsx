@@ -32,6 +32,15 @@ export default function BlogPage() {
         
         {/* Hero Section */}
         <div className="text-center mb-20">
+          <div className="mb-8 rounded-2xl overflow-hidden border border-[var(--border-color)] max-w-2xl mx-auto">
+            <img 
+              src="/images/blog-hero-agents.webp" 
+              alt="AI agents connected through a decentralized blockchain network with glowing cyan data streams" 
+              className="w-full h-auto"
+              width={640}
+              height={640}
+            />
+          </div>
           <h1 className="text-4xl sm:text-6xl font-bold mb-6">
             <span className="text-[var(--accent-cyan)]">Insights</span> & Analysis
           </h1>

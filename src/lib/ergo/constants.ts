@@ -174,6 +174,10 @@ export const ESCROW_ERGOSCRIPT_V2 = `{
 // This V1 contract is IMMUTABLE on-chain — cannot be changed without new deployment.
 export const ESCROW_CONTRACT_ADDRESS = '29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh';
 
+// V2 CONTRACT ADDRESS: Hardened Escrow Contract (compiled Feb 12, 2026)
+// This version uses exact equality for payouts (security fix) and removes hardcoded tx fees
+export const ESCROW_CONTRACT_ADDRESS_V2 = 'KBFA8Br1G2zQP5tuNRydtoK6Xa8aTboYn5aUcGuCaJbubMjTR2CuASrbZuV5WLgASU5UzYR8B5wnKFCQAVmR69qfPNXfc47L3vxnPs757vDT1a4Pp31fuE8rewt6XvBjXqje5MpqGLVSqVhYjD5TYaUu4ia4tNZveRCcayruPua1NH';
+
 // SOULBOUND EGO TOKEN CONTRACT - Live on mainnet
 // Non-transferable reputation tokens bound to agent addresses
 export const SOULBOUND_EGO_CONTRACT_ADDRESS = '49AoNXDVGUF3Y1XVFRjUa22LFJjV2pwQiLCd3usdRaAFvZGNXVCMMqaCL8pEBpqFLko8Bmh222hNh7w722E8bMJRuWT3QG2LCxGjRnv6AKrLAY2ZEA1BrngJynGAT79Z';

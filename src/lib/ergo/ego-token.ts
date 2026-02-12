@@ -171,6 +171,10 @@ export const SOULBOUND_CONTRACT_ADDRESS_V2_0 =
 export const SOULBOUND_CONTRACT_ADDRESS_V1 =
   '49AoNXDVGUF3Y1XVFRjUa22LFJjV2pwQiLCd3usdRaAFvZGNXVCMMqaCL8pEBpqFLko8Bmh222hNh7w722E8bMJRuWT3QG2LCxGjRnv6AKrLAY2ZEA1BrngJynGAT79Z';
 
+/** V3 contract address — Ultra-hardened with strict token position enforcement (compiled Feb 12, 2026) */
+export const SOULBOUND_CONTRACT_ADDRESS_V3 =
+  '4rpBVtyT3mwAqMYSGvUUQyuyJvn1Whxpc4k4E5gefnfBGK7dqHnqehe9Nxyubho4NJ4rn5qaFvXwGK7uRTF6VNyqECeeVAVkkyyt5W65MZShFdrt41DB32hYs9me9MuwUf8jGvfK4BvjNghg15QLNdmNaicAqiL8VYbXFzt8VnMrAg67iSXEL9NssQZRE3Ca936z71poiZmbBNMMkTZSj15zrBgo1b3Sz7529FcocTRtZiM6jJGkPaZqVQdhWxH8N46BiYgFp3W31KrVUssARg4HreXr7';
+
 // ─── Constants ───────────────────────────────────────────────────────
 
 const EGO_TOKEN_PREFIX = 'EGO-';

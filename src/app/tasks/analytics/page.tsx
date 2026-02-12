@@ -289,7 +289,7 @@ export default function TaskAnalytics() {
               Task Activity Trends
             </h3>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                 <AreaChart data={taskCreationData}>
                   <XAxis 
                     dataKey="dateDisplay" 
@@ -335,7 +335,7 @@ export default function TaskAnalytics() {
               Task Status Distribution
             </h3>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                 <PieChart>
                   <Pie
                     data={statusDistribution}
@@ -378,7 +378,7 @@ export default function TaskAnalytics() {
               Most Active Categories
             </h3>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minHeight={200}>
                 <BarChart data={categoryStats}>
                   <XAxis 
                     dataKey="skill" 

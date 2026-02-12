@@ -27,12 +27,16 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ chartData, platformSt
   const COLORS = ['#0891b2', '#9333ea', '#16a34a', '#dc2626', '#ea580c', '#7c3aed'];
 
   const renderChart = () => {
-    if (!chartData) return null;
+    if (!chartData) return (
+      <div className="w-full h-[300px] flex items-center justify-center text-[var(--text-secondary)]">
+        No data available
+      </div>
+    );
 
     switch (chartType) {
       case 'tasks':
         return (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={300} minHeight={200}>
             <AreaChart data={chartData.weeklyTasks}>
               <defs>
                 <linearGradient id="tasksGradient" x1="0" y1="0" x2="0" y2="1">
@@ -62,7 +66,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ chartData, platformSt
       
       case 'volume':
         return (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={300} minHeight={200}>
             <AreaChart data={chartData.weeklyVolume}>
               <defs>
                 <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
@@ -92,7 +96,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ chartData, platformSt
 
       case 'agents':
         return (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={300} minHeight={200}>
             <LineChart data={chartData.agentGrowth}>
               <XAxis dataKey="week" />
               <YAxis />
@@ -116,7 +120,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ chartData, platformSt
 
       case 'skills':
         return (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={300} minHeight={200}>
             <PieChart>
               <Pie
                 data={chartData.categories}

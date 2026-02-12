@@ -95,6 +95,12 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setDesktopMoreOpen(!desktopMoreOpen)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setDesktopMoreOpen(false);
+                  if (e.key === 'ArrowDown' && !desktopMoreOpen) { e.preventDefault(); setDesktopMoreOpen(true); }
+                }}
+                aria-expanded={desktopMoreOpen}
+                aria-haspopup="true"
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all min-h-[44px] flex items-center gap-1 ${
                   secondaryLinks.some(l => isActive(l.href))
                     ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10 border border-[var(--accent-cyan)]/20'
@@ -109,11 +115,18 @@ export default function Navbar() {
               {desktopMoreOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setDesktopMoreOpen(false)} />
-                  <div className="absolute left-0 mt-2 w-48 card p-2 shadow-xl z-50 animate-in fade-in duration-200">
+                  <div
+                    className="absolute left-0 mt-2 w-48 card p-2 shadow-xl z-50 animate-in fade-in duration-200"
+                    role="menu"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setDesktopMoreOpen(false);
+                    }}
+                  >
                     {secondaryLinks.map(link => (
                       <a
                         key={link.href}
                         href={link.href}
+                        role="menuitem"
                         className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                           isActive(link.href)
                             ? 'text-[var(--accent-cyan)] bg-[var(--accent-cyan)]/10'

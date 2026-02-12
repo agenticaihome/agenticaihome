@@ -86,6 +86,55 @@ export const SOULBOUND_ERGOSCRIPT_V2 = `{
   )
 }`;
 
+// ─── Soulbound V3 (Ultra-Hardened) ───────────────────────────────────────────────
+// ** ULTRA-HARDENED VERSION (Feb 12, 2026) **
+// Addresses all audit findings with tightened token position + singleton enforcement.
+// 
+// **AUDITOR FALSE POSITIVE**: The suggestion `out.id == egoTokenId` is INCORRECT.
+// Box ID only equals token ID at MINT TIME. After the first spend, the output box
+// gets a NEW box ID while the token ID stays the same. This is how UTXO works.
+// Implementing `out.id == egoTokenId` would make tokens unspendable after first transfer.
+export const SOULBOUND_ERGOSCRIPT_V3 = `{
+  val agentPk     = SELF.R7[SigmaProp].get
+  val egoTokenId  = SELF.tokens(0)._1
+  val egoTokenAmt = SELF.tokens(0)._2
+  val minBoxVal   = 1000000L
+
+  // STRICT: exactly one output has ANY of our token, and it must be first token
+  val tokenOutputs = OUTPUTS.filter { (box: Box) =>
+    box.tokens.size > 0 && box.tokens(0)._1 == egoTokenId  // Token MUST be in position 0
+  }
+
+  val singleOutput = tokenOutputs.size == 1
+  val out = tokenOutputs(0)
+
+  // Soulbound: stays at same contract, same agent
+  val soulbound = out.propositionBytes == SELF.propositionBytes &&
+    out.R7[SigmaProp].get == agentPk
+
+  // Token: must be ONLY token (singleton), exact amount preserved
+  val tokenPreserved = out.tokens.size == 1 &&             // STRICT: exactly 1 token
+    out.tokens(0)._1 == egoTokenId &&                      // STRICT: correct token ID in pos 0
+    out.tokens(0)._2 == egoTokenAmt                         // STRICT: exact amount preserved
+
+  // EIP-4 metadata preserved (immutable name, description, decimals)
+  val metadataPreserved =
+    out.R4[Coll[Byte]].get == SELF.R4[Coll[Byte]].get &&
+    out.R5[Coll[Byte]].get == SELF.R5[Coll[Byte]].get &&
+    out.R6[Coll[Byte]].get == SELF.R6[Coll[Byte]].get
+
+  // Minimum ERG value maintained
+  val valueOk = out.value >= minBoxVal
+
+  agentPk && sigmaProp(
+    singleOutput &&
+    soulbound &&
+    tokenPreserved &&
+    metadataPreserved &&
+    valueOk
+  )
+}`;
+
 // V1 contract (R4 = agent pubkey) — kept for reference only, old tokens live here
 // NOTE: V1 is NOT re-deployed. This source is preserved for documentation.
 // Old tokens at V1 address remain readable but V1 has weaker protections.

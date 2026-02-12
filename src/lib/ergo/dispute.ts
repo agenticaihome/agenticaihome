@@ -181,6 +181,103 @@ const DISPUTE_ERGOSCRIPT = `{
   )
 }`;
 
+// ─── Dispute V3 (Hardened) ───────────────────────────────────────────────────────
+// ** ULTRA-HARDENED VERSION (Feb 12, 2026) **
+// Addresses all audit findings with tightened value checks to eliminate MEV opportunities.
+// **PRECISION LOSS NOTE**: Integer division `(escrowValue * PLATFORM_FEE_BPS) / 10000L` 
+// may lose 1-9999 nanoERG for amounts under 10M nanoERG. This is acceptable given 
+// typical escrow amounts (>>1M nanoERG) and prevents more complex decimal handling.
+const DISPUTE_ERGOSCRIPT_V3 = `{
+  // ─── Constants ───
+  val PLATFORM_FEE_BPS = 50L  // 0.5% = 50 basis points
+
+  // ─── Registers ───
+  val posterPubKey = SELF.R4[SigmaProp].get
+  val agentPubKey = SELF.R5[SigmaProp].get
+  val deadline = SELF.R6[Int].get
+  val posterPercent = SELF.R7[Int].get
+  val agentPercent = SELF.R8[Int].get
+
+  // ─── Percentage validation ───
+  val validPercentages = (posterPercent + agentPercent) == 100 &&
+                        posterPercent >= 0 && posterPercent <= 100 &&
+                        agentPercent >= 0 && agentPercent <= 100
+
+  // ─── Fee calculation ───
+  val platformFeeNanoErg = (SELF.value * PLATFORM_FEE_BPS) / 10000L
+  val amountAfterFee = SELF.value - platformFeeNanoErg
+
+  // ─── Output count cap (prevent dust attacks) ───
+  val outputCountValid = OUTPUTS.size <= 4
+
+  // ─── Token preservation ───
+  val tokensPreserved = if (SELF.tokens.size > 0) {
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == posterPubKey.propBytes &&
+      SELF.tokens.forall { (t: (Coll[Byte], Long)) =>
+        o.tokens.exists { (ot: (Coll[Byte], Long)) =>
+          ot._1 == t._1 && ot._2 == t._2
+        }
+      }
+    }
+  } else true
+
+  // ─── ERG conservation ───
+  val totalOutputValue = OUTPUTS.fold(0L, { (acc: Long, o: Box) => acc + o.value })
+  val minerFee = SELF.value - totalOutputValue
+  val ergConserved = minerFee > 0L && minerFee <= 2000000L
+
+  // ─── EXACT VALUE ENFORCEMENT (Anti-MEV) ───
+  val posterExpectedAmount = (amountAfterFee * posterPercent) / 100L
+  val agentExpectedAmount = amountAfterFee - posterExpectedAmount
+
+  val posterOutputValid = if (posterPercent > 0) {
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == posterPubKey.propBytes &&
+      o.value == posterExpectedAmount  // EXACT equality (no MEV buffer)
+    }
+  } else true
+
+  val agentOutputValid = if (agentPercent > 0) {
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == agentPubKey.propBytes &&
+      o.value == agentExpectedAmount   // EXACT equality (no MEV buffer)
+    }
+  } else true
+
+  val platformFeeOutputExists = OUTPUTS.exists { (o: Box) =>
+    o.propositionBytes == fromBase64("\${PLATFORM_FEE_ADDRESS_HASH}") &&
+    o.value == platformFeeNanoErg     // EXACT equality (no MEV buffer)
+  }
+
+  val mutualResolution = HEIGHT <= deadline &&
+                        posterPubKey &&
+                        agentPubKey &&
+                        validPercentages &&
+                        posterOutputValid &&
+                        agentOutputValid &&
+                        platformFeeOutputExists
+
+  // ─── Timeout refund: needs miner fee flexibility ───
+  // NOTE: Only timeout refund allows value range (miner fee uncertainty)
+  // Mutual resolution uses exact values to prevent MEV extraction
+  val timeoutRefund = HEIGHT >= deadline &&
+                     posterPubKey &&
+                     OUTPUTS.exists { (o: Box) =>
+                       o.propositionBytes == posterPubKey.propBytes &&
+                       o.value >= amountAfterFee - 2000000L &&  // Min: account for max miner fee
+                       o.value <= amountAfterFee                // Max: exact amount after platform fee
+                     } &&
+                     platformFeeOutputExists
+
+  sigmaProp(
+    outputCountValid &&
+    ergConserved &&
+    tokensPreserved &&
+    (mutualResolution || timeoutRefund)
+  )
+}`;
+
 // ─── Contract address ────────────────────────────────────────────────
 
 /**

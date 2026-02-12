@@ -115,15 +115,63 @@ export const ESCROW_ERGOSCRIPT = `{
   clientApproval || timeoutRefund
 }`;
 
+// ─── Escrow V2 (Hardened) ────────────────────────────────────────────────────────
+// ** SECURITY-HARDENED VERSION (Feb 12, 2026) **
+// Addresses all critical audit findings for future deployments.
+// ** NOTE: V1 contract is IMMUTABLE on mainnet — this V2 is for NEW deployments only **
+//
+// FIXES APPLIED:
+// 1. CRITICAL: Changed `>=` to `==` for exact amount matching (prevents fund misdirection)
+// 2. MEDIUM: Removed hardcoded txFee — TX fees handled off-chain by constructor
+// 3. OPTIMIZATION: Removed redundant `protocolFee >= 0L` check
+// 4. DOCUMENTATION: Added warning about token loss and client-paid refund fees
+export const ESCROW_ERGOSCRIPT_V2 = `{
+  // ─── WARNING: Tokens in escrow box will be LOST on release/refund ───
+  // This contract only handles ERG. Any tokens sent to escrow address cannot be recovered.
+  // Client pays transaction fees for timeout refunds (not deducted from escrow).
+
+  val clientPk     = SELF.R4[SigmaProp].get
+  val deadline     = SELF.R6[Int].get
+  val escrowValue  = SELF.value
+  val feePercent   = 1L
+  val feeDenom     = 100L
+  val protocolFee  = escrowValue * feePercent / feeDenom
+  val agentPayout  = escrowValue - protocolFee   // NO txFee deduction (off-chain concern)
+  val agentPkBytes = SELF.R5[Coll[Byte]].get
+  val feePkBytes   = SELF.R7[Coll[Byte]].get
+
+  // Integer overflow protection: ensure all amounts are valid
+  val validAmounts = agentPayout >= 0L &&
+                    agentPayout <= escrowValue &&
+                    (agentPayout + protocolFee) <= escrowValue
+
+  val clientApproval = {
+    clientPk &&
+    validAmounts &&
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == agentPkBytes && o.value == agentPayout  // EXACT match (security fix)
+    } &&
+    OUTPUTS.exists { (o: Box) =>
+      o.propositionBytes == feePkBytes && o.value == protocolFee    // EXACT match (security fix)
+    }
+  }
+
+  val timeoutRefund = {
+    sigmaProp(HEIGHT > deadline) && clientPk
+  }
+
+  clientApproval || timeoutRefund
+}`;
+
 // LIVE CONTRACT ADDRESS: Task Escrow Contract (includes integer underflow protection)
 // This is the DEPLOYED mainnet contract address with real ERG transactions.
 //
-// AUDIT NOTE (Feb 11, 2026): Contract uses `o.value >= agentPayout` (not strict equality).
+// AUDIT NOTE (Feb 12, 2026): V1 contract uses `o.value >= agentPayout` (not strict equality).
 // Risk is LOW because: (1) only client can trigger release (clientPk required),
 // (2) TX builder uses exact amounts, (3) no third party can craft a release TX.
 // The `>=` pattern only allows overpayment to agent, never underpayment.
-// Future escrow contract versions should use tight bounds (>= AND <=) like dispute V2.
-// This contract is IMMUTABLE on-chain — cannot be changed without new deployment.
+// ** V2 CONTRACT AVAILABLE **: ESCROW_ERGOSCRIPT_V2 above uses exact equality for new deployments.
+// This V1 contract is IMMUTABLE on-chain — cannot be changed without new deployment.
 export const ESCROW_CONTRACT_ADDRESS = '29yJts3zALmvcVeYTVqzyXqzrwviZRDTGCCNzX7aLTKxYzP7TXoX6LNvR2w7nRhBWsk86dP3fMHnLvUn5TqwQVvf2ffFPrHZ1bN7hzuGgy6VS4XAmXgpZv3rGu7AA7BeQE47ASQSwLWA9UJzDh';
 
 // SOULBOUND EGO TOKEN CONTRACT - Live on mainnet

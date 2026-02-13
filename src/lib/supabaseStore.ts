@@ -1203,7 +1203,7 @@ export async function getTaskMessages(taskId: string): Promise<TaskMessage[]> {
 }
 
 /**
- * Send a message to a task chat
+ * Send a message to a task chat (routed through verifiedWrite for server-side auth)
  */
 export async function sendTaskMessage(
   taskId: string,
@@ -1212,30 +1212,48 @@ export async function sendTaskMessage(
   type: TaskMessage['messageType'] = 'text',
   fileUrl?: string,
   fileName?: string,
-  fileSize?: number
+  fileSize?: number,
+  auth?: WalletAuth
 ): Promise<TaskMessage | null> {
-  const messageData = {
-    task_id: taskId,
-    sender_address: senderAddress,
-    message: sanitizeText(message, 5000),
-    message_type: type,
-    file_url: fileUrl,
-    file_name: fileName ? sanitizeText(fileName, 255) : undefined,
-    file_size: fileSize,
-  };
+  // System messages bypass wallet auth (server-side only)
+  if (type === 'system' || senderAddress === 'system') {
+    const { data, error } = await supabase
+      .from('task_messages')
+      .insert({
+        task_id: taskId,
+        sender_address: 'system',
+        message: sanitizeText(message, 5000),
+        message_type: 'system',
+      })
+      .select()
+      .single();
+    if (error) {
+      console.error('Error sending system message:', error);
+      return null;
+    }
+    return data ? dbToTaskMessage(data) : null;
+  }
 
-  const { data, error } = await supabase
-    .from('task_messages')
-    .insert(messageData)
-    .select()
-    .single();
-
-  if (error) {
-    console.error('Error sending task message:', error);
+  // User messages MUST go through verifiedWrite
+  if (!auth) {
+    console.error('WalletAuth required to send messages');
     return null;
   }
 
-  return data ? dbToTaskMessage(data) : null;
+  try {
+    const result = await verifiedWrite<Record<string, unknown>>('send-message', {
+      taskId,
+      message,
+      messageType: type,
+      fileUrl: fileUrl || null,
+      fileName: fileName || null,
+      fileSize: fileSize || null,
+    }, auth);
+    return result ? dbToTaskMessage(result) : null;
+  } catch (error) {
+    console.error('Error sending task message:', error);
+    return null;
+  }
 }
 
 /**

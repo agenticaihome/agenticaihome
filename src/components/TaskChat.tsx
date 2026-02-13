@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useWallet } from '@/contexts/WalletContext';
 import { useToast } from '@/contexts/ToastContext';
-import { getTaskMessages, sendTaskMessage, uploadTaskFile, type TaskMessage } from '@/lib/supabaseStore';
+import { getTaskMessages, sendTaskMessage, uploadTaskFile, withWalletAuth, type TaskMessage } from '@/lib/supabaseStore';
+import type { WalletAuth } from '@/lib/supabase';
 import DOMPurify from 'isomorphic-dompurify';
 import { MessageSquare } from 'lucide-react';
 
@@ -79,6 +80,16 @@ const TaskChat = memo(function TaskChat({
     }
   }, [isCollapsed]);
 
+  // Get wallet auth for verified writes
+  const getAuth = async (): Promise<WalletAuth> => {
+    if (!userAddress) throw new Error('Not connected');
+    return withWalletAuth(userAddress, async (msg) => {
+      const ergo = (window as any).ergo;
+      if (!ergo?.auth) throw new Error('Wallet auth not available — please connect Nautilus');
+      return await ergo.auth(userAddress, msg);
+    });
+  };
+
   // Send text message
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,11 +98,16 @@ const TaskChat = memo(function TaskChat({
     
     setSending(true);
     try {
+      const auth = await getAuth();
       const message = await sendTaskMessage(
         taskId,
         userAddress,
         newMessage.trim(),
-        'text'
+        'text',
+        undefined,
+        undefined,
+        undefined,
+        auth
       );
       
       if (message) {
@@ -113,6 +129,7 @@ const TaskChat = memo(function TaskChat({
 
     setSending(true);
     try {
+      const auth = await getAuth();
       const result = await uploadTaskFile(taskId, file);
       if (result) {
         const message = await sendTaskMessage(
@@ -122,7 +139,8 @@ const TaskChat = memo(function TaskChat({
           'file',
           result.url,
           result.fileName,
-          result.fileSize
+          result.fileSize,
+          auth
         );
         
         if (message) {

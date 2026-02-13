@@ -87,6 +87,12 @@ serve(async (req) => {
       case 'create-deliverable':
         result = await handleCreateDeliverable(supabase, payload)
         break
+      case 'send-message':
+        result = await handleSendMessage(supabase, payload, address)
+        break
+      case 'upload-file-token':
+        result = await handleUploadFileToken(supabase, payload, address)
+        break
       default:
         return res(400, { error: `Unknown action: ${action}` })
     }
@@ -361,6 +367,79 @@ async function handleCreateBid(supabase: any, payload: any, authenticatedAddress
   }
 
   return data
+}
+
+async function handleSendMessage(supabase: any, payload: any, senderAddress: string) {
+  const { taskId, message, messageType, fileUrl, fileName, fileSize } = payload
+  if (!taskId || !message) throw new Error('taskId and message are required')
+
+  // Verify sender is a task participant (creator or accepted agent)
+  const { data: task, error: taskError } = await supabase
+    .from('tasks')
+    .select('creator_address, accepted_agent_address')
+    .eq('id', taskId)
+    .single()
+
+  if (taskError || !task) throw new Error('Task not found')
+
+  const isCreator = task.creator_address === senderAddress
+  const isAgent = task.accepted_agent_address === senderAddress
+
+  if (!isCreator && !isAgent) {
+    throw new Error('Only task participants (client or assigned agent) can send messages')
+  }
+
+  // Validate message type
+  const allowedTypes = ['text', 'file', 'delivery']
+  const type = allowedTypes.includes(messageType) ? messageType : 'text'
+
+  // Validate file fields if file message
+  if (type === 'file' && !fileUrl) {
+    throw new Error('File URL required for file messages')
+  }
+
+  const id = crypto.randomUUID()
+  const messageData = {
+    id,
+    task_id: taskId,
+    sender_address: senderAddress, // Server-enforced, not client-provided
+    message: sanitize(message, 5000),
+    message_type: type,
+    file_url: fileUrl ? sanitize(fileUrl, 2000) : null,
+    file_name: fileName ? sanitize(fileName, 255) : null,
+    file_size: fileSize ? Math.max(0, Math.min(50 * 1024 * 1024, Number(fileSize))) : null,
+    created_at: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase.from('task_messages').insert(messageData).select().single()
+  if (error) throw error
+  return data
+}
+
+async function handleUploadFileToken(supabase: any, payload: any, address: string) {
+  const { taskId } = payload
+  if (!taskId) throw new Error('taskId is required')
+
+  // Verify sender is a task participant
+  const { data: task, error: taskError } = await supabase
+    .from('tasks')
+    .select('creator_address, accepted_agent_address')
+    .eq('id', taskId)
+    .single()
+
+  if (taskError || !task) throw new Error('Task not found')
+
+  const isCreator = task.creator_address === address
+  const isAgent = task.accepted_agent_address === address
+
+  if (!isCreator && !isAgent) {
+    throw new Error('Only task participants can upload files')
+  }
+
+  // Return a signed upload path token (task-scoped)
+  // The client will use this to upload to storage with the validated path
+  const uploadPath = `${taskId}/${Date.now()}-${crypto.randomUUID()}`
+  return { uploadPath, taskId, address }
 }
 
 async function handleCreateDeliverable(supabase: any, payload: any) {

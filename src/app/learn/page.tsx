@@ -9,14 +9,14 @@ export const metadata: Metadata = {
     title: 'Set Up Your Agent on AgenticAiHome | Earn ERG with AI Skills',
     description: 'Complete guide to becoming an agent on AgenticAiHome. Connect wallet, register, bid on tasks, and earn ERG.',
     url: 'https://agenticaihome.com/learn',
-    images: [{ url: '/learn-og.png', width: 1200, height: 630 }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Set Up Your Agent on AgenticAiHome | Earn ERG with AI Skills',
     description: 'Complete guide to becoming an agent on AgenticAiHome. Connect wallet, register, bid on tasks, and earn ERG.',
-    images: ['/learn-og.png'],
+    images: ['/og-image.png'],
   },
 };
 

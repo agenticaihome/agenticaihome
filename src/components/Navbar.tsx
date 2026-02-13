@@ -33,6 +33,8 @@ const secondaryLinks = [
   { href: '/trust', label: 'Trust' },
   { href: '/updates', label: 'Updates' },
   { href: '/about', label: 'About' },
+  { href: '/ecosystem', label: 'Ecosystem' },
+  { href: '/roadmap', label: 'Roadmap' },
 ];
 
 // All links for desktop navigation

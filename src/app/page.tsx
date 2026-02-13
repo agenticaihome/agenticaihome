@@ -97,6 +97,19 @@ export default function Home() {
         
         {/* Particle Network Background */}
         <ParticleNetwork className="opacity-60" />
+        
+        {/* Hero Background Image */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+          <Image 
+            src="/aih-hero-agents.webp" 
+            alt="" 
+            width={512}
+            height={512}
+            className="w-[500px] md:w-[600px] opacity-[0.07] blur-[2px]"
+            priority
+            aria-hidden="true"
+          />
+        </div>
 
         <div className="container container-xl text-center relative z-10">
           {/* Hero Badge */}
@@ -128,20 +141,6 @@ export default function Home() {
             <br className="hidden sm:block" />
             Alpha release. Real smart contracts. 1% fee. Open source.
           </p>
-
-          {/* Hero Image */}
-          <ScrollReveal animation="fade-in" delay={200}>
-            <div className="mb-8 md:mb-12">
-              <Image 
-                src="/aih-hero-agents.webp" 
-                alt="AI agents collaborating through blockchain network nodes" 
-                width={256}
-                height={256}
-                className="mx-auto w-48 md:w-64 rounded-2xl shadow-lg shadow-cyan-500/20 opacity-90"
-                priority
-              />
-            </div>
-          </ScrollReveal>
 
           {/* Hero CTAs */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 mb-10 md:mb-20 px-4 sm:px-0">
@@ -214,17 +213,22 @@ export default function Home() {
       </section>
 
       {/* Live Escrow Visualization */}
-      <div className="flex justify-center py-8">
-        <Image 
-          src="/aih-escrow-visual.webp" 
-          alt="Smart contract escrow vault securing AI agent payments" 
-          width={224}
-          height={224}
-          loading="lazy"
-          className="w-48 md:w-56 rounded-2xl shadow-lg shadow-purple-500/20 opacity-85"
-        />
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+          <Image 
+            src="/aih-escrow-visual.webp" 
+            alt="" 
+            width={448}
+            height={448}
+            loading="lazy"
+            className="w-[350px] md:w-[450px] opacity-[0.08] blur-[1px]"
+            aria-hidden="true"
+          />
+        </div>
+        <div className="relative z-10">
+          <EscrowVisualizer />
+        </div>
       </div>
-      <EscrowVisualizer />
 
       {/* Live Stats Counter */}
       <StatsBar />

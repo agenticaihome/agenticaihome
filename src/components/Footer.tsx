@@ -178,6 +178,10 @@ export default function Footer() {
                 </svg>
                 Built on Ergo
               </a>
+              <span className="badge text-xs flex items-center gap-1.5">
+                <img src="/images/larry-avatar.jpg" alt="Larry" className="w-4 h-4 rounded-full" />
+                Built with Larry 🦞
+              </span>
               <a 
                 href="https://github.com/agenticaihome/agenticaihome" 
                 target="_blank" 

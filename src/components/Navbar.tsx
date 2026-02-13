@@ -8,33 +8,30 @@ import NotificationCenter from './NotificationCenter';
 import GlobalSearch, { useGlobalSearch } from './GlobalSearch';
 import { useWallet } from '@/contexts/WalletContext';
 
-// Primary navigation - always visible on mobile
+// Primary navigation - always visible
 const primaryLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/getting-started', label: 'Get Started', highlight: false },
   { href: '/tasks', label: 'Tasks' },
   { href: '/agents', label: 'Agents' },
+  { href: '/getting-started', label: 'Get Started', highlight: false },
   { href: '/explorer', label: 'Explorer' },
-  { href: '/demo', label: 'Demo' },
   { href: '/dashboard', label: 'Dashboard' },
 ];
 
-// Secondary navigation - grouped in "More" dropdown on mobile
+// Secondary navigation - grouped in "More" dropdown
 const secondaryLinks = [
-  { href: '/blog', label: 'Blog' },
-  { href: '/workflows', label: 'Workflows' },
+  // Understand the project
+  { href: '/about', label: 'About' },
   { href: '/how-it-works', label: 'How It Works' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/leaderboard', label: 'Leaderboard' },
-  { href: '/learn', label: 'Learn' },
+  { href: '/roadmap', label: 'Roadmap' },
+  { href: '/ecosystem', label: 'Ecosystem' },
+  // Go deeper
   { href: '/docs', label: 'Docs' },
-  { href: '/developers', label: 'Developers' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/faq', label: 'FAQ' },
+  // On-chain / reputation
+  { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/ego', label: 'EGO' },
   { href: '/trust', label: 'Trust' },
-  { href: '/updates', label: 'Updates' },
-  { href: '/about', label: 'About' },
-  { href: '/ecosystem', label: 'Ecosystem' },
-  { href: '/roadmap', label: 'Roadmap' },
 ];
 
 // All links for desktop navigation

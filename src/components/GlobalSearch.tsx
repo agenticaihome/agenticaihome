@@ -30,7 +30,12 @@ export default function GlobalSearch({ isOpen, onClose }: SearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
   
-  const { agents, tasks } = useData();
+  const { agents, tasks, ensureLoaded } = useData();
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   // Search function
   const searchResults = useMemo(() => {

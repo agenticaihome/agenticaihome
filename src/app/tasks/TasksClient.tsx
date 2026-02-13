@@ -34,7 +34,7 @@ function TaskBudgetDisplay({ task }: { task: Task }) {
 
 export default function TasksClient() {
   const { userAddress } = useWallet();
-  const { tasks, loading } = useData();
+  const { tasks, loading, ensureLoaded } = useData();
   const { ergToUsdStr } = useErgPrice();
   const [filter, setFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -45,6 +45,11 @@ export default function TasksClient() {
   const [maxBudget, setMaxBudget] = useState<string>('');
   const [escrowTypeFilter, setEscrowTypeFilter] = useState<string>('all');
   const [showMyTasks, setShowMyTasks] = useState(false);
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   // Get all unique skills from tasks
   const allSkills = [...new Set(tasks.flatMap(task => task.skillsRequired))].sort();

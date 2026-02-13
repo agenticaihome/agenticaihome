@@ -72,16 +72,22 @@
     outputBox.propositionBytes == SELF.propositionBytes  // Contract must be preserved
 
   // ── Verify the AVL tree operation ──
-  // The proof cryptographically demonstrates that the tree was correctly updated.
-  // performInsert/performUpdate returns the new digest, which MUST match the output's R4.
-  // We use insert for new agents and update for existing ones.
-  // The off-chain code determines which operation to use and provides the right proof.
-  //
-  // NOTE: In ErgoScript, AvlTree.insert() and .update() take the proof and key-value
-  // pairs as arguments and return Option[AvlTree] with the new digest.
-  // The actual verification that newTreeDigest matches the proof result happens
-  // via the off-chain builder setting R4 to the computed post-operation digest.
-  // The on-chain contract verifies the proof is valid for the current digest.
+  // The proof cryptographically demonstrates the tree was correctly updated.
+  // Context var 1 carries the key-value operations as Coll[(Coll[Byte], Coll[Byte])].
+  // We attempt insert first; if that fails (key exists), we try update.
+  // The resulting digest MUST match the output box's R4.
+  val operations = getVar[Coll[(Coll[Byte], Coll[Byte])]](1).get
+
+  // Try insert (for new agents) — returns Option[AvlTree]
+  val insertResult = currentTreeDigest.insert(operations, proof)
+  // Try update (for existing agents) — returns Option[AvlTree]
+  val updateResult = currentTreeDigest.update(operations, proof)
+
+  // One of insert or update must succeed AND produce the claimed new digest
+  val validAvlProof = {
+    (insertResult.isDefined && insertResult.get.digest == newTreeDigest.digest) ||
+    (updateResult.isDefined && updateResult.get.digest == newTreeDigest.digest)
+  }
 
   // ── Optional: verify update came from escrow completion ──
   // Check that one of the data inputs is a spent escrow box (by contract hash)
@@ -90,6 +96,6 @@
   //   blake2b256(di.propositionBytes) == escrowContractHash
   // }
 
-  // ── Final guard: admin must sign AND state transition must be valid ──
-  adminPk && sigmaProp(validSingleton && validStateTransition)
+  // ── Final guard: admin must sign AND state + AVL proof must be valid ──
+  adminPk && sigmaProp(validSingleton && validStateTransition && validAvlProof)
 }

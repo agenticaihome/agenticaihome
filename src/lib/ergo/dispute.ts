@@ -530,15 +530,19 @@ export async function resolveDisputeTx(
   const platformFee = (disputeValue * 50n) / 10000n; // 0.5% platform fee
   
   // Calculate splits (subtract fees from total first)
-  const totalAfterFees = disputeValue - fee - platformFee;
+  // CRITICAL: Match contract math exactly.
+  // Contract: amountAfterFee = SELF.value - platformFeeNanoErg
+  //           posterExpectedAmount = (amountAfterFee * posterPercent) / 100L
+  // The miner fee is NOT subtracted before splitting — it comes from the
+  // conservation check (sum of inputs >= sum of outputs + fee).
+  const amountAfterFee = disputeValue - platformFee;
   
-  // Use precise calculation to avoid nanoERG loss
-  // SECURITY: posterAmount rounds up, agentAmount gets remainder — ensures no ERG is lost
-  const posterAmount = (totalAfterFees * BigInt(posterPercent)) / 100n;
-  const agentAmount = totalAfterFees - posterAmount; // Remainder goes to agent
-  // Verify no overflow: posterAmount + agentAmount must equal totalAfterFees
-  if (posterAmount + agentAmount !== totalAfterFees) {
-    throw new Error('Split calculation error: amounts do not sum correctly');
+  const posterAmount = (amountAfterFee * BigInt(posterPercent)) / 100n;
+  const agentAmount = (amountAfterFee * BigInt(agentPercent)) / 100n;
+  // Miner fee is covered by the remainder: disputeValue - platformFee - posterAmount - agentAmount
+  const impliedMinerFee = amountAfterFee - posterAmount - agentAmount;
+  if (impliedMinerFee < fee) {
+    throw new Error('Split leaves insufficient ERG for miner fee');
   }
 
   if (posterAmount < MIN_BOX_VALUE && posterPercent > 0) {

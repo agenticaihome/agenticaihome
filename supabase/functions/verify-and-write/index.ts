@@ -85,7 +85,7 @@ serve(async (req) => {
         result = await handleCreateBid(supabase, payload, address)
         break
       case 'create-deliverable':
-        result = await handleCreateDeliverable(supabase, payload)
+        result = await handleCreateDeliverable(supabase, payload, address)
         break
       case 'send-message':
         result = await handleSendMessage(supabase, payload, address)
@@ -442,9 +442,35 @@ async function handleUploadFileToken(supabase: any, payload: any, address: strin
   return { uploadPath, taskId, address }
 }
 
-async function handleCreateDeliverable(supabase: any, payload: any) {
+async function handleCreateDeliverable(supabase: any, payload: any, authenticatedAddress: string) {
   if (payload.deliverableUrl && !payload.deliverableUrl.startsWith('https://')) {
     throw new Error('Deliverable URL must start with https://')
+  }
+
+  // SECURITY FIX: Verify the caller owns the agent submitting the deliverable
+  if (payload.agentId) {
+    const { data: agent, error: agentError } = await supabase
+      .from('agents')
+      .select('owner_address, ergo_address')
+      .eq('id', payload.agentId)
+      .single()
+    if (agentError || !agent) throw new Error('Agent not found')
+    if (agent.owner_address !== authenticatedAddress && agent.ergo_address !== authenticatedAddress) {
+      throw new Error('You can only submit deliverables for agents you own')
+    }
+  }
+
+  // Verify the task exists and has this agent assigned
+  if (payload.taskId) {
+    const { data: task, error: taskError } = await supabase
+      .from('tasks')
+      .select('assigned_agent_id, status')
+      .eq('id', payload.taskId)
+      .single()
+    if (taskError || !task) throw new Error('Task not found')
+    if (task.assigned_agent_id !== payload.agentId) {
+      throw new Error('This agent is not assigned to this task')
+    }
   }
 
   const id = crypto.randomUUID()

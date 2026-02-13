@@ -295,11 +295,11 @@ export async function createSealedBid(params: SealedBidParams, salt: Uint8Array)
     SEALED_BID_CONTRACT_ADDRESS
   )
     .setAdditionalRegisters({
-      R4: SColl(SByte, Array.from(commitHash)).toHex(),
-      R5: SSigmaProp(SGroupElement(Buffer.from(bidderPubkey).toString('hex'))).toHex(),
-      R6: SInt(commitDeadlineHeight).toHex(),
-      R7: SInt(refundDeadlineHeight).toHex(),
-      R8: SColl(SByte, Array.from(Buffer.from(taskId, 'utf-8'))).toHex(),
+      R4: SConstant(SColl(SByte, Array.from(commitHash))),
+      R5: SConstant(SSigmaProp(SGroupElement(Buffer.from(bidderPubkey).toString('hex')))),
+      R6: SConstant(SInt(commitDeadlineHeight)),
+      R7: SConstant(SInt(refundDeadlineHeight)),
+      R8: SConstant(SColl(SByte, Array.from(Buffer.from(taskId, 'utf-8')))),
     });
 
   // Build transaction
@@ -355,19 +355,19 @@ export async function revealBid(
   // Extract bidder pubkey and taskId from commit box registers
   const bidderPkHex = commitBox.additionalRegisters?.R5 || '';
   const taskIdHex = commitBox.additionalRegisters?.R8 || '';
-  const commitHashHex = commitBox.additionalRegisters?.R4 || '';
+  const taskOwnerPkHex = commitBox.additionalRegisters?.R9 || ''; // Task owner from commit box
 
   const revealOutput = new OutputBuilder(
     BigInt(commitBox.value),
     BID_REVEAL_CONTRACT_ADDRESS
   )
     .setAdditionalRegisters({
-      R4: SLong(bidAmountNanoErg).toHex(),
-      R5: SColl(SByte, Array.from(salt)).toHex(),
-      R6: bidderPkHex, // Preserve bidder's SigmaProp from commit box
-      R7: SInt(selectionDeadlineHeight).toHex(),
-      R8: taskIdHex, // Preserve task ID from commit box
-      R9: commitHashHex, // Original commitment hash for audit trail
+      R4: SConstant(SLong(bidAmountNanoErg)),
+      R5: SConstant(SColl(SByte, Array.from(salt))),
+      R6: bidderPkHex, // Preserve bidder's SigmaProp from commit box (already encoded)
+      R7: SConstant(SInt(selectionDeadlineHeight)),
+      R8: taskIdHex, // Preserve task ID from commit box (already encoded)
+      R9: taskOwnerPkHex, // Task owner pubkey carried from commit box for secure winner selection
     });
 
   const unsignedTx = new TransactionBuilder(currentHeight)

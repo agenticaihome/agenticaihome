@@ -372,19 +372,29 @@ export async function fulfillBabelFee(
  * Decode the R5 register value (nanoERG per token rate).
  * R5 is encoded as SLong in the explorer API.
  */
+/**
+ * Decode SLong from serialized hex using proper VLQ + ZigZag decoding.
+ * SLong format: type byte (05) + VLQ-encoded ZigZag value.
+ */
 function decodeR5Rate(r5Hex: string): bigint | null {
   try {
-    // Explorer returns serialized SLong values
-    // For simplicity, attempt numeric parse from the register encoding
-    // In production, use Fleet SDK's SConstant decoder
-    //
-    // SLong encoding: type byte (05) + ZigZag-encoded value
-    if (r5Hex.startsWith('05')) {
-      const zigzag = parseInt(r5Hex.slice(2), 16);
-      const value = (zigzag >>> 1) ^ -(zigzag & 1);
-      return BigInt(value);
+    if (!r5Hex.startsWith('05')) return null;
+
+    // Decode VLQ (Variable-Length Quantity)
+    let offset = 2; // skip type byte
+    let result = 0n;
+    let shift = 0n;
+    while (offset < r5Hex.length) {
+      const byte = parseInt(r5Hex.slice(offset, offset + 2), 16);
+      offset += 2;
+      result |= BigInt(byte & 0x7f) << shift;
+      shift += 7n;
+      if ((byte & 0x80) === 0) break;
     }
-    return null;
+
+    // ZigZag decode: (n >>> 1) ^ -(n & 1)
+    const value = (result >> 1n) ^ -(result & 1n);
+    return value;
   } catch {
     return null;
   }

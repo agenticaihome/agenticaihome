@@ -6,34 +6,34 @@
 // (by spending the sealed_bid.es box), the revealed amount is stored here
 // for the task owner to evaluate and select a winner.
 //
-// The task owner (client) can select the winning bid and release funds to the
-// winner's escrow, or bidders can reclaim after the selection deadline.
-//
 // Register layout:
 //   R4: Long        — revealed bid amount (in nanoERG)
 //   R5: Coll[Byte]  — salt used in commitment (proof of valid reveal)
 //   R6: SigmaProp   — bidder's public key
 //   R7: Int          — selection deadline (client must pick winner before this)
 //   R8: Coll[Byte]   — task ID
-//   R9: Coll[Byte]   — original commitment hash (for audit trail)
+//   R9: SigmaProp    — task owner's public key (set during reveal from sealed_bid)
 //
 // Security properties:
 // - Bid amount is now public (reveal happened via sealed_bid.es hash check)
+// - Task owner pubkey stored IN the box (R9) — not from untrusted data input
 // - Client selects winner by signing; losing bidders reclaim funds after deadline
 // - Platform fee taken on winner selection
+//
+// SECURITY FIX: Task owner pubkey is stored in R9 at reveal time (from the
+// sealed_bid box which has the task owner hardcoded). This prevents the attack
+// where anyone creates a fake data input box with their own pubkey to steal bids.
 //
 {
   val bidAmount         = SELF.R4[Long].get
   val bidderPk          = SELF.R6[SigmaProp].get
   val selectionDeadline = SELF.R7[Int].get
   val taskId            = SELF.R8[Coll[Byte]].get
+  val taskOwnerPk       = SELF.R9[SigmaProp].get
 
   // ── WINNER SELECTION ──
-  // The task owner (encoded as a data input) selects this bid as winner.
+  // The task owner (stored in R9 at reveal time) selects this bid as winner.
   // Funds move to an escrow contract for task execution.
-  // We require a data input with the task owner's pubkey in R4 to authorize.
-  val taskOwnerPk = CONTEXT.dataInputs(0).R4[SigmaProp].get
-  
   val winnerSelected = {
     taskOwnerPk &&
     sigmaProp(HEIGHT <= selectionDeadline)

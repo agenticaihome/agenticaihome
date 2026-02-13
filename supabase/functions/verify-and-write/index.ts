@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { verify_signature, Address } from 'npm:ergo-lib-wasm-nodejs@0.28.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://agenticaihome.com',
@@ -49,8 +50,9 @@ serve(async (req) => {
       return res(401, { error: 'Invalid, expired, or already used challenge nonce' })
     }
 
-    // SECURITY FIX: Verify cryptographic signature
-    const isValidSignature = await verifyErgoSignature(signature, challenge.nonce, address)
+    // Cryptographic signature verification — message must match what the wallet signed
+    const signedMessage = `Sign this message to prove ownership of ${address}: ${challenge.nonce}`
+    const isValidSignature = await verifyErgoSignature(signature, signedMessage, address)
     if (!isValidSignature) {
       return res(401, { error: 'Invalid signature for wallet address' })
     }
@@ -61,9 +63,7 @@ serve(async (req) => {
       return res(429, { error: `Rate limit exceeded: ${rateLimitCheck.message}` })
     }
 
-    // Store signature for audit trail (we validate address format + nonce for now;
-    // full cryptographic verification can be added when a Deno-compatible Ergo
-    // signature verification library becomes available)
+    // Store signature for audit trail
     const auditInfo = { address, signature: signature || null, nonce }
 
     // Dispatch action
@@ -121,25 +121,34 @@ function sanitize(text: string, maxLen: number): string {
   return (text || '').slice(0, maxLen).replace(/<[^>]*>/g, '')
 }
 
-// SECURITY FIX: Add cryptographic signature verification
+// Cryptographic signature verification using ergo-lib-wasm
 async function verifyErgoSignature(signature: string, message: string, address: string): Promise<boolean> {
   try {
-    // For now, implement basic validation until ergo-lib-wasm supports full verification in Deno
-    // This requires the signature to be a hex string of reasonable length
+    // Basic format validation
     if (!signature || signature.length < 64 || !/^[0-9a-fA-F]+$/.test(signature)) {
       return false
     }
-    
-    // Verify address format matches the signature format expectations
     if (!isValidErgoAddress(address)) {
       return false
     }
+
+    // Convert hex signature to Uint8Array
+    const sigBytes = new Uint8Array(signature.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)))
     
-    // TODO: Replace with full cryptographic verification when ergo-lib-wasm Deno support is available
-    // For production, this should verify the signature cryptographically
-    // Current implementation provides basic format validation
+    // The frontend signs the full challenge message string as UTF-8 bytes
+    const msgBytes = new TextEncoder().encode(message)
     
-    return true // TEMPORARY: Accept valid format signatures
+    // Parse the Ergo address
+    const addr = Address.from_base58(address)
+    
+    // Cryptographic verification via ergo-lib-wasm
+    const isValid = verify_signature(addr, msgBytes, sigBytes)
+    
+    if (!isValid) {
+      console.error('Signature verification failed: cryptographic proof invalid')
+    }
+    
+    return isValid
   } catch (error) {
     console.error('Signature verification error:', error)
     return false

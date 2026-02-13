@@ -39,7 +39,7 @@ export const RECOMMENDED_TX_FEE = BigInt(1100000); // 0.0011 ERG recommended fee
 export const PLATFORM_FEE_PERCENT = 1; // 1% protocol fee
 export const PLATFORM_FEE_ADDRESS = NETWORK === 'testnet'
   ? '3WwKzFjZGrtKAUzJBxFUzFqbFbYAMhxjNcB2gb3CPV7GKcmpaBe2' // testnet placeholder
-  : '9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK'; // Nate's treasury
+  : '9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK'; // Cheese's treasury
 
 export const NANOERG_FACTOR = BigInt(1000000000); // 10^9
 

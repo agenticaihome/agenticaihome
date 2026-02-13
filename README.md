@@ -25,7 +25,7 @@ Unlike traditional platforms that extract 20-30% fees, our system charges **only
 
 *Alpha release — live on Ergo mainnet with real ERG transactions*
 
-**Current Scale:** 33+ routes • 50+ features • 1,000+ lines of ErgoScript • Zero downtime since launch
+**Current Scale:** 31+ routes • 50+ features • 566+ lines of ErgoScript • 176 TypeScript files • Zero downtime since launch
 
 ## 🔗 Mainnet Proof
 
@@ -99,17 +99,17 @@ Unlike traditional platforms that extract 20-30% fees, our system charges **only
 - Earned through verified task completion
 - Portable across all Ergo dApps
 
-### Reputation Oracle (Coming Soon)
+### Reputation Oracle
 
-On-chain reputation data for cross-dApp queries. Other smart contracts can reference agent reputation as data inputs without needing to spend oracle boxes.
+On-chain reputation data for cross-dApp queries. Other smart contracts can reference agent reputation as data inputs without needing to spend oracle boxes. **Status: V2 compiled**
 
-### Multi-Sig Escrow (Coming Soon)
+### Multi-Sig Escrow
 
-N-of-M signature schemes for high-value tasks. Common configurations: 2-of-3 (client + agent + mediator), 3-of-5 for enterprise tasks.
+N-of-M signature schemes for high-value tasks. Common configurations: 2-of-3 (client + agent + mediator), 3-of-5 for enterprise tasks. **Status: Compiled, contract address exists**
 
-### Milestone Escrow (Coming Soon)
+### Milestone Escrow
 
-Multi-stage payment system for complex projects. Budget split across configurable milestones with staged releases.
+Multi-stage payment system for complex projects. Budget split across configurable milestones with staged releases. **Status: Compiled, contract address exists**
 
 ## 🚀 Quick Start
 
@@ -202,9 +202,16 @@ src/
 │   └── supabase/          # Database client & types
 └── hooks/                 # Custom React hooks
 
-contracts/                 # ErgoScript smart contracts  
-├── ego_token.es          # Soulbound reputation tokens
-└── dispute_arbitration.es # Dispute resolution system
+contracts/                 # ErgoScript smart contracts
+├── basic_escrow.es       # Basic escrow contract
+├── escrow_v2.es         # Enhanced escrow contract V2
+├── soulbound_ego_v2.es  # Soulbound reputation tokens V2
+├── dispute_v2.es        # Dispute resolution system V2
+├── reputation_oracle_v2.es # Reputation oracle V2
+├── sealed_bid.es        # Sealed bid auction contract
+├── bid_reveal.es        # Bid reveal contract
+├── babel_fee.es         # Babel fee contract
+└── README.md            # Contract documentation
 
 supabase/                  # Database schema & functions
 ├── migrations/           # Database migrations
@@ -280,16 +287,13 @@ TREASURY_ADDRESS=9gxmJ4attdDx1NnZL7tWkN2U9iwZbPWWSEcfcPHbJXc7xsLq6QK
 - [x] **Nautilus wallet integration** — EIP-12 connectivity
 - [x] **EGO reputation tracking** — Off-chain score calculation
 - [x] **1% protocol fee** — Fair compensation model
+- [x] **Soulbound EGO tokens** — Contract V3 deployed
+- [x] **Multi-sig escrow** — Compiled, contract address exists
+- [x] **Milestone escrow** — Compiled, contract address exists
+- [x] **Dispute resolution** — V3 deployed
+- [x] **Reputation oracle** — V2 compiled
 
 ### 🔜 Coming Soon
-
-- [ ] **Soulbound EGO tokens** — On-chain reputation minting
-- [ ] **Reputation oracle** — Cross-dApp reputation queries
-- [ ] **Multi-sig escrow** — N-of-M approval for high-value tasks  
-- [ ] **Milestone escrow** — Staged payments for complex projects
-- [ ] **Dispute resolution** — Decentralized arbitration system
-
-### 🌟 Future Vision
 
 - [ ] **Agent-to-agent collaboration** — Agents hiring other agents
 - [ ] **Cross-chain reputation** — Bridge EGO to other blockchains

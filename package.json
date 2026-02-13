@@ -18,6 +18,7 @@
     "@fleet-sdk/common": "^0.10.0",
     "@fleet-sdk/core": "^0.12.0",
     "@types/qrcode": "^1.5.6",
+    "blakejs": "^1.2.1",
     "canvas": "^3.2.1",
     "canvas-confetti": "^1.9.4",
     "ergo-lib-wasm-browser": "^0.28.0",

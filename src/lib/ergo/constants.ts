@@ -196,6 +196,18 @@ export const MULTISIG_ESCROW_CONTRACT_ADDRESS = '777XzGB9VzAtjbbr5DpEasgzN7HXVit
 // Register layout: R4=client pubkey, R5=agent address, R6=deadlines, R7=percentages, R8=current milestone, R9=fee address
 export const MILESTONE_ESCROW_CONTRACT_ADDRESS = '5UXuLjRVH4rvrWic6CHmPY4gCGFuxesKTkwwkNb9ssonUZ4ewKWzeGKhLNTnM5Z6Q7TwVaPKmVhL2YqZSKtFJhhgHjptAjwy3q5M4QGgN9nvTrM8B767hJ1cDXTJWqBYPNGF9buwXosWCwbez7KnRb6om921qvtWSim6duxKpg2v6xvZ7b63EgTqwXXYVGHHnessAdZPLeVZ8N2tnoRPahf94s9uzmKjcgsekKMPFmugKBPBUtN6bnWzD8bQzzpLQo1cCsajvWdATQ1HG4io4dbftj4hQxkWUoHZfrpsm9DQ9tVnK5hSD49bcb8gnoS6JqFWYdCMsicoXAvmtMtMaDgj9WrUmCoQKtZyo4a4w6X7JtCkXNp';
 
+// ─── SEALED BID (Commit-Reveal) CONTRACT ADDRESSES ─────────────────────────
+// Private bidding system: prevents undercutting via commit-reveal protocol
+// See contracts/sealed_bid.es and contracts/bid_reveal.es
+
+// Sealed Bid (Commit Phase) Contract — holds hashed bid commitments
+// Register layout: R4=commitment hash, R5=bidder pubkey, R6=commit deadline, R7=refund deadline, R8=task ID
+export const SEALED_BID_CONTRACT_ADDRESS = 'PLACEHOLDER_SEALED_BID_COMPILE_WITH_NODE';
+
+// Bid Reveal Contract — holds revealed bid amounts after commit phase
+// Register layout: R4=bid amount, R5=salt, R6=bidder pubkey, R7=selection deadline, R8=task ID, R9=commit hash
+export const BID_REVEAL_CONTRACT_ADDRESS = 'PLACEHOLDER_BID_REVEAL_COMPILE_WITH_NODE';
+
 // Testnet faucet URL
 export const TESTNET_FAUCET_URL = 'https://testnet.ergofaucet.org/';
 

@@ -12,6 +12,7 @@ import { logEvent } from '@/lib/events';
 import { sanitizeText, sanitizeNumber, validateFormSubmission, INPUT_LIMITS } from '@/lib/sanitize';
 import { getErgPrice, usdToErg, ergToUsd, formatUsdAmount, formatErgAmount } from '@/lib/ergPrice';
 import { AlertTriangle, Lock, CheckCircle, Lightbulb, RefreshCw, DollarSign, Bot, Link2 } from 'lucide-react';
+import OraclePriceDisplay from '@/components/OraclePriceDisplay';
 import { Agent, Task } from '@/lib/types';
 
 export default function CreateTask() {
@@ -421,6 +422,9 @@ export default function CreateTask() {
               maxSkills={8}
             />
           </div>
+
+          {/* Oracle Price */}
+          <OraclePriceDisplay compact className="mb-1" />
 
           {/* Budget */}
           <div>

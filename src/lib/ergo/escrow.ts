@@ -10,6 +10,7 @@ import {
   ErgoAddress,
 } from '@fleet-sdk/core';
 import { getCurrentHeight, getBoxesByAddress, getBoxById } from './explorer';
+import { buildDataInputFromOracle } from './oracle';
 import {
   MIN_BOX_VALUE,
   RECOMMENDED_TX_FEE,
@@ -32,6 +33,9 @@ export interface EscrowParams {
   amountNanoErg: bigint;
   deadlineHeight: number;
   taskId?: string;
+  /** When true, the oracle pool box is added as a data input so
+   *  contracts can verify the ERG/USD rate at escrow creation time. */
+  includeOracleData?: boolean;
 }
 
 export interface EscrowBox {
@@ -184,13 +188,26 @@ export async function createEscrowTx(
       R8: SConstant(SColl(SByte, taskBytes)),
     });
 
-  const unsignedTx = new TransactionBuilder(currentHeight)
+  let txBuilder = new TransactionBuilder(currentHeight)
     .from(walletUtxos)
     .to([escrowOutput])
     .sendChangeTo(changeAddress)
-    .payFee(RECOMMENDED_TX_FEE)
-    .build()
-    .toEIP12Object();
+    .payFee(RECOMMENDED_TX_FEE);
+
+  // Optionally attach the oracle pool box as a data input so the
+  // transaction (and any future contract upgrades) can reference
+  // the on-chain ERG/USD rate at escrow creation time.
+  if (params.includeOracleData) {
+    try {
+      const { boxForDataInput } = await buildDataInputFromOracle();
+      txBuilder = txBuilder.withDataFrom([boxForDataInput]);
+    } catch {
+      // Oracle unavailable — proceed without data input.
+      // The escrow is still valid; oracle data is supplementary.
+    }
+  }
+
+  const unsignedTx = txBuilder.build().toEIP12Object();
 
   return unsignedTx;
 }

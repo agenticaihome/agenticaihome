@@ -195,99 +195,127 @@ export default function ErgoNetworkStats() {
   }
 
   return (
-    <div className="w-full bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] py-3 px-4">
+    <div className="w-full bg-[var(--bg-secondary)]/50 border-b border-[var(--border-color)] py-1.5 md:py-2 px-4">
       <div className="container container-xl">
-        {/* Network Stats Row */}
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">ERG</span>
-            {stats.price !== null ? (
-              <>
-                <span className="font-semibold text-[var(--text-primary)]">${stats.price.toFixed(4)}</span>
-                {stats.priceChange24h !== null && (
-                  <span className={`text-xs font-medium ${changeColor}`}>
-                    {changeArrow} {Math.abs(stats.priceChange24h).toFixed(2)}%
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="font-semibold text-[var(--text-secondary)]">—</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Block</span>
-            {stats.blockHeight !== null ? (
-              <span className="font-semibold text-[var(--accent-cyan)]">#{stats.blockHeight.toLocaleString()}</span>
-            ) : (
-              <span className="font-semibold text-[var(--text-secondary)]">—</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Difficulty</span>
-            {stats.difficulty !== null ? (
-              <span className="font-semibold text-[var(--accent-purple)]">{formatDifficulty(stats.difficulty)}</span>
-            ) : (
-              <span className="font-semibold text-[var(--text-secondary)]">—</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Last Block</span>
-            {stats.lastBlockTime !== null ? (
-              <span className="font-medium text-[var(--accent-green)]">{timeAgo(stats.lastBlockTime)}</span>
-            ) : (
-              <span className="font-medium text-[var(--text-secondary)]">—</span>
-            )}
-          </div>
+        {/* Mobile: single compact line */}
+        <div className="flex md:hidden items-center justify-center gap-3 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-[var(--text-muted)]">Live</span>
-          </div>
-        </div>
-
-        {/* Platform Stats Row */}
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm border-t border-[var(--border-color)]/30 pt-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Total Tasks</span>
-            {stats.totalTasks !== null ? (
-              <span className="font-semibold text-[var(--accent-cyan)]">{stats.totalTasks.toLocaleString()}</span>
-            ) : (
-              <span className="font-semibold text-[var(--text-secondary)]">—</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Active Tasks</span>
-            {stats.activeTasks !== null ? (
-              <span className="font-semibold text-[var(--accent-green)]">{stats.activeTasks.toLocaleString()}</span>
-            ) : (
-              <span className="font-semibold text-[var(--text-secondary)]">—</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">Registered Agents</span>
-            {stats.totalAgents !== null ? (
-              <span className="font-semibold text-[var(--accent-purple)]">{stats.totalAgents.toLocaleString()}</span>
-            ) : (
-              <span className="font-semibold text-[var(--text-secondary)]">—</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[var(--text-muted)]">ERG in Escrow</span>
-            {stats.totalEscrowErg !== null ? (
-              <span className="font-semibold text-[var(--accent-amber)]">
-                {stats.totalEscrowErg.toFixed(2)} ERG
-                {stats.price && (
-                  <span className="text-xs text-[var(--text-muted)] ml-1">
-                    (${(stats.totalEscrowErg * stats.price).toFixed(0)})
+            {stats.price !== null ? (
+              <span className="font-medium text-[var(--text-primary)]">
+                ERG ${stats.price.toFixed(2)}
+                {stats.priceChange24h !== null && (
+                  <span className={`ml-1 ${changeColor}`}>
+                    {changeArrow}{Math.abs(stats.priceChange24h).toFixed(1)}%
                   </span>
                 )}
               </span>
             ) : (
-              <span className="font-semibold text-[var(--text-secondary)]">—</span>
+              <span className="text-[var(--text-secondary)]">ERG —</span>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
-            <span className="text-xs text-[var(--text-muted)]">Platform</span>
+          <span className="text-[var(--border-color)]">·</span>
+          {stats.blockHeight !== null && (
+            <span className="text-[var(--text-muted)]">
+              Block <span className="text-[var(--accent-cyan)]">#{stats.blockHeight.toLocaleString()}</span>
+            </span>
+          )}
+          <span className="text-[var(--border-color)]">·</span>
+          {stats.totalTasks !== null && (
+            <span className="text-[var(--text-muted)]">
+              <span className="text-[var(--text-primary)]">{stats.totalTasks}</span> Tasks
+            </span>
+          )}
+        </div>
+
+        {/* Desktop: full two rows */}
+        <div className="hidden md:block">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)]">ERG</span>
+              {stats.price !== null ? (
+                <>
+                  <span className="font-semibold text-[var(--text-primary)]">${stats.price.toFixed(4)}</span>
+                  {stats.priceChange24h !== null && (
+                    <span className={`text-xs font-medium ${changeColor}`}>
+                      {changeArrow} {Math.abs(stats.priceChange24h).toFixed(2)}%
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="font-semibold text-[var(--text-secondary)]">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)]">Block</span>
+              {stats.blockHeight !== null ? (
+                <span className="font-semibold text-[var(--accent-cyan)]">#{stats.blockHeight.toLocaleString()}</span>
+              ) : (
+                <span className="font-semibold text-[var(--text-secondary)]">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)]">Difficulty</span>
+              {stats.difficulty !== null ? (
+                <span className="font-semibold text-[var(--accent-purple)]">{formatDifficulty(stats.difficulty)}</span>
+              ) : (
+                <span className="font-semibold text-[var(--text-secondary)]">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)]">Last Block</span>
+              {stats.lastBlockTime !== null ? (
+                <span className="font-medium text-[var(--accent-green)]">{timeAgo(stats.lastBlockTime)}</span>
+              ) : (
+                <span className="font-medium text-[var(--text-secondary)]">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-xs text-[var(--text-muted)]">Live</span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm border-t border-[var(--border-color)]/30 pt-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)]">Tasks</span>
+              {stats.totalTasks !== null ? (
+                <span className="font-semibold text-[var(--accent-cyan)]">{stats.totalTasks.toLocaleString()}</span>
+              ) : (
+                <span className="font-semibold text-[var(--text-secondary)]">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)]">Active</span>
+              {stats.activeTasks !== null ? (
+                <span className="font-semibold text-[var(--accent-green)]">{stats.activeTasks.toLocaleString()}</span>
+              ) : (
+                <span className="font-semibold text-[var(--text-secondary)]">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)]">Agents</span>
+              {stats.totalAgents !== null ? (
+                <span className="font-semibold text-[var(--accent-purple)]">{stats.totalAgents.toLocaleString()}</span>
+              ) : (
+                <span className="font-semibold text-[var(--text-secondary)]">—</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--text-muted)]">Escrow</span>
+              {stats.totalEscrowErg !== null ? (
+                <span className="font-semibold text-[var(--accent-amber)]">
+                  {stats.totalEscrowErg.toFixed(2)} ERG
+                  {stats.price && (
+                    <span className="text-xs text-[var(--text-muted)] ml-1">
+                      (${(stats.totalEscrowErg * stats.price).toFixed(0)})
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="font-semibold text-[var(--text-secondary)]">—</span>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -5,8 +5,6 @@ const StatsBar = dynamic(() => import('@/components/StatsBar'), { loading: () =>
 import { Bot, ClipboardList, Coins, Zap, CheckCircle, Target, Lock } from 'lucide-react';
 
 // Lazy load heavy below-fold components (code-split into separate chunks)
-const ParticleNetwork = dynamic(() => import('@/components/ParticleNetwork'), { loading: () => null });
-const ErgoNetworkStats = dynamic(() => import('@/components/ErgoNetworkStats'), { loading: () => <div className="h-32 animate-pulse bg-[var(--bg-secondary)] rounded-xl" /> });
 const NewsletterForm = dynamic(() => import('@/components/NewsletterForm'), { loading: () => <div className="h-24 animate-pulse bg-[var(--bg-secondary)] rounded-xl" /> });
 
 const organizationSchema = {
@@ -80,18 +78,12 @@ export default function Home() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
       />
 
-      {/* Ergo Network Stats — Top Ticker */}
-      <ErgoNetworkStats />
-
       {/* Hero Section */}
       <section className="relative overflow-hidden py-8 md:py-24 lg:py-32 px-4 gradient-mesh">
         {/* Background Orbs */}
         <div className="orb w-96 h-96 bg-[var(--accent-cyan)] -top-48 -left-48" />
         <div className="orb orb-pulse w-80 h-80 bg-[var(--accent-purple)] top-20 -right-20" style={{ animationDelay: '3s' }} />
         <div className="orb w-64 h-64 bg-[var(--accent-green)] -bottom-32 left-1/4" style={{ animationDelay: '6s' }} />
-        
-        {/* Particle Network Background */}
-        <ParticleNetwork className="opacity-60" />
 
         <div className="container container-xl text-center relative z-10">
           {/* Hero Badge */}

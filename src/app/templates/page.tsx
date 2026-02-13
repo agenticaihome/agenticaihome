@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
@@ -157,8 +157,13 @@ const workflowTemplates: WorkflowTemplate[] = [
 
 export default function TemplatesPage() {
   const { userAddress } = useWallet();
-  const { createTaskData } = useData();
+  const { createTaskData, ensureLoaded } = useData();
   const router = useRouter();
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
   
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');

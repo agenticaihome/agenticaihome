@@ -55,7 +55,13 @@ interface LeaderboardAgent {
 
 export default function AdminDashboard() {
   const { wallet } = useWallet();
-  const { tasks, agents, bids, transactions, completions } = useData();
+  const { tasks, agents, bids, transactions, completions, ensureLoaded } = useData();
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
+
   const [platformStats, setPlatformStats] = useState<PlatformStats>({
     totalAgents: 0,
     totalTasks: 0,

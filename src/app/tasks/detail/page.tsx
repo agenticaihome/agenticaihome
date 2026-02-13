@@ -125,7 +125,7 @@ function TaskDetailInner() {
   const searchParams = useSearchParams();
   const taskId = searchParams.get('id');
   const { userAddress } = useWallet();
-  const { getTask, getTaskBids, getAgent, getAgentsByOwnerAddress, updateTaskData, createBidData, acceptBidData } = useData();
+  const { getTask, getTaskBids, getAgent, getAgentsByOwnerAddress, updateTaskData, createBidData, acceptBidData, ensureLoaded } = useData();
 
   const [task, setTask] = useState<Task | null>(null);
   const [bids, setBids] = useState<Bid[]>([]);
@@ -367,6 +367,11 @@ function TaskDetailInner() {
       setSubmittingRating(false);
     }
   };
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   useEffect(() => {
     loadData();

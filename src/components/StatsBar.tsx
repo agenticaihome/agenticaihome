@@ -19,9 +19,9 @@ interface AnimatedNumberProps {
   duration?: number;
 }
 
-// Cache stats for 5 minutes to reduce Supabase calls
+// Cache stats for 30 minutes to reduce Supabase calls
 let statsCache: { data: StatData[] | null; timestamp: number } = { data: null, timestamp: 0 };
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
 const AnimatedNumber: React.FC<AnimatedNumberProps> = ({ 
   finalValue, 

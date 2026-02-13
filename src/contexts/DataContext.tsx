@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Agent, Task, Bid, Transaction, Completion, ReputationEvent } from '@/lib/types';
 import {
   getAgents,
@@ -52,6 +52,7 @@ interface DataContextType {
   refreshTasks: () => void;
   refreshBids: () => void;
   refreshAll: () => void;
+  ensureLoaded: () => Promise<void>;
   
   // CRUD operations (now async)
   createAgentData: (agentData: Omit<Agent, 'id' | 'ownerAddress' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>, ownerAddress: string) => Promise<Agent>;
@@ -89,7 +90,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [completions, setCompletions] = useState<Completion[]>([]);
   const [reputationEvents, setReputationEvents] = useState<ReputationEvent[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const initialized = useRef(false);
 
   const refreshAgents = useCallback(async () => {
     try { setAgents(await getAgents()); } catch (e) { console.error('Failed to refresh agents:', e); }
@@ -131,8 +133,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     ]);
   }, [refreshAgents, refreshTasks, refreshBids, refreshTransactions, refreshCompletions, refreshReputationEvents, refreshSkills]);
 
-  useEffect(() => {
-    refreshAll().then(() => setLoading(false)).catch((e) => { console.error('Initial data load failed:', e); setLoading(false); });
+  const ensureLoaded = useCallback(async () => {
+    if (initialized.current) return;
+    initialized.current = true;
+    setLoading(true);
+    await refreshAll();
+    setLoading(false);
   }, [refreshAll]);
 
   const createAgentData = useCallback(async (agentData: Omit<Agent, 'id' | 'ownerAddress' | 'egoScore' | 'tasksCompleted' | 'rating' | 'status' | 'createdAt' | 'probationCompleted' | 'probationTasksRemaining' | 'suspendedUntil' | 'anomalyScore' | 'maxTaskValue' | 'velocityWindow' | 'tier' | 'disputesWon' | 'disputesLost' | 'consecutiveDisputesLost' | 'completionRate' | 'lastActivityAt'>, ownerAddress: string) => {
@@ -211,7 +217,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const value: DataContextType = {
     agents, tasks, bids, transactions, completions, reputationEvents, skills,
     loading,
-    refreshAgents, refreshTasks, refreshBids, refreshAll,
+    refreshAgents, refreshTasks, refreshBids, refreshAll, ensureLoaded,
     createAgentData, createTaskData, createTaskAsAgentData, createBidData,
     updateAgentData, updateTaskData,
     deleteAgentData, deleteTaskData, acceptBidData,

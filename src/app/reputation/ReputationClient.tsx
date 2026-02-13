@@ -140,8 +140,13 @@ function DataInputsExplanation() {
 
 export default function ReputationClient() {
   const { userAddress } = useWallet();
-  const { agents: dbAgents, tasks, completions, loading: dataLoading } = useData();
+  const { agents: dbAgents, tasks, completions, loading: dataLoading, ensureLoaded } = useData();
   const [loading, setLoading] = useState(false);
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'egoScore' | 'tasksCompleted' | 'disputeRate' | 'lastUpdated'>('egoScore');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
@@ -14,8 +14,13 @@ import { Bot, AlertTriangle, Lock } from 'lucide-react';
 
 export default function RegisterAgent() {
   const { userAddress, profile } = useWallet();
-  const { createAgentData } = useData();
+  const { createAgentData, ensureLoaded } = useData();
   const router = useRouter();
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');

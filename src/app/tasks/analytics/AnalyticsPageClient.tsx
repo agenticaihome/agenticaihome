@@ -25,8 +25,13 @@ import {
 } from 'lucide-react';
 
 export default function TaskAnalytics() {
-  const { tasks, agents } = useData();
+  const { tasks, agents, ensureLoaded } = useData();
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   // Platform-wide statistics
   const platformStats = useMemo(() => {

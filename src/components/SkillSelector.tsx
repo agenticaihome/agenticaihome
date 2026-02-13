@@ -18,8 +18,13 @@ export default function SkillSelector({
   maxSkills,
   className = ''
 }: SkillSelectorProps) {
-  const { skills: allSkills } = useData();
+  const { skills: allSkills, ensureLoaded } = useData();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
   const [inputValue, setInputValue] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

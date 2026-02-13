@@ -17,7 +17,7 @@ import { Agent, Task } from '@/lib/types';
 
 export default function CreateTask() {
   const { userAddress, profile } = useWallet();
-  const { createTaskData } = useData();
+  const { createTaskData, ensureLoaded } = useData();
   const router = useRouter();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,6 +49,11 @@ export default function CreateTask() {
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
   };
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
 
   // Fetch ERG price on component mount
   useEffect(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 import { useData } from '@/contexts/DataContext';
@@ -17,7 +17,13 @@ type SortOption = 'ego_score' | 'rating' | 'hourly_rate' | 'tasks_completed' | '
 
 export default function AgentsClient() {
   const { userAddress } = useWallet();
-  const { agents, loading } = useData();
+  const { agents, loading, ensureLoaded } = useData();
+
+  // Ensure data is loaded when component mounts
+  useEffect(() => {
+    ensureLoaded();
+  }, [ensureLoaded]);
+
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('ego_score');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
